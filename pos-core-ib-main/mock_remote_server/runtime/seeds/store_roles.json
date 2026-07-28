@@ -1,0 +1,38 @@
+{
+  "data": [
+    {
+      "remote_id": "org_001:store_001:cust_001:member",
+      "customerId": "cust_001",
+      "orgId": "org_001",
+      "storeId": "store_001",
+      "role": "admin",
+      "access_enabled": 1,
+      "id": 11
+    },
+    {
+      "remote_id": "org_001:store_002:cust_001:member",
+      "customerId": "cust_001",
+      "orgId": "org_001",
+      "storeId": "store_002",
+      "role": "member",
+      "access_enabled": true
+    },
+    {
+      "remote_id": "org_001:store_001:cust_003:admin",
+      "customerId": "cust_003",
+      "orgId": "org_001",
+      "storeId": "store_001",
+      "role": "admin",
+      "access_enabled": 1,
+      "id": 12
+    },
+    {
+      "remote_id": "org_001:store_002:cust_003:admin",
+      "customerId": "cust_003",
+      "orgId": "org_001",
+      "storeId": "store_002",
+      "role": "admin",
+      "access_enabled": true
+    }
+  ]
+}

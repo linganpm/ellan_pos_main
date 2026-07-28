@@ -1,0 +1,26 @@
+{
+  "assets": {},
+  "config": {
+    "build_asset_types": [
+      "code_assets/code"
+    ],
+    "extensions": {
+      "code_assets": {
+        "c_compiler": {
+          "ar": "/home/lingaraja/.local/bin/llvm-ar",
+          "cc": "/home/lingaraja/.local/bin/clang",
+          "ld": "/home/lingaraja/.local/bin/ld"
+        },
+        "link_mode_preference": "dynamic",
+        "target_architecture": "x64",
+        "target_os": "linux"
+      }
+    },
+    "linking_enabled": false
+  },
+  "out_dir_shared": "/home/lingaraja/work/ellanone/ellan-one-container/pos-core-ib-main/.dart_tool/hooks_runner/shared/sqlite3/build/",
+  "out_file": "/home/lingaraja/work/ellanone/ellan-one-container/pos-core-ib-main/.dart_tool/hooks_runner/sqlite3/3a44a36914/output.json",
+  "package_name": "sqlite3",
+  "package_root": "/home/lingaraja/.pub-cache/hosted/pub.dev/sqlite3-3.3.1/",
+  "user_defines": {}
+}

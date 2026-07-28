@@ -1,0 +1,361 @@
+{
+    "data": {
+        "id": 634,
+        "_id": 350234914,
+        "reference_id": "95022757",
+        "is_paid": false,
+        "service_instance": 4,
+        "service_instance_id": "0CAtdjVRa651573163047",
+        "service_instance_data": {
+            "logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB304215677609/0CAtdjVRa651573163047/uploads/node_config/logo/1_4ba53b699cc15cec9e6f3e9f52ad9ae1/1697562404700621130_magic taste.jpg",
+            "name": "Magic Taste Singapore",
+            "node_data": {
+                "id": 9,
+                "node_name": "JJdosai"
+            },
+            "account_nbr": "087752614977",
+            "service_name": "Restaurant",
+            "currency_symbol": "\u20b9",
+            "node_address_data": {
+                "name": "JJdosai",
+                "fline": "",
+                "fname": "JJ",
+                "lname": "Dosai",
+                "mname": null,
+                "sline": "Campbell lane",
+                "door_no": "37",
+                "zipcode": "209909",
+                "latitude": "0",
+                "city_data": {
+                    "name": null
+                },
+                "longitude": "0",
+                "state_data": {
+                    "name": "South East Community Development Council"
+                },
+                "county_data": {
+                    "name": null
+                },
+                "country_data": {
+                    "name": "Singapore"
+                }
+            },
+            "node_settings_data": [
+                {
+                    "key": "CONTACT_LANDLINE",
+                    "text": "undefined",
+                    "value": "9688645192",
+                    "active": 1,
+                    "deleted": 0,
+                    "item_key": "contact_landline",
+                    "data_type": 5,
+                    "item_text": "Contact Landline Number"
+                },
+                {
+                    "key": "CONTACT_PHONE_NUMBER",
+                    "text": "undefined",
+                    "value": "9688645000",
+                    "active": 1,
+                    "deleted": 0,
+                    "item_key": "oc_phone",
+                    "data_type": 5,
+                    "item_text": "Order Center Phone"
+                }
+            ],
+            "service_instance_id": "0CAtdjVRa651573163047",
+            "company_registration_number": ""
+        },
+        "notes": null,
+        "order_time": "15-03-2026 12:56:07",
+        "delivery_time": "15-03-2026 12:56:07",
+        "full_name": "ggg",
+        "email": null,
+        "mobile": "7985282496",
+        "type": 2,
+        "order_type": 2,
+        "order_type_str": "PICK-UP",
+        "source_type": 1,
+        "source_type_str": "POS",
+        "created_on": "2026-03-15T12:56:07.505385Z",
+        "order_items_count": 0,
+        "user_data": null,
+        "delivery_address_data": null,
+        "order_item_data": [],
+        "payment_status": 1,
+        "payment_method": null,
+        "payment_mode_name": null,
+        "payment_data": [],
+        "status_data": [],
+        "Tracking_order": [
+            {
+                "Icon": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg",
+                "Key": 1,
+                "Title": "Order Initiated",
+                "Date_Time": "",
+                "Progress": 100,
+                "Completed": true
+            },
+            {
+                "Icon": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg",
+                "Key": 2,
+                "Title": "Order Placed",
+                "Date_Time": "-",
+                "Progress": 50,
+                "Completed": false
+            },
+            {
+                "Icon": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg",
+                "Key": 4,
+                "Title": "Order Confirmed",
+                "Date_Time": "-",
+                "Progress": 0,
+                "Completed": false
+            },
+            {
+                "Icon": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg",
+                "Key": 8,
+                "Title": "Order Ready For PickUp",
+                "Date_Time": "-",
+                "Progress": 0,
+                "Completed": false
+            },
+            {
+                "Icon": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg",
+                "Key": 11,
+                "Title": "Delivered",
+                "Date_Time": "-",
+                "Progress": 0,
+                "Completed": false
+            }
+        ],
+        "final_total": 0.0,
+        "voucher_code": null,
+        "delivery_slot_data": {
+            "end_time": null,
+            "start_time": null,
+            "schedule_delivery_date": null
+        },
+        "order_review_data": [],
+        "order_review_max_data": 0.0,
+        "order_review_avg_max_data": 0.0,
+        "order_review_value_data": 0.0,
+        "order_review_max_value_data": 0.0,
+        "product_review_data": [],
+        "product_review_max_data": 0.0,
+        "product_review_avg_max_data": 0.0,
+        "product_review_value_data": 0.0,
+        "product_review_max_value_data": 0.0,
+        "preparation_time_in_min": 0,
+        "approved_time": null,
+        "total": [
+            {
+                "label": "Sub Total",
+                "amount": "0.00",
+                "currency": "\u20b9"
+            },
+            {
+                "label": "Savings",
+                "amount": "0.00",
+                "currency": "\u20b9",
+                "sign": "-"
+            },
+            {
+                "label": "Promotions",
+                "amount": "0.00",
+                "is_reward_voucher": false,
+                "currency": "\u20b9"
+            },
+            {
+                "label": "Reward Savings",
+                "amount": "0.00",
+                "currency": "\u20b9",
+                "sign": "-"
+            },
+            {
+                "label": "Addon Items",
+                "amount": "0.00",
+                "currency": "\u20b9",
+                "sign": "-"
+            },
+            {
+                "label": "Tax",
+                "amount": "0.00",
+                "currency": "\u20b9",
+                "tax_breakdown": {},
+                "sign": "-"
+            },
+            {
+                "label": "Delivery Charge",
+                "amount": "0.00",
+                "currency": "\u20b9",
+                "breakdown": {}
+            },
+            {
+                "label": "Service Charge",
+                "value": 0.0,
+                "amount": "0.00",
+                "currency": "\u20b9"
+            },
+            {
+                "label": "Instant Discount",
+                "value": 0.0,
+                "amount": "0.00",
+                "currency": "\u20b9",
+                "sign": "-"
+            },
+            {
+                "label": "Platform Fee",
+                "amount": "0.00",
+                "currency": "\u20b9",
+                "sign": "-"
+            },
+            {
+                "label": "Package Fee",
+                "amount": "0.00",
+                "currency": "\u20b9",
+                "sign": "-"
+            },
+            {
+                "label": "Net Total",
+                "amount": "0.00",
+                "currency": "\u20b9"
+            }
+        ],
+        "total_dict": {
+            "sub_total": {
+                "label": "Sub Total",
+                "amount": "0.00",
+                "currency": "\u20b9"
+            },
+            "savings": {
+                "label": "Savings",
+                "amount": "0.00",
+                "currency": "\u20b9",
+                "sign": "-"
+            },
+            "promotions": {
+                "label": "Promotions",
+                "amount": "0.00",
+                "is_reward_voucher": false,
+                "currency": "\u20b9"
+            },
+            "club_card_savings": {
+                "label": "Reward Savings",
+                "amount": "0.00",
+                "currency": "\u20b9",
+                "sign": "-"
+            },
+            "addon_items": {
+                "label": "Addon Items",
+                "amount": "0.00",
+                "currency": "\u20b9"
+            },
+            "tax": {
+                "label": "Tax",
+                "amount": "0.00",
+                "tax_breakdown": {},
+                "currency": "\u20b9",
+                "sign": "-"
+            },
+            "delivery_fee": {
+                "label": "Delivery Charge",
+                "amount": "0.00",
+                "currency": "\u20b9",
+                "breakdown": {}
+            },
+            "service_charge": {
+                "label": "Service Charge",
+                "amount": "0.00",
+                "currency": "\u20b9"
+            },
+            "instant_discount": {
+                "label": "Instant Discount",
+                "value": 0.0,
+                "amount": "0.00",
+                "currency": "\u20b9"
+            },
+            "platform_fee": {
+                "label": "Platform Fee",
+                "amount": "0.00",
+                "currency": "\u20b9",
+                "sign": "-"
+            },
+            "package_fee": {
+                "label": "Package Fee",
+                "amount": "0.00",
+                "currency": "\u20b9",
+                "sign": "-"
+            },
+            "net_total": {
+                "label": "Net Total",
+                "amount": "0.00",
+                "currency": "\u20b9"
+            }
+        },
+        "next_states_oc": [],
+        "driver": null,
+        "driver_name": null,
+        "driver_status": null,
+        "distance": null,
+        "driver_status_str": null,
+        "delivery_status": null,
+        "delivery_status_str": null,
+        "operator_amt": 0.0,
+        "vendor_amt": 0.0,
+        "driver_amt": "0.00",
+        "current_status_data": {
+            "status_name": "Order Initiated",
+            "key": "ORDER_INITIATED",
+            "status": 1,
+            "filtering": 1,
+            "status_bg_color_code": "#78829D",
+            "status_color_code": "#FFFFFF",
+            "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+        },
+        "actions": {
+            "negatives": [],
+            "positives": [
+                {
+                    "status_name": "Order Placed",
+                    "key": "ORDER_PLACED",
+                    "status": 2,
+                    "filtering": 1,
+                    "status_bg_color_code": "#056EE9",
+                    "status_color_code": "#FFFFFF",
+                    "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+                },
+                {
+                    "status_name": "Order Pending",
+                    "key": "ORDER_PENDING",
+                    "status": 3,
+                    "filtering": 1,
+                    "status_bg_color_code": "#CC7700",
+                    "status_color_code": "#000000",
+                    "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+                },
+                {
+                    "status_name": "Cancelled by Store",
+                    "key": "ORDER_REJECTED",
+                    "status": 13,
+                    "filtering": 1,
+                    "status_bg_color_code": "#880033",
+                    "status_color_code": "#FFFFFF",
+                    "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+                },
+                {
+                    "status_name": "Wrong Order",
+                    "key": "WRONG_ORDER",
+                    "status": 23,
+                    "filtering": 1,
+                    "status_bg_color_code": "#D81A48",
+                    "status_color_code": "#FFFFFF",
+                    "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+                }
+            ]
+        },
+        "age_restriction": false
+    },
+    "message": "",
+    "more_info": {},
+    "status": "Success"
+}

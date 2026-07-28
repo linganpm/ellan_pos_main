@@ -1,0 +1,18 @@
+name: pos_orders_offline
+version: 0.1.0
+publish_to: none
+description: Dart package for offline orders management with API and SQLite integration.
+environment:
+  sdk: ^3.8.0
+dependencies:
+  http: ^1.1.0
+  sqflite_common_ffi: ^2.4.0+3
+  path: ^1.8.0
+  json_annotation: ^4.11.0
+  uuid: ^4.3.3
+  crypto: ^3.0.6
+  sqlite3: ^3.3.1
+dev_dependencies:
+  build_runner: ^2.3.3
+  json_serializable: ^6.6.1
+  test: ^1.31.0

@@ -1,0 +1,1097 @@
+import 'package:flutter/material.dart';
+import 'package:pos_tablet/core/sell_unit.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pos_orders_offline/store_models.dart';
+import 'package:pos_tablet/core/cart_draft_store.dart';
+import 'package:pos_tablet/core/controllers/checkout_models.dart';
+import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
+import 'package:pos_tablet/core/currency_format.dart';
+import 'package:pos_tablet/core/di/service_locator.dart';
+import 'package:pos_tablet/data/models/cart_item_model.dart';
+import 'package:pos_tablet/data/models/product_model.dart';
+import '../../core/utils/font_utility.dart';
+import '../../bloc/cart/cart_bloc.dart';
+import '../../bloc/cart/cart_event.dart';
+import '../../bloc/cart/cart_state.dart';
+import '../widgets/category_card.dart';
+import '../widgets/product_item_card.dart';
+import '../widgets/cart_item_tile.dart';
+import '../widgets/order_summary_widget.dart';
+import '../widgets/checkout_tab_bar.dart';
+import '../widgets/checkout_footer_buttons.dart';
+import '../widgets/order_history_card.dart';
+import 'billing_summary_screen.dart';
+
+class OrderCreateScreenArgs {
+  final String orderType; // Display label (Pickup, On-Site, …)
+  /// Stable synced key (PICKUP, ONSITE, …) used for checkout/export.
+  final String? orderTypeKey;
+  final String? name;
+  final String? phone;
+  final String? email;
+  /// Stable unique sync id — never a local SQLite PK.
+  final String? customerUniqueId;
+  final String? floor;
+  final String? table;
+  /// When restoring a saved cart draft.
+  final String? draftId;
+  final CartDraftSnapshot? draftSnapshot;
+  /// Open kitchen order id when continuing after KOT.
+  final int? openOrderId;
+
+  OrderCreateScreenArgs({
+    required this.orderType,
+    this.orderTypeKey,
+    this.name,
+    this.phone,
+    this.email,
+    this.customerUniqueId,
+    this.floor,
+    this.table,
+    this.draftId,
+    this.draftSnapshot,
+    this.openOrderId,
+  });
+}
+
+class OrderCreateScreen extends StatefulWidget {
+  final OrderCreateScreenArgs args;
+
+  const OrderCreateScreen({super.key, required this.args});
+
+  @override
+  State<OrderCreateScreen> createState() => _OrderCreateScreenState();
+}
+
+class _OrderCreateScreenState extends State<OrderCreateScreen> {
+  String? _draftId;
+  int? _openOrderId;
+  bool _kotBusy = false;
+
+  OrderCreateScreenArgs get args => widget.args;
+
+  @override
+  void initState() {
+    super.initState();
+    _draftId = args.draftId;
+    _openOrderId = args.openOrderId;
+  }
+
+  Future<void> _sendKot(BuildContext context, CartState state) async {
+    if (_kotBusy || state.cartItems.isEmpty) return;
+    final pending = state.cartItems.any((i) => i.pendingKotQuantity > 0.0001);
+    if (!pending) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('All items already sent to kitchen.')),
+      );
+      return;
+    }
+    setState(() => _kotBusy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final cartBloc = context.read<CartBloc>();
+    final controller = getIt<UiStoreController>();
+    try {
+      final snapshotItems = List<CartItem>.from(state.cartItems);
+      final snapshotNet = state.netTotal;
+      final snapshotDiscounts = List.of(state.discounts);
+      final snapshotTax = state.serviceTaxPercentage;
+      final snapshotTips = state.tipsAmount;
+      final snapshotDelivery = state.deliveryCharge;
+      final result = await controller.sendKotFromCart(
+        existingOrderId: _openOrderId,
+        items: [
+          for (final item in snapshotItems)
+            CheckoutLineItem(
+              productId: item.product.id,
+              productVariantId: item.product.id,
+              quantity: item.quantity,
+              unitPrice: item.product.price,
+              lineTotal: item.totalPrice,
+              itemName: item.product.name,
+              addons: item.addons,
+              sellUnitBaseQty: item.product.sellUnitBaseQty,
+              sellUnitShort: item.product.sellUnitShort,
+            ),
+        ],
+        orderType: (args.orderTypeKey != null &&
+                args.orderTypeKey!.trim().isNotEmpty)
+            ? args.orderTypeKey!.trim()
+            : args.orderType,
+        customerName: args.name,
+        customerPhone: args.phone,
+        customerEmail: args.email,
+        customerUniqueId: args.customerUniqueId,
+        tableId: args.table,
+        tipsAmount: snapshotTips,
+        serviceTaxAmount: state.serviceTaxValue,
+        discountAmount: state.discountValue,
+        deliveryCharge: snapshotDelivery,
+      );
+      if (!mounted) return;
+      setState(() => _openOrderId = result.orderId);
+      // Persist restoreable draft before clearing the active basket.
+      final draft = await CartDraftStore.save(
+        existingId: _draftId,
+        args: CartDraftArgs(
+          orderType: args.orderType,
+          orderTypeKey: args.orderTypeKey,
+          name: args.name,
+          phone: args.phone,
+          email: args.email,
+          customerUniqueId: args.customerUniqueId,
+          floor: args.floor,
+          table: args.table,
+          openOrderId: result.orderId,
+        ),
+        items: [
+          for (final item in snapshotItems)
+            item.copyWith(kotSentQuantity: item.quantity),
+        ],
+        discounts: snapshotDiscounts,
+        serviceTaxPercentage: snapshotTax,
+        tipsAmount: snapshotTips,
+        deliveryCharge: snapshotDelivery,
+        netTotal: snapshotNet,
+      );
+      if (!mounted) return;
+      setState(() => _draftId = draft.id);
+      cartBloc.add(MarkCartKotSent(
+        orderId: result.orderId,
+        batchNumber: result.batchNumber,
+      ));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'KOT #${result.batchNumber} sent · Order #${result.orderId} saved',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('KOT failed: $error'),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _kotBusy = false);
+    }
+  }
+
+  Future<void> _saveDraft(BuildContext context, CartState state) async {
+    if (state.cartItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Add items before saving a draft.')),
+      );
+      return;
+    }
+    try {
+      final draft = await CartDraftStore.save(
+        existingId: _draftId,
+        args: CartDraftArgs(
+          orderType: args.orderType,
+          orderTypeKey: args.orderTypeKey,
+          name: args.name,
+          phone: args.phone,
+          email: args.email,
+          customerUniqueId: args.customerUniqueId,
+          floor: args.floor,
+          table: args.table,
+          openOrderId: _openOrderId,
+        ),
+        items: state.cartItems,
+        discounts: state.discounts,
+        serviceTaxPercentage: state.serviceTaxPercentage,
+        tipsAmount: state.tipsAmount,
+        deliveryCharge: state.deliveryCharge,
+        netTotal: state.netTotal,
+      );
+      if (!mounted) return;
+      setState(() => _draftId = draft.id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Draft saved.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save draft: $error')),
+      );
+    }
+  }
+
+  Future<void> _deleteDraft(BuildContext context, CartState state) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete draft?'),
+        content: const Text(
+          'This clears the cart and removes the saved draft.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF512F),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final id = _draftId;
+    if (id != null && id.isNotEmpty) {
+      await CartDraftStore.delete(id);
+    }
+    if (!mounted) return;
+    context.read<CartBloc>().add(ClearCart());
+    setState(() => _draftId = null);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Draft deleted.')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => CartBloc()
+        ..add(LoadInitialData(draft: args.draftSnapshot)),
+      child: Builder(
+        builder: (context) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFF8F9FA),
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
+                onPressed: () => Navigator.pop(context),
+              ),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'New ${args.orderType} Order',
+                    style: FontUtility.heading.copyWith(fontSize: 20),
+                  ),
+                  if (args.name != null && args.name!.isNotEmpty)
+                    Text(
+                      [
+                        args.name,
+                        if (args.phone != null && args.phone!.isNotEmpty)
+                          args.phone,
+                        if (args.table != null && args.table!.isNotEmpty)
+                          '${args.floor ?? ''} ${args.table}'.trim(),
+                      ]
+                          .whereType<String>()
+                          .where((part) => part.isNotEmpty)
+                          .join(' · '),
+                      style: FontUtility.body
+                          .copyWith(fontSize: 12, color: Colors.grey.shade600),
+                    )
+                  else if (args.table != null)
+                    Text(
+                      'Floor: ${args.floor} | Table: ${args.table}',
+                      style: FontUtility.body
+                          .copyWith(fontSize: 12, color: Colors.grey.shade600),
+                    )
+                ],
+              ),
+              centerTitle: false,
+              actions: [
+                BlocBuilder<CartBloc, CartState>(
+                  builder: (context, state) {
+                    return IconButton(
+                      tooltip: 'Save draft',
+                      onPressed: state.cartItems.isEmpty
+                          ? null
+                          : () => _saveDraft(context, state),
+                      icon: const Icon(
+                        Icons.save_rounded,
+                        color: Color(0xFF4A00E0),
+                      ),
+                    );
+                  },
+                ),
+                BlocBuilder<CartBloc, CartState>(
+                  builder: (context, state) {
+                    return IconButton(
+                      tooltip: 'Delete draft',
+                      onPressed: state.cartItems.isEmpty && _draftId == null
+                          ? null
+                          : () => _deleteDraft(context, state),
+                      icon: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: Color(0xFFFF512F),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 4),
+              ],
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(1.0),
+                child: Container(
+                  color: Colors.grey.withValues(alpha: 0.2),
+                  height: 1.0,
+                ),
+              ),
+            ),
+            body: SafeArea(
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 65,
+                    child: _buildLeftPanel(),
+                  ),
+                  Container(
+                    width: 1,
+                    color: Colors.grey.withValues(alpha: 0.2),
+                  ),
+                  Expanded(
+                    flex: 35,
+                    child: _buildRightPanel(),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLeftPanel() {
+    return BlocBuilder<CartBloc, CartState>(
+      builder: (context, state) {
+        if (state.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Categories List
+            Container(
+              height: 44,
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: state.categories.length,
+                      itemBuilder: (context, index) {
+                        final category = state.categories[index];
+                        return CategoryCard(
+                          category: category,
+                          isSelected: state.selectedCategoryId == category.id,
+                          onTap: () {
+                            context
+                                .read<CartBloc>()
+                                .add(SelectCategory(category.id));
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => _showMiscItemDialog(context),
+                    icon: const Icon(Icons.add_box_outlined, size: 18),
+                    label: const Text('Misc'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF4A00E0),
+                      side: const BorderSide(color: Color(0xFF4A00E0)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Products Grid — spacing/columns adapt to the available panel size.
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final layout = _ProductGridLayout.fromConstraints(constraints);
+                  return Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      layout.padding,
+                      4,
+                      layout.padding,
+                      layout.padding,
+                    ),
+                    child: GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: layout.crossAxisCount,
+                        childAspectRatio: layout.childAspectRatio,
+                        crossAxisSpacing: layout.spacing,
+                        mainAxisSpacing: layout.spacing,
+                      ),
+                      itemCount: state.filteredProducts.length,
+                      itemBuilder: (context, index) {
+                        final product = state.filteredProducts[index];
+                        return ProductItemCard(
+                          product: product,
+                          onTap: () => _onProductTap(context, product),
+                          compact: layout.compact,
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showMiscItemDialog(BuildContext context) async {
+    final nameController = TextEditingController(text: 'Misc');
+    final priceController = TextEditingController();
+    final added = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Add Misc Item'),
+          content: SizedBox(
+            width: 360,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Product name',
+                    hintText: 'Misc',
+                  ),
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: priceController,
+                  decoration: InputDecoration(
+                    labelText: 'Price',
+                    prefixText: '${PosCurrency.symbol()} ',
+                  ),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  autofocus: true,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final price = double.tryParse(priceController.text.trim());
+                if (price == null || price <= 0) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    const SnackBar(content: Text('Enter a valid price')),
+                  );
+                  return;
+                }
+                Navigator.pop(dialogContext, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4A00E0),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+    final name = nameController.text.trim();
+    final price = double.tryParse(priceController.text.trim()) ?? 0;
+    nameController.dispose();
+    priceController.dispose();
+    if (added != true || !context.mounted || price <= 0) return;
+
+    final product = Product(
+      id: 'misc-${DateTime.now().microsecondsSinceEpoch}',
+      name: name.isEmpty ? 'Misc' : name,
+      description: 'Misc item',
+      price: price,
+      imageUrl: '',
+      categoryId: 'misc',
+      isMisc: true,
+    );
+    context.read<CartBloc>().add(AddProductToCart(product));
+  }
+
+  Future<void> _onProductTap(BuildContext context, dynamic product) async {
+    final productModel = product is Product
+        ? product
+        : Product(
+            id: '${product.id}',
+            name: '${product.name}',
+            description: '',
+            price: (product.price as num?)?.toDouble() ?? 0,
+            imageUrl: '',
+            categoryId: '${product.categoryId}',
+            sellUnitCode: product.sellUnitCode as int?,
+            sellUnitShort: product.sellUnitShort?.toString(),
+            sellUnitLabel: product.sellUnitLabel?.toString(),
+            sellUnitBaseQty: (product.sellUnitBaseQty as num?)?.toDouble(),
+          );
+
+    final addons = await _pickAddons(context, productModel);
+    if (addons == null || !context.mounted) return;
+
+    if (productModel.hasSellUnit != true) {
+      context.read<CartBloc>().add(
+            AddProductToCart(productModel, addons: addons),
+          );
+      return;
+    }
+    final base = productModel.sellUnitBaseQty ?? 1.0;
+    final unitShort = productModel.sellUnitShort ?? '';
+    final unitPrice = productModel.price;
+    final sellUnit = SellUnitInfo(
+      unitCode: productModel.sellUnitCode ?? 0,
+      unitLabel: productModel.sellUnitLabel ?? unitShort,
+      unitShort: unitShort,
+      baseQty: base > 0 ? base : 1,
+    );
+    final controller = TextEditingController(text: formatSellQty(base));
+    final qty = await showDialog<double>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final entered = double.tryParse(controller.text.trim()) ?? 0;
+            final lineTotal = entered > 0
+                ? computeSellLineTotal(
+                    unitPrice +
+                        addons.fold<double>(
+                          0,
+                          (sum, a) => sum + a.unitPrice * a.quantity,
+                        ),
+                    entered,
+                    sellUnit,
+                  )
+                : 0.0;
+            final blocks = entered > 0
+                ? sellUnitBillableQty(entered, sellUnit).toInt()
+                : 0;
+            return AlertDialog(
+              title: Text('How many $unitShort?'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${productModel.name} · ${PosCurrency.format(unitPrice)} / ${formatSellQty(base)} $unitShort',
+                    style: FontUtility.body.copyWith(color: Colors.black54),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: controller,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    autofocus: true,
+                    onChanged: (_) => setDialogState(() {}),
+                    decoration: InputDecoration(
+                      labelText: 'Quantity ($unitShort)',
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    entered > 0
+                        ? 'Line total: ${PosCurrency.format(lineTotal)}'
+                            ' ($blocks × ${PosCurrency.format(unitPrice + addons.fold<double>(0, (s, a) => s + a.unitPrice * a.quantity))})'
+                        : 'Enter a quantity greater than zero.',
+                    style: FontUtility.subheading.copyWith(
+                      fontSize: 15,
+                      color: const Color(0xFF4A00E0),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final value = double.tryParse(controller.text.trim());
+                    if (value == null || value <= 0) return;
+                    Navigator.pop(dialogContext, value);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4A00E0),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Add'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    controller.dispose();
+    if (qty == null || !context.mounted) return;
+    context.read<CartBloc>().add(
+          AddProductToCart(productModel, quantity: qty, addons: addons),
+        );
+  }
+
+  /// Returns selected add-ons, or ``null`` if the user cancelled.
+  /// Empty list means the product has no add-on groups (or none selected
+  /// when all groups are optional).
+  Future<List<CartAddonSelection>?> _pickAddons(
+    BuildContext context,
+    Product product,
+  ) async {
+    final controller = getIt<UiStoreController>();
+    List<StoreProductAddonGroupRecord> groups;
+    try {
+      groups = await controller.loadAddonGroupsForVariant(product.id);
+    } catch (_) {
+      groups = const [];
+    }
+    if (groups.isEmpty) return const [];
+
+    final selected = <String, CartAddonSelection>{};
+    for (final group in groups) {
+      for (final item in group.items.where((i) => i.active && i.defaultSelected)) {
+        selected[item.addonItemId] = CartAddonSelection(
+          addonGroupId: group.addonGroupId,
+          addonGroupName: group.addonGroupName,
+          minSelections: group.minSelections,
+          maxSelections: group.maxSelections,
+          addonItemId: item.addonItemId,
+          addonItemName: item.addonItemName,
+          unitPrice: item.sellPrice,
+        );
+      }
+    }
+
+    return showDialog<List<CartAddonSelection>>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            String? validationError;
+            for (final group in groups) {
+              final count = selected.values
+                  .where((a) => a.addonGroupId == group.addonGroupId)
+                  .fold<int>(0, (sum, a) => sum + a.quantity);
+              if (count < group.minSelections) {
+                validationError =
+                    'Select at least ${group.minSelections} in ${group.addonGroupName}';
+                break;
+              }
+              if (group.maxSelections != null && count > group.maxSelections!) {
+                validationError =
+                    'Select at most ${group.maxSelections} in ${group.addonGroupName}';
+                break;
+              }
+            }
+
+            return AlertDialog(
+              title: Text(product.name),
+              content: SizedBox(
+                width: 420,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final group in groups) ...[
+                        Text(
+                          '${group.addonGroupName}'
+                          '${group.minSelections > 0 ? ' (min ${group.minSelections})' : ''}'
+                          '${group.maxSelections != null ? ' · max ${group.maxSelections}' : ''}',
+                          style: FontUtility.subheading.copyWith(fontSize: 15),
+                        ),
+                        const SizedBox(height: 8),
+                        for (final item in group.items.where((i) => i.active))
+                          CheckboxListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            value: selected.containsKey(item.addonItemId),
+                            title: Text(item.addonItemName),
+                            subtitle: Text(
+                              PosCurrency.format(item.sellPrice),
+                            ),
+                            onChanged: (checked) {
+                              setDialogState(() {
+                                if (checked == true) {
+                                  final max = group.maxSelections;
+                                  final current = selected.values
+                                      .where(
+                                        (a) =>
+                                            a.addonGroupId == group.addonGroupId,
+                                      )
+                                      .length;
+                                  if (max != null && current >= max) {
+                                    String? first;
+                                    for (final entry in selected.entries) {
+                                      if (entry.value.addonGroupId ==
+                                          group.addonGroupId) {
+                                        first = entry.key;
+                                        break;
+                                      }
+                                    }
+                                    if (first != null) selected.remove(first);
+                                  }
+                                  selected[item.addonItemId] = CartAddonSelection(
+                                    addonGroupId: group.addonGroupId,
+                                    addonGroupName: group.addonGroupName,
+                                    minSelections: group.minSelections,
+                                    maxSelections: group.maxSelections,
+                                    addonItemId: item.addonItemId,
+                                    addonItemName: item.addonItemName,
+                                    unitPrice: item.sellPrice,
+                                  );
+                                } else {
+                                  selected.remove(item.addonItemId);
+                                }
+                              });
+                            },
+                          ),
+                        const SizedBox(height: 12),
+                      ],
+                      if (validationError != null)
+                        Text(
+                          validationError,
+                          style: FontUtility.body.copyWith(color: Colors.red),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: validationError != null
+                      ? null
+                      : () => Navigator.pop(
+                            dialogContext,
+                            selected.values.toList(growable: false),
+                          ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4A00E0),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Continue'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRightPanel() {
+    return Container(
+      color: Colors.white,
+      child: BlocBuilder<CartBloc, CartState>(
+        builder: (context, state) {
+          return Column(
+            children: [
+              // Top Section (Tabs + List) - 67% height
+              Expanded(
+                flex: 65,
+                child: Column(
+                  children: [
+                    // Tabs
+                    CheckoutTabBar(
+                      isHistoryActive: state.isHistoryTabActive,
+                      newOrderCount: state.totalItems,
+                      onNewOrderTap: () {
+                        context.read<CartBloc>().add(const ToggleCheckoutTab(false));
+                      },
+                      onHistoryTap: () {
+                        context.read<CartBloc>().add(const ToggleCheckoutTab(true));
+                      },
+                    ),
+
+                    // List Content
+                    Expanded(
+                      child: state.isHistoryTabActive
+                          ? _buildHistoryList(state, context)
+                          : _buildActiveCartList(state, context),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Summary Section - 22% height
+              Expanded(
+                flex: 26,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4.0),
+                  child:                   OrderSummaryWidget(
+                    subTotal: state.subTotal,
+                    deliveryCharge: state.cartItems.isEmpty ? 0 : state.deliveryCharge,
+                    netTotal: state.cartItems.isEmpty ? 0 : state.netTotal,
+                    discounts: state.discounts,
+                    discountAmounts: {
+                      for (final d in state.discounts)
+                        d.id: state.amountForDiscount(d),
+                    },
+                    offerAppliedAmount: state.offerAppliedAmount,
+                    offerLabels: state.offerLabels,
+                    serviceTaxValue: state.serviceTaxValue,
+                    serviceTaxPercentage: state.serviceTaxPercentage,
+                    tipsAmount: state.tipsAmount,
+                    cartItems: state.cartItems,
+                  ),
+                ),
+              ),
+
+              // Footer Buttons Section - 11% height
+              Expanded(
+                flex: 11,
+                child: CheckoutFooterButtons(
+                  hasItems: state.cartItems.isNotEmpty && !state.isHistoryTabActive,
+                  onKOT: () => _sendKot(context, state),
+                  onBill: () {
+                    final billArgs = OrderCreateScreenArgs(
+                      orderType: args.orderType,
+                      orderTypeKey: args.orderTypeKey,
+                      name: args.name,
+                      phone: args.phone,
+                      email: args.email,
+                      customerUniqueId: args.customerUniqueId,
+                      floor: args.floor,
+                      table: args.table,
+                      draftId: _draftId,
+                      openOrderId: _openOrderId,
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (navContext) => BlocProvider.value(
+                          value: context.read<CartBloc>(),
+                          child: BillingSummaryScreen(orderArgs: billArgs),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildActiveCartList(CartState state, BuildContext context) {
+    if (state.cartItems.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.shopping_cart_outlined, size: 64, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Text(
+              'Your cart is empty',
+              style: FontUtility.subheading.copyWith(color: Colors.grey.shade500),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      itemCount: state.cartItems.length,
+      itemBuilder: (context, index) {
+        final item = state.cartItems[index];
+        return CartItemTile(
+          cartItem: item,
+          onIncrease: () {
+            context.read<CartBloc>().add(UpdateCartItemQuantity(item, item.quantity + 1));
+          },
+          onDecrease: () {
+            context.read<CartBloc>().add(UpdateCartItemQuantity(item, item.quantity - 1));
+          },
+          onRemove: () {
+            context.read<CartBloc>().add(RemoveProductFromCart(item));
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildHistoryList(CartState state, BuildContext context) {
+    if (state.orderHistory.isEmpty) {
+      return Column(
+        children: [
+          _buildHistoryHeader(context),
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.history_rounded, size: 64, color: Colors.grey.shade300),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No order history yet',
+                    style: FontUtility.subheading.copyWith(color: Colors.grey.shade500),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        _buildHistoryHeader(context),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            itemCount: state.orderHistory.length,
+            itemBuilder: (context, index) {
+              final order = state.orderHistory[index];
+              return OrderHistoryCard(order: order);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHistoryHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Past Orders',
+            style: FontUtility.subheading.copyWith(color: Colors.grey.shade700),
+          ),
+          IconButton(
+            onPressed: () {
+              // Optionally trigger a bloc event to reload history if it was from an API
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('History Refreshed')),
+              );
+            },
+            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF4A00E0)),
+            tooltip: 'Refresh History',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Evenly places product tiles for the current panel size (~30 visible).
+class _ProductGridLayout {
+  final int crossAxisCount;
+  final double spacing;
+  final double padding;
+  final double childAspectRatio;
+  final bool compact;
+
+  const _ProductGridLayout({
+    required this.crossAxisCount,
+    required this.spacing,
+    required this.padding,
+    required this.childAspectRatio,
+    required this.compact,
+  });
+
+  factory _ProductGridLayout.fromConstraints(BoxConstraints constraints) {
+    const minTile = 104.0;
+    const maxTile = 148.0;
+    const minGap = 6.0;
+    const maxGap = 16.0;
+    const minPad = 8.0;
+    const maxPad = 16.0;
+    const targetVisible = 30;
+
+    final rawWidth = constraints.maxWidth;
+    final rawHeight = constraints.maxHeight;
+    if (rawWidth <= 0 || rawHeight <= 0) {
+      return const _ProductGridLayout(
+        crossAxisCount: 5,
+        spacing: 8,
+        padding: 12,
+        childAspectRatio: 0.92,
+        compact: true,
+      );
+    }
+
+    // Outer padding scales with panel width.
+    final padding = (rawWidth * 0.015).clamp(minPad, maxPad);
+    final width = (rawWidth - padding * 2).clamp(1.0, rawWidth);
+    final height = (rawHeight - 4 - padding).clamp(1.0, rawHeight);
+
+    // Start from a comfortable tile width, then clamp column count.
+    var cols = (width / 124).round().clamp(4, 8);
+
+    double tileWidthFor(int columnCount, double gap) =>
+        (width - (columnCount - 1) * gap) / columnCount;
+
+    var gap = minGap;
+    var tileW = tileWidthFor(cols, gap);
+
+    while (tileW > maxTile && cols < 8) {
+      cols += 1;
+      tileW = tileWidthFor(cols, gap);
+    }
+    while (tileW < minTile && cols > 4) {
+      cols -= 1;
+      tileW = tileWidthFor(cols, gap);
+    }
+
+    // Spread leftover width into gaps so the row fills evenly.
+    if (cols > 1) {
+      final leftover = width - cols * tileW.clamp(minTile, maxTile);
+      gap = (leftover / (cols - 1)).clamp(minGap, maxGap);
+      tileW = tileWidthFor(cols, gap);
+    } else {
+      tileW = width;
+      gap = minGap;
+    }
+
+    // Choose row height so roughly 30 tiles fit the viewport.
+    final targetRows = (targetVisible / cols).ceil().clamp(4, 7);
+    final tileH = ((height - (targetRows - 1) * gap) / targetRows)
+        .clamp(tileW * 0.88, tileW * 1.28);
+    final aspect = tileW / tileH;
+
+    return _ProductGridLayout(
+      crossAxisCount: cols,
+      spacing: gap,
+      padding: padding,
+      childAspectRatio: aspect,
+      compact: tileW < 120,
+    );
+  }
+}

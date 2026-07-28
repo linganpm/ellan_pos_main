@@ -1,0 +1,674 @@
+{
+    "data": [
+        {
+            "id": 634,
+            "_id": 350234914,
+            "order_id": 634,
+            "restaurant_name": "Magic Taste Singapore",
+            "name": "ggg",
+            "mobile": "7985282496",
+            "reference_id": "95022757",
+            "notes": null,
+            "payment_method": null,
+            "pre_order": false,
+            "is_paid": false,
+            "driver_id_number": null,
+            "order_time": "15-03-2026 12:56:07",
+            "delivery_time": "15-03-2026 12:56:07",
+            "created_on": "2026-03-15T12:56:07.505385Z",
+            "type": 2,
+            "type_str": "PICK-UP",
+            "status": {
+                "status_name": "Order Initiated",
+                "key": "ORDER_INITIATED",
+                "status": 1,
+                "filtering": 1,
+                "status_bg_color_code": "#78829D",
+                "status_color_code": "#FFFFFF",
+                "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+            },
+            "user_data": {
+                "id": null,
+                "name": null
+            },
+            "currency": "\u20b9",
+            "total": 0.0,
+            "preparation_time_in_min": 0,
+            "approved_time": null,
+            "delivery_slot_data": {
+                "end_time": null,
+                "start_time": null,
+                "schedule_delivery_date": null
+            },
+            "next_states_customer": [],
+            "next_states_oc": [],
+            "table_data": null,
+            "item_count": 0,
+            "driver": null,
+            "driver_name": null,
+            "driver_status": null,
+            "driver_status_str": null,
+            "delivery_status": null,
+            "distance": null,
+            "driver_amt": 0.0,
+            "delivery_status_str": null
+        },
+        {
+            "id": 633,
+            "_id": 349682493,
+            "order_id": 633,
+            "restaurant_name": "Magic Taste Singapore",
+            "name": "ggg",
+            "mobile": "7985282496",
+            "reference_id": "36016389",
+            "notes": null,
+            "payment_method": null,
+            "pre_order": false,
+            "is_paid": false,
+            "driver_id_number": null,
+            "order_time": "15-03-2026 12:56:00",
+            "delivery_time": "15-03-2026 12:56:00",
+            "created_on": "2026-03-15T12:56:00.661917Z",
+            "type": 2,
+            "type_str": "PICK-UP",
+            "status": {
+                "status_name": "Order Initiated",
+                "key": "ORDER_INITIATED",
+                "status": 1,
+                "filtering": 1,
+                "status_bg_color_code": "#78829D",
+                "status_color_code": "#FFFFFF",
+                "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+            },
+            "user_data": {
+                "id": null,
+                "name": null
+            },
+            "currency": "\u20b9",
+            "total": 0.0,
+            "preparation_time_in_min": 0,
+            "approved_time": null,
+            "delivery_slot_data": {
+                "end_time": null,
+                "start_time": null,
+                "schedule_delivery_date": null
+            },
+            "next_states_customer": [],
+            "next_states_oc": [],
+            "table_data": null,
+            "item_count": 0,
+            "driver": null,
+            "driver_name": null,
+            "driver_status": null,
+            "driver_status_str": null,
+            "delivery_status": null,
+            "distance": null,
+            "driver_amt": 0.0,
+            "delivery_status_str": null
+        },
+        {
+            "id": 632,
+            "_id": 349130072,
+            "order_id": 632,
+            "restaurant_name": "Magic Taste Singapore",
+            "name": null,
+            "mobile": null,
+            "reference_id": "93910348",
+            "notes": null,
+            "payment_method": null,
+            "pre_order": false,
+            "is_paid": false,
+            "driver_id_number": null,
+            "order_time": "15-03-2026 12:55:38",
+            "delivery_time": "15-03-2026 12:55:38",
+            "created_on": "2026-03-15T12:55:38.390340Z",
+            "type": 3,
+            "type_str": "DINE-IN",
+            "status": {
+                "status_name": "Order Initiated",
+                "key": "ORDER_INITIATED",
+                "status": 1,
+                "filtering": 1,
+                "status_bg_color_code": "#78829D",
+                "status_color_code": "#FFFFFF",
+                "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+            },
+            "user_data": {
+                "id": null,
+                "name": null
+            },
+            "currency": "\u20b9",
+            "total": 0.0,
+            "preparation_time_in_min": 0,
+            "approved_time": null,
+            "delivery_slot_data": {
+                "end_time": null,
+                "start_time": null,
+                "schedule_delivery_date": null
+            },
+            "next_states_customer": [],
+            "next_states_oc": [
+                {
+                    "status_name": "Cooking",
+                    "status": 18
+                },
+                {
+                    "status_name": "Wrong order",
+                    "status": 23
+                },
+                {
+                    "status_name": "Reject",
+                    "status": 13
+                }
+            ],
+            "table_data": null,
+            "item_count": 0,
+            "driver": null,
+            "driver_name": null,
+            "driver_status": null,
+            "driver_status_str": null,
+            "delivery_status": null,
+            "distance": null,
+            "driver_amt": 0.0,
+            "delivery_status_str": null
+        },
+        {
+            "id": 630,
+            "_id": 348025230,
+            "order_id": 630,
+            "restaurant_name": "Magic Taste Singapore",
+            "name": null,
+            "mobile": null,
+            "reference_id": "48028261",
+            "notes": null,
+            "payment_method": null,
+            "pre_order": false,
+            "is_paid": false,
+            "driver_id_number": null,
+            "order_time": "14-03-2026 14:24:05",
+            "delivery_time": "14-03-2026 14:24:05",
+            "created_on": "2026-03-14T14:24:05.207788Z",
+            "type": 3,
+            "type_str": "DINE-IN",
+            "status": {
+                "status_name": "Order Initiated",
+                "key": "ORDER_INITIATED",
+                "status": 1,
+                "filtering": 1,
+                "status_bg_color_code": "#78829D",
+                "status_color_code": "#FFFFFF",
+                "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+            },
+            "user_data": {
+                "id": null,
+                "name": null
+            },
+            "currency": "\u20b9",
+            "total": 0.0,
+            "preparation_time_in_min": 0,
+            "approved_time": null,
+            "delivery_slot_data": {
+                "end_time": null,
+                "start_time": null,
+                "schedule_delivery_date": null
+            },
+            "next_states_customer": [],
+            "next_states_oc": [
+                {
+                    "status_name": "Cooking",
+                    "status": 18
+                },
+                {
+                    "status_name": "Wrong order",
+                    "status": 23
+                },
+                {
+                    "status_name": "Reject",
+                    "status": 13
+                }
+            ],
+            "table_data": null,
+            "item_count": 0,
+            "driver": null,
+            "driver_name": null,
+            "driver_status": null,
+            "driver_status_str": null,
+            "delivery_status": null,
+            "distance": null,
+            "driver_amt": 0.0,
+            "delivery_status_str": null
+        },
+        {
+            "id": 629,
+            "_id": 347472809,
+            "order_id": 629,
+            "restaurant_name": "Magic Taste Singapore",
+            "name": null,
+            "mobile": null,
+            "reference_id": "13746663",
+            "notes": null,
+            "payment_method": null,
+            "pre_order": false,
+            "is_paid": false,
+            "driver_id_number": null,
+            "order_time": "14-03-2026 14:22:09",
+            "delivery_time": "14-03-2026 14:22:09",
+            "created_on": "2026-03-14T14:22:09.121654Z",
+            "type": 3,
+            "type_str": "DINE-IN",
+            "status": {
+                "status_name": "Order Initiated",
+                "key": "ORDER_INITIATED",
+                "status": 1,
+                "filtering": 1,
+                "status_bg_color_code": "#78829D",
+                "status_color_code": "#FFFFFF",
+                "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+            },
+            "user_data": {
+                "id": null,
+                "name": null
+            },
+            "currency": "\u20b9",
+            "total": 0.0,
+            "preparation_time_in_min": 0,
+            "approved_time": null,
+            "delivery_slot_data": {
+                "end_time": null,
+                "start_time": null,
+                "schedule_delivery_date": null
+            },
+            "next_states_customer": [],
+            "next_states_oc": [
+                {
+                    "status_name": "Cooking",
+                    "status": 18
+                },
+                {
+                    "status_name": "Wrong order",
+                    "status": 23
+                },
+                {
+                    "status_name": "Reject",
+                    "status": 13
+                }
+            ],
+            "table_data": null,
+            "item_count": 0,
+            "driver": null,
+            "driver_name": null,
+            "driver_status": null,
+            "driver_status_str": null,
+            "delivery_status": null,
+            "distance": null,
+            "driver_amt": 0.0,
+            "delivery_status_str": null
+        },
+        {
+            "id": 624,
+            "_id": 344710704,
+            "order_id": 624,
+            "restaurant_name": "Magic Taste Singapore",
+            "name": null,
+            "mobile": null,
+            "reference_id": "76812739",
+            "notes": null,
+            "payment_method": null,
+            "pre_order": false,
+            "is_paid": false,
+            "driver_id_number": null,
+            "order_time": null,
+            "delivery_time": null,
+            "created_on": "2026-03-12T11:59:42.637051Z",
+            "type": 1,
+            "type_str": "DELIVERY",
+            "status": {
+                "status_name": "Order Initiated",
+                "key": "ORDER_INITIATED",
+                "status": 1,
+                "filtering": 1,
+                "status_bg_color_code": "#78829D",
+                "status_color_code": "#FFFFFF",
+                "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+            },
+            "user_data": {
+                "id": null,
+                "name": null
+            },
+            "currency": "\u20b9",
+            "total": 150.0,
+            "preparation_time_in_min": 0,
+            "approved_time": null,
+            "delivery_slot_data": {
+                "end_time": null,
+                "start_time": null,
+                "schedule_delivery_date": null
+            },
+            "next_states_customer": [],
+            "next_states_oc": [],
+            "table_data": null,
+            "item_count": 0,
+            "driver": null,
+            "driver_name": null,
+            "driver_status": null,
+            "driver_status_str": null,
+            "delivery_status": null,
+            "distance": null,
+            "driver_amt": 0.0,
+            "delivery_status_str": null
+        },
+        {
+            "id": 622,
+            "_id": 343605862,
+            "order_id": 622,
+            "restaurant_name": "Magic Taste Singapore",
+            "name": null,
+            "mobile": null,
+            "reference_id": "39124434",
+            "notes": null,
+            "payment_method": null,
+            "pre_order": false,
+            "is_paid": false,
+            "driver_id_number": null,
+            "order_time": null,
+            "delivery_time": null,
+            "created_on": "2026-03-09T17:28:54.690326Z",
+            "type": 1,
+            "type_str": "DELIVERY",
+            "status": {
+                "status_name": "Order Initiated",
+                "key": "ORDER_INITIATED",
+                "status": 1,
+                "filtering": 1,
+                "status_bg_color_code": "#78829D",
+                "status_color_code": "#FFFFFF",
+                "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+            },
+            "user_data": {
+                "id": null,
+                "name": null
+            },
+            "currency": "\u20b9",
+            "total": 214.0,
+            "preparation_time_in_min": 0,
+            "approved_time": null,
+            "delivery_slot_data": {
+                "end_time": null,
+                "start_time": null,
+                "schedule_delivery_date": null
+            },
+            "next_states_customer": [],
+            "next_states_oc": [],
+            "table_data": null,
+            "item_count": 0,
+            "driver": null,
+            "driver_name": null,
+            "driver_status": null,
+            "driver_status_str": null,
+            "delivery_status": null,
+            "distance": null,
+            "driver_amt": 0.0,
+            "delivery_status_str": null
+        },
+        {
+            "id": 621,
+            "_id": 343053441,
+            "order_id": 621,
+            "restaurant_name": "Magic Taste Singapore",
+            "name": null,
+            "mobile": null,
+            "reference_id": "58804111",
+            "notes": null,
+            "payment_method": null,
+            "pre_order": false,
+            "is_paid": false,
+            "driver_id_number": null,
+            "order_time": "05-03-2026 11:30:09",
+            "delivery_time": "05-03-2026 11:30:09",
+            "created_on": "2026-03-05T11:30:09.493390Z",
+            "type": 3,
+            "type_str": "DINE-IN",
+            "status": {
+                "status_name": "Order Initiated",
+                "key": "ORDER_INITIATED",
+                "status": 1,
+                "filtering": 1,
+                "status_bg_color_code": "#78829D",
+                "status_color_code": "#FFFFFF",
+                "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+            },
+            "user_data": {
+                "id": null,
+                "name": null
+            },
+            "currency": "\u20b9",
+            "total": 0.0,
+            "preparation_time_in_min": 0,
+            "approved_time": null,
+            "delivery_slot_data": {
+                "end_time": null,
+                "start_time": null,
+                "schedule_delivery_date": null
+            },
+            "next_states_customer": [],
+            "next_states_oc": [
+                {
+                    "status_name": "Cooking",
+                    "status": 18
+                },
+                {
+                    "status_name": "Wrong order",
+                    "status": 23
+                },
+                {
+                    "status_name": "Reject",
+                    "status": 13
+                }
+            ],
+            "table_data": null,
+            "item_count": 0,
+            "driver": null,
+            "driver_name": null,
+            "driver_status": null,
+            "driver_status_str": null,
+            "delivery_status": null,
+            "distance": null,
+            "driver_amt": 0.0,
+            "delivery_status_str": null
+        },
+        {
+            "id": 551,
+            "_id": 304383971,
+            "order_id": 551,
+            "restaurant_name": "Magic Taste Singapore",
+            "name": null,
+            "mobile": null,
+            "reference_id": "09083613",
+            "notes": null,
+            "payment_method": null,
+            "pre_order": false,
+            "is_paid": false,
+            "driver_id_number": null,
+            "order_time": "26-02-2026 15:50:10",
+            "delivery_time": "26-02-2026 15:50:10",
+            "created_on": "2026-02-26T15:50:10.917286Z",
+            "type": 3,
+            "type_str": "DINE-IN",
+            "status": {
+                "status_name": "Order Initiated",
+                "key": "ORDER_INITIATED",
+                "status": 1,
+                "filtering": 1,
+                "status_bg_color_code": "#78829D",
+                "status_color_code": "#FFFFFF",
+                "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+            },
+            "user_data": {
+                "id": null,
+                "name": null
+            },
+            "currency": "\u20b9",
+            "total": 0.0,
+            "preparation_time_in_min": 0,
+            "approved_time": null,
+            "delivery_slot_data": {
+                "end_time": null,
+                "start_time": null,
+                "schedule_delivery_date": null
+            },
+            "next_states_customer": [],
+            "next_states_oc": [
+                {
+                    "status_name": "Cooking",
+                    "status": 18
+                },
+                {
+                    "status_name": "Wrong order",
+                    "status": 23
+                },
+                {
+                    "status_name": "Reject",
+                    "status": 13
+                }
+            ],
+            "table_data": null,
+            "item_count": 0,
+            "driver": null,
+            "driver_name": null,
+            "driver_status": null,
+            "driver_status_str": null,
+            "delivery_status": null,
+            "distance": null,
+            "driver_amt": 0.0,
+            "delivery_status_str": null
+        },
+        {
+            "id": 319,
+            "_id": 176222299,
+            "order_id": 319,
+            "restaurant_name": "Magic Taste Singapore",
+            "name": "Jamuna",
+            "mobile": "9865321450",
+            "reference_id": "86883780",
+            "notes": null,
+            "payment_method": null,
+            "pre_order": false,
+            "is_paid": false,
+            "driver_id_number": null,
+            "order_time": "03-02-2026 14:23:16",
+            "delivery_time": "03-02-2026 14:23:16",
+            "created_on": "2026-02-03T14:23:16.833203Z",
+            "type": 2,
+            "type_str": "PICK-UP",
+            "status": {
+                "status_name": "Order Initiated",
+                "key": "ORDER_INITIATED",
+                "status": 1,
+                "filtering": 1,
+                "status_bg_color_code": "#78829D",
+                "status_color_code": "#FFFFFF",
+                "logo": "https://icon-library.com/images/order-status-icon/order-status-icon-14.jpg"
+            },
+            "user_data": {
+                "id": null,
+                "name": null
+            },
+            "currency": "\u20b9",
+            "total": 0.0,
+            "preparation_time_in_min": 0,
+            "approved_time": null,
+            "delivery_slot_data": {
+                "end_time": null,
+                "start_time": null,
+                "schedule_delivery_date": null
+            },
+            "next_states_customer": [],
+            "next_states_oc": [],
+            "table_data": null,
+            "item_count": 0,
+            "driver": null,
+            "driver_name": null,
+            "driver_status": null,
+            "driver_status_str": null,
+            "delivery_status": null,
+            "distance": null,
+            "driver_amt": 0.0,
+            "delivery_status_str": null
+        }
+    ],
+    "order_count_stat": [
+        {
+            "status": null,
+            "label": "UnAssigned",
+            "count": 54
+        },
+        {
+            "status": null,
+            "label": "Inprocess",
+            "count": 0
+        },
+        {
+            "status": null,
+            "label": "All_Orders",
+            "count": 54
+        },
+        {
+            "status": 3,
+            "label": "ORDER_PENDING",
+            "count": 0
+        },
+        {
+            "status": 2,
+            "label": "ORDER_PLACED",
+            "count": 17
+        },
+        {
+            "status": 1,
+            "label": "ORDER_INITIATED",
+            "count": 31
+        },
+        {
+            "status": 4,
+            "label": "ORDER_APPROVED",
+            "count": 0
+        },
+        {
+            "status": 13,
+            "label": "ORDER_REJECTED",
+            "count": 1
+        },
+        {
+            "status": 8,
+            "label": "ORDER_READY_FOR_PICKUP",
+            "count": 0
+        },
+        {
+            "status": 11,
+            "label": "ORDER_DELIVERED",
+            "count": 0
+        },
+        {
+            "status": 9,
+            "label": "ORDER_OUT_FOR_DELIVERY",
+            "count": 0
+        },
+        {
+            "status": 24,
+            "label": "ORDER_PICKED_UP",
+            "count": 0
+        },
+        {
+            "status": 25,
+            "label": "DRIVER_ASSIGNED",
+            "count": 0
+        },
+        {
+            "status": 22,
+            "label": "ORDER_UNPAID",
+            "count": 5
+        }
+    ],
+    "draw": 2,
+    "recordsFiltered": 31,
+    "recordsTotal": 31
+}

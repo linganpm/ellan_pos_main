@@ -1,0 +1,44 @@
+{
+  "data": [
+    {
+      "remote_id": "org_001:cust_001:member",
+      "customerId": "cust_001",
+      "orgId": "org_001",
+      "customer_name": "Alice Smith",
+      "email": "alice@example.com",
+      "role": "member"
+    },
+    {
+      "remote_id": "org_001:cust_002:guest",
+      "customerId": "cust_002",
+      "orgId": "org_001",
+      "customer_name": "Bob Johnson",
+      "email": "bob@example.com",
+      "role": "guest"
+    },
+    {
+      "remote_id": "org_001:cust_003:admin",
+      "customerId": "cust_003",
+      "orgId": "org_001",
+      "customer_name": "Charlie Lee",
+      "email": "charlie@example.com",
+      "role": "admin"
+    },
+    {
+      "remote_id": "cust_001",
+      "customerId": "cust_001",
+      "orgId": "org_001",
+      "customer_name": "Alice Smith",
+      "email": "alice@example.com",
+      "role": "member"
+    },
+    {
+      "remote_id": "cust_003",
+      "customerId": "cust_003",
+      "orgId": "org_001",
+      "customer_name": "Charlie Lee",
+      "email": "charlie@example.com",
+      "role": "admin"
+    }
+  ]
+}

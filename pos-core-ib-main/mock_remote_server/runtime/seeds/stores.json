@@ -1,0 +1,36 @@
+{
+  "data": [
+    {
+      "orgId": "org_001",
+      "orgName": "Ellan Test Organisation",
+      "orgCode": "100001",
+      "storeId": "store_001",
+      "serviceInstanceId": 1,
+      "storeName": "Test Store",
+      "logo": "logo.png",
+      "uniqueId": "12345678",
+      "contactEmail": "test@store.com",
+      "phone": "+1234567890",
+      "contactPerson": "Test Person",
+      "status": "active",
+      "serviceVariantType": "standard",
+      "remote_id": "store_001"
+    },
+    {
+      "orgId": "org_001",
+      "orgName": "Ellan Test Organisation",
+      "orgCode": "100001",
+      "storeId": "store_002",
+      "serviceInstanceId": 2,
+      "storeName": "Test Store Two",
+      "logo": "logo.png",
+      "uniqueId": "22345679",
+      "contactEmail": "test-two@store.com",
+      "phone": "+1234567891",
+      "contactPerson": "Test Person Two",
+      "status": "active",
+      "serviceVariantType": "standard",
+      "remote_id": "store_002"
+    }
+  ]
+}

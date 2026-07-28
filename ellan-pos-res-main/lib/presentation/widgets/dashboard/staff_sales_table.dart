@@ -1,0 +1,208 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../../../core/controllers/checkout_models.dart';
+import '../../../core/utils/font_utility.dart';
+
+class StaffSalesTable extends StatelessWidget {
+  final String title;
+  final List<PosDashboardStaffSales> rows;
+
+  const StaffSalesTable({
+    super.key,
+    required this.title,
+    required this.rows,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final currency = NumberFormat.currency(symbol: '\$');
+    final empty = rows.isEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: FontUtility.heading.copyWith(fontSize: 20),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Orders · amount · credit by checkout staff',
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 4,
+                  child: Text(
+                    'Staff',
+                    style: FontUtility.body.copyWith(
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Orders',
+                    textAlign: TextAlign.right,
+                    style: FontUtility.body.copyWith(
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Amount',
+                    textAlign: TextAlign.right,
+                    style: FontUtility.body.copyWith(
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Credit',
+                    textAlign: TextAlign.right,
+                    style: FontUtility.body.copyWith(
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(color: Colors.black12, height: 1),
+          Expanded(
+            child: empty
+                ? Center(
+                    child: Text(
+                      'No staff sales in this period.',
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: EdgeInsets.zero,
+                    itemCount: rows.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(color: Colors.black12),
+                    itemBuilder: (context, index) {
+                      final row = rows[index];
+                      final initial = row.staffName.trim().isNotEmpty
+                          ? row.staffName.trim().substring(0, 1).toUpperCase()
+                          : '?';
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 4,
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 18,
+                                    backgroundColor:
+                                        const Color(0xFF0F766E).withValues(alpha: 0.12),
+                                    child: Text(
+                                      initial,
+                                      style: const TextStyle(
+                                        color: Color(0xFF0F766E),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          row.staffName,
+                                          style: FontUtility.body.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (row.staffReg.isNotEmpty)
+                                          Text(
+                                            'Reg ${row.staffReg}',
+                                            style: TextStyle(
+                                              color: Colors.grey.shade600,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                '${row.orderCount}',
+                                textAlign: TextAlign.right,
+                                style: FontUtility.body.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                currency.format(row.amount),
+                                textAlign: TextAlign.right,
+                                style: FontUtility.body.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                row.creditAmount > 0.0001
+                                    ? currency.format(row.creditAmount)
+                                    : '—',
+                                textAlign: TextAlign.right,
+                                style: FontUtility.body.copyWith(
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}

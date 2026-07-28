@@ -1,0 +1,103 @@
+{
+  "data": [
+    {
+      "remote_id": "cust_001",
+      "customerId": "cust_001",
+      "orgId": "org_001",
+      "storeId": "store_001",
+      "name": "Alice Smith",
+      "email": "alice@example.com",
+      "phone": "+1234567890",
+      "country": "USA",
+      "status": "active",
+      "role": "member",
+      "password": "alicepass"
+    },
+    {
+      "remote_id": "cust_002",
+      "customerId": "cust_002",
+      "orgId": "org_001",
+      "storeId": "store_002",
+      "name": "Bob Johnson",
+      "email": "bob@example.com",
+      "phone": "+1987654321",
+      "country": "USA",
+      "status": "inactive",
+      "role": "guest",
+      "password": "bobpass"
+    },
+    {
+      "remote_id": "cust_003",
+      "customerId": "cust_003",
+      "orgId": "org_001",
+      "storeId": "store_001",
+      "name": "Charlie Lee",
+      "email": "charlie@example.com",
+      "phone": "+1122334455",
+      "country": "Canada",
+      "status": "active",
+      "role": "admin",
+      "password": "charliepass"
+    }
+  ],
+  "store_roles": [
+    {
+      "remote_id": "org_001:store_001:cust_001:member",
+      "customerId": "cust_001",
+      "orgId": "org_001",
+      "storeId": "store_001",
+      "role": "member",
+      "access_enabled": true
+    },
+    {
+      "remote_id": "org_001:store_002:cust_001:member",
+      "customerId": "cust_001",
+      "orgId": "org_001",
+      "storeId": "store_002",
+      "role": "member",
+      "access_enabled": true
+    },
+    {
+      "remote_id": "org_001:store_001:cust_003:admin",
+      "customerId": "cust_003",
+      "orgId": "org_001",
+      "storeId": "store_001",
+      "role": "admin",
+      "access_enabled": true
+    },
+    {
+      "remote_id": "org_001:store_002:cust_003:admin",
+      "customerId": "cust_003",
+      "orgId": "org_001",
+      "storeId": "store_002",
+      "role": "admin",
+      "access_enabled": true
+    }
+  ],
+  "org_roles": [
+    {
+      "remote_id": "org_001:cust_001:member",
+      "customerId": "cust_001",
+      "orgId": "org_001",
+      "customer_name": "Alice Smith",
+      "email": "alice@example.com",
+      "role": "member"
+    },
+    {
+      "remote_id": "org_001:cust_002:guest",
+      "customerId": "cust_002",
+      "orgId": "org_001",
+      "customer_name": "Bob Johnson",
+      "email": "bob@example.com",
+      "role": "guest"
+    },
+    {
+      "remote_id": "org_001:cust_003:admin",
+      "customerId": "cust_003",
+      "orgId": "org_001",
+      "customer_name": "Charlie Lee",
+      "email": "charlie@example.com",
+      "role": "admin"
+    }
+  ]
+}

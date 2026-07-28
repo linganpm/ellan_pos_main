@@ -1,0 +1,242 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'product_models.dart';
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+Category _$CategoryFromJson(Map<String, dynamic> json) => Category(
+  localId: json['localId'] as String,
+  uniqueId: json['unique_id'] as String? ?? json['uniqueId'] as String?,
+  categoryId: (json['categoryId'] as num?)?.toInt(),
+  name: json['name'] as String,
+  slug: json['slug'] as String?,
+  logo: json['logo'] as String?,
+  sorting_order: (json['sorting_order'] as num?)?.toInt(),
+  description: json['description'] as String?,
+  parent_id: (json['parent_id'] as num?)?.toInt(),
+  short_code: json['short_code'] as String?,
+  depth: (json['depth'] as num?)?.toInt(),
+  path: json['path'] as String?,
+  children: (json['children'] as List<dynamic>?)
+      ?.map((e) => Category.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  id: (json['id'] as num?)?.toInt(),
+  product_variants: (json['product_variants'] as List<dynamic>?)
+      ?.map((e) => ProductVariant.fromJson(e as Map<String, dynamic>))
+      .toList(),
+);
+
+Map<String, dynamic> _$CategoryToJson(Category instance) => <String, dynamic>{
+  'categoryId': instance.categoryId,
+  'localId': instance.localId,
+  'unique_id': instance.uniqueId,
+  'name': instance.name,
+  'slug': instance.slug,
+  'logo': instance.logo,
+  'sorting_order': instance.sorting_order,
+  'description': instance.description,
+  'parent_id': instance.parent_id,
+  'short_code': instance.short_code,
+  'depth': instance.depth,
+  'path': instance.path,
+  'children': instance.children?.map((e) => e.toJson()).toList(),
+  'id': instance.id,
+  'product_variants': instance.product_variants
+      ?.map((e) => e.toJson())
+      .toList(),
+};
+
+ProductVariant _$ProductVariantFromJson(
+  Map<String, dynamic> json,
+) => ProductVariant(
+  localId: json['localId'] as String,
+  uniqueId: json['unique_id'] as String? ?? json['uniqueId'] as String?,
+  variantId: (json['variantId'] as num?)?.toInt(),
+  exported: json['exported'] as bool?,
+  lastImportedAt: json['lastImportedAt'] as String?,
+  lastExportedAt: json['lastExportedAt'] as String?,
+  barcode: json['barcode'] as String?,
+  product_variant_name: json['product_variant_name'] as String,
+  product_name: json['product_name'] as String,
+  preorder_product: json['preorder_product'] as bool,
+  product_variant_description: json['product_variant_description'] as String?,
+  product_variant_quantity: (json['product_variant_quantity'] as num).toInt(),
+  product_variant_logo: json['product_variant_logo'] as String?,
+  product_data: ProductData.fromJson(
+    json['product_data'] as Map<String, dynamic>,
+  ),
+  category_data: CategoryData.fromJson(
+    json['category_data'] as Map<String, dynamic>,
+  ),
+  product_addon_group_data: json['product_addon_group_data'] as List<dynamic>?,
+  product_variant_addon_group_data:
+      json['product_variant_addon_group_data'] as List<dynamic>?,
+  sell_price: json['sell_price'] as String,
+  buy_price: json['buy_price'] as String?,
+  mrp_price: json['mrp_price'] as String,
+  proportions: (json['proportions'] as List<dynamic>?)
+      ?.map((e) => Proportion.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  offer_data: json['offer_data'] as List<dynamic>?,
+  review_max_data: (json['review_max_data'] as num?)?.toDouble(),
+  review_avg_max_data: (json['review_avg_max_data'] as num?)?.toDouble(),
+  review_value_data: (json['review_value_data'] as num?)?.toDouble(),
+  review_max_value_data: (json['review_max_value_data'] as num?)?.toDouble(),
+  review_count: (json['review_count'] as num?)?.toInt(),
+  favourite_data: json['favourite_data'] as List<dynamic>?,
+  gallery_data: json['gallery_data'] as List<dynamic>?,
+  delivery_slot_data: json['delivery_slot_data'] as List<dynamic>?,
+);
+
+Map<String, dynamic> _$ProductVariantToJson(
+  ProductVariant instance,
+) => <String, dynamic>{
+  'variantId': instance.variantId,
+  'localId': instance.localId,
+  'unique_id': instance.uniqueId,
+  'exported': instance.exported,
+  'lastImportedAt': instance.lastImportedAt,
+  'lastExportedAt': instance.lastExportedAt,
+  'barcode': instance.barcode,
+  'product_variant_name': instance.product_variant_name,
+  'product_name': instance.product_name,
+  'preorder_product': instance.preorder_product,
+  'product_variant_description': instance.product_variant_description,
+  'product_variant_quantity': instance.product_variant_quantity,
+  'product_variant_logo': instance.product_variant_logo,
+  'product_data': instance.product_data.toJson(),
+  'category_data': instance.category_data.toJson(),
+  'product_addon_group_data': instance.product_addon_group_data,
+  'product_variant_addon_group_data': instance.product_variant_addon_group_data,
+  'sell_price': instance.sell_price,
+  'buy_price': instance.buy_price,
+  'mrp_price': instance.mrp_price,
+  'proportions': instance.proportions?.map((e) => e.toJson()).toList(),
+  'offer_data': instance.offer_data,
+  'review_max_data': instance.review_max_data,
+  'review_avg_max_data': instance.review_avg_max_data,
+  'review_value_data': instance.review_value_data,
+  'review_max_value_data': instance.review_max_value_data,
+  'review_count': instance.review_count,
+  'favourite_data': instance.favourite_data,
+  'gallery_data': instance.gallery_data,
+  'delivery_slot_data': instance.delivery_slot_data,
+};
+
+ProductData _$ProductDataFromJson(Map<String, dynamic> json) => ProductData(
+  localId: json['localId'] as String,
+  uniqueId: json['unique_id'] as String? ?? json['uniqueId'] as String?,
+  productId: (json['productId'] as num?)?.toInt(),
+  logo: json['logo'] as String?,
+  name: json['name'] as String,
+  type: (json['type'] as num?)?.toInt(),
+  description: json['description'] as String?,
+  is_preorder: (json['is_preorder'] as num?)?.toInt(),
+  is_allergens: (json['is_allergens'] as num?)?.toInt(),
+);
+
+Map<String, dynamic> _$ProductDataToJson(ProductData instance) =>
+    <String, dynamic>{
+      'productId': instance.productId,
+      'localId': instance.localId,
+      'unique_id': instance.uniqueId,
+      'logo': instance.logo,
+      'name': instance.name,
+      'type': instance.type,
+      'description': instance.description,
+      'is_preorder': instance.is_preorder,
+      'is_allergens': instance.is_allergens,
+    };
+
+CategoryData _$CategoryDataFromJson(Map<String, dynamic> json) => CategoryData(
+  id: (json['id'] as num).toInt(),
+  localId: json['local_id'] as String? ?? json['localId'] as String?,
+  uniqueId: json['unique_id'] as String? ?? json['uniqueId'] as String?,
+  remoteId: (json['remote_id'] as num?)?.toInt() ?? (json['remoteId'] as num?)?.toInt(),
+  name: json['name'] as String,
+  slug: json['slug'] as String,
+  active: (json['active'] as num).toInt(),
+  parent_id: (json['parent_id'] as num?)?.toInt(),
+  is_preorder: (json['is_preorder'] as num?)?.toInt(),
+  parent_slug: json['parent_slug'] as String?,
+);
+
+Map<String, dynamic> _$CategoryDataToJson(CategoryData instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'local_id': instance.localId,
+      'unique_id': instance.uniqueId,
+      'remote_id': instance.remoteId,
+      'name': instance.name,
+      'slug': instance.slug,
+      'active': instance.active,
+      'parent_id': instance.parent_id,
+      'is_preorder': instance.is_preorder,
+      'parent_slug': instance.parent_slug,
+    };
+
+Proportion _$ProportionFromJson(Map<String, dynamic> json) => Proportion(
+  localId: json['localId'] as String,
+  proportionId: (json['proportionId'] as num?)?.toInt(),
+  active: (json['active'] as num).toInt(),
+  proportion_data: ProportionData.fromJson(
+    json['proportion_data'] as Map<String, dynamic>,
+  ),
+);
+
+Map<String, dynamic> _$ProportionToJson(Proportion instance) =>
+    <String, dynamic>{
+      'proportionId': instance.proportionId,
+      'localId': instance.localId,
+      'active': instance.active,
+      'proportion_data': instance.proportion_data.toJson(),
+    };
+
+ProportionData _$ProportionDataFromJson(Map<String, dynamic> json) =>
+    ProportionData(
+      id: (json['id'] as num).toInt(),
+      unit: (json['unit'] as num).toInt(),
+      label: json['label'] as String,
+      value: json['value'],
+      active: (json['active'] as num).toInt(),
+      default_: (json['default_'] as num?)?.toInt(),
+      quantity: json['quantity'],
+      proportion_group_data: json['proportion_group_data'] == null
+          ? null
+          : ProportionGroupData.fromJson(
+              json['proportion_group_data'] as Map<String, dynamic>,
+            ),
+    );
+
+Map<String, dynamic> _$ProportionDataToJson(ProportionData instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'unit': instance.unit,
+      'label': instance.label,
+      'value': instance.value,
+      'active': instance.active,
+      'default_': instance.default_,
+      'quantity': instance.quantity,
+      'proportion_group_data': instance.proportion_group_data,
+    };
+
+ProportionGroupData _$ProportionGroupDataFromJson(Map<String, dynamic> json) =>
+    ProportionGroupData(
+      id: (json['id'] as num).toInt(),
+      name: json['name'] as String,
+      type: json['type'],
+      active: (json['active'] as num).toInt(),
+      is_selected: (json['is_selected'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$ProportionGroupDataToJson(
+  ProportionGroupData instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'name': instance.name,
+  'type': instance.type,
+  'active': instance.active,
+  'is_selected': instance.is_selected,
+};

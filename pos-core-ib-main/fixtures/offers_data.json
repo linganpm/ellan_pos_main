@@ -1,0 +1,38 @@
+{
+  "data": [
+    {
+      "local_id": "seed-category-main-course-10pct",
+      "name": "Main Course 10% Off",
+      "target_type": "category",
+      "offer_type": "percentage",
+      "target_ids": ["7"],
+      "percentage_value": 10,
+      "active": false,
+      "created_on": "2026-03-30T00:00:00.000Z",
+      "updated_on": "2026-03-30T00:00:00.000Z"
+    },
+    {
+      "local_id": "seed-product-dosai-flat-12",
+      "name": "Selected Dosai Flat 12",
+      "target_type": "product",
+      "offer_type": "flat",
+      "target_ids": ["prod_39", "prod_40", "prod_41"],
+      "flat_value": 12,
+      "active": false,
+      "created_on": "2026-03-30T00:00:00.000Z",
+      "updated_on": "2026-03-30T00:00:00.000Z"
+    },
+    {
+      "local_id": "seed-main-course-buy-2-get-1",
+      "name": "Main Course Buy 2 Get 1",
+      "target_type": "category",
+      "offer_type": "buy_n_get_m",
+      "target_ids": ["7"],
+      "buy_quantity": 2,
+      "get_quantity": 1,
+      "active": false,
+      "created_on": "2026-03-30T00:00:00.000Z",
+      "updated_on": "2026-03-30T00:00:00.000Z"
+    }
+  ]
+}

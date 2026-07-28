@@ -1,0 +1,48 @@
+{
+  "orgId": "org_001",
+  "storeId": "store_001",
+  "floors": [
+    {
+      "remote_id": "ground",
+      "orgId": "org_001",
+      "storeId": "store_001",
+      "floor_id": "ground",
+      "name": "Ground Floor",
+      "sorting_order": 1,
+      "active": true
+    },
+    {
+      "remote_id": "first",
+      "orgId": "org_001",
+      "storeId": "store_001",
+      "floor_id": "first",
+      "name": "First Floor",
+      "sorting_order": 2,
+      "active": true
+    }
+  ],
+  "tables": [
+    {
+      "remote_id": "g1",
+      "orgId": "org_001",
+      "storeId": "store_001",
+      "table_id": "g1",
+      "floor_id": "ground",
+      "name": "G1",
+      "capacity": 4,
+      "sorting_order": 1,
+      "active": true
+    },
+    {
+      "remote_id": "f1",
+      "orgId": "org_001",
+      "storeId": "store_001",
+      "table_id": "f1",
+      "floor_id": "first",
+      "name": "F1",
+      "capacity": 6,
+      "sorting_order": 1,
+      "active": true
+    }
+  ]
+}

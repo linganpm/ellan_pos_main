@@ -1,0 +1,37 @@
+{
+  "data": [
+    {
+      "id": 1,
+      "local_id": "credit-seed-1",
+      "remote_id": 1,
+      "orgId": "org_001",
+      "storeId": "store_001",
+      "customerId": "cust_001",
+      "amount": 24,
+      "created_on": "2026-01-28T10:30:17.788810Z",
+      "updated_on": "2026-01-28T10:30:17.788810Z"
+    },
+    {
+      "id": 2,
+      "local_id": "credit-seed-2",
+      "remote_id": 2,
+      "orgId": "org_001",
+      "storeId": "store_001",
+      "customerId": "cust_003",
+      "amount": 59.5,
+      "created_on": "2025-11-26T05:40:03.939960Z",
+      "updated_on": "2025-11-26T05:40:03.939960Z"
+    },
+    {
+      "id": 3,
+      "local_id": "credit-seed-3",
+      "remote_id": 3,
+      "orgId": "org_001",
+      "storeId": "store_002",
+      "customerId": "cust_001",
+      "amount": 12.75,
+      "created_on": "2025-11-28T10:54:16.366491Z",
+      "updated_on": "2025-11-28T10:54:16.366491Z"
+    }
+  ]
+}

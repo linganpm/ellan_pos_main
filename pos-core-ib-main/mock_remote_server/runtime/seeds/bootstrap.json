@@ -1,0 +1,62 @@
+{
+  "organisations": [
+    {
+      "remote_id": "org_001",
+      "orgId": "org_001",
+      "org_name": "Ellan Remote Organisation",
+      "org_code": "100001"
+    }
+  ],
+  "stores": [
+    {
+      "remote_id": "store_001",
+      "org_id": "org_001",
+      "org_name": "Ellan Remote Organisation",
+      "org_code": "100001",
+      "store_id": "store_001",
+      "service_instance_id": 1,
+      "store_name": "Main Remote Store",
+      "logo": "logo.png",
+      "unique_id": "12345678",
+      "contact_email": "remote-main@store.com",
+      "phone": "+1234567890",
+      "contact_person": "Remote Manager",
+      "status": "active",
+      "service_variant_type": "standard"
+    },
+    {
+      "remote_id": "store_002",
+      "org_id": "org_001",
+      "org_name": "Ellan Remote Organisation",
+      "org_code": "100001",
+      "store_id": "store_002",
+      "service_instance_id": 2,
+      "store_name": "Remote Express Store",
+      "logo": "logo.png",
+      "unique_id": "22345679",
+      "contact_email": "remote-express@store.com",
+      "phone": "+1234567891",
+      "contact_person": "Remote Express Manager",
+      "status": "active",
+      "service_variant_type": "standard"
+    }
+  ],
+  "org_roles": [
+    {
+      "remote_id": "org_001:cust_001:member",
+      "customerId": "cust_001",
+      "orgId": "org_001",
+      "customer_name": "Alice Smith",
+      "email": "alice@example.com",
+      "role": "member"
+    },
+    {
+      "remote_id": "org_001:cust_003:admin",
+      "customerId": "cust_003",
+      "orgId": "org_001",
+      "customer_name": "Charlie Lee",
+      "email": "charlie@example.com",
+      "role": "admin"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "data": [
+    {
+      "orgId": "org_001",
+      "orgName": "Ellan Test Organisation",
+      "orgCode": "100001",
+      "logo": "logo.png",
+      "status": "active",
+      "remote_id": "org_001"
+    }
+  ]
+}

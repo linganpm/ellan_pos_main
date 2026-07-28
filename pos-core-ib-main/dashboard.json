@@ -1,0 +1,50 @@
+{
+    "data": {
+        "data": [
+            {
+                "date": "15-03-2026",
+                "amount": 0,
+                "count": 3,
+                "count_by_delivery": 0,
+                "count_by_pickup": 2,
+                "count_by_dine_in": 1,
+                "count_by_instore": 0,
+                "count_by_initiated": 3,
+                "count_by_placed": 0,
+                "count_by_delivered": 0,
+                "count_by_cancelled": 0,
+                "count_by_pay_later": 0,
+                "cash_amount": 0.0,
+                "card_amount": 0.0,
+                "online_amount": 0.0,
+                "pay_later_amount": 0.0
+            }
+        ],
+        "total_count": 3,
+        "total_count_by_delivery": 0,
+        "total_count_by_pickup": 2,
+        "total_count_by_instore": 0,
+        "total_count_by_dine_in": 1,
+        "total_count_by_initiated": 3,
+        "total_count_by_placed": 0,
+        "total_count_by_delivered": 0,
+        "total_count_by_cancelled": 0,
+        "total_count_by_pay_later": 0,
+        "total_amount": 0,
+        "total_amount_by_card": 0.0,
+        "total_amount_by_cash": 0.0,
+        "total_amount_by_online": 0.0,
+        "total_amount_by_pay_later": 0.0,
+        "Source": {
+            "total_count_by_web": 0,
+            "total_count_by_store": 3,
+            "total_count_by_mobile": 0,
+            "total_amount_by_mobile": 0,
+            "total_amount_by_store": 0,
+            "total_amount_by_web": 0
+        }
+    },
+    "message": "",
+    "more_info": {},
+    "status": "Success"
+}

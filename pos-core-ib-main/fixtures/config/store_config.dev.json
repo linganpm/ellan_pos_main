@@ -1,0 +1,43 @@
+{
+  "db_name_id": "store_dev",
+  "bootstrap": {
+    "lookup_path": "/api/bootstrap",
+    "device_registration_path": "/api/devices/register"
+  },
+  "sync": {
+    "base_url": "http://127.0.0.1:8080",
+    "auto_sync_enabled": false,
+    "periodic_duration_seconds": 300,
+    "orders": {
+      "import_path": "/api/orders/import",
+      "export_path": "/api/orders/export",
+      "export_token": "orders-token"
+    },
+    "products": {
+      "import_path": "/api/products/import",
+      "export_path": "/api/products/export",
+      "export_token": "products-token"
+    },
+    "customers": {
+      "import_path": "/api/customers/import",
+      "export_path": "/api/customers/export",
+      "export_token": "customers-token"
+    },
+    "credits": {
+      "import_path": "/api/credits/import",
+      "export_path": "/api/credits/export",
+      "export_token": "credits-token"
+    }
+  },
+  "session_duration_hours": 12,
+  "asset_paths": {
+    "orders": "fixtures/order_list.json",
+    "products": "fixtures/product_data.json",
+    "customers": "fixtures/customer_data.json",
+    "offers": "fixtures/offers_data.json"
+  },
+  "default_login": {
+    "email": "alice@example.com",
+    "password": "alicepass"
+  }
+}

@@ -1,0 +1,3044 @@
+{
+  "data": [
+    {
+      "id": 7,
+      "name": "Main Course",
+      "slug": "main-course",
+      "logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/categories/7_8201726db20bde25ac54ea7be44b5665/1478045444032718834_858926940692566571_download.png",
+      "sorting_order": 1,
+      "description": null,
+      "parent_id": null,
+      "short_code": null,
+      "depth": 1,
+      "path": "Main Course",
+      "children": [],
+      "_id": 3866947,
+      "product_variants": [
+        {
+          "id": 39,
+          "product_variant_name": "Plain Dosai",
+          "product_name": "Plain Dosai",
+          "preorder_product": false,
+          "product_variant_description": "Allergen: Nuts, plain dosa served with chutney",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/39_d62a829ef3ffc7aec2d4eb98dc512106/1679576583464941617_222514769470525671_download.png",
+          "product_data": {
+            "id": 39,
+            "logo": null,
+            "name": "Plain Dosai",
+            "type": 1,
+            "description": "Nuts and Milk",
+            "is_preorder": 0,
+            "is_allergens": 1,
+            "remote_id": 39,
+            "local_id": "prod_39"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "40.00",
+          "buy_price": null,
+          "mrp_price": "50.00",
+          "proportions": [
+            {
+              "id": 39,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 39,
+          "local_id": "var_39"
+        },
+        {
+          "id": 40,
+          "product_variant_name": "Egg Dosai",
+          "product_name": "Egg Dosai",
+          "preorder_product": false,
+          "product_variant_description": "egg dosa",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/40_1356956789020f36cf96827fce75167d/1129401855584333317_1155919877072682893_download.png",
+          "product_data": {
+            "id": 40,
+            "logo": null,
+            "name": "Egg Dosai",
+            "type": 2,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 40,
+            "local_id": "prod_40"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "35.00",
+          "buy_price": null,
+          "mrp_price": "40.00",
+          "proportions": [
+            {
+              "id": 40,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 40,
+          "local_id": "var_40"
+        },
+        {
+          "id": 41,
+          "product_variant_name": "Podi Dosai",
+          "product_name": "Podi Dosai",
+          "preorder_product": false,
+          "product_variant_description": "podi dosa with chutney",
+          "product_variant_quantity": 7,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/41_396d955692cfe2752bec49853f103f22/779144729933629070_2119300970161531045_download.png",
+          "product_data": {
+            "id": 41,
+            "logo": null,
+            "name": "Podi Dosai",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 41,
+            "local_id": "prod_41"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [
+            {
+              "id": 4,
+              "max": 1,
+              "min": 1,
+              "name": "Toppings",
+              "active": 1,
+              "addon_item_data": [
+                {
+                  "id": 2,
+                  "name": "Onion",
+                  "price": 0,
+                  "active": 1,
+                  "default": 1,
+                  "product_data": {
+                    "id": null,
+                    "name": null,
+                    "active": null
+                  },
+                  "product_variant_data": {
+                    "id": null,
+                    "name": null,
+                    "active": null
+                  },
+                  "remote_id": 2,
+                  "local_id": "addon_item_2"
+                }
+              ],
+              "remote_id": 4,
+              "local_id": "addon_group_4"
+            }
+          ],
+          "sell_price": "34.00",
+          "buy_price": null,
+          "mrp_price": "40.00",
+          "proportions": [
+            {
+              "id": 41,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 41,
+          "local_id": "var_41"
+        },
+        {
+          "id": 42,
+          "product_variant_name": "Onion Uthappam",
+          "product_name": "Onion Uthappam",
+          "preorder_product": false,
+          "product_variant_description": "onion uthappam",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/42_8cb108b72e2bd534c4172867298a8d37/1814238170431889906_1734455407735384241_download.png",
+          "product_data": {
+            "id": 42,
+            "logo": null,
+            "name": "Onion Uthappam",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 42,
+            "local_id": "prod_42"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "35.00",
+          "buy_price": null,
+          "mrp_price": "40.00",
+          "proportions": [
+            {
+              "id": 42,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 42,
+          "local_id": "var_42"
+        },
+        {
+          "id": 43,
+          "product_variant_name": "Chicken Kari Uthappam",
+          "product_name": "Chicken Kari Uthappam",
+          "preorder_product": false,
+          "product_variant_description": "chicken curry uthappam",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/43_dbf8d33de2054506e1abba97591b554d/1715548205720271471_1212643681835970072_download.png",
+          "product_data": {
+            "id": 43,
+            "logo": null,
+            "name": "Chicken Kari Uthappam",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 43,
+            "local_id": "prod_43"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "40.00",
+          "buy_price": null,
+          "mrp_price": "45.00",
+          "proportions": [
+            {
+              "id": 43,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 43,
+          "local_id": "var_43"
+        },
+        {
+          "id": 44,
+          "product_variant_name": "Mutton Kari Dosai",
+          "product_name": "Mutton Kari Dosai",
+          "preorder_product": false,
+          "product_variant_description": "mutton curry dosa",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/44_56923037319fac2b547b09246c238566/1937139381110540885_323048614986136660_download.png",
+          "product_data": {
+            "id": 44,
+            "logo": null,
+            "name": "Mutton Kari Dosai",
+            "type": 2,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 44,
+            "local_id": "prod_44"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "45.00",
+          "buy_price": null,
+          "mrp_price": "50.00",
+          "proportions": [
+            {
+              "id": 44,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 44,
+          "local_id": "var_44"
+        },
+        {
+          "id": 45,
+          "product_variant_name": "Kerala Parota 2 Pcs",
+          "product_name": "Kerala Parota 2 Pcs",
+          "preorder_product": false,
+          "product_variant_description": "kerala parotta 2 pieces",
+          "product_variant_quantity": 9,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/45_33ebb35b17bf8cb4de96d43189b41327/607129433910016257_1824845159067308449_download.png",
+          "product_data": {
+            "id": 45,
+            "logo": null,
+            "name": "Kerala Parota 2 Pcs",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 45,
+            "local_id": "prod_45"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "30.00",
+          "buy_price": null,
+          "mrp_price": "35.00",
+          "proportions": [
+            {
+              "id": 45,
+              "active": 1,
+              "proportion_data": {
+                "id": 4,
+                "unit": 0,
+                "label": "2 pcs",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 2,
+                  "name": "pieces",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 45,
+          "local_id": "var_45"
+        },
+        {
+          "id": 46,
+          "product_variant_name": "Egg Kothu Parota",
+          "product_name": "Egg Kothu Parota",
+          "preorder_product": false,
+          "product_variant_description": "egg kothu parotta",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/46_054344bc49d665fd60b2e17055b20587/2054506749346857147_907810680036868815_download.png",
+          "product_data": {
+            "id": 46,
+            "logo": null,
+            "name": "Egg Kothu Parota",
+            "type": 2,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 46,
+            "local_id": "prod_46"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "80.00",
+          "buy_price": null,
+          "mrp_price": "85.00",
+          "proportions": [
+            {
+              "id": 46,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 46,
+          "local_id": "var_46"
+        },
+        {
+          "id": 47,
+          "product_variant_name": "Chicken Kothu",
+          "product_name": "Chicken Kothu",
+          "preorder_product": false,
+          "product_variant_description": "chicken kothu parotta",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/47_45d41463090c714974ea7d3ebaee86d9/1061610366041174400_339420343054646287_download.png",
+          "product_data": {
+            "id": 47,
+            "logo": null,
+            "name": "Chicken Kothu",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 47,
+            "local_id": "prod_47"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "90.00",
+          "buy_price": null,
+          "mrp_price": "100.00",
+          "proportions": [
+            {
+              "id": 47,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 47,
+          "local_id": "var_47"
+        },
+        {
+          "id": 48,
+          "product_variant_name": "Mixed Sea Food Kothu Parotta",
+          "product_name": "Mixed Sea Food Kothu Parotta",
+          "preorder_product": false,
+          "product_variant_description": "mixed seafood kothu parotta",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/48_6c6356431082ac4d9e80bd6396e50f6b/139734737271157274_857543207388696121_download.png",
+          "product_data": {
+            "id": 48,
+            "logo": null,
+            "name": "Mixed Sea Food Kothu Parotta",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 48,
+            "local_id": "prod_48"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "110.00",
+          "buy_price": null,
+          "mrp_price": "120.00",
+          "proportions": [
+            {
+              "id": 48,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 48,
+          "local_id": "var_48"
+        },
+        {
+          "id": 51,
+          "product_variant_name": "Fried Rice Veg",
+          "product_name": "Fried Rice Veg",
+          "preorder_product": false,
+          "product_variant_description": "fried rice variety",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/51_3ddce748b2fcee9170c718ea2ec92fd2/466703106702159887_764848879533593513_download.png",
+          "product_data": {
+            "id": 51,
+            "logo": null,
+            "name": "Fried Rice Veg",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 51,
+            "local_id": "prod_51"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "90.00",
+          "buy_price": null,
+          "mrp_price": "100.00",
+          "proportions": [
+            {
+              "id": 51,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 51,
+          "local_id": "var_51"
+        },
+        {
+          "id": 52,
+          "product_variant_name": "Fried Rice Chicken",
+          "product_name": "Fried Rice Chicken",
+          "preorder_product": false,
+          "product_variant_description": "fried rice variety",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/52_c9e23fca4e8bc0dbf114e3737b67a314/371010410683211788_1154997386481502149_download.png",
+          "product_data": {
+            "id": 52,
+            "logo": null,
+            "name": "Fried Rice Chicken",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 52,
+            "local_id": "prod_52"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "90.00",
+          "buy_price": null,
+          "mrp_price": "100.00",
+          "proportions": [
+            {
+              "id": 52,
+              "active": 1,
+              "proportion_data": {
+                "id": 3,
+                "unit": 0,
+                "label": "2 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 52,
+          "local_id": "var_52"
+        },
+        {
+          "id": 53,
+          "product_variant_name": "Fried Rice Mutton",
+          "product_name": "Fried Rice Mutton",
+          "preorder_product": false,
+          "product_variant_description": "fried rice variety",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/53_cc889d101eba1bea7fde54764089a3ad/2187553153163580295_225512037769848219_download.png",
+          "product_data": {
+            "id": 53,
+            "logo": null,
+            "name": "Fried Rice Mutton",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 53,
+            "local_id": "prod_53"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "100.00",
+          "buy_price": null,
+          "mrp_price": "110.00",
+          "proportions": [
+            {
+              "id": 53,
+              "active": 1,
+              "proportion_data": {
+                "id": 5,
+                "unit": 0,
+                "label": "3 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 53,
+          "local_id": "var_53"
+        },
+        {
+          "id": 54,
+          "product_variant_name": "Fried Rice Mixed Sea Food",
+          "product_name": "Fried Rice Mixed Sea Food",
+          "preorder_product": false,
+          "product_variant_description": "fried rice variety",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/54_8c79898ed410b32d24a1ed78413f6354/984595073361774650_1796713054324527874_download.png",
+          "product_data": {
+            "id": 54,
+            "logo": null,
+            "name": "Fried Rice Mixed Sea Food",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 54,
+            "local_id": "prod_54"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "80.00",
+          "buy_price": null,
+          "mrp_price": "90.00",
+          "proportions": [
+            {
+              "id": 54,
+              "active": 1,
+              "proportion_data": {
+                "id": 2,
+                "unit": 0,
+                "label": "4 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 54,
+          "local_id": "var_54"
+        },
+        {
+          "id": 56,
+          "product_variant_name": "Noodles Chicken",
+          "product_name": "Noodles Chicken",
+          "preorder_product": false,
+          "product_variant_description": "noodles variety",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/56_c025bb0e2b7659caaa716c4046cffe1a/29975988312832840_1433773061965370759_download.png",
+          "product_data": {
+            "id": 56,
+            "logo": null,
+            "name": "Noodles Chicken",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 56,
+            "local_id": "prod_56"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "95.00",
+          "buy_price": null,
+          "mrp_price": "100.00",
+          "proportions": [
+            {
+              "id": 56,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 56,
+          "local_id": "var_56"
+        },
+        {
+          "id": 57,
+          "product_variant_name": "Noodles Mutton",
+          "product_name": "Noodles Mutton",
+          "preorder_product": false,
+          "product_variant_description": "noodles variety",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/57_0f025d37e3eebf81162a79b017d90fa7/2084712531944530354_2289702182052181192_download.png",
+          "product_data": {
+            "id": 57,
+            "logo": null,
+            "name": "Noodles Mutton",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 57,
+            "local_id": "prod_57"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "90.00",
+          "buy_price": null,
+          "mrp_price": "100.00",
+          "proportions": [
+            {
+              "id": 57,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 57,
+          "local_id": "var_57"
+        },
+        {
+          "id": 58,
+          "product_variant_name": "Noodles Mixed Sea Food",
+          "product_name": "Noodles Mixed Sea Food",
+          "preorder_product": false,
+          "product_variant_description": "noodles variety",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/58_d9cc5cc4a72e6ad8fb93f632f26c126d/1304415517941919732_2299386680417127890_download.png",
+          "product_data": {
+            "id": 58,
+            "logo": null,
+            "name": "Noodles Mixed Sea Food",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 58,
+            "local_id": "prod_58"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "90.00",
+          "buy_price": null,
+          "mrp_price": "100.00",
+          "proportions": [
+            {
+              "id": 58,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 58,
+          "local_id": "var_58"
+        },
+        {
+          "id": 60,
+          "product_variant_name": "Rasam Rice",
+          "product_name": "Rasam Rice",
+          "preorder_product": false,
+          "product_variant_description": "rasam rice",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/60_ad621aef20eac551d9f75bfee7c33228/1607172578873152203_1089972267343986130_download.png",
+          "product_data": {
+            "id": 60,
+            "logo": null,
+            "name": "Rasam Rice",
+            "type": 1,
+            "description": "test pro",
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 60,
+            "local_id": "prod_60"
+          },
+          "category_data": {
+            "id": 7,
+            "name": "Main Course",
+            "slug": "main-course",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 7,
+            "local_id": "cat_7"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "50.00",
+          "buy_price": null,
+          "mrp_price": "55.00",
+          "proportions": [
+            {
+              "id": 60,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 60,
+          "local_id": "var_60"
+        }
+      ],
+      "remote_id": 7,
+      "local_id": "cat_7"
+    },
+    {
+      "id": 6,
+      "name": "Magic Taste Signature",
+      "slug": "magic-taste-signature",
+      "logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/categories/6_f05a028625608956ee55533a26d23d29/1808242117462187837_1725462499955360459_download.png",
+      "sorting_order": 2,
+      "description": null,
+      "parent_id": null,
+      "short_code": null,
+      "depth": 1,
+      "path": "Magic Taste Signature",
+      "children": [],
+      "_id": 3314526,
+      "product_variants": [
+        {
+          "id": 31,
+          "product_variant_name": "Panner Ghee Roast",
+          "product_name": "Panner Ghee Roast",
+          "preorder_product": false,
+          "product_variant_description": "paneer ghee roast",
+          "product_variant_quantity": 9,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/31_6570734fb428b48d66ed8b8c4ffecaff/795747355822647714_544871787947014801_download.png",
+          "product_data": {
+            "id": 31,
+            "logo": null,
+            "name": "Panner Ghee Roast",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 31,
+            "local_id": "prod_31"
+          },
+          "category_data": {
+            "id": 6,
+            "name": "Magic Taste Signature",
+            "slug": "magic-taste-signature",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 6,
+            "local_id": "cat_6"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "70.00",
+          "buy_price": null,
+          "mrp_price": "80.00",
+          "proportions": [
+            {
+              "id": 31,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 31,
+          "local_id": "var_31"
+        },
+        {
+          "id": 32,
+          "product_variant_name": "Darbari Fish Fry",
+          "product_name": "Darbari Fish Fry",
+          "preorder_product": false,
+          "product_variant_description": "darbari style fish fry",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/32_217c6e62fa70afe7cde059c026ae6282/2110308064806265264_386460749662158013_download.png",
+          "product_data": {
+            "id": 32,
+            "logo": null,
+            "name": "Darbari Fish Fry",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 32,
+            "local_id": "prod_32"
+          },
+          "category_data": {
+            "id": 6,
+            "name": "Magic Taste Signature",
+            "slug": "magic-taste-signature",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 6,
+            "local_id": "cat_6"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "90.00",
+          "buy_price": null,
+          "mrp_price": "100.00",
+          "proportions": [
+            {
+              "id": 32,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 32,
+          "local_id": "var_32"
+        },
+        {
+          "id": 33,
+          "product_variant_name": "Mohal Chicken",
+          "product_name": "Mohal Chicken",
+          "preorder_product": false,
+          "product_variant_description": "special chicken dish",
+          "product_variant_quantity": 6,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/33_573bf5cf67321fd22f758706d850ce20/57416501629968362_2297082105226689690_download.png",
+          "product_data": {
+            "id": 33,
+            "logo": null,
+            "name": "Mohal Chicken",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 33,
+            "local_id": "prod_33"
+          },
+          "category_data": {
+            "id": 6,
+            "name": "Magic Taste Signature",
+            "slug": "magic-taste-signature",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 6,
+            "local_id": "cat_6"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "80.00",
+          "buy_price": null,
+          "mrp_price": "85.00",
+          "proportions": [
+            {
+              "id": 33,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 33,
+          "local_id": "var_33"
+        },
+        {
+          "id": 34,
+          "product_variant_name": "Fish Polichadhu",
+          "product_name": "Fish Polichadhu",
+          "preorder_product": false,
+          "product_variant_description": "fish polichathu",
+          "product_variant_quantity": 8,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/34_81f3960e709c5c9ed7af3859315b7ffd/1580424824028552139_337114667747043887_download.png",
+          "product_data": {
+            "id": 34,
+            "logo": null,
+            "name": "Fish Polichadhu",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 34,
+            "local_id": "prod_34"
+          },
+          "category_data": {
+            "id": 6,
+            "name": "Magic Taste Signature",
+            "slug": "magic-taste-signature",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 6,
+            "local_id": "cat_6"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "88.00",
+          "buy_price": null,
+          "mrp_price": "100.00",
+          "proportions": [
+            {
+              "id": 34,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 34,
+          "local_id": "var_34"
+        },
+        {
+          "id": 35,
+          "product_variant_name": "Butter Tandoori Chicken",
+          "product_name": "Butter Tandoori Chicken",
+          "preorder_product": false,
+          "product_variant_description": "butter tandoori chicken",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/35_017f58c672f85041e85156a5e6734f9d/1378664440309805276_1569357140161102262_download.png",
+          "product_data": {
+            "id": 35,
+            "logo": null,
+            "name": "Butter Tandoori Chicken",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 35,
+            "local_id": "prod_35"
+          },
+          "category_data": {
+            "id": 6,
+            "name": "Magic Taste Signature",
+            "slug": "magic-taste-signature",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 6,
+            "local_id": "cat_6"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "80.00",
+          "buy_price": null,
+          "mrp_price": "90.00",
+          "proportions": [
+            {
+              "id": 35,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 35,
+          "local_id": "var_35"
+        },
+        {
+          "id": 36,
+          "product_variant_name": "Butter Tandoori Prawn",
+          "product_name": "Butter Tandoori Prawn",
+          "preorder_product": false,
+          "product_variant_description": "butter tandoori prawn",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/36_4009364d3eb0ee5fe4495fb287b9623d/1401492500697597261_1352608213873302053_download.png",
+          "product_data": {
+            "id": 36,
+            "logo": null,
+            "name": "Butter Tandoori Prawn",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 36,
+            "local_id": "prod_36"
+          },
+          "category_data": {
+            "id": 6,
+            "name": "Magic Taste Signature",
+            "slug": "magic-taste-signature",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 6,
+            "local_id": "cat_6"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "90.00",
+          "buy_price": null,
+          "mrp_price": "95.00",
+          "proportions": [
+            {
+              "id": 36,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 36,
+          "local_id": "var_36"
+        },
+        {
+          "id": 37,
+          "product_variant_name": "Tawa Grill Roasted Chicken (Full)",
+          "product_name": "Tawa Grill Roasted Chicken (Full)",
+          "preorder_product": false,
+          "product_variant_description": "full roast tawa chicken",
+          "product_variant_quantity": 9,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/37_c0d3f88bc5a116fc8106331034c2468d/455635423845092171_75861908728282451_download.png",
+          "product_data": {
+            "id": 37,
+            "logo": null,
+            "name": "Tawa Grill Roasted Chicken (Full)",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 37,
+            "local_id": "prod_37"
+          },
+          "category_data": {
+            "id": 6,
+            "name": "Magic Taste Signature",
+            "slug": "magic-taste-signature",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 6,
+            "local_id": "cat_6"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "145.00",
+          "buy_price": null,
+          "mrp_price": "150.00",
+          "proportions": [
+            {
+              "id": 37,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 37,
+          "local_id": "var_37"
+        },
+        {
+          "id": 38,
+          "product_variant_name": "Tawa Grill Roasted Chicken (Half)",
+          "product_name": "Tawa Grill Roasted Chicken (Half)",
+          "preorder_product": false,
+          "product_variant_description": "half roast tawa chicken",
+          "product_variant_quantity": 9,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/38_b094f72b4333f1daf777f751695d809a/434190549033637806_900662755265345671_download.png",
+          "product_data": {
+            "id": 38,
+            "logo": null,
+            "name": "Tawa Grill Roasted Chicken (Half)",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 38,
+            "local_id": "prod_38"
+          },
+          "category_data": {
+            "id": 6,
+            "name": "Magic Taste Signature",
+            "slug": "magic-taste-signature",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 6,
+            "local_id": "cat_6"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "90.00",
+          "buy_price": null,
+          "mrp_price": "100.00",
+          "proportions": [
+            {
+              "id": 38,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 38,
+          "local_id": "var_38"
+        }
+      ],
+      "remote_id": 6,
+      "local_id": "cat_6"
+    },
+    {
+      "id": 5,
+      "name": "Wraps",
+      "slug": "wraps",
+      "logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/categories/5_5afe272bca8e731e0871c5b169760081/1314791744298506034_1247000119562991823_download.png",
+      "sorting_order": 3,
+      "description": null,
+      "parent_id": null,
+      "short_code": null,
+      "depth": 1,
+      "path": "Wraps",
+      "children": [],
+      "_id": 2762105,
+      "product_variants": [
+        {
+          "id": 27,
+          "product_variant_name": "Zinger Wraps",
+          "product_name": "Zinger Wraps",
+          "preorder_product": false,
+          "product_variant_description": "crispy zinger wrap",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/27_fe4530ecaa8535d8cd747f36d9091bd4/1723156826642929172_581764801234574502_download.png",
+          "product_data": {
+            "id": 27,
+            "logo": null,
+            "name": "Zinger Wraps",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 27,
+            "local_id": "prod_27"
+          },
+          "category_data": {
+            "id": 5,
+            "name": "Wraps",
+            "slug": "wraps",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 5,
+            "local_id": "cat_5"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "70.00",
+          "buy_price": null,
+          "mrp_price": "80.00",
+          "proportions": [
+            {
+              "id": 27,
+              "active": 1,
+              "proportion_data": {
+                "id": 6,
+                "unit": 0,
+                "label": "1 pcs",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 2,
+                  "name": "pieces",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 27,
+          "local_id": "var_27"
+        },
+        {
+          "id": 28,
+          "product_variant_name": "Nutrella Wraps",
+          "product_name": "Nutrella Wraps",
+          "preorder_product": false,
+          "product_variant_description": "nutella chocolate wrap",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/28_4416b7c6c98f090b01cbaea7d5018170/172247297128345149_1930221254678724544_download.png",
+          "product_data": {
+            "id": 28,
+            "logo": null,
+            "name": "Nutrella Wraps",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 28,
+            "local_id": "prod_28"
+          },
+          "category_data": {
+            "id": 5,
+            "name": "Wraps",
+            "slug": "wraps",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 5,
+            "local_id": "cat_5"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "80.00",
+          "buy_price": null,
+          "mrp_price": "85.00",
+          "proportions": [
+            {
+              "id": 28,
+              "active": 1,
+              "proportion_data": {
+                "id": 6,
+                "unit": 0,
+                "label": "1 pcs",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 2,
+                  "name": "pieces",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 28,
+          "local_id": "var_28"
+        },
+        {
+          "id": 29,
+          "product_variant_name": "Egg Wrap",
+          "product_name": "Egg Wrap",
+          "preorder_product": false,
+          "product_variant_description": "egg stuffed wrap",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/29_85d2f66d115d030c58f76200be5039be/216979828169581701_2007237646130768334_download.png",
+          "product_data": {
+            "id": 29,
+            "logo": null,
+            "name": "Egg Wrap",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 29,
+            "local_id": "prod_29"
+          },
+          "category_data": {
+            "id": 5,
+            "name": "Wraps",
+            "slug": "wraps",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 5,
+            "local_id": "cat_5"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "70.00",
+          "buy_price": null,
+          "mrp_price": "80.00",
+          "proportions": [
+            {
+              "id": 29,
+              "active": 1,
+              "proportion_data": {
+                "id": 6,
+                "unit": 0,
+                "label": "1 pcs",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 2,
+                  "name": "pieces",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 29,
+          "local_id": "var_29"
+        },
+        {
+          "id": 30,
+          "product_variant_name": "Classic Paneer Wrap",
+          "product_name": "Classic Paneer Wrap",
+          "preorder_product": false,
+          "product_variant_description": "paneer wrap",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/30_05e18b23a8536995fc9ebc2e8944bbb1/761620713942498567_312210729516108923_download.png",
+          "product_data": {
+            "id": 30,
+            "logo": null,
+            "name": "Classic Paneer Wrap",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 30,
+            "local_id": "prod_30"
+          },
+          "category_data": {
+            "id": 5,
+            "name": "Wraps",
+            "slug": "wraps",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 5,
+            "local_id": "cat_5"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "70.00",
+          "buy_price": null,
+          "mrp_price": "80.00",
+          "proportions": [
+            {
+              "id": 30,
+              "active": 1,
+              "proportion_data": {
+                "id": 6,
+                "unit": 0,
+                "label": "1 pcs",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 2,
+                  "name": "pieces",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 30,
+          "local_id": "var_30"
+        }
+      ],
+      "remote_id": 5,
+      "local_id": "cat_5"
+    },
+    {
+      "id": 4,
+      "name": "Breads",
+      "slug": "breads",
+      "logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/categories/4_fa9a1354631a4206df34291f0db8f42a/2026374916535990608_1809856614538545787_download.png",
+      "sorting_order": 4,
+      "description": null,
+      "parent_id": null,
+      "short_code": null,
+      "depth": 1,
+      "path": "Breads",
+      "children": [],
+      "_id": 2209684,
+      "product_variants": [
+        {
+          "id": 23,
+          "product_variant_name": "Grilled Chicken Club Sandwich",
+          "product_name": "Grilled Chicken Club Sandwich",
+          "preorder_product": false,
+          "product_variant_description": "grilled chicken sandwich with fries",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/23_835f953a538a3b0411887a2cbb1adcf1/1985561873861651887_783065589191570800_download.png",
+          "product_data": {
+            "id": 23,
+            "logo": null,
+            "name": "Grilled Chicken Club Sandwich",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 23,
+            "local_id": "prod_23"
+          },
+          "category_data": {
+            "id": 4,
+            "name": "Breads",
+            "slug": "breads",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 4,
+            "local_id": "cat_4"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "80.00",
+          "buy_price": null,
+          "mrp_price": "85.00",
+          "proportions": [
+            {
+              "id": 23,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 23,
+          "local_id": "var_23"
+        },
+        {
+          "id": 24,
+          "product_variant_name": "Grilled Veg Club Sandwich",
+          "product_name": "Grilled Veg Club Sandwich",
+          "preorder_product": false,
+          "product_variant_description": "grilled veg sandwich",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/24_e23c0e8bfc81468ede06458272dfd577/1219560710066561271_1334391505647724240_download.png",
+          "product_data": {
+            "id": 24,
+            "logo": null,
+            "name": "Grilled Veg Club Sandwich",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 24,
+            "local_id": "prod_24"
+          },
+          "category_data": {
+            "id": 4,
+            "name": "Breads",
+            "slug": "breads",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 4,
+            "local_id": "cat_4"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "70.00",
+          "buy_price": null,
+          "mrp_price": "80.00",
+          "proportions": [
+            {
+              "id": 24,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 24,
+          "local_id": "var_24"
+        },
+        {
+          "id": 25,
+          "product_variant_name": "Classic Veg Burger",
+          "product_name": "Classic Veg Burger",
+          "preorder_product": false,
+          "product_variant_description": "veg burger with toppings",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/25_88c20599615db7f182b67df5180c92dd/584071576487133562_2161958723475147161_download.png",
+          "product_data": {
+            "id": 25,
+            "logo": null,
+            "name": "Classic Veg Burger",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 25,
+            "local_id": "prod_25"
+          },
+          "category_data": {
+            "id": 4,
+            "name": "Breads",
+            "slug": "breads",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 4,
+            "local_id": "cat_4"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "70.00",
+          "buy_price": null,
+          "mrp_price": "75.00",
+          "proportions": [
+            {
+              "id": 25,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 25,
+          "local_id": "var_25"
+        },
+        {
+          "id": 26,
+          "product_variant_name": "Nutrella Club Sandwich",
+          "product_name": "Nutrella Club Sandwich",
+          "preorder_product": false,
+          "product_variant_description": "nutella spread sandwich",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/26_26da06f32084b622de16581d58771e46/551097222746434239_1181515408872394850_download.png",
+          "product_data": {
+            "id": 26,
+            "logo": null,
+            "name": "Nutrella Club Sandwich",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 26,
+            "local_id": "prod_26"
+          },
+          "category_data": {
+            "id": 4,
+            "name": "Breads",
+            "slug": "breads",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 4,
+            "local_id": "cat_4"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "70.00",
+          "buy_price": null,
+          "mrp_price": "80.00",
+          "proportions": [
+            {
+              "id": 26,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 26,
+          "local_id": "var_26"
+        }
+      ],
+      "remote_id": 4,
+      "local_id": "cat_4"
+    },
+    {
+      "id": 3,
+      "name": "Indo Continental",
+      "slug": "indo-continental",
+      "logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/categories/3_8021343703994b4f2333426bb5050534/1518628280868729411_1228553613095601886_download.png",
+      "sorting_order": 5,
+      "description": null,
+      "parent_id": null,
+      "short_code": null,
+      "depth": 1,
+      "path": "Indo Continental",
+      "children": [],
+      "_id": 1657263,
+      "product_variants": [
+        {
+          "id": 17,
+          "product_variant_name": "Chicken Chops",
+          "product_name": "Chicken Chops",
+          "preorder_product": false,
+          "product_variant_description": "fried chicken chops",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/17_4ac4f6f997e9cdbf0cd4424a240557a3/999583618198944987_2059809695481416499_download.png",
+          "product_data": {
+            "id": 17,
+            "logo": null,
+            "name": "Chicken Chops",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 17,
+            "local_id": "prod_17"
+          },
+          "category_data": {
+            "id": 3,
+            "name": "Indo Continental",
+            "slug": "indo-continental",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 3,
+            "local_id": "cat_3"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "80.00",
+          "buy_price": null,
+          "mrp_price": "85.00",
+          "proportions": [
+            {
+              "id": 17,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 17,
+          "local_id": "var_17"
+        },
+        {
+          "id": 18,
+          "product_variant_name": "Fish & Chips",
+          "product_name": "Fish & Chips",
+          "preorder_product": false,
+          "product_variant_description": "classic fish and chips",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/18_bc5e2e6702d38bdb69f60008d3a79acf/804970060057871350_2222603387067315102_download.png",
+          "product_data": {
+            "id": 18,
+            "logo": null,
+            "name": "Fish & Chips",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 18,
+            "local_id": "prod_18"
+          },
+          "category_data": {
+            "id": 3,
+            "name": "Indo Continental",
+            "slug": "indo-continental",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 3,
+            "local_id": "cat_3"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "70.00",
+          "buy_price": null,
+          "mrp_price": "80.00",
+          "proportions": [
+            {
+              "id": 18,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 18,
+          "local_id": "var_18"
+        },
+        {
+          "id": 19,
+          "product_variant_name": "Jumbo Sausage",
+          "product_name": "Jumbo Sausage",
+          "preorder_product": false,
+          "product_variant_description": "large sausage serving",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/19_8dc487c0f5b53729f6307877a3622b6a/1567743057663125451_2072491462550826241_download.png",
+          "product_data": {
+            "id": 19,
+            "logo": null,
+            "name": "Jumbo Sausage",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 19,
+            "local_id": "prod_19"
+          },
+          "category_data": {
+            "id": 3,
+            "name": "Indo Continental",
+            "slug": "indo-continental",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 3,
+            "local_id": "cat_3"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "70.00",
+          "buy_price": null,
+          "mrp_price": "80.00",
+          "proportions": [
+            {
+              "id": 19,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 19,
+          "local_id": "var_19"
+        },
+        {
+          "id": 20,
+          "product_variant_name": "Cheese Sausage",
+          "product_name": "Cheese Sausage",
+          "preorder_product": false,
+          "product_variant_description": "cheese stuffed sausage",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/20_f9b8a0b63d11b4d5120d5504ba07313a/649094495511585151_700516455342041409_download.png",
+          "product_data": {
+            "id": 20,
+            "logo": null,
+            "name": "Cheese Sausage",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 20,
+            "local_id": "prod_20"
+          },
+          "category_data": {
+            "id": 3,
+            "name": "Indo Continental",
+            "slug": "indo-continental",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 3,
+            "local_id": "cat_3"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "70.00",
+          "buy_price": null,
+          "mrp_price": "80.00",
+          "proportions": [
+            {
+              "id": 20,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 20,
+          "local_id": "var_20"
+        },
+        {
+          "id": 21,
+          "product_variant_name": "Chicken Alfredo Cream Pasta",
+          "product_name": "Chicken Alfredo Cream Pasta",
+          "preorder_product": false,
+          "product_variant_description": "creamy chicken pasta",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/21_08040ab834b229eda1ab125c9674536b/1462134965664422563_863307947866920585_download.png",
+          "product_data": {
+            "id": 21,
+            "logo": null,
+            "name": "Chicken Alfredo Cream Pasta",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 21,
+            "local_id": "prod_21"
+          },
+          "category_data": {
+            "id": 3,
+            "name": "Indo Continental",
+            "slug": "indo-continental",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 3,
+            "local_id": "cat_3"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "80.00",
+          "buy_price": null,
+          "mrp_price": "90.00",
+          "proportions": [
+            {
+              "id": 21,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 21,
+          "local_id": "var_21"
+        },
+        {
+          "id": 22,
+          "product_variant_name": "Mixed Veg Alfredo Cream Pasta",
+          "product_name": "Mixed Veg Alfredo Cream Pasta",
+          "preorder_product": false,
+          "product_variant_description": "creamy veg pasta",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/22_8dc948d085fd5051b413b3108f8e2c6b/2213609381680155377_1106113100595194363_download.png",
+          "product_data": {
+            "id": 22,
+            "logo": null,
+            "name": "Mixed Veg Alfredo Cream Pasta",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 22,
+            "local_id": "prod_22"
+          },
+          "category_data": {
+            "id": 3,
+            "name": "Indo Continental",
+            "slug": "indo-continental",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 3,
+            "local_id": "cat_3"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "90.00",
+          "buy_price": null,
+          "mrp_price": "95.00",
+          "proportions": [
+            {
+              "id": 22,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 22,
+          "local_id": "var_22"
+        }
+      ],
+      "remote_id": 3,
+      "local_id": "cat_3"
+    },
+    {
+      "id": 1,
+      "name": "Veg Delights",
+      "slug": "veg-delights",
+      "logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/categories/1_379c0f897db0fa7e004f65f52cce2e75/1487499320047997356_130050237558151029_images.png",
+      "sorting_order": 7,
+      "description": null,
+      "parent_id": null,
+      "short_code": null,
+      "depth": 1,
+      "path": "Veg Delights",
+      "children": [],
+      "_id": 552421,
+      "product_variants": [
+        {
+          "id": 5,
+          "product_variant_name": "Gobi Salt & Pepper",
+          "product_name": "Gobi Salt & Pepper",
+          "preorder_product": false,
+          "product_variant_description": "salt and pepper cauliflower",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/5_bb570e6e7131d4ae9ca7abbbb10aeb70/506364692516384122_841863073576551984_download.png",
+          "product_data": {
+            "id": 5,
+            "logo": null,
+            "name": "Gobi Salt & Pepper",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 5,
+            "local_id": "prod_5"
+          },
+          "category_data": {
+            "id": 1,
+            "name": "Veg Delights",
+            "slug": "veg-delights",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 1,
+            "local_id": "cat_1"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "70.00",
+          "buy_price": null,
+          "mrp_price": "80.00",
+          "proportions": [
+            {
+              "id": 5,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 5,
+          "local_id": "var_5"
+        },
+        {
+          "id": 7,
+          "product_variant_name": "Kaalan Milagu Varuval",
+          "product_name": "Kaalan Milagu Varuval",
+          "preorder_product": false,
+          "product_variant_description": "peppery kaalan fry",
+          "product_variant_quantity": 10,
+          "product_variant_logo": "https://ellantec.s3.ap-south-1.amazonaws.com/uu5jVVTB086804384288/0CAtdjVRa198074888380/uploads/store/products/7_27fc772e1c28298925230d288cd8e3a7/1600717411681106282_61796957010759101_download.png",
+          "product_data": {
+            "id": 7,
+            "logo": null,
+            "name": "Kaalan Milagu Varuval",
+            "type": 1,
+            "description": null,
+            "is_preorder": 0,
+            "is_allergens": 0,
+            "remote_id": 7,
+            "local_id": "prod_7"
+          },
+          "category_data": {
+            "id": 1,
+            "name": "Veg Delights",
+            "slug": "veg-delights",
+            "active": 1,
+            "parent_id": null,
+            "is_preorder": 0,
+            "parent_slug": null,
+            "remote_id": 1,
+            "local_id": "cat_1"
+          },
+          "product_addon_group_data": [],
+          "product_variant_addon_group_data": [],
+          "sell_price": "70.00",
+          "buy_price": null,
+          "mrp_price": "80.00",
+          "proportions": [
+            {
+              "id": 7,
+              "active": 1,
+              "proportion_data": {
+                "id": 1,
+                "unit": 0,
+                "label": "1 plate",
+                "value": null,
+                "active": 1,
+                "default": 0,
+                "quantity": null,
+                "proportion_group_data": {
+                  "id": 1,
+                  "name": "plate",
+                  "type": null,
+                  "active": 1,
+                  "is_selected": 0
+                }
+              }
+            }
+          ],
+          "offer_data": [],
+          "review_max_data": 0,
+          "review_avg_max_data": 0,
+          "review_value_data": 0,
+          "review_max_value_data": 0,
+          "review_count": null,
+          "favourite_data": [],
+          "gallery_data": [],
+          "delivery_slot_data": [],
+          "remote_id": 7,
+          "local_id": "var_7"
+        }
+      ],
+      "remote_id": 1,
+      "local_id": "cat_1"
+    }
+  ],
+  "message": "",
+  "more_info": {},
+  "status": "Success"
+}

@@ -1,0 +1,307 @@
+{
+  "entity": "customers",
+  "request_count": 4,
+  "last_received_at": "2026-05-25T17:04:14.318655+00:00",
+  "requests": [
+    {
+      "received_at": "2026-05-19T16:55:37.620631+00:00",
+      "headers": {
+        "Authorization": "Bearer customers-token",
+        "Content-Type": "application/json"
+      },
+      "payload": {
+        "data": [
+          {
+            "customerId": "cust_001",
+            "remote_id": "cust_001",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "name": "Alice Smith",
+            "email": "alice@example.com",
+            "phone": "+1234567890",
+            "country": "USA",
+            "status": "active",
+            "role": "member",
+            "password": "13dc8554575637802eec3c0117f41591a990e1a2d37160018c48c9125063838a"
+          },
+          {
+            "customerId": "cust_003",
+            "remote_id": "cust_003",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "name": "Charlie Lee",
+            "email": "charlie@example.com",
+            "phone": "+1122334455",
+            "country": "Canada",
+            "status": "active",
+            "role": "admin",
+            "password": "ce44586fec739a984eebda6a96cf897a4f9908a6f0812bdd9bbc55315203d833"
+          }
+        ],
+        "store_roles": [
+          {
+            "id": 97,
+            "remote_id": "org_001:store_001:cust_001:member",
+            "customerId": "cust_001",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "role": "admin",
+            "access_enabled": 1
+          },
+          {
+            "id": 98,
+            "remote_id": "org_001:store_001:cust_003:admin",
+            "customerId": "cust_003",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "role": "admin",
+            "access_enabled": 1
+          }
+        ],
+        "org_roles": [
+          {
+            "remote_id": "cust_001",
+            "customerId": "cust_001",
+            "orgId": "org_001",
+            "customer_name": "Alice Smith",
+            "email": "alice@example.com",
+            "role": "member"
+          },
+          {
+            "remote_id": "cust_003",
+            "customerId": "cust_003",
+            "orgId": "org_001",
+            "customer_name": "Charlie Lee",
+            "email": "charlie@example.com",
+            "role": "admin"
+          }
+        ]
+      }
+    },
+    {
+      "received_at": "2026-05-19T16:56:45.005617+00:00",
+      "headers": {
+        "Authorization": "Bearer customers-token",
+        "Content-Type": "application/json"
+      },
+      "payload": {
+        "data": [
+          {
+            "customerId": "cust_001",
+            "remote_id": "cust_001",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "name": "Alice Smith",
+            "email": "alice@example.com",
+            "phone": "+1234567890",
+            "country": "USA",
+            "status": "active",
+            "role": "member",
+            "password": "13dc8554575637802eec3c0117f41591a990e1a2d37160018c48c9125063838a"
+          },
+          {
+            "customerId": "cust_003",
+            "remote_id": "cust_003",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "name": "Charlie Lee",
+            "email": "charlie@example.com",
+            "phone": "+1122334455",
+            "country": "Canada",
+            "status": "active",
+            "role": "admin",
+            "password": "ce44586fec739a984eebda6a96cf897a4f9908a6f0812bdd9bbc55315203d833"
+          }
+        ],
+        "store_roles": [
+          {
+            "id": 103,
+            "remote_id": "org_001:store_001:cust_001:member",
+            "customerId": "cust_001",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "role": "admin",
+            "access_enabled": 1
+          },
+          {
+            "id": 104,
+            "remote_id": "org_001:store_001:cust_003:admin",
+            "customerId": "cust_003",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "role": "admin",
+            "access_enabled": 1
+          }
+        ],
+        "org_roles": [
+          {
+            "remote_id": "cust_001",
+            "customerId": "cust_001",
+            "orgId": "org_001",
+            "customer_name": "Alice Smith",
+            "email": "alice@example.com",
+            "role": "member"
+          },
+          {
+            "remote_id": "cust_003",
+            "customerId": "cust_003",
+            "orgId": "org_001",
+            "customer_name": "Charlie Lee",
+            "email": "charlie@example.com",
+            "role": "admin"
+          }
+        ]
+      }
+    },
+    {
+      "received_at": "2026-05-25T17:03:30.878846+00:00",
+      "headers": {
+        "Authorization": "Bearer customers-token",
+        "Content-Type": "application/json"
+      },
+      "payload": {
+        "data": [
+          {
+            "customerId": "cust_001",
+            "remote_id": "cust_001",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "name": "Alice Smith",
+            "email": "alice@example.com",
+            "phone": "+1234567890",
+            "country": "USA",
+            "status": "active",
+            "role": "member",
+            "password": "13dc8554575637802eec3c0117f41591a990e1a2d37160018c48c9125063838a"
+          },
+          {
+            "customerId": "cust_003",
+            "remote_id": "cust_003",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "name": "Charlie Lee",
+            "email": "charlie@example.com",
+            "phone": "+1122334455",
+            "country": "Canada",
+            "status": "active",
+            "role": "admin",
+            "password": "ce44586fec739a984eebda6a96cf897a4f9908a6f0812bdd9bbc55315203d833"
+          }
+        ],
+        "store_roles": [
+          {
+            "id": 5,
+            "remote_id": "org_001:store_001:cust_001:member",
+            "customerId": "cust_001",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "role": "admin",
+            "access_enabled": 1
+          },
+          {
+            "id": 6,
+            "remote_id": "org_001:store_001:cust_003:admin",
+            "customerId": "cust_003",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "role": "admin",
+            "access_enabled": 1
+          }
+        ],
+        "org_roles": [
+          {
+            "remote_id": "cust_001",
+            "customerId": "cust_001",
+            "orgId": "org_001",
+            "customer_name": "Alice Smith",
+            "email": "alice@example.com",
+            "role": "member"
+          },
+          {
+            "remote_id": "cust_003",
+            "customerId": "cust_003",
+            "orgId": "org_001",
+            "customer_name": "Charlie Lee",
+            "email": "charlie@example.com",
+            "role": "admin"
+          }
+        ]
+      }
+    },
+    {
+      "received_at": "2026-05-25T17:04:14.318655+00:00",
+      "headers": {
+        "Authorization": "Bearer customers-token",
+        "Content-Type": "application/json"
+      },
+      "payload": {
+        "data": [
+          {
+            "customerId": "cust_001",
+            "remote_id": "cust_001",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "name": "Alice Smith",
+            "email": "alice@example.com",
+            "phone": "+1234567890",
+            "country": "USA",
+            "status": "active",
+            "role": "member",
+            "password": "13dc8554575637802eec3c0117f41591a990e1a2d37160018c48c9125063838a"
+          },
+          {
+            "customerId": "cust_003",
+            "remote_id": "cust_003",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "name": "Charlie Lee",
+            "email": "charlie@example.com",
+            "phone": "+1122334455",
+            "country": "Canada",
+            "status": "active",
+            "role": "admin",
+            "password": "ce44586fec739a984eebda6a96cf897a4f9908a6f0812bdd9bbc55315203d833"
+          }
+        ],
+        "store_roles": [
+          {
+            "id": 11,
+            "remote_id": "org_001:store_001:cust_001:member",
+            "customerId": "cust_001",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "role": "admin",
+            "access_enabled": 1
+          },
+          {
+            "id": 12,
+            "remote_id": "org_001:store_001:cust_003:admin",
+            "customerId": "cust_003",
+            "orgId": "org_001",
+            "storeId": "store_001",
+            "role": "admin",
+            "access_enabled": 1
+          }
+        ],
+        "org_roles": [
+          {
+            "remote_id": "cust_001",
+            "customerId": "cust_001",
+            "orgId": "org_001",
+            "customer_name": "Alice Smith",
+            "email": "alice@example.com",
+            "role": "member"
+          },
+          {
+            "remote_id": "cust_003",
+            "customerId": "cust_003",
+            "orgId": "org_001",
+            "customer_name": "Charlie Lee",
+            "email": "charlie@example.com",
+            "role": "admin"
+          }
+        ]
+      }
+    }
+  ]
+}

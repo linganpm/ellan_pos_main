@@ -1,0 +1,3 @@
+dependency_overrides:
+  pos_orders_offline:
+    path: ../pos-core-ib-main

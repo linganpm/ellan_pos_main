@@ -1,0 +1,341 @@
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+Order _$OrderFromJson(Map<String, dynamic> json) => Order(
+  localId: json['localId'] as String,
+  orderId: (json['orderId'] as num?)?.toInt(),
+  exported: json['exported'] as bool?,
+  lastImportedAt: json['lastImportedAt'] as String?,
+  lastExportedAt: json['lastExportedAt'] as String?,
+  referenceId: json['referenceId'] as String?,
+  isPaid: json['isPaid'] as bool?,
+  serviceInstance: (json['serviceInstance'] as num?)?.toInt(),
+  serviceInstanceData: json['serviceInstanceData'] == null
+      ? null
+      : ServiceInstanceData.fromJson(
+          json['serviceInstanceData'] as Map<String, dynamic>,
+        ),
+  notes: json['notes'] as String?,
+  orderTime: json['orderTime'] as String?,
+  deliveryTime: json['deliveryTime'] as String?,
+  fullName: json['fullName'] as String?,
+  email: json['email'] as String?,
+  mobile: json['mobile'] as String?,
+  type: (json['type'] as num?)?.toInt(),
+  orderType: (json['orderType'] as num?)?.toInt(),
+  orderTypeStr: json['orderTypeStr'] as String?,
+  sourceType: (json['sourceType'] as num?)?.toInt(),
+  sourceTypeStr: json['sourceTypeStr'] as String?,
+  createdOn: json['createdOn'] as String?,
+  orderItemsCount: (json['orderItemsCount'] as num?)?.toInt(),
+  userData: json['userData'],
+  deliveryAddressData: json['deliveryAddressData'],
+  orderItemData: (json['orderItemData'] as List<dynamic>?)
+      ?.map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  paymentStatus: (json['paymentStatus'] as num?)?.toInt(),
+  paymentMethod: json['paymentMethod'] as String?,
+  paymentModeName: json['paymentModeName'] as String?,
+  paymentData: json['paymentData'] as List<dynamic>?,
+  statusData: json['statusData'] as List<dynamic>?,
+  trackingOrder: (json['trackingOrder'] as List<dynamic>?)
+      ?.map((e) => TrackingOrder.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  finalTotal: (json['finalTotal'] as num?)?.toDouble(),
+  voucherCode: json['voucherCode'] as String?,
+  deliverySlotData: json['deliverySlotData'] == null
+      ? null
+      : DeliverySlotData.fromJson(
+          json['deliverySlotData'] as Map<String, dynamic>,
+        ),
+  orderReviewData: json['orderReviewData'] as List<dynamic>?,
+  orderReviewMaxData: (json['orderReviewMaxData'] as num?)?.toDouble(),
+  orderReviewAvgMaxData: (json['orderReviewAvgMaxData'] as num?)?.toDouble(),
+  orderReviewValueData: (json['orderReviewValueData'] as num?)?.toDouble(),
+  orderReviewMaxValueData: (json['orderReviewMaxValueData'] as num?)
+      ?.toDouble(),
+  productReviewData: json['productReviewData'] as List<dynamic>?,
+  productReviewMaxData: (json['productReviewMaxData'] as num?)?.toDouble(),
+  productReviewAvgMaxData: (json['productReviewAvgMaxData'] as num?)
+      ?.toDouble(),
+  productReviewValueData: (json['productReviewValueData'] as num?)?.toDouble(),
+  productReviewMaxValueData: (json['productReviewMaxValueData'] as num?)
+      ?.toDouble(),
+  preparationTimeInMin: (json['preparationTimeInMin'] as num?)?.toInt(),
+  approvedTime: json['approvedTime'] as String?,
+  total: json['total'] as List<dynamic>?,
+  totalDict: json['totalDict'] as Map<String, dynamic>?,
+  nextStatesOc: json['nextStatesOc'] as List<dynamic>?,
+  driver: json['driver'],
+  driverName: json['driverName'] as String?,
+  driverStatus: json['driverStatus'],
+  distance: json['distance'],
+  driverStatusStr: json['driverStatusStr'],
+  deliveryStatus: json['deliveryStatus'],
+  deliveryStatusStr: json['deliveryStatusStr'],
+  operatorAmt: (json['operatorAmt'] as num?)?.toDouble(),
+  vendorAmt: (json['vendorAmt'] as num?)?.toDouble(),
+  driverAmt: json['driverAmt'] as String?,
+  currentStatusData: json['currentStatusData'] == null
+      ? null
+      : CurrentStatusData.fromJson(
+          json['currentStatusData'] as Map<String, dynamic>,
+        ),
+  actions: json['actions'] == null
+      ? null
+      : ActionsData.fromJson(json['actions'] as Map<String, dynamic>),
+  ageRestriction: json['ageRestriction'] as bool?,
+);
+
+Map<String, dynamic> _$OrderToJson(Order instance) => <String, dynamic>{
+  'orderId': instance.orderId,
+  'localId': instance.localId,
+  'exported': instance.exported,
+  'lastImportedAt': instance.lastImportedAt,
+  'lastExportedAt': instance.lastExportedAt,
+  'referenceId': instance.referenceId,
+  'isPaid': instance.isPaid,
+  'serviceInstance': instance.serviceInstance,
+  'serviceInstanceData': instance.serviceInstanceData,
+  'notes': instance.notes,
+  'orderTime': instance.orderTime,
+  'deliveryTime': instance.deliveryTime,
+  'fullName': instance.fullName,
+  'email': instance.email,
+  'mobile': instance.mobile,
+  'type': instance.type,
+  'orderType': instance.orderType,
+  'orderTypeStr': instance.orderTypeStr,
+  'sourceType': instance.sourceType,
+  'sourceTypeStr': instance.sourceTypeStr,
+  'createdOn': instance.createdOn,
+  'orderItemsCount': instance.orderItemsCount,
+  'userData': instance.userData,
+  'deliveryAddressData': instance.deliveryAddressData,
+  'orderItemData': instance.orderItemData,
+  'paymentStatus': instance.paymentStatus,
+  'paymentMethod': instance.paymentMethod,
+  'paymentModeName': instance.paymentModeName,
+  'paymentData': instance.paymentData,
+  'statusData': instance.statusData,
+  'trackingOrder': instance.trackingOrder,
+  'finalTotal': instance.finalTotal,
+  'voucherCode': instance.voucherCode,
+  'deliverySlotData': instance.deliverySlotData,
+  'orderReviewData': instance.orderReviewData,
+  'orderReviewMaxData': instance.orderReviewMaxData,
+  'orderReviewAvgMaxData': instance.orderReviewAvgMaxData,
+  'orderReviewValueData': instance.orderReviewValueData,
+  'orderReviewMaxValueData': instance.orderReviewMaxValueData,
+  'productReviewData': instance.productReviewData,
+  'productReviewMaxData': instance.productReviewMaxData,
+  'productReviewAvgMaxData': instance.productReviewAvgMaxData,
+  'productReviewValueData': instance.productReviewValueData,
+  'productReviewMaxValueData': instance.productReviewMaxValueData,
+  'preparationTimeInMin': instance.preparationTimeInMin,
+  'approvedTime': instance.approvedTime,
+  'total': instance.total,
+  'totalDict': instance.totalDict,
+  'nextStatesOc': instance.nextStatesOc,
+  'driver': instance.driver,
+  'driverName': instance.driverName,
+  'driverStatus': instance.driverStatus,
+  'distance': instance.distance,
+  'driverStatusStr': instance.driverStatusStr,
+  'deliveryStatus': instance.deliveryStatus,
+  'deliveryStatusStr': instance.deliveryStatusStr,
+  'operatorAmt': instance.operatorAmt,
+  'vendorAmt': instance.vendorAmt,
+  'driverAmt': instance.driverAmt,
+  'currentStatusData': instance.currentStatusData,
+  'actions': instance.actions,
+  'ageRestriction': instance.ageRestriction,
+};
+
+OrderItem _$OrderItemFromJson(Map<String, dynamic> json) => OrderItem(
+  id: (json['id'] as num?)?.toInt(),
+  order: (json['order'] as num?)?.toInt(),
+  basket: (json['basket'] as num?)?.toInt(),
+  product: (json['product'] as num?)?.toInt(),
+  productVariant: (json['productVariant'] as num?)?.toInt(),
+  appliedOffer: (json['appliedOffer'] as num?)?.toInt(),
+  qty: (json['qty'] as num?)?.toInt(),
+  unitPrice: (json['unitPrice'] as num?)?.toDouble(),
+  finalPrice: json['finalPrice'] as String?,
+  notes: json['notes'] as String?,
+  status: (json['status'] as num?)?.toInt(),
+  printed: (json['printed'] as num?)?.toInt(),
+  waitTime: (json['waitTime'] as num?)?.toInt(),
+  offer: json['offer'] as Map<String, dynamic>?,
+  reviewStars: (json['reviewStars'] as num?)?.toInt(),
+  review: json['review'] as String?,
+  reviewedBy: (json['reviewedBy'] as num?)?.toInt(),
+  createdOn: json['createdOn'] as String?,
+  updatedOn: json['updatedOn'] as String?,
+  createdBy: (json['createdBy'] as num?)?.toInt(),
+  updatedBy: (json['updatedBy'] as num?)?.toInt(),
+  orderedBy: (json['orderedBy'] as num?)?.toInt(),
+  preparedBy: (json['preparedBy'] as num?)?.toInt(),
+  servedBy: (json['servedBy'] as num?)?.toInt(),
+  orderItemAddons: (json['orderItemAddons'] as List<dynamic>?)
+      ?.map((e) => OrderItemAddon.fromJson(e as Map<String, dynamic>))
+      .toList(),
+);
+
+Map<String, dynamic> _$OrderItemToJson(OrderItem instance) => <String, dynamic>{
+  'id': instance.id,
+  'order': instance.order,
+  'basket': instance.basket,
+  'product': instance.product,
+  'productVariant': instance.productVariant,
+  'appliedOffer': instance.appliedOffer,
+  'qty': instance.qty,
+  'unitPrice': instance.unitPrice,
+  'finalPrice': instance.finalPrice,
+  'notes': instance.notes,
+  'status': instance.status,
+  'printed': instance.printed,
+  'waitTime': instance.waitTime,
+  'offer': instance.offer,
+  'reviewStars': instance.reviewStars,
+  'review': instance.review,
+  'reviewedBy': instance.reviewedBy,
+  'createdOn': instance.createdOn,
+  'updatedOn': instance.updatedOn,
+  'createdBy': instance.createdBy,
+  'updatedBy': instance.updatedBy,
+  'orderedBy': instance.orderedBy,
+  'preparedBy': instance.preparedBy,
+  'servedBy': instance.servedBy,
+  'orderItemAddons': instance.orderItemAddons,
+};
+
+OrderItemAddon _$OrderItemAddonFromJson(Map<String, dynamic> json) =>
+    OrderItemAddon(
+      id: (json['id'] as num?)?.toInt(),
+      orderItem: (json['orderItem'] as num?)?.toInt(),
+      addon: (json['addon'] as num?)?.toInt(),
+      productVariant: (json['productVariant'] as num?)?.toInt(),
+      qty: (json['qty'] as num?)?.toInt(),
+      price: (json['price'] as num?)?.toDouble(),
+      createdOn: json['createdOn'] as String?,
+      updatedOn: json['updatedOn'] as String?,
+      createdBy: (json['createdBy'] as num?)?.toInt(),
+      updatedBy: (json['updatedBy'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$OrderItemAddonToJson(OrderItemAddon instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'orderItem': instance.orderItem,
+      'addon': instance.addon,
+      'productVariant': instance.productVariant,
+      'qty': instance.qty,
+      'price': instance.price,
+      'createdOn': instance.createdOn,
+      'updatedOn': instance.updatedOn,
+      'createdBy': instance.createdBy,
+      'updatedBy': instance.updatedBy,
+    };
+
+ServiceInstanceData _$ServiceInstanceDataFromJson(Map<String, dynamic> json) =>
+    ServiceInstanceData(
+      logo: json['logo'] as String?,
+      name: json['name'] as String?,
+    );
+
+Map<String, dynamic> _$ServiceInstanceDataToJson(
+  ServiceInstanceData instance,
+) => <String, dynamic>{'logo': instance.logo, 'name': instance.name};
+
+TrackingOrder _$TrackingOrderFromJson(Map<String, dynamic> json) =>
+    TrackingOrder(
+      icon: json['icon'] as String?,
+      key: (json['key'] as num?)?.toInt(),
+      title: json['title'] as String?,
+      dateTime: json['dateTime'] as String?,
+      progress: (json['progress'] as num?)?.toInt(),
+      completed: json['completed'] as bool?,
+    );
+
+Map<String, dynamic> _$TrackingOrderToJson(TrackingOrder instance) =>
+    <String, dynamic>{
+      'icon': instance.icon,
+      'key': instance.key,
+      'title': instance.title,
+      'dateTime': instance.dateTime,
+      'progress': instance.progress,
+      'completed': instance.completed,
+    };
+
+DeliverySlotData _$DeliverySlotDataFromJson(Map<String, dynamic> json) =>
+    DeliverySlotData(
+      endTime: json['endTime'] as String?,
+      startTime: json['startTime'] as String?,
+      scheduleDeliveryDate: json['scheduleDeliveryDate'] as String?,
+    );
+
+Map<String, dynamic> _$DeliverySlotDataToJson(DeliverySlotData instance) =>
+    <String, dynamic>{
+      'endTime': instance.endTime,
+      'startTime': instance.startTime,
+      'scheduleDeliveryDate': instance.scheduleDeliveryDate,
+    };
+
+CurrentStatusData _$CurrentStatusDataFromJson(Map<String, dynamic> json) =>
+    CurrentStatusData(
+      statusName: json['statusName'] as String?,
+      key: json['key'] as String?,
+      status: (json['status'] as num?)?.toInt(),
+      filtering: (json['filtering'] as num?)?.toInt(),
+      statusBgColorCode: json['statusBgColorCode'] as String?,
+      statusColorCode: json['statusColorCode'] as String?,
+      logo: json['logo'] as String?,
+    );
+
+Map<String, dynamic> _$CurrentStatusDataToJson(CurrentStatusData instance) =>
+    <String, dynamic>{
+      'statusName': instance.statusName,
+      'key': instance.key,
+      'status': instance.status,
+      'filtering': instance.filtering,
+      'statusBgColorCode': instance.statusBgColorCode,
+      'statusColorCode': instance.statusColorCode,
+      'logo': instance.logo,
+    };
+
+ActionsData _$ActionsDataFromJson(Map<String, dynamic> json) => ActionsData(
+  negatives: json['negatives'] as List<dynamic>?,
+  positives: (json['positives'] as List<dynamic>?)
+      ?.map((e) => PositiveAction.fromJson(e as Map<String, dynamic>))
+      .toList(),
+);
+
+Map<String, dynamic> _$ActionsDataToJson(ActionsData instance) =>
+    <String, dynamic>{
+      'negatives': instance.negatives,
+      'positives': instance.positives,
+    };
+
+PositiveAction _$PositiveActionFromJson(Map<String, dynamic> json) =>
+    PositiveAction(
+      statusName: json['statusName'] as String?,
+      key: json['key'] as String?,
+      status: (json['status'] as num?)?.toInt(),
+      filtering: (json['filtering'] as num?)?.toInt(),
+      statusBgColorCode: json['statusBgColorCode'] as String?,
+      statusColorCode: json['statusColorCode'] as String?,
+      logo: json['logo'] as String?,
+    );
+
+Map<String, dynamic> _$PositiveActionToJson(PositiveAction instance) =>
+    <String, dynamic>{
+      'statusName': instance.statusName,
+      'key': instance.key,
+      'status': instance.status,
+      'filtering': instance.filtering,
+      'statusBgColorCode': instance.statusBgColorCode,
+      'statusColorCode': instance.statusColorCode,
+      'logo': instance.logo,
+    };
