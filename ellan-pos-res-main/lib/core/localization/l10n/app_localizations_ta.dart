@@ -143,6 +143,9 @@ class AppLocalizationsTa extends AppLocalizations {
   String get dashboardTopCategories => 'சிறந்த பிரிவுகள்';
 
   @override
+  String get dashboardTopProducts => 'சிறந்த பொருட்கள்';
+
+  @override
   String get unsupportedDeviceTitle => 'சாதனம் ஆதரிக்கப்படவில்லை';
 
   @override

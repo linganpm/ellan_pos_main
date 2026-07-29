@@ -20,6 +20,8 @@ class OrderListLoaded extends OrderListState {
   /// `'All'` or a [PosOrderType.key].
   final String selectedTypeFilter;
   final String? selectedStatusFilter;
+  /// Dashboard period label when opened from a metric card (`Today`, etc.).
+  final String? periodFilter;
   final String searchQuery;
   final bool hasReachedMax;
   final bool isFetchingMore;
@@ -29,6 +31,7 @@ class OrderListLoaded extends OrderListState {
     this.availableOrderTypes = const [],
     this.selectedTypeFilter = 'All',
     this.selectedStatusFilter,
+    this.periodFilter,
     this.searchQuery = '',
     this.hasReachedMax = false,
     this.isFetchingMore = false,
@@ -39,6 +42,7 @@ class OrderListLoaded extends OrderListState {
     List<PosOrderType>? availableOrderTypes,
     String? selectedTypeFilter,
     String? selectedStatusFilter,
+    String? periodFilter,
     String? searchQuery,
     bool? hasReachedMax,
     bool? isFetchingMore,
@@ -48,6 +52,7 @@ class OrderListLoaded extends OrderListState {
       availableOrderTypes: availableOrderTypes ?? this.availableOrderTypes,
       selectedTypeFilter: selectedTypeFilter ?? this.selectedTypeFilter,
       selectedStatusFilter: selectedStatusFilter ?? this.selectedStatusFilter,
+      periodFilter: periodFilter ?? this.periodFilter,
       searchQuery: searchQuery ?? this.searchQuery,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
       isFetchingMore: isFetchingMore ?? this.isFetchingMore,
@@ -60,6 +65,7 @@ class OrderListLoaded extends OrderListState {
         availableOrderTypes,
         selectedTypeFilter,
         selectedStatusFilter,
+        periodFilter,
         searchQuery,
         hasReachedMax,
         isFetchingMore,

@@ -16,11 +16,17 @@ import 'order_payments_screen.dart';
 class OrderListScreen extends StatelessWidget {
   final String? customerId;
   final String? customerName;
+  final String? initialTypeFilter;
+  final String? initialStatusFilter;
+  final String? periodFilter;
 
   const OrderListScreen({
     super.key,
     this.customerId,
     this.customerName,
+    this.initialTypeFilter,
+    this.initialStatusFilter,
+    this.periodFilter,
   });
 
   @override
@@ -29,10 +35,15 @@ class OrderListScreen extends StatelessWidget {
       create: (context) => OrderListBloc(
         customerIdFilter: customerId,
         customerNameFilter: customerName,
+        initialTypeFilter: initialTypeFilter ?? 'All',
+        initialStatusFilter: initialStatusFilter,
+        periodFilter: periodFilter,
       )..add(FetchInitialOrders()),
       child: _OrderListScreenContent(
         customerId: customerId,
         customerName: customerName,
+        periodFilter: periodFilter,
+        initialStatusFilter: initialStatusFilter,
       ),
     );
   }
@@ -41,8 +52,15 @@ class OrderListScreen extends StatelessWidget {
 class _OrderListScreenContent extends StatefulWidget {
   final String? customerId;
   final String? customerName;
+  final String? periodFilter;
+  final String? initialStatusFilter;
 
-  const _OrderListScreenContent({this.customerId, this.customerName});
+  const _OrderListScreenContent({
+    this.customerId,
+    this.customerName,
+    this.periodFilter,
+    this.initialStatusFilter,
+  });
 
   @override
   State<_OrderListScreenContent> createState() => _OrderListScreenContentState();
@@ -80,6 +98,20 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
     });
   }
 
+  String _ordersTitle(BuildContext context) {
+    final parts = <String>[];
+    if (widget.customerName != null && widget.customerName!.trim().isNotEmpty) {
+      parts.add(widget.customerName!.trim());
+    } else {
+      parts.add(AppLocalizations.of(context)!.homeOrdersList);
+    }
+    final status = (widget.initialStatusFilter ?? '').trim();
+    if (status.isNotEmpty) parts.add(status);
+    final period = (widget.periodFilter ?? '').trim();
+    if (period.isNotEmpty) parts.add(period);
+    return parts.join(' · ');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,9 +121,7 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
         elevation: 1,
         shadowColor: Colors.black.withValues(alpha: 0.05),
         title: Text(
-          (widget.customerName != null && widget.customerName!.trim().isNotEmpty)
-              ? 'Orders · ${widget.customerName!.trim()}'
-              : AppLocalizations.of(context)!.homeOrdersList,
+          _ordersTitle(context),
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
         leading: IconButton(

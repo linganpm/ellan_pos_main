@@ -60,7 +60,10 @@ class _SplashScreenState extends State<SplashScreen>
             Navigator.pushReplacementNamed(
               context,
               AppRoutes.staffLock,
-              arguments: state.storeId,
+              arguments: {
+                'storeId': state.storeId,
+                'storeName': state.storeName,
+              },
             );
           }
         } else if (state is UserError) {
@@ -86,7 +89,7 @@ class _SplashScreenState extends State<SplashScreen>
             );
           } else if (state.message.contains("No stored organisation code found") ||
               state.message.contains("No stored configuration found")) {
-            Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
+            Navigator.pushReplacementNamed(context, AppRoutes.authEntry);
           } else if (state.message.contains("Please sign in to continue")) {
             Navigator.pushReplacementNamed(context, AppRoutes.login);
           } else {

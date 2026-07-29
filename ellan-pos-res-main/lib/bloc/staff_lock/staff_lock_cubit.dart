@@ -16,6 +16,7 @@ class StaffLockState extends Equatable {
   final bool needsStorePicker;
   final bool needsOnlineRenew;
   final String? storeId;
+  final String? storeName;
   final List<PosStaffOption> staffOptions;
   final List<PosStaffOption> recentStaff;
   final String? selectedCustomerId;
@@ -32,6 +33,7 @@ class StaffLockState extends Equatable {
     this.needsStorePicker = false,
     this.needsOnlineRenew = false,
     this.storeId,
+    this.storeName,
     this.staffOptions = const [],
     this.recentStaff = const [],
     this.selectedCustomerId,
@@ -74,6 +76,7 @@ class StaffLockState extends Equatable {
     bool? needsStorePicker,
     bool? needsOnlineRenew,
     String? storeId,
+    String? storeName,
     List<PosStaffOption>? staffOptions,
     List<PosStaffOption>? recentStaff,
     String? selectedCustomerId,
@@ -91,6 +94,7 @@ class StaffLockState extends Equatable {
       needsStorePicker: needsStorePicker ?? this.needsStorePicker,
       needsOnlineRenew: needsOnlineRenew ?? this.needsOnlineRenew,
       storeId: storeId ?? this.storeId,
+      storeName: storeName ?? this.storeName,
       staffOptions: staffOptions ?? this.staffOptions,
       recentStaff: recentStaff ?? this.recentStaff,
       selectedCustomerId: clearSelectedStaff
@@ -112,6 +116,7 @@ class StaffLockState extends Equatable {
         needsStorePicker,
         needsOnlineRenew,
         storeId,
+        storeName,
         staffOptions,
         recentStaff,
         selectedCustomerId,
@@ -122,16 +127,21 @@ class StaffLockState extends Equatable {
 class StaffLockCubit extends Cubit<StaffLockState> {
   final SharedPreferences prefs;
   final String? preferredStoreId;
+  final String? storeNameHint;
 
   StaffLockCubit({
     required this.prefs,
     this.preferredStoreId,
+    this.storeNameHint,
   }) : super(
           StaffLockState(
             identifier: prefs.getString('lastStaffIdentifier') ??
                 prefs.getString('userEmail') ??
                 '',
             storeId: preferredStoreId ?? prefs.getString('selectedStoreId'),
+            storeName: (storeNameHint ?? '').trim().isNotEmpty
+                ? storeNameHint!.trim()
+                : prefs.getString('selectedStoreName'),
             loadingStaff: true,
           ),
         ) {
@@ -140,13 +150,21 @@ class StaffLockCubit extends Cubit<StaffLockState> {
 
   Future<void> loadStaffOptions() async {
     emit(state.copyWith(loadingStaff: true, clearError: true));
+    final controller = getIt<UiStoreController>();
+    final storeId = preferredStoreId ?? state.storeId;
+    final resolvedName = controller.staffUnlockStoreName(storeId: storeId) ??
+        ((storeNameHint ?? '').trim().isNotEmpty
+            ? storeNameHint!.trim()
+            : null) ??
+        prefs.getString('selectedStoreName');
+    final earlyName = (resolvedName ?? state.storeName ?? '').trim();
+    if (earlyName.isNotEmpty) {
+      emit(state.copyWith(loadingStaff: true, storeName: earlyName));
+    }
     try {
-      final controller = getIt<UiStoreController>();
-      final staff = await controller.listLocalStaffOptions(
-        storeId: preferredStoreId ?? state.storeId,
-      );
+      final staff = await controller.listLocalStaffOptions(storeId: storeId);
       final recent = await controller.loadRecentStaffOptions();
-      // Keep recent entries that still exist in the local staff list when possible.
+      // Keep recent entries that still exist in this store's staff list only.
       final byId = {for (final s in staff) s.customerId: s};
       final byIdent = {
         for (final s in staff) s.identifier.toLowerCase(): s,
@@ -154,8 +172,8 @@ class StaffLockCubit extends Cubit<StaffLockState> {
       final resolvedRecent = <PosStaffOption>[];
       for (final row in recent) {
         final match = byId[row.customerId] ??
-            byIdent[row.identifier.toLowerCase()] ??
-            row;
+            byIdent[row.identifier.toLowerCase()];
+        if (match == null) continue;
         if (resolvedRecent.any(
           (s) =>
               s.customerId == match.customerId ||
@@ -177,9 +195,14 @@ class StaffLockCubit extends Cubit<StaffLockState> {
           }
         }
       }
+      final name = (resolvedName ?? '').trim();
+      if (name.isNotEmpty) {
+        await prefs.setString('selectedStoreName', name);
+      }
       emit(
         state.copyWith(
           loadingStaff: false,
+          storeName: name.isNotEmpty ? name : state.storeName,
           staffOptions: staff,
           recentStaff: resolvedRecent,
           selectedCustomerId: selectedId,
@@ -189,6 +212,9 @@ class StaffLockCubit extends Cubit<StaffLockState> {
       emit(
         state.copyWith(
           loadingStaff: false,
+          storeName: (resolvedName ?? '').trim().isNotEmpty
+              ? resolvedName!.trim()
+              : state.storeName,
           staffOptions: const [],
           recentStaff: const [],
         ),

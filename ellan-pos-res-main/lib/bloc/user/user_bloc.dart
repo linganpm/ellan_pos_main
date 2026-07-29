@@ -114,7 +114,16 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       await prefs.remove('userPassword');
       await prefs.remove('userLoggedIn');
 
-      emit(UserNeedsStaffUnlock(storeId: selectedStoreId));
+      final storeName = controller.staffUnlockStoreName(
+            storeId: selectedStoreId,
+          ) ??
+          prefs.getString('selectedStoreName');
+      emit(
+        UserNeedsStaffUnlock(
+          storeId: selectedStoreId,
+          storeName: storeName,
+        ),
+      );
     } catch (e, st) {
       // ignore: avoid_print
       print('UserBloc::_onUserInitialize error: $e\n$st');

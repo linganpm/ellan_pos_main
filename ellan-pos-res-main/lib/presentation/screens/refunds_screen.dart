@@ -11,7 +11,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Lists local order refunds for the open store.
 class RefundsScreen extends StatefulWidget {
-  const RefundsScreen({super.key});
+  /// Optional dashboard period (`Today`, `This Week`, …).
+  final String? periodFilter;
+
+  const RefundsScreen({super.key, this.periodFilter});
 
   @override
   State<RefundsScreen> createState() => _RefundsScreenState();
@@ -39,7 +42,23 @@ class _RefundsScreenState extends State<RefundsScreen> {
       _error = null;
     });
     try {
-      final rows = await getIt<UiStoreController>().listRefunds();
+      final controller = getIt<UiStoreController>();
+      var rows = await controller.listRefunds();
+      final period = (widget.periodFilter ?? '').trim();
+      if (period.isNotEmpty) {
+        try {
+          final range = controller.dashboardDateRangeForFilter(period);
+          final prefs = getIt<SharedPreferences>();
+          final storeId = controller.store?.storeId;
+          final tzName = DeviceSetupStore(prefs).timezoneForStore(storeId);
+          rows = rows.where((row) {
+            final when = OrgTimezone.tryParseWallClock(row.createdOn, tzName) ??
+                DateTime.tryParse(row.createdOn);
+            if (when == null) return false;
+            return !when.isBefore(range.start) && when.isBefore(range.end);
+          }).toList(growable: false);
+        } catch (_) {}
+      }
       if (!mounted) return;
       setState(() {
         _refunds = rows;
@@ -71,7 +90,12 @@ class _RefundsScreenState extends State<RefundsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text('Refunds', style: FontUtility.heading.copyWith(fontSize: 22)),
+        title: Text(
+          (widget.periodFilter ?? '').trim().isEmpty
+              ? 'Refunds'
+              : 'Refunds · ${widget.periodFilter!.trim()}',
+          style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
         actions: [
           IconButton(
             onPressed: _loading ? null : _load,

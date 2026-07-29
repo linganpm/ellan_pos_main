@@ -356,6 +356,12 @@ abstract class AppLocalizations {
   /// **'Top Categories'**
   String get dashboardTopCategories;
 
+  /// No description provided for @dashboardTopProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Products'**
+  String get dashboardTopProducts;
+
   /// No description provided for @unsupportedDeviceTitle.
   ///
   /// In en, this message translates to:

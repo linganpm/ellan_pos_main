@@ -24,6 +24,7 @@ import '../order_types_repository.dart';
 import '../device_approval.dart';
 import '../org_timezone.dart';
 import '../pos_checkout_meta.dart';
+import '../pos_report_mailer_defaults.dart';
 
 export 'checkout_models.dart';
 export '../device_local_reset.dart' show DeviceLocalResetResult;
@@ -190,6 +191,13 @@ class UiStoreController {
   /// Clear the active staff session but keep the device / store shell ready.
   Future<void> lockStaff() async {
     final prefs = await SharedPreferences.getInstance();
+    final open = _store;
+    if (open != null) {
+      await persistSelectedStore(
+        storeId: open.scope.storeId,
+        storeName: open.storeName,
+      );
+    }
     try {
       if (_store != null) {
         await logout();
@@ -239,45 +247,116 @@ class UiStoreController {
     final preferredStoreId =
         (storeId ?? prefs.getString('selectedStoreId') ?? '').trim();
 
-    // Fast path: store already open — switch session locally.
+    // Fast path: store already open — try local switch, then online rebind.
     final existingStore = _store;
     if (existingStore != null) {
       try {
         await existingStore.auth.logout();
       } catch (_) {}
-      final session = await existingStore.auth.login(
+      var session = await existingStore.auth.login(
         existingStore.scope,
         StoreLoginRequest(email: trimmedId, password: trimmedPassword),
       );
-      if (session != null) {
-        final customer = await existingStore.auth.currentCustomer();
-        await _rememberStaffHint(
-          prefs,
-          trimmedId,
-          session.email,
-          displayName: customer?.name,
-          customerId: customer?.customerId ?? session.customerId,
-        );
-        // Refresh org-login cache for this operator when possible.
-        await loginToOrganisation(
+
+      // Local SQLite hashes go stale after password changes / first sync with
+      // the default offline hash. Fall back to gateway auth and rebind when
+      // the device can reach the server; otherwise stay offline-only.
+      if (session == null) {
+        final online = await NetworkReachability.canReachGateway();
+        if (!online) {
+          return const StaffUnlockResult(
+            ok: false,
+            message: 'Invalid staff ID or password.',
+          );
+        }
+        final onlineOk = await _loginOrganisationForUnlock(
           orgCode: orgCode,
-          email: trimmedId,
+          identifier: trimmedId,
           password: trimmedPassword,
-          preferLocal: true,
+          allowOnline: true,
         );
-        await applyDeviceAutoSync();
-        return StaffUnlockResult(
-          ok: true,
-          storeId: existingStore.scope.storeId,
+        if (!onlineOk) {
+          return const StaffUnlockResult(
+            ok: false,
+            message: 'Invalid staff ID or password.',
+          );
+        }
+        final login = _organisationLogin;
+        if (login == null) {
+          return const StaffUnlockResult(
+            ok: false,
+            message: 'Invalid staff ID or password.',
+          );
+        }
+        final hasThisStore = login.accessibleStores.any(
+          (entry) => entry.store.storeId == existingStore.scope.storeId,
+        );
+        if (!hasThisStore) {
+          final row = login.customerRow;
+          await _rememberStaffHint(
+            prefs,
+            trimmedId,
+            login.email,
+            displayName: '${row?['name'] ?? login.customerName}'.trim(),
+            customerId: login.customerId,
+          );
+          return const StaffUnlockResult(
+            ok: true,
+            needsStorePicker: true,
+          );
+        }
+        try {
+          _store = await existingStore.switchAccessibleStore(
+            login: login,
+            storeId: existingStore.scope.storeId,
+            deviceRegistration: _deviceRegistration,
+          );
+          session = await _store?.auth.currentSession();
+        } catch (_) {
+          return const StaffUnlockResult(
+            ok: false,
+            message:
+                'Signed in, but this branch is not available. Try Switch store.',
+          );
+        }
+      }
+
+      if (session == null) {
+        return const StaffUnlockResult(
+          ok: false,
+          message: 'Invalid staff ID or password.',
         );
       }
+
+      final open = _store ?? existingStore;
+      final customer = await open.auth.currentCustomer();
+      await _rememberStaffHint(
+        prefs,
+        trimmedId,
+        session.email,
+        displayName: customer?.name,
+        customerId: customer?.customerId ?? session.customerId,
+      );
+      await _persistVerifiedOfflineCredentials(
+        identifier: trimmedId,
+        password: trimmedPassword,
+        customerId: customer?.customerId ?? session.customerId,
+        email: session.email,
+      );
+      try {
+        await applyDeviceAutoSync();
+      } catch (_) {}
+      return StaffUnlockResult(
+        ok: true,
+        storeId: open.scope.storeId,
+      );
     }
 
-    final loggedIn = await loginToOrganisation(
+    final loggedIn = await _loginOrganisationForUnlock(
       orgCode: orgCode,
-      email: trimmedId,
+      identifier: trimmedId,
       password: trimmedPassword,
-      preferLocal: true,
+      allowOnline: await NetworkReachability.canReachGateway(),
     );
     if (!loggedIn) {
       return const StaffUnlockResult(
@@ -311,14 +390,26 @@ class UiStoreController {
         displayName: '${row?['name'] ?? ''}'.trim(),
         customerId: _organisationLogin?.customerId,
       );
+      await _persistVerifiedOfflineCredentials(
+        identifier: trimmedId,
+        password: trimmedPassword,
+        customerId: _organisationLogin?.customerId,
+        email: _organisationLogin?.email,
+      );
       return const StaffUnlockResult(
         ok: true,
         needsStorePicker: true,
       );
     }
 
-    await openStore(targetStoreId);
-    await prefs.setString('selectedStoreId', targetStoreId);
+    try {
+      await openStore(targetStoreId);
+    } catch (e) {
+      return StaffUnlockResult(
+        ok: false,
+        message: 'Could not open store. Try Switch store or Online sign-in.',
+      );
+    }
     final row = _organisationLogin?.customerRow;
     await _rememberStaffHint(
       prefs,
@@ -327,7 +418,76 @@ class UiStoreController {
       displayName: '${row?['name'] ?? ''}'.trim(),
       customerId: _organisationLogin?.customerId,
     );
+    await _persistVerifiedOfflineCredentials(
+      identifier: trimmedId,
+      password: trimmedPassword,
+      customerId: _organisationLogin?.customerId,
+      email: _organisationLogin?.email,
+    );
     return StaffUnlockResult(ok: true, storeId: targetStoreId);
+  }
+
+  /// Local cache first, then gateway — keeps unlock working when offline hashes
+  /// are stale but the real password is correct online.
+  Future<bool> _loginOrganisationForUnlock({
+    required String orgCode,
+    required String identifier,
+    required String password,
+    bool allowOnline = true,
+  }) async {
+    try {
+      final localOk = await loginToOrganisation(
+        orgCode: orgCode,
+        email: identifier,
+        password: password,
+        preferLocal: true,
+      );
+      if (localOk) return true;
+    } catch (_) {}
+
+    if (!allowOnline) return false;
+
+    try {
+      return await loginToOrganisation(
+        orgCode: orgCode,
+        email: identifier,
+        password: password,
+        forceOnline: true,
+      );
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// After a successful unlock, keep the verified password hash on-device for
+  /// offline staff unlock until lease end / a newer sync credential arrives.
+  Future<void> _persistVerifiedOfflineCredentials({
+    required String identifier,
+    required String password,
+    String? customerId,
+    String? email,
+  }) async {
+    final open = _store;
+    if (open != null) {
+      try {
+        await open.auth.persistVerifiedOfflinePassword(
+          password: password,
+          customerId: customerId,
+          identifier: identifier,
+        );
+      } catch (_) {}
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final setup = DeviceSetupStore(prefs);
+    try {
+      await setup.persistVerifiedStaffCredential(
+        identifier: identifier,
+        password: password,
+        customerId: customerId,
+        email: email,
+      );
+    } catch (_) {}
   }
 
   Future<void> _rememberStaffHint(
@@ -523,9 +683,10 @@ class UiStoreController {
     return _organisationLogin?.accessibleStores ?? const [];
   }
 
-  /// Local POS operators for the staff unlock name buttons.
+  /// Local POS operators for the staff unlock name buttons (this store only).
   Future<List<PosStaffOption>> listLocalStaffOptions({String? storeId}) async {
-    final preferredStoreId = (storeId ?? '').trim();
+    final open = _store;
+    final preferredStoreId = (storeId ?? open?.scope.storeId ?? '').trim();
     // Key by login identity (reg / email), not customerId — the same person can
     // appear as both `user_123` and a legacy row after sync.
     final byLoginKey = <String, PosStaffOption>{};
@@ -562,8 +723,6 @@ class UiStoreController {
       final display = name.isNotEmpty
           ? name
           : (reg.isNotEmpty ? reg : (email.isNotEmpty ? email : customerId));
-      // Prefer the first (store DB) entry; keep richer name/reg if a later
-      // row fills gaps.
       final existing = byLoginKey[key];
       if (existing == null) {
         byLoginKey[key] = PosStaffOption(
@@ -586,13 +745,12 @@ class UiStoreController {
       }
     }
 
-    // Prefer operators from the open store DB only — merging bootstrap on top
-    // duplicated the same staff under different customer ids.
-    final open = _store;
+    // Branch-scoped operators from the open store DB (store_roles), even after
+    // logout — do not list org-wide customers.
     var loadedFromStore = false;
     if (open != null) {
       try {
-        final rows = await open.customers.listDetails(
+        final rows = await open.customers.listStoreOperators(
           scope: open.scope,
           limit: 500,
           offset: 0,
@@ -607,11 +765,11 @@ class UiStoreController {
             'usr_reg_num': customer.usrRegNum,
           });
         }
-        loadedFromStore = byLoginKey.isNotEmpty;
+        loadedFromStore = true;
       } catch (_) {}
     }
 
-    if (!loadedFromStore) {
+    if (!loadedFromStore && preferredStoreId.isNotEmpty) {
       try {
         final prefs = await SharedPreferences.getInstance();
         final setup = DeviceSetupStore(prefs);
@@ -625,31 +783,27 @@ class UiStoreController {
               final customerId = '${raw['customerId'] ?? ''}'.trim();
               final roleStoreId = '${raw['storeId'] ?? ''}'.trim();
               if (customerId.isEmpty) continue;
-              if (preferredStoreId.isNotEmpty &&
-                  roleStoreId.isNotEmpty &&
-                  roleStoreId != preferredStoreId) {
-                continue;
-              }
+              if (roleStoreId != preferredStoreId) continue;
               final access = raw['access_enabled'];
               final enabled = access is bool
                   ? access
                   : ((access as num?)?.toInt() ?? 1) == 1;
               if (!enabled) continue;
+              final role = '${raw['role'] ?? ''}'.trim().toLowerCase();
+              if (role == 'retail_customer' || role == 'business_customer') {
+                continue;
+              }
               roleByCustomer.add(customerId);
             }
           }
 
           final data = bootstrap['data'];
-          if (data is List) {
+          if (data is List && roleByCustomer.isNotEmpty) {
             for (final raw in data) {
               if (raw is! Map) continue;
               final row = raw.cast<String, dynamic>();
               final customerId = '${row['customerId'] ?? ''}'.trim();
-              if (preferredStoreId.isNotEmpty &&
-                  roleByCustomer.isNotEmpty &&
-                  !roleByCustomer.contains(customerId)) {
-                continue;
-              }
+              if (!roleByCustomer.contains(customerId)) continue;
               addRow(row);
             }
           }
@@ -662,6 +816,41 @@ class UiStoreController {
         (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
       );
     return staff;
+  }
+
+  /// Display name for the open / selected store on staff unlock.
+  String? staffUnlockStoreName({String? storeId}) {
+    final open = _store;
+    if (open != null) {
+      final name = open.storeName.trim();
+      if (name.isNotEmpty) return name;
+    }
+    final id = (storeId ?? open?.scope.storeId ?? '').trim();
+    if (id.isEmpty) return null;
+    for (final entry in accessibleStores()) {
+      final sid = entry.store.storeId.trim();
+      final remote = (entry.store.remoteId ?? '').trim();
+      if (sid == id || (remote.isNotEmpty && remote == id)) {
+        final name = entry.store.storeName.trim();
+        if (name.isNotEmpty) return name;
+      }
+    }
+    return null;
+  }
+
+  /// Persist selected branch id + display name for staff unlock / cold start.
+  Future<void> persistSelectedStore({
+    required String storeId,
+    String? storeName,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final id = storeId.trim();
+    if (id.isEmpty) return;
+    await prefs.setString('selectedStoreId', id);
+    final name = (storeName ?? staffUnlockStoreName(storeId: id) ?? '').trim();
+    if (name.isNotEmpty) {
+      await prefs.setString('selectedStoreName', name);
+    }
   }
 
   /// 4-digit POS code of the logged-in organisation ('' when unknown).
@@ -755,6 +944,24 @@ class UiStoreController {
       print('Opened store: ${_store!.storeName} (ID: ${_store!.scope.storeId})');
     }
 
+    await persistSelectedStore(
+      storeId: _store!.scope.storeId,
+      storeName: _store!.storeName,
+    );
+    try {
+      await _store!.ensureFixedSystemMailers(
+        host: PosReportMailerDefaults.host,
+        port: PosReportMailerDefaults.port,
+        username: PosReportMailerDefaults.username,
+        password: PosReportMailerDefaults.password,
+        fromEmail: PosReportMailerDefaults.fromEmail,
+        reportsFromName: PosReportMailerDefaults.reportsFromName,
+        invoicesFromName: PosReportMailerDefaults.invoicesFromName,
+        useTls: PosReportMailerDefaults.useTls,
+      );
+    } catch (_) {
+      // Non-fatal — settings/reports screens will retry.
+    }
     await applyDeviceAutoSync();
   }
 
@@ -815,9 +1022,18 @@ class UiStoreController {
     List<StoreOrderItemDetails> items,
   ) async {
     final catalogue = await loadCatalogue();
-    final byId = {
-      for (final product in catalogue.products) product.id: product.name,
-    };
+    final byId = <String, String>{};
+    for (final product in catalogue.products) {
+      void put(String? key) {
+        final k = (key ?? '').trim();
+        if (k.isEmpty) return;
+        byId.putIfAbsent(k, () => product.name);
+      }
+
+      put(product.id);
+      put(product.localId);
+      if (product.variantId != null) put('${product.variantId}');
+    }
     final labels = <String, String>{};
     for (final detail in items) {
       final item = detail.item;
@@ -839,9 +1055,22 @@ class UiStoreController {
     List<StoreOrderItemDetails> items,
   ) async {
     final catalogue = await loadCatalogue();
-    final byId = {
-      for (final product in catalogue.products) product.id: product,
-    };
+    final byId = <String, PosCatalogProduct>{};
+    void index(PosCatalogProduct product) {
+      void put(String? key) {
+        final k = (key ?? '').trim();
+        if (k.isEmpty) return;
+        byId.putIfAbsent(k, () => product);
+      }
+
+      put(product.id);
+      put(product.localId);
+      if (product.variantId != null) put('${product.variantId}');
+    }
+
+    for (final product in catalogue.products) {
+      index(product);
+    }
     final resolved = <String, PosCatalogProduct>{};
     for (final detail in items) {
       final item = detail.item;
@@ -922,14 +1151,23 @@ class UiStoreController {
     );
     String? resolvedCreditCustomerId;
     if (needsCreditCustomer) {
+      // Require an explicit credit customer — never fall back to the signed-in
+      // staff session, which would silently "succeed" credit without a buyer.
       resolvedCreditCustomerId =
-          creditCustomerId ?? resolvedCustomerId ?? sessionCustomer?.customerId;
+          (creditCustomerId ?? resolvedCustomerId)?.trim();
       if (resolvedCreditCustomerId == null ||
           resolvedCreditCustomerId.isEmpty) {
         throw StateError(
           'Credit checkout requires a customer. Search or add a customer before paying on credit.',
         );
       }
+    }
+
+    final hasPayablePayment = payments.any((line) => line.amount > 0.0001);
+    if (!hasPayablePayment) {
+      throw StateError(
+        'Cannot checkout without at least one payment. Select a customer to put remaining balance on credit, or add another tender.',
+      );
     }
 
     final orderId = await store.orders.create(
@@ -1138,7 +1376,6 @@ class UiStoreController {
     }
 
     final paymentMode = _mapPaymentMethod(paymentMethod);
-    final sessionCustomer = await store.auth.currentCustomer();
     String? resolvedCreditCustomerId;
     if (paymentMode == StoreOrderPaymentMode.credit) {
       String? fromOrder;
@@ -1149,8 +1386,7 @@ class UiStoreController {
           break;
         }
       }
-      resolvedCreditCustomerId =
-          creditCustomerId ?? fromOrder ?? sessionCustomer?.customerId;
+      resolvedCreditCustomerId = creditCustomerId ?? fromOrder;
       if (resolvedCreditCustomerId == null ||
           resolvedCreditCustomerId.isEmpty) {
         throw StateError('Credit payment requires a customer on the order.');
@@ -1981,6 +2217,7 @@ class UiStoreController {
           : (variant.variantId?.toString() ?? variant.localId);
       return PosCatalogProduct(
         id: id,
+        localId: variant.localId,
         name: packageName.isNotEmpty
             ? packageName
             : (productName.isEmpty ? 'Item' : productName),
@@ -2001,18 +2238,30 @@ class UiStoreController {
     }
 
     for (final category in categoryRows) {
-      final variants = await store.products.listVariantsByCategory(
-        scope,
-        category.categoryId,
-      );
+      // Prefer localId lookup so offline-created categories (null categoryId) still resolve.
+      List<StoreProductVariantRecord> variants;
+      if (category.localId.trim().isNotEmpty) {
+        variants = await store.products.listVariantsByCategoryLocalId(
+          scope,
+          category.localId,
+        );
+      } else {
+        variants = await store.products.listVariantsByCategory(
+          scope,
+          category.categoryId,
+        );
+      }
       if (variants.isEmpty) continue;
+      final stableCategoryId = category.categoryId != 0
+          ? category.categoryId
+          : category.localId.hashCode.abs();
       categories.add(
-        PosCatalogCategory(id: category.categoryId, name: category.name),
+        PosCatalogCategory(id: stableCategoryId, name: category.name),
       );
       for (final variant in variants) {
         final mapped = mapVariant(
           variant,
-          categoryId: category.categoryId,
+          categoryId: stableCategoryId,
           categoryName: category.name,
         );
         if (!seenIds.add(mapped.id)) continue;
@@ -2033,13 +2282,26 @@ class UiStoreController {
         if (seenIds.contains(id)) continue;
         var categoryId = variant.categoryId;
         var categoryName = '';
+        final catLocal = variant.categoryLocalId.trim();
         for (final category in categoryRows) {
-          if (category.categoryId == categoryId ||
+          if ((catLocal.isNotEmpty && category.localId == catLocal) ||
+              category.categoryId == categoryId ||
               category.localId == 'cat_${variant.categoryId}' ||
               category.localId.endsWith('_${variant.categoryId}')) {
-            categoryId = category.categoryId;
+            categoryId = category.categoryId != 0
+                ? category.categoryId
+                : category.localId.hashCode.abs();
             categoryName = category.name;
             break;
+          }
+        }
+        if (categoryName.isEmpty && catLocal.isNotEmpty) {
+          final resolved = await store.products.findCategoryById(scope, catLocal);
+          if (resolved != null) {
+            categoryId = resolved.categoryId != 0
+                ? resolved.categoryId
+                : resolved.localId.hashCode.abs();
+            categoryName = resolved.name;
           }
         }
         if (categoryName.isEmpty && categoryId != 0) {
@@ -2433,31 +2695,100 @@ class UiStoreController {
     var credit = 0.0;
     final categoryCounts = <String, int>{};
     final categoryLabels = <String, String>{};
+    final productCounts = <String, int>{};
+    final productLabels = <String, String>{};
     final staffTotals = <String, PosDashboardStaffSales>{};
     final catalogue = await loadCatalogue();
-    final productsById = <String, PosCatalogProduct>{
-      for (final product in catalogue.products) product.id: product,
-    };
-    for (final product in catalogue.products) {
-      final variantId = product.variantId;
-      if (variantId != null) {
-        productsById.putIfAbsent('$variantId', () => product);
+    final productsById = <String, PosCatalogProduct>{};
+    void indexCatalogueProduct(PosCatalogProduct product) {
+      void put(String? key) {
+        final k = (key ?? '').trim();
+        if (k.isEmpty) return;
+        productsById.putIfAbsent(k, () => product);
       }
+
+      put(product.id);
+      put(product.localId);
+      if (product.variantId != null) put('${product.variantId}');
+    }
+
+    for (final product in catalogue.products) {
+      indexCatalogueProduct(product);
     }
 
     PosCatalogProduct? matchCatalogueProduct(String variantKey, String productKey) {
-      final direct = productsById[variantKey] ?? productsById[productKey];
+      final direct = productsById[variantKey.trim()] ?? productsById[productKey.trim()];
       if (direct != null) return direct;
       for (final product in catalogue.products) {
         if (variantKey.isNotEmpty &&
-            (product.id == variantKey || '${product.variantId ?? ''}' == variantKey)) {
+            (product.id == variantKey ||
+                product.localId == variantKey ||
+                '${product.variantId ?? ''}' == variantKey)) {
           return product;
         }
-        if (productKey.isNotEmpty && product.id == productKey) {
+        if (productKey.isNotEmpty &&
+            (product.id == productKey || product.localId == productKey)) {
           return product;
         }
       }
       return null;
+    }
+
+    Future<String?> resolveCategoryDisplayName(
+      String variantKey,
+      String productKey,
+    ) async {
+      final matched = matchCatalogueProduct(variantKey, productKey);
+      final fromCatalogue = (matched?.categoryName ?? '').trim();
+      if (fromCatalogue.isNotEmpty) return fromCatalogue;
+      if (matched != null && matched.categoryId != 0) {
+        return 'Category ${matched.categoryId}';
+      }
+
+      for (final key in [variantKey, productKey]) {
+        final trimmed = key.trim();
+        if (trimmed.isEmpty) continue;
+        final variant = await store.products.findVariantById(scope, trimmed);
+        if (variant == null) continue;
+        final catLocal = variant.categoryLocalId.trim();
+        if (catLocal.isNotEmpty) {
+          final category = await store.products.findCategoryById(scope, catLocal);
+          final name = (category?.name ?? '').trim();
+          if (name.isNotEmpty) return name;
+        }
+        if (variant.categoryId != 0) {
+          return 'Category ${variant.categoryId}';
+        }
+      }
+      return null;
+    }
+
+    Future<String> resolveProductDisplayName({
+      required String variantKey,
+      required String productKey,
+      required String itemName,
+    }) async {
+      final named = itemName.trim();
+      if (named.isNotEmpty) return named;
+      final matched = matchCatalogueProduct(variantKey, productKey);
+      final fromCatalogue = (matched?.name ?? '').trim().isNotEmpty
+          ? matched!.name.trim()
+          : (matched?.productName ?? '').trim();
+      if (fromCatalogue.isNotEmpty) return fromCatalogue;
+
+      for (final key in [variantKey, productKey]) {
+        final trimmed = key.trim();
+        if (trimmed.isEmpty) continue;
+        final variant = await store.products.findVariantById(scope, trimmed);
+        if (variant == null) continue;
+        final package = variant.productVariantName.trim();
+        if (package.isNotEmpty) return package;
+        final product = variant.productName.trim();
+        if (product.isNotEmpty) return product;
+      }
+      if (variantKey.trim().isNotEmpty) return variantKey.trim();
+      if (productKey.trim().isNotEmpty) return productKey.trim();
+      return 'Item';
     }
 
     ({String name, String reg}) resolveStaff(StoreOrderSummary order) {
@@ -2532,22 +2863,32 @@ class UiStoreController {
 
       final items = await store.orders.listItems(scope, order.orderId);
       for (final item in items) {
-        final matched = matchCatalogueProduct(item.productVariantId, item.productId);
-        final rawName = (matched?.categoryName ?? '').trim();
-        final displayName = rawName.isNotEmpty
-            ? rawName
-            : (matched != null && matched.categoryId != 0
-                ? 'Category ${matched.categoryId}'
-                : '');
-        if (displayName.isEmpty) continue;
-
-        final rollupKey = rawName.isNotEmpty
-            ? rawName.toLowerCase()
-            : 'id:${matched!.categoryId}';
         final qty = item.quantity;
         if (qty <= 0) continue;
+
+        final productName = await resolveProductDisplayName(
+          variantKey: item.productVariantId,
+          productKey: item.productId,
+          itemName: item.itemName,
+        );
+        final productKey = item.productVariantId.trim().isNotEmpty
+            ? item.productVariantId.trim()
+            : (item.productId.trim().isNotEmpty
+                ? item.productId.trim()
+                : productName.toLowerCase());
+        productCounts[productKey] = (productCounts[productKey] ?? 0) + qty;
+        productLabels.putIfAbsent(productKey, () => productName);
+
+        final categoryName = (await resolveCategoryDisplayName(
+              item.productVariantId,
+              item.productId,
+            ))
+            ?.trim();
+        if (categoryName == null || categoryName.isEmpty) continue;
+
+        final rollupKey = categoryName.toLowerCase();
         categoryCounts[rollupKey] = (categoryCounts[rollupKey] ?? 0) + qty;
-        categoryLabels.putIfAbsent(rollupKey, () => displayName);
+        categoryLabels.putIfAbsent(rollupKey, () => categoryName);
       }
     }
 
@@ -2578,6 +2919,24 @@ class UiStoreController {
         .map(
           (entry) => (
             name: categoryLabels[entry.key] ?? entry.key,
+            count: entry.value,
+          ),
+        )
+        .toList(growable: false);
+
+    final topProducts = productCounts.entries.toList()
+      ..sort((a, b) {
+        final byCount = b.value.compareTo(a.value);
+        if (byCount != 0) return byCount;
+        return (productLabels[a.key] ?? a.key)
+            .toLowerCase()
+            .compareTo((productLabels[b.key] ?? b.key).toLowerCase());
+      });
+    final topProductRows = topProducts
+        .take(8)
+        .map(
+          (entry) => (
+            name: productLabels[entry.key] ?? entry.key,
             count: entry.value,
           ),
         )
@@ -2657,6 +3016,7 @@ class UiStoreController {
       refundsAmount: refundsAmount,
       salesPoints: salesPoints,
       topCategories: topCategoryRows,
+      topProducts: topProductRows,
       staffSales: staffSalesRows,
       creditOrders: creditOrders,
     );
@@ -2692,6 +3052,11 @@ class UiStoreController {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Public date window used by dashboard metrics and deep-linked list screens.
+  ({DateTime start, DateTime end}) dashboardDateRangeForFilter(String filter) {
+    return _dashboardDateRange(filter, _orgTimezoneName);
   }
 
   ({DateTime start, DateTime end}) _dashboardDateRange(
@@ -2767,6 +3132,10 @@ class UiStoreController {
   }) async {
     try {
       final store = _requireStore();
+      // Ensure local tables/columns exist before any sync SQL runs.
+      try {
+        await store.ensureLocalSchema();
+      } catch (_) {}
       // Repair older sealed configs (missing offers/wallets/export URLs) and
       // push them into the live store so this sync run uses the fixed endpoints.
       try {
@@ -2795,6 +3164,11 @@ class UiStoreController {
           await store.sync.exportOrders(store.scope, onProgress: onProgress);
       final creditUpload =
           await store.sync.exportCredits(store.scope, onProgress: onProgress);
+      // Store Setup catalogue (categories/products/offers) uploads before import.
+      final productUpload = await store.sync.exportProducts(
+        store.scope,
+        onProgress: onProgress,
+      );
 
       final download = await store.sync.importConfiguredCatalogue(
         store.scope,
@@ -2827,6 +3201,7 @@ class UiStoreController {
           customerUpload,
           orderUpload,
           creditUpload,
+          productUpload,
           ...download.operations,
         ],
       );
@@ -2875,6 +3250,10 @@ class UiStoreController {
           await store.sync.exportOrders(store.scope, onProgress: onProgress);
       final creditUpload =
           await store.sync.exportCredits(store.scope, onProgress: onProgress);
+      final productUpload = await store.sync.exportProducts(
+        store.scope,
+        onProgress: onProgress,
+      );
       final download = await store.sync.importConfiguredCatalogue(
         store.scope,
         onProgress: onProgress,
@@ -2893,6 +3272,7 @@ class UiStoreController {
           customerUpload,
           orderUpload,
           creditUpload,
+          productUpload,
           ...download.operations,
         ],
       );

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../../core/utils/responsive_utils.dart';
 import '../screens/unsupported_device_screen.dart';
@@ -9,10 +10,10 @@ class DeviceRestrictionWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine screen size and conditionally render.
-    if (!ResponsiveUtils.isTablet(context)) {
-      return const UnsupportedDeviceScreen();
+    // Browser / desktop web is used as a tablet emulator in local dev.
+    if (kIsWeb || ResponsiveUtils.isTablet(context)) {
+      return child;
     }
-    return child;
+    return const UnsupportedDeviceScreen();
   }
 }

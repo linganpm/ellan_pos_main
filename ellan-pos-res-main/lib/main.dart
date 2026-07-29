@@ -1,11 +1,10 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:io' show Platform, Directory;
-import 'package:path_provider/path_provider.dart';
 
-// sqflite FFI initialization for desktop (macOS, Linux, Windows)
-// ensures sqlite databases can be opened when running outside mobile.
+// sqflite FFI initialization for desktop / mobile; web uses ffi_web.
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'bloc/splash/splash_bloc.dart';
 import 'bloc/user/user_bloc.dart';
@@ -20,26 +19,31 @@ import 'core/utils/font_utility.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/di/service_locator.dart';
 import 'core/device_setup_store.dart';
+import 'core/constants/discovery_constants.dart';
 import 'core/org_timezone.dart';
 import 'features/store/presentation/bloc/store_bloc.dart';
 import 'core/controllers/ui_store_controller.dart';
 
+import 'main_io_stub.dart' if (dart.library.io) 'main_io.dart' as io_support;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize sqflite FFI on all platforms (Android, iOS, macOS, Windows, Linux)
-  sqfliteFfiInit();
-  databaseFactory = databaseFactoryFfi;
-  
-  try {
-    final appSupportDir = await getApplicationSupportDirectory();
-    final dbDir = Directory('${appSupportDir.path}/databases');
-    if (!await dbDir.exists()) {
-      await dbDir.create(recursive: true);
+  // Server URL + root org id from `.env` (see `.env.example`).
+  await loadPosDiscoveryEnv();
+
+  if (kIsWeb) {
+    // Browser builds need the WASM/web SQLite factory.
+    databaseFactory = databaseFactoryFfiWeb;
+  } else {
+    // Initialize sqflite FFI on Android, iOS, macOS, Windows, Linux
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+    try {
+      await io_support.configureSqfliteDatabasesPath(databaseFactory);
+    } catch (e) {
+      debugPrint('Failed to set sqflite databases path: $e');
     }
-    await databaseFactory.setDatabasesPath(dbDir.path);
-  } catch (e) {
-    debugPrint('Failed to set sqflite databases path: $e');
   }
 
   // Initialize SharedPreferences for app-wide access

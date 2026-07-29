@@ -42,6 +42,19 @@ class StoreCustomersService {
     );
   }
 
+  /// Staff unlock operators for [scope.storeId] (no login session required).
+  Future<List<StoreCustomer>> listStoreOperators({
+    required StoreScope scope,
+    int limit = 500,
+    int offset = 0,
+  }) {
+    return _store._listStoreOperatorsForUnlock(
+      scope: scope,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
   /// Records an order's customer as a Retail (default) / Business Customer for
   /// the store so they appear in the Customers directory and sync upstream.
   /// Returns the local customerId, or null when name/phone are missing.

@@ -73,7 +73,8 @@ Map<String, dynamic> sealOfflinePosConfig(Map<String, dynamic> config) {
           syncMap['periodic_duration_seconds'] ?? 300,
       // Orders keep their export endpoint: local orders upload on every sync.
       'orders': _importAndExport(syncMap['orders']),
-      'products': _importOnly(syncMap['products']),
+      // Products keep export so tablet Store Setup catalogue reaches the server.
+      'products': _importAndExport(syncMap['products']),
       'customers': _importOnly(syncMap['customers']),
       // Credits keep export so buy-on-credit ledger reaches the server.
       'credits': _importAndExport(syncMap['credits']),
@@ -127,11 +128,12 @@ Map<String, dynamic> ensureCatalogImportUrls(Map<String, dynamic> config) {
     'wallets',
     'offers',
   ];
-  const twoWayEntities = {'orders', 'customers', 'credits'};
+  const twoWayEntities = {'orders', 'customers', 'credits', 'products'};
   const defaultExportTokens = {
     'orders': 'orders-token',
     'customers': 'customers-token',
     'credits': 'credits-token',
+    'products': 'products-token',
   };
 
   for (final entity in entities) {
@@ -411,6 +413,8 @@ Map<String, dynamic> _buildPosConfig({
         remoteConfig['login_lease_minutes'] ?? (7 * 24 * 60),
     'login_lease_days': remoteConfig['login_lease_days'] ?? 7,
     if (remoteConfig['pos_code'] != null) 'pos_code': remoteConfig['pos_code'],
+    if (remoteConfig['fixed_email_mailers'] is List)
+      'fixed_email_mailers': remoteConfig['fixed_email_mailers'],
     // Top-level org clock / country (home AppBar + dashboard buckets).
     ..._localeFieldsFrom(remoteConfig, bootstrapPayload, defaultStore),
     if (defaultStore != null) 'default_store': defaultStore,

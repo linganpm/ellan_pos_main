@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
+import 'package:pos_tablet/core/di/service_locator.dart';
 import '../../core/utils/font_utility.dart';
 import '../../core/routes.dart';
 import '../../bloc/store_list/store_list_bloc.dart';
@@ -8,23 +10,27 @@ import '../../data/models/store_model.dart';
 import '../../core/localization/l10n/app_localizations.dart';
 
 /// Store List Screen - Premium tablet-optimized UI for store selection
-/// 
+///
 /// This screen allows users to select a store from the available list
 /// before proceeding to the main dashboard. The left side uses the same
 /// branding layout as the welcome screen, while the right side displays
 /// an elegant store selection interface.
+///
+/// When [returnToStaffLock] is true (Switch store from the lock screen),
+/// a successful selection opens the branch then returns to staff unlock
+/// instead of auto-entering the previous operator's home session.
 class StoreListScreen extends StatelessWidget {
-  const StoreListScreen({super.key});
+  final bool returnToStaffLock;
+
+  const StoreListScreen({super.key, this.returnToStaffLock = false});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => StoreListCubit()
-          ..loadStores(),
+      create: (context) => StoreListCubit()..loadStores(),
       child: Scaffold(
         body: Row(
           children: [
-            // LEFT SIDE - Branding / Graphic (Reused from WelcomeScreen)
             Expanded(
               flex: 1,
               child: Container(
@@ -74,20 +80,19 @@ class StoreListScreen extends StatelessWidget {
                 ),
               ),
             ),
-
-            // RIGHT SIDE - Store Selection Area
             Expanded(
               flex: 1,
               child: Container(
                 color: Colors.white,
-                child: Center(
+                child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 60.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 48.0,
+                      vertical: 24.0,
+                    ),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Title
                         Text(
                           'Select Store',
                           style: FontUtility.heading.copyWith(
@@ -96,28 +101,23 @@ class StoreListScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        // Subtitle
                         Text(
-                          'Choose your store to continue',
+                          returnToStaffLock
+                              ? 'Choose a branch, then unlock with staff ID'
+                              : 'Choose your store to continue',
                           style: FontUtility.body.copyWith(
                             color: Colors.black54,
                             fontSize: 16,
                           ),
                         ),
-                        const SizedBox(height: 32),
-
-                        // Search Field
+                        const SizedBox(height: 24),
                         _buildSearchField(),
-                        const SizedBox(height: 24),
-
-                        // Store List
-                        Expanded(
-                          child: _buildStoreListContent(),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Submit Button
+                        const SizedBox(height: 16),
+                        Expanded(child: _buildStoreListContent()),
+                        const SizedBox(height: 16),
                         _buildSubmitButton(),
+                        const SizedBox(height: 8),
+                        _buildExitActions(context),
                       ],
                     ),
                   ),
@@ -130,7 +130,53 @@ class StoreListScreen extends StatelessWidget {
     );
   }
 
-  /// Builds the search field for filtering stores
+  Widget _buildExitActions(BuildContext context) {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      children: [
+        if (returnToStaffLock)
+          TextButton(
+            onPressed: () {
+              final controller = getIt<UiStoreController>();
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                AppRoutes.staffLock,
+                (route) => false,
+                arguments: {
+                  'storeId': controller.store?.scope.storeId,
+                  'storeName': controller.store?.storeName,
+                },
+              );
+            },
+            child: Text(
+              'Back to staff unlock',
+              style: FontUtility.body.copyWith(
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        TextButton(
+          onPressed: () {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.login,
+              (route) => false,
+            );
+          },
+          child: Text(
+            'Online device sign-in',
+            style: FontUtility.body.copyWith(
+              color: Colors.black54,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSearchField() {
     return BlocBuilder<StoreListCubit, StoreListState>(
       builder: (context, state) {
@@ -142,7 +188,8 @@ class StoreListScreen extends StatelessWidget {
             hintText: 'Search by store name or ID...',
             hintStyle: FontUtility.body.copyWith(color: Colors.black38),
             prefixIcon: const Icon(Icons.search, color: Color(0xFF4A00E0)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Colors.black12),
@@ -162,7 +209,6 @@ class StoreListScreen extends StatelessWidget {
     );
   }
 
-  /// Builds the main store list content with appropriate state handling
   Widget _buildStoreListContent() {
     return BlocBuilder<StoreListCubit, StoreListState>(
       builder: (context, state) {
@@ -207,11 +253,17 @@ class StoreListScreen extends StatelessWidget {
                     fontSize: 14,
                   ),
                 ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () => context.read<StoreListCubit>().loadStores(),
+                  child: const Text('Retry'),
+                ),
               ],
             ),
           );
         }
 
+        final cubit = context.read<StoreListCubit>();
         List<StoreModel> stores = [];
         String? selectedStoreId;
 
@@ -221,6 +273,13 @@ class StoreListScreen extends StatelessWidget {
         } else if (state is StoreSelectionChanged) {
           stores = state.allStores;
           selectedStoreId = state.selectedStore.storeId;
+        } else if (state is StoreVerificationLoading) {
+          stores = cubit.allStores;
+          selectedStoreId = state.store.storeId;
+        } else if (state is StoreVerificationFailure ||
+            state is StoreVerificationSuccess) {
+          stores = cubit.allStores;
+          selectedStoreId = cubit.selectedStoreId;
         }
 
         if (stores.isEmpty) {
@@ -228,7 +287,7 @@ class StoreListScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                const Icon(
                   Icons.store_outlined,
                   size: 48,
                   color: Colors.black26,
@@ -246,7 +305,6 @@ class StoreListScreen extends StatelessWidget {
           );
         }
 
-        // Display store list
         return ListView.builder(
           itemCount: stores.length,
           itemBuilder: (context, index) {
@@ -267,21 +325,21 @@ class StoreListScreen extends StatelessWidget {
     );
   }
 
-  /// Builds an individual store card with selection indicator
   Widget _buildStoreCard({
     required BuildContext context,
     required StoreModel store,
     required bool isSelected,
   }) {
     return InkWell(
-               onTap: () {
-                context.read<StoreListCubit>().selectStore(store.storeId);
-              
+      onTap: () {
+        context.read<StoreListCubit>().selectStore(store.storeId);
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF4A00E0).withValues(alpha: 0.08) : Colors.white,
+          color: isSelected
+              ? const Color(0xFF4A00E0).withValues(alpha: 0.08)
+              : Colors.white,
           border: Border.all(
             color: isSelected ? const Color(0xFF4A00E0) : Colors.black12,
             width: isSelected ? 2.0 : 1.0,
@@ -309,7 +367,6 @@ class StoreListScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              // Store Avatar/Icon
               Container(
                 width: 56,
                 height: 56,
@@ -324,7 +381,7 @@ class StoreListScreen extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Center(
+                child: const Center(
                   child: Icon(
                     Icons.store_rounded,
                     color: Colors.white,
@@ -333,14 +390,11 @@ class StoreListScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-
-              // Store Details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Store Name
                     Text(
                       store.storeName,
                       style: FontUtility.body.copyWith(
@@ -352,7 +406,6 @@ class StoreListScreen extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    // Store ID
                     Text(
                       'Store ID: ${store.storeId}',
                       style: FontUtility.body.copyWith(
@@ -361,14 +414,11 @@ class StoreListScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    // Role Badge
                     _buildRoleBadge(store.storeRole),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-
-              // Selection Indicator
               AnimatedScale(
                 scale: isSelected ? 1.0 : 0.8,
                 duration: const Duration(milliseconds: 300),
@@ -378,7 +428,8 @@ class StoreListScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSelected ? const Color(0xFF4A00E0) : Colors.black26,
+                      color:
+                          isSelected ? const Color(0xFF4A00E0) : Colors.black26,
                       width: 2.0,
                     ),
                   ),
@@ -403,7 +454,6 @@ class StoreListScreen extends StatelessWidget {
     );
   }
 
-  /// Builds a role badge widget
   Widget _buildRoleBadge(String role) {
     Color badgeColor;
     Color textColor;
@@ -440,12 +490,10 @@ class StoreListScreen extends StatelessWidget {
     );
   }
 
-  /// Builds the submit button
   Widget _buildSubmitButton() {
     return BlocListener<StoreListCubit, StoreListState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is StoreVerificationSuccess) {
-          // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${state.store.storeName} selected successfully!'),
@@ -453,12 +501,33 @@ class StoreListScreen extends StatelessWidget {
               duration: const Duration(seconds: 2),
             ),
           );
-          // Navigate to home screen after a brief delay
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.pushReplacementNamed(context, AppRoutes.home);
-          });
+
+          if (returnToStaffLock) {
+            // openStore binds the cached org login as the store session —
+            // clear it so the next operator must unlock explicitly.
+            try {
+              await getIt<UiStoreController>().lockStaff();
+            } catch (_) {}
+            if (!context.mounted) return;
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.staffLock,
+              (route) => false,
+              arguments: {
+                'storeId': state.store.storeId,
+                'storeName': state.store.storeName,
+              },
+            );
+            return;
+          }
+
+          if (!context.mounted) return;
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.home,
+            (route) => false,
+          );
         } else if (state is StoreVerificationFailure) {
-          // Show error message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage),
@@ -467,24 +536,19 @@ class StoreListScreen extends StatelessWidget {
           );
         }
       },
-        child: BlocBuilder<StoreListCubit, StoreListState>(
+      child: BlocBuilder<StoreListCubit, StoreListState>(
         builder: (context, state) {
-          bool isLoading = state is StoreVerificationLoading;
+          final cubit = context.read<StoreListCubit>();
+          final isLoading = state is StoreVerificationLoading;
           final syncMessage =
               state is StoreVerificationLoading ? state.message : null;
-          bool isEnabled = false;
-
-          if (state is StoreListLoaded && state.selectedStoreId != null) {
-            isEnabled = true;
-          } else if (state is StoreSelectionChanged) {
-            isEnabled = true;
-          }
+          final isEnabled = (cubit.selectedStoreId ?? '').isNotEmpty;
 
           return SizedBox(
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-               onPressed: isEnabled && !isLoading
+              onPressed: isEnabled && !isLoading
                   ? () {
                       context.read<StoreListCubit>().verifySelectedStore();
                     }
@@ -528,7 +592,7 @@ class StoreListScreen extends StatelessWidget {
                         ],
                       )
                     : Text(
-                        'Continue',
+                        returnToStaffLock ? 'Open branch' : 'Continue',
                         style: FontUtility.button.copyWith(
                           color: isEnabled ? Colors.white : Colors.grey.shade500,
                           fontSize: 16,

@@ -85,6 +85,602 @@ class Store {
   late final StorePrintingService printing = StorePrintingService._(this);
   late final StoreSyncService sync = StoreSyncService._(this);
 
+  /// Idempotent local SQLite repairs used before Sync / wallet catalogue ops.
+  Future<void> ensureLocalSchema() => BackendSetup.ensureSchemaRepairs(_db);
+
+  Future<Map<String, dynamic>> loadCompanyProfile() async {
+    await _requireRole('member');
+    final rows = await _db.query(
+      _storeInfoTable,
+      where: 'orgId = ? AND storeId = ?',
+      whereArgs: [orgId, storeId],
+      limit: 1,
+    );
+    final row = rows.isEmpty ? <String, Object?>{} : rows.first;
+    return {
+      'storeName': row['storeName'] ?? storeName,
+      'phone': row['phone'] ?? phone,
+      'contactEmail': row['contactEmail'] ?? contactEmail,
+      'contactPerson': row['contactPerson'] ?? contactPerson,
+      'address': row['address'] ?? '',
+      'registration_number': row['registration_number'] ?? '',
+      'tax_number': row['tax_number'] ?? '',
+      'identifier': row['identifier'] ?? '',
+      'logo': row['logo'] ?? logo,
+      'logo_pending_sync': (row['logo_pending_sync'] as num?)?.toInt() ?? 0,
+      'uniqueId': uniqueId,
+      'serviceInstanceId': serviceInstanceId,
+      'storeRemoteId': storeRemoteId,
+      'orgId': orgId,
+      'storeId': storeId,
+    };
+  }
+
+  Future<void> saveCompanyProfileLocal({
+    String? storeName,
+    String? phone,
+    String? contactEmail,
+    String? address,
+    String? registrationNumber,
+    String? taxNumber,
+    String? identifier,
+    String? logo,
+    bool? logoPendingSync,
+  }) async {
+    await _requireRole('admin');
+    final patch = <String, Object?>{};
+    if (storeName != null) patch['storeName'] = storeName;
+    if (phone != null) patch['phone'] = phone;
+    if (contactEmail != null) patch['contactEmail'] = contactEmail;
+    if (address != null) patch['address'] = address;
+    if (registrationNumber != null) {
+      patch['registration_number'] = registrationNumber;
+    }
+    if (taxNumber != null) patch['tax_number'] = taxNumber;
+    if (identifier != null) patch['identifier'] = identifier;
+    if (logo != null) patch['logo'] = logo;
+    if (logoPendingSync != null) {
+      patch['logo_pending_sync'] = logoPendingSync ? 1 : 0;
+    }
+    if (patch.isEmpty) return;
+    await _db.update(
+      _storeInfoTable,
+      patch,
+      where: 'orgId = ? AND storeId = ?',
+      whereArgs: [orgId, storeId],
+    );
+  }
+
+  /// Persist a picked logo file path for later company-settings sync.
+  Future<void> setCompanyLogoLocal(String absolutePath) async {
+    await saveCompanyProfileLocal(
+      logo: absolutePath,
+      logoPendingSync: true,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> listReportSubscribers() async {
+    await _requireRole('member');
+    final rows = await _db.query(
+      'subscribers',
+      where:
+          'orgId = ? AND storeId = ? AND type = ? AND deleted = 0 AND active = 1',
+      whereArgs: [orgId, storeId, 'report'],
+      orderBy: 'is_owner_default DESC, name COLLATE NOCASE ASC',
+    );
+    // Keep a `cadence` alias for older UI callers.
+    return rows
+        .map(
+          (row) => {
+            ...row,
+            'cadence': row['periodicity'] ?? 'daily',
+          },
+        )
+        .toList(growable: false);
+  }
+
+  Future<void> ensureOwnerReportSubscriber({
+    required String email,
+    required String name,
+  }) async {
+    await _requireRole('admin');
+    final trimmed = email.trim().toLowerCase();
+    if (trimmed.isEmpty || !trimmed.contains('@')) return;
+    final existing = await _db.query(
+      'subscribers',
+      where: 'orgId = ? AND storeId = ? AND email = ? AND type = ? AND deleted = 0',
+      whereArgs: [orgId, storeId, trimmed, 'report'],
+      limit: 1,
+    );
+    if (existing.isNotEmpty) return;
+    final now = DateTime.now().toIso8601String();
+    await _db.insert('subscribers', {
+      'local_id': _newLocalSyncId('subscriber'),
+      'orgId': orgId,
+      'storeId': storeId,
+      'name': name.trim().isEmpty ? 'Owner' : name.trim(),
+      'email': trimmed,
+      'type': 'report',
+      'notification_type': 'email',
+      'periodicity': 'daily',
+      'deleted': 0,
+      'active': 1,
+      'is_owner_default': 1,
+      'created_on': now,
+      'updated_on': now,
+      'pending_sync': 1,
+      'exported': 0,
+    });
+  }
+
+  Future<int> addReportSubscriber({
+    required String name,
+    required String email,
+    required String cadence,
+    String notificationType = 'email',
+    String? phoneNumber,
+    String? countryId,
+    String? userId,
+  }) async {
+    await _requireRole('admin');
+    final trimmed = email.trim().toLowerCase();
+    final phone = phoneNumber?.trim() ?? '';
+    final channel = notificationType.trim().toLowerCase();
+    const allowedChannels = {'email', 'slack', 'whatsapp', 'sms', 'push'};
+    if (!allowedChannels.contains(channel)) {
+      throw ArgumentError(
+        'Notification type must be email, slack, whatsapp, sms, or push.',
+      );
+    }
+    if (channel == 'email' && (trimmed.isEmpty || !trimmed.contains('@'))) {
+      throw ArgumentError('A valid email is required.');
+    }
+    if ((channel == 'sms' || channel == 'whatsapp') &&
+        phone.isEmpty &&
+        (trimmed.isEmpty || !trimmed.contains('@'))) {
+      throw ArgumentError('A phone number (or email) is required.');
+    }
+    final allowed = {'daily', 'weekly', 'monthly', 'annually', 'annual'};
+    var kind = cadence.trim().toLowerCase();
+    if (kind == 'annual' || kind == 'yearly') kind = 'annually';
+    if (!allowed.contains(kind)) {
+      throw ArgumentError(
+        'Periodicity must be daily, weekly, monthly, or annually.',
+      );
+    }
+    final now = DateTime.now().toIso8601String();
+    return _db.insert(
+      'subscribers',
+      {
+        'local_id': _newLocalSyncId('subscriber'),
+        'orgId': orgId,
+        'storeId': storeId,
+        'name': name.trim().isEmpty
+            ? (trimmed.isNotEmpty ? trimmed : phone)
+            : name.trim(),
+        'email': trimmed,
+        'phone_number': phone.isEmpty ? null : phone,
+        'country_id': countryId?.trim(),
+        'user_id': userId?.trim(),
+        'type': 'report',
+        'notification_type': channel,
+        'periodicity': kind,
+        'deleted': 0,
+        'active': 1,
+        'is_owner_default': 0,
+        'created_on': now,
+        'updated_on': now,
+        'pending_sync': 1,
+        'exported': 0,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> deleteReportSubscriber(int id) async {
+    await _requireRole('admin');
+    final now = DateTime.now().toIso8601String();
+    await _db.update(
+      'subscribers',
+      {
+        'deleted': 1,
+        'active': 0,
+        'pending_sync': 1,
+        'exported': 0,
+        'updated_on': now,
+      },
+      where:
+          'id = ? AND orgId = ? AND storeId = ? AND is_owner_default = 0 AND type = ?',
+      whereArgs: [id, orgId, storeId, 'report'],
+    );
+  }
+
+  Future<void> _importSubscribersFromData(
+    StoreScope scope,
+    Map<String, dynamic> data, {
+    bool skipAuth = false,
+  }) async {
+    _validateScope(scope);
+    if (!skipAuth) {
+      await _requireRole('admin');
+    }
+    final rawRows = data['data'] ?? data['subscribers'] ?? const <dynamic>[];
+    if (rawRows is! List) return;
+    final now = DateTime.now().toIso8601String();
+    for (final raw in rawRows.whereType<Map>()) {
+      final row = raw.cast<String, dynamic>();
+      final email = (row['email'] as String?)?.trim().toLowerCase() ?? '';
+      if (email.isEmpty || !email.contains('@')) continue;
+      final type = (row['type'] as String?)?.trim().toLowerCase() ?? 'report';
+      final notificationType =
+          (row['notification_type'] as String?)?.trim().toLowerCase() ??
+              (row['notificationType'] as String?)?.trim().toLowerCase() ??
+              'email';
+      var periodicity =
+          (row['periodicity'] as String?)?.trim().toLowerCase() ??
+              (row['cadence'] as String?)?.trim().toLowerCase() ??
+              'daily';
+      if (periodicity == 'annual' || periodicity == 'yearly') {
+        periodicity = 'annually';
+      }
+      final remoteId = (row['remote_id'] as num?)?.toInt() ??
+          (row['id'] as num?)?.toInt();
+      final localId = (row['local_id'] as String?)?.trim().isNotEmpty == true
+          ? (row['local_id'] as String).trim()
+          : (remoteId != null
+              ? 'subscriber-$remoteId'
+              : _newLocalSyncId('subscriber'));
+      final deleted = row['deleted'] is bool
+          ? ((row['deleted'] as bool) ? 1 : 0)
+          : ((row['deleted'] as num?)?.toInt() ?? 0);
+      final active = deleted == 1
+          ? 0
+          : (row['active'] is bool
+              ? ((row['active'] as bool) ? 1 : 0)
+              : ((row['active'] as num?)?.toInt() ?? 1));
+      final values = <String, Object?>{
+        'local_id': localId,
+        'remote_id': remoteId,
+        'orgId': scope.orgId,
+        'storeId': scope.storeId,
+        'name': ((row['name'] as String?)?.trim().isNotEmpty == true)
+            ? (row['name'] as String).trim()
+            : email,
+        'user_id': row['user_id']?.toString() ?? row['userId']?.toString(),
+        'email': email,
+        'phone_number':
+            (row['phone_number'] as String?) ?? (row['phone'] as String?),
+        'country_id':
+            row['country_id']?.toString() ?? row['countryId']?.toString(),
+        'type': type,
+        'notification_type': notificationType,
+        'periodicity': periodicity,
+        'deleted': deleted,
+        'active': active,
+        'is_owner_default': (row['is_owner_default'] as num?)?.toInt() ?? 0,
+        'created_by':
+            row['created_by']?.toString() ?? row['createdBy']?.toString(),
+        'created_on': (row['created_on'] as String?) ?? now,
+        'updated_on': (row['updated_on'] as String?) ?? now,
+        'pending_sync': 0,
+        'exported': 1,
+      };
+
+      Map<String, dynamic>? existing;
+      if (remoteId != null) {
+        final byRemote = await _db.query(
+          'subscribers',
+          where: 'orgId = ? AND storeId = ? AND remote_id = ?',
+          whereArgs: [scope.orgId, scope.storeId, remoteId],
+          limit: 1,
+        );
+        if (byRemote.isNotEmpty) existing = byRemote.first;
+      }
+      if (existing == null) {
+        final byLocal = await _db.query(
+          'subscribers',
+          where: 'orgId = ? AND storeId = ? AND local_id = ?',
+          whereArgs: [scope.orgId, scope.storeId, localId],
+          limit: 1,
+        );
+        if (byLocal.isNotEmpty) existing = byLocal.first;
+      }
+      if (existing == null) {
+        final byEmail = await _db.query(
+          'subscribers',
+          where:
+              'orgId = ? AND storeId = ? AND email = ? AND type = ? AND notification_type = ?',
+          whereArgs: [
+            scope.orgId,
+            scope.storeId,
+            email,
+            type,
+            notificationType,
+          ],
+          limit: 1,
+        );
+        if (byEmail.isNotEmpty) existing = byEmail.first;
+      }
+
+      if (existing == null) {
+        await _db.insert('subscribers', values);
+      } else {
+        // Prefer server truth when not pending local edits.
+        final pending =
+            ((existing['pending_sync'] as num?)?.toInt() ?? 0) == 1;
+        if (pending) continue;
+        await _db.update(
+          'subscribers',
+          values,
+          where: 'id = ?',
+          whereArgs: [existing['id']],
+        );
+      }
+    }
+  }
+
+  Future<int> _countSubscriberExportRows(StoreScope scope) async {
+    _validateScope(scope);
+    final rows = await _db.rawQuery(
+      '''
+      SELECT COUNT(*) AS c
+      FROM subscribers
+      WHERE orgId = ? AND storeId = ? AND pending_sync = 1
+      ''',
+      [scope.orgId, scope.storeId],
+    );
+    return (rows.first['c'] as num?)?.toInt() ?? 0;
+  }
+
+  Future<List<Map<String, dynamic>>> _listSubscriberExportRows(
+    StoreScope scope, {
+    required int limit,
+    required int offset,
+  }) async {
+    _validateScope(scope);
+    final rows = await _db.query(
+      'subscribers',
+      where: 'orgId = ? AND storeId = ? AND pending_sync = 1',
+      whereArgs: [scope.orgId, scope.storeId],
+      orderBy: 'id ASC',
+      limit: limit,
+      offset: offset,
+    );
+    return rows
+        .map(
+          (row) => <String, dynamic>{
+            'local_id': row['local_id'] ?? 'subscriber-${row['id']}',
+            'remote_id': row['remote_id'],
+            'orgId': scope.orgId,
+            'storeId': scope.storeId,
+            'name': row['name'],
+            'user_id': row['user_id'],
+            'email': row['email'],
+            'phone_number': row['phone_number'],
+            'country_id': row['country_id'],
+            'type': row['type'] ?? 'report',
+            'notification_type': row['notification_type'] ?? 'email',
+            'periodicity': row['periodicity'] ?? 'daily',
+            'deleted': (row['deleted'] as num?)?.toInt() ?? 0,
+            'active': (row['active'] as num?)?.toInt() ?? 1,
+            'is_owner_default': (row['is_owner_default'] as num?)?.toInt() ?? 0,
+            'created_by': row['created_by'],
+            'created_on': row['created_on'],
+            'updated_on': row['updated_on'],
+          },
+        )
+        .toList(growable: false);
+  }
+
+  Future<void> _markSubscribersExported(
+    StoreScope scope,
+    List<String> localIds, {
+    List<Map<String, dynamic>> mappings = const [],
+  }) async {
+    _validateScope(scope);
+    if (localIds.isEmpty && mappings.isEmpty) return;
+    final now = DateTime.now().toIso8601String();
+    final remoteByLocal = <String, int>{};
+    for (final mapping in mappings) {
+      final localId = '${mapping['local_id'] ?? ''}'.trim();
+      final remoteId = (mapping['remote_id'] as num?)?.toInt();
+      if (localId.isEmpty || remoteId == null) continue;
+      remoteByLocal[localId] = remoteId;
+    }
+    final ids = {
+      ...localIds.map((id) => id.trim()).where((id) => id.isNotEmpty),
+      ...remoteByLocal.keys,
+    };
+    for (final localId in ids) {
+      final patch = <String, Object?>{
+        'pending_sync': 0,
+        'exported': 1,
+        'updated_on': now,
+      };
+      final remoteId = remoteByLocal[localId];
+      if (remoteId != null) {
+        patch['remote_id'] = remoteId;
+      }
+      await _db.update(
+        'subscribers',
+        patch,
+        where: 'orgId = ? AND storeId = ? AND local_id = ?',
+        whereArgs: [scope.orgId, scope.storeId, localId],
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>?> loadEmailConfig(String purpose) async {
+    await _requireRole('member');
+    final rows = await _db.query(
+      'store_email_config',
+      where: 'orgId = ? AND storeId = ? AND purpose = ?',
+      whereArgs: [orgId, storeId, purpose],
+      limit: 1,
+    );
+    return rows.isEmpty ? null : rows.first;
+  }
+
+  /// Persist email config. Locked / system purposes cannot be created or edited.
+  Future<void> saveEmailConfig({
+    required String purpose,
+    required String host,
+    required int port,
+    required String username,
+    required String password,
+    required String fromEmail,
+    required String fromName,
+    bool useTls = true,
+    bool locked = false,
+    bool pendingSync = true,
+  }) async {
+    await _requireRole('admin');
+    final key = purpose.trim().toLowerCase();
+    if (key == 'sales_reports' || key == 'invoice_booking') {
+      throw StateError(
+        'System email credentials are fixed and cannot be changed.',
+      );
+    }
+    final existing = await loadEmailConfig(purpose);
+    if (existing != null && ((existing['locked'] as num?)?.toInt() ?? 0) == 1) {
+      throw StateError('This email configuration is locked and cannot be changed.');
+    }
+    await _db.insert(
+      'store_email_config',
+      {
+        'orgId': orgId,
+        'storeId': storeId,
+        'purpose': purpose,
+        'host': host.trim(),
+        'port': port,
+        'username': username.trim(),
+        'password': password,
+        'from_email': fromEmail.trim(),
+        'from_name': fromName.trim(),
+        'use_tls': useTls ? 1 : 0,
+        'locked': locked ? 1 : 0,
+        'pending_sync': pendingSync ? 1 : 0,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Upsert locked system mailers from gateway public rows (no password).
+  ///
+  /// Password is never taken from [rows]; keep any existing local password, or
+  /// leave blank when the remote seed has no prior row.
+  Future<void> applyFixedEmailMailersFromRemote(
+    List<Map<String, dynamic>> rows, {
+    String? localPasswordFallback,
+  }) async {
+    for (final row in rows) {
+      final purpose = '${row['purpose'] ?? ''}'.trim();
+      if (purpose.isEmpty) continue;
+      final existingRows = await _db.query(
+        'store_email_config',
+        where: 'orgId = ? AND storeId = ? AND purpose = ?',
+        whereArgs: [orgId, storeId, purpose],
+        limit: 1,
+      );
+      final existing = existingRows.isEmpty ? null : existingRows.first;
+      final existingPassword = '${existing?['password'] ?? ''}'.trim();
+      final password = existingPassword.isNotEmpty
+          ? existingPassword
+          : (localPasswordFallback ?? '');
+      // Never accept a password field from remote rows.
+      final host = '${row['host'] ?? ''}'.trim();
+      final username = '${row['username'] ?? ''}'.trim();
+      final fromEmail =
+          '${row['from_email'] ?? row['fromEmail'] ?? username}'.trim();
+      final fromName = '${row['from_name'] ?? row['fromName'] ?? ''}'.trim();
+      final port = (row['port'] as num?)?.toInt() ??
+          int.tryParse('${row['port'] ?? ''}') ??
+          587;
+      final useTls = row['use_tls'] is bool
+          ? (row['use_tls'] as bool)
+          : ((row['use_tls'] as num?)?.toInt() ?? 1) == 1;
+
+      await _db.insert(
+        'store_email_config',
+        {
+          'orgId': orgId,
+          'storeId': storeId,
+          'purpose': purpose,
+          'host': host,
+          'port': port,
+          'username': username,
+          'password': password,
+          'from_email': fromEmail,
+          'from_name': fromName,
+          'use_tls': useTls ? 1 : 0,
+          'locked': 1,
+          'pending_sync': 0,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+  }
+
+  /// Ensure both fixed system mailers exist (immutable). Password is local-only.
+  Future<void> ensureFixedSystemMailers({
+    required String host,
+    required int port,
+    required String username,
+    required String password,
+    required String fromEmail,
+    required String reportsFromName,
+    required String invoicesFromName,
+    bool useTls = true,
+  }) async {
+    await applyFixedEmailMailersFromRemote(
+      [
+        {
+          'purpose': 'sales_reports',
+          'host': host,
+          'port': port,
+          'username': username,
+          'from_email': fromEmail,
+          'from_name': reportsFromName,
+          'use_tls': useTls,
+          'locked': true,
+        },
+        {
+          'purpose': 'invoice_booking',
+          'host': host,
+          'port': port,
+          'username': username,
+          'from_email': fromEmail,
+          'from_name': invoicesFromName,
+          'use_tls': useTls,
+          'locked': true,
+        },
+      ],
+      localPasswordFallback: password,
+    );
+  }
+
+  /// Ensure the fixed system report mailer row exists (immutable).
+  Future<void> ensureFixedReportMailer({
+    required String host,
+    required int port,
+    required String username,
+    required String password,
+    required String fromEmail,
+    required String fromName,
+    bool useTls = true,
+  }) async {
+    await ensureFixedSystemMailers(
+      host: host,
+      port: port,
+      username: username,
+      password: password,
+      fromEmail: fromEmail,
+      reportsFromName: fromName,
+      invoicesFromName: 'Ellan POS Invoices',
+      useTls: useTls,
+    );
+  }
+
   static const String _storeInfoTable = 'store_info';
   static const String _organisationTable = 'organisation';
   static const String _storeSessionTable = 'store_session';
@@ -434,6 +1030,13 @@ class Store {
         onUpgrade: (db, oldVersion, newVersion) async {
           await BackendSetup.upgradeTablesForTest(db, oldVersion, newVersion);
         },
+        onOpen: (db) async {
+          // Repair missing tables/columns even when user_version is already current
+          // (e.g. wallet_variants after a partial v48 upgrade).
+          try {
+            await BackendSetup.ensureSchemaRepairs(db);
+          } catch (_) {}
+        },
       ),
     );
   }
@@ -479,6 +1082,18 @@ class Store {
       'contactPerson': entry.contactPerson,
       'status': entry.status,
       'serviceVariantType': entry.serviceVariantType,
+      'address': entry.address.isNotEmpty
+          ? entry.address
+          : (existing?['address'] as String? ?? ''),
+      'registration_number': entry.registrationNumber.isNotEmpty
+          ? entry.registrationNumber
+          : (existing?['registration_number'] as String? ?? ''),
+      'tax_number': entry.taxNumber.isNotEmpty
+          ? entry.taxNumber
+          : (existing?['tax_number'] as String? ?? ''),
+      'identifier': entry.identifier.isNotEmpty
+          ? entry.identifier
+          : (existing?['identifier'] as String? ?? ''),
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -633,6 +1248,14 @@ class Store {
 
   static bool _isActiveStatus(String? status) =>
       (status ?? '').toLowerCase() == 'active';
+
+  static bool _isActiveCustomerStatus(String? status) {
+    final normalized = (status ?? '').trim().toLowerCase();
+    return normalized.isEmpty ||
+        normalized == 'active' ||
+        normalized == 'approved' ||
+        normalized == '1';
+  }
 
   static Future<Database?> _openExistingOrganisationDatabaseIfPresent({
     required String orgId,
@@ -1082,29 +1705,38 @@ class Store {
     // 2) Lease-valid cold start: fall back to the org SQLite customers table,
     //    which is updated with the real password hash on online login.
     if (customer == null && preferLocal) {
-      final dbRoot = await databaseFactoryFfi.getDatabasesPath();
-      final existingDb = await _openExistingOrganisationDatabaseIfPresent(
-        orgId: organisation.orgId,
-        dbRoot: dbRoot,
-        config: resolvedConfig,
-      );
-      if (existingDb != null) {
-        try {
-          final localRepo = CustomerRepository(existingDb);
-          customer = await localRepo.authenticateCustomerForOrganisation(
-            orgId: organisation.orgId,
-            email: email,
-            password: password,
-          );
-          if (customer != null) {
-            roles = await localRepo.listStoreRolesForCustomer(
+      try {
+        final dbRoot = await databaseFactoryFfi.getDatabasesPath();
+        final existingDb = await _openExistingOrganisationDatabaseIfPresent(
+          orgId: organisation.orgId,
+          dbRoot: dbRoot,
+          config: resolvedConfig,
+        );
+        if (existingDb != null) {
+          try {
+            final localRepo = CustomerRepository(existingDb);
+            customer = await localRepo.authenticateCustomerForOrganisation(
               orgId: organisation.orgId,
-              customerId: customer['customerId'] as String? ?? '',
+              email: email,
+              password: password,
             );
+            if (customer != null) {
+              roles = await localRepo.listStoreRolesForCustomer(
+                orgId: organisation.orgId,
+                customerId: customer['customerId'] as String? ?? '',
+              );
+            }
+          } finally {
+            // Only close when this open is a separate handle. If the store
+            // already holds the same single-instance DB, closing would break it.
+            try {
+              await existingDb.close();
+            } catch (_) {}
           }
-        } finally {
-          await existingDb.close();
         }
+      } catch (_) {
+        // Treat local DB open/query failures as failed auth, not a crash.
+        customer = null;
       }
     }
 
@@ -1128,30 +1760,36 @@ class Store {
           .where((id) => id.isNotEmpty && !storesById.containsKey(id))
           .toList(growable: false);
       if (missing.isNotEmpty) {
-        final dbRoot = await databaseFactoryFfi.getDatabasesPath();
-        final existingDb = await _openExistingOrganisationDatabaseIfPresent(
-          orgId: organisation.orgId,
-          dbRoot: dbRoot,
-          config: resolvedConfig,
-        );
-        if (existingDb != null) {
-          try {
-            final storeRows = await existingDb.query(
-              _storeInfoTable,
-              where: 'orgId = ?',
-              whereArgs: [organisation.orgId],
-            );
-            for (final row in storeRows) {
-              final entry = StoreDirectoryEntry.fromRow({
-                ...row,
-                'org_name': organisation.orgName,
-                'org_code': organisation.orgCode,
-              });
-              storesById[entry.storeId] = entry;
+        try {
+          final dbRoot = await databaseFactoryFfi.getDatabasesPath();
+          final existingDb = await _openExistingOrganisationDatabaseIfPresent(
+            orgId: organisation.orgId,
+            dbRoot: dbRoot,
+            config: resolvedConfig,
+          );
+          if (existingDb != null) {
+            try {
+              final storeRows = await existingDb.query(
+                _storeInfoTable,
+                where: 'orgId = ?',
+                whereArgs: [organisation.orgId],
+              );
+              for (final row in storeRows) {
+                final entry = StoreDirectoryEntry.fromRow({
+                  ...row,
+                  'org_name': organisation.orgName,
+                  'org_code': organisation.orgCode,
+                });
+                storesById[entry.storeId] = entry;
+              }
+            } finally {
+              try {
+                await existingDb.close();
+              } catch (_) {}
             }
-          } finally {
-            await existingDb.close();
           }
+        } catch (_) {
+          // Keep bootstrap store list; missing extras are non-fatal for login.
         }
       }
     }
@@ -1257,6 +1895,7 @@ class Store {
       return null;
     }
 
+    final si = payload['service_instance_id'];
     return StoreOrganisationLoginResult(
       organisation: organisation,
       customerId: payload['customerId'] as String? ?? '',
@@ -1267,6 +1906,17 @@ class Store {
       customerRow: payload['customer'] is Map
           ? (payload['customer'] as Map).cast<String, dynamic>()
           : null,
+      accessToken: '${payload['access_token'] ?? ''}'.trim().isEmpty
+          ? null
+          : '${payload['access_token']}'.trim(),
+      refreshToken: '${payload['refresh_token'] ?? ''}'.trim().isEmpty
+          ? null
+          : '${payload['refresh_token']}'.trim(),
+      sessionId: '${payload['session_id'] ?? ''}'.trim().isEmpty
+          ? null
+          : '${payload['session_id']}'.trim(),
+      serviceInstanceId:
+          si == null || '$si'.trim().isEmpty ? null : '$si'.trim(),
     );
   }
 
@@ -1938,7 +2588,10 @@ class Store {
       'email': row['email']?.toString() ?? login.email,
       'phone': row['phone']?.toString() ?? '',
       'country': row['country']?.toString() ?? '',
-      'status': row['status']?.toString() ?? 'active',
+      'status': () {
+        final raw = row['status']?.toString().trim() ?? '';
+        return raw.isEmpty ? 'active' : raw;
+      }(),
       'role': row['role']?.toString() ?? login.organisationRole,
       'password': normalizedPassword,
       'usr_reg_num': '${row['usr_reg_num'] ?? row['reg_num'] ?? ''}',
@@ -2090,7 +2743,8 @@ class Store {
     final customer = await _customerRepo.getCustomerById(
       row['customerId'] as String? ?? '',
     );
-    if (customer == null || (customer['status'] as String? ?? '') != 'active') {
+    if (customer == null ||
+        !_isActiveCustomerStatus(customer['status'] as String?)) {
       _invalidateSessionCache();
       await _clearSession(_db);
       return null;
@@ -2141,25 +2795,46 @@ class Store {
     StoreLoginRequest request,
   ) async {
     _validateScope(scope);
-    final customer = await _customerRepo.authenticateCustomer(
+    // Prefer store-scoped row, then org-wide (operators are often stored with
+    // another storeId / first-accessible store, not the open branch).
+    var customer = await _customerRepo.authenticateCustomer(
       scope: scope,
+      email: request.email,
+      password: request.password,
+    );
+    customer ??= await _customerRepo.authenticateCustomerForOrganisation(
+      orgId: scope.orgId,
       email: request.email,
       password: request.password,
     );
     if (customer == null) {
       return null;
     }
+    final customerId = customer['customerId'] as String? ?? '';
     final storeRole = await _customerRepo.getStoreRole(
       orgId: scope.orgId,
-      customerId: customer['customerId'] as String? ?? '',
+      customerId: customerId,
       storeId: scope.storeId,
     );
+    final customerStoreId = '${customer['storeId'] ?? ''}'.trim();
+    final roleFromCustomer = '${customer['role'] ?? ''}'.trim().toLowerCase();
+    final isDirectoryCustomer = roleFromCustomer == 'retail_customer' ||
+        roleFromCustomer == 'business_customer';
+    // Prefer store_roles; allow same-branch customer row for operators when
+    // roles were not imported yet (otherwise unlock traps the tablet).
+    if (storeRole == null) {
+      if (isDirectoryCustomer ||
+          (customerStoreId.isNotEmpty && customerStoreId != scope.storeId)) {
+        return null;
+      }
+    }
     final session = StoreSession(
-      customerId: customer['customerId'] as String? ?? '',
+      customerId: customerId,
       email: customer['email'] as String? ?? request.email,
       loginAt: DateTime.now().toIso8601String(),
       organisationRole: customer['role'] as String? ?? '',
-      storeRole: storeRole?['role'] as String? ?? '',
+      storeRole: storeRole?['role'] as String? ??
+          (roleFromCustomer.isNotEmpty ? roleFromCustomer : 'member'),
     );
     await _saveSession(_db, session);
     _sessionCache = session;
@@ -2232,6 +2907,56 @@ class Store {
     );
     if (updated == 0) {
       throw const StoreAuthException('Customer not found for password reset.');
+    }
+  }
+
+  /// Persist a verified password hash for offline unlock until the next sync
+  /// that carries a newer credential.
+  Future<void> _persistVerifiedOfflinePassword({
+    required String password,
+    String? customerId,
+    String? identifier,
+  }) async {
+    final hash = CustomerRepository.hashPassword(password);
+    final ids = <String>{};
+    final cid = (customerId ?? '').trim();
+    if (cid.isNotEmpty) ids.add(cid);
+
+    final key = (identifier ?? '').trim();
+    if (key.isNotEmpty) {
+      final rows = await _db.query(
+        'customers',
+        columns: ['customerId', 'email', 'phone', 'usr_reg_num'],
+        where: 'orgId = ?',
+        whereArgs: [orgId],
+      );
+      final keyLower = key.toLowerCase();
+      final digits = key.replaceAll(RegExp(r'[^0-9]'), '');
+      for (final row in rows) {
+        final email = '${row['email'] ?? ''}'.trim().toLowerCase();
+        final phone = '${row['phone'] ?? ''}'.replaceAll(RegExp(r'[^0-9]'), '');
+        final reg = '${row['usr_reg_num'] ?? ''}'.trim().toLowerCase();
+        final match = (email.isNotEmpty && email == keyLower) ||
+            (reg.isNotEmpty && (reg == keyLower || reg == digits)) ||
+            (digits.length >= 7 &&
+                phone.length >= 7 &&
+                (phone == digits ||
+                    phone.endsWith(digits) ||
+                    digits.endsWith(phone)));
+        if (match) {
+          final id = '${row['customerId'] ?? ''}'.trim();
+          if (id.isNotEmpty) ids.add(id);
+        }
+      }
+    }
+
+    for (final id in ids) {
+      await _db.update(
+        'customers',
+        {'password': hash},
+        where: 'customerId = ? AND orgId = ?',
+        whereArgs: [id, orgId],
+      );
     }
   }
 
@@ -3756,18 +4481,14 @@ class Store {
           organisationRolesByCustomerId[customerRow['customerId'] as String? ??
               ''];
       final customerId = customerRow['customerId'];
-      String resolvedPassword = password;
-      if (resolvedPassword.isEmpty && customerId != null) {
-        final existing = await _db.query(
-          'customers',
-          columns: ['password'],
-          where: 'customerId = ?',
-          whereArgs: [customerId],
-          limit: 1,
+      final normalizedIncoming = password;
+      String resolvedPassword = normalizedIncoming;
+      if (customerId != null) {
+        resolvedPassword = await CustomerRepository.resolveImportedPassword(
+          db: _db,
+          customerId: '$customerId',
+          incomingPassword: normalizedIncoming,
         );
-        if (existing.isNotEmpty) {
-          resolvedPassword = existing.first['password'] as String? ?? '';
-        }
       }
       await _db.insert('customers', {
         'customerId': customerId,
@@ -4123,6 +4844,45 @@ class Store {
     return rows.map(StoreProductVariantRecord.fromRow).toList();
   }
 
+  Future<List<StoreProductVariantRecord>> _getProductVariantRecordsByCategoryLocalId(
+    StoreScope scope,
+    String categoryLocalId,
+  ) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    final rows = await _productRepo.getProductVariantsByCategoryLocalId(
+      scope,
+      categoryLocalId,
+    );
+    return rows.map(StoreProductVariantRecord.fromRow).toList();
+  }
+
+  Future<StoreProductVariantRecord?> _findProductVariantRecordById(
+    StoreScope scope,
+    String productVariantId,
+  ) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    final key = productVariantId.trim();
+    if (key.isEmpty) return null;
+    final row = await _productRepo.getProductVariantById(scope, key);
+    if (row == null) return null;
+    return StoreProductVariantRecord.fromRow(row);
+  }
+
+  Future<StoreProductCategoryRecord?> _findProductCategoryRecordById(
+    StoreScope scope,
+    String categoryId,
+  ) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    final key = categoryId.trim();
+    if (key.isEmpty) return null;
+    final row = await _productRepo.getCategoryById(scope, key);
+    if (row == null) return null;
+    return StoreProductCategoryRecord.fromRow(row);
+  }
+
   Future<List<int>> _listCategoryIdsWithVariants(StoreScope scope) async {
     _validateScope(scope);
     await _requireRole('member');
@@ -4156,6 +4916,359 @@ class Store {
       limit: limit,
       offset: offset,
     );
+  }
+
+  Future<List<Map<String, dynamic>>> _listPendingExportCatalogRows(
+    StoreScope scope, {
+    int? limit,
+    int? offset,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    return _productRepo.listPendingExportCatalogRows(
+      scope,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  Future<int> _countPendingExportOffers(StoreScope scope) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    return _productRepo.countPendingExportOffers(scope);
+  }
+
+  Future<List<Map<String, dynamic>>> _listPendingExportOffers(
+    StoreScope scope, {
+    int? limit,
+    int? offset,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    return _productRepo.listPendingExportOffers(
+      scope,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  Future<int> _markOffersExported(
+    StoreScope scope,
+    List<String> localIds, {
+    required bool exported,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    return _productRepo.markOffersExported(
+      scope,
+      localIds,
+      exported: exported,
+    );
+  }
+
+  Future<void> _markCatalogRelatedExported(
+    StoreScope scope,
+    List<String> variantLocalIds,
+  ) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    await _productRepo.markAddonGroupsExportedForVariants(
+      scope,
+      variantLocalIds,
+    );
+    await _productRepo.markCatalogMastersExportedFromVariants(
+      scope,
+      variantLocalIds,
+    );
+  }
+
+  Future<void> _applyProductExportMappings(
+    StoreScope scope,
+    List<Map<String, dynamic>> mappings,
+  ) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    await _productRepo.applyProductExportMappings(scope, mappings);
+  }
+
+  Future<List<Map<String, dynamic>>> _listMasterCategories() async {
+    await _requireRole('member');
+    return _productRepo.listMasterCategories(orgId);
+  }
+
+  Future<Map<String, dynamic>> _upsertMasterCategory({
+    String? localId,
+    required String name,
+    String? shortCode,
+  }) async {
+    await _requireRole('admin');
+    return _productRepo.upsertMasterCategory(
+      orgId: orgId,
+      localId: localId,
+      name: name,
+      shortCode: shortCode,
+      serviceVariantType: serviceVariantType,
+    );
+  }
+
+  Future<Map<String, dynamic>> _linkMasterCategoryToStore({
+    required StoreScope scope,
+    required String masterLocalId,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    return _productRepo.linkMasterCategoryToStore(
+      scope: scope,
+      masterLocalId: masterLocalId,
+    );
+  }
+
+  Future<Map<String, dynamic>> _createLocalSellableItem({
+    required StoreScope scope,
+    required String categoryLocalId,
+    required String productName,
+    required String packageName,
+    required double sellPrice,
+    required String unitLabel,
+    required double unitQty,
+    String? taxLabel,
+    String? description,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    return _productRepo.createLocalSellableItem(
+      scope: scope,
+      categoryLocalId: categoryLocalId,
+      productName: productName,
+      packageName: packageName,
+      sellPrice: sellPrice,
+      unitLabel: unitLabel,
+      unitQty: unitQty,
+      taxLabel: taxLabel,
+      description: description,
+    );
+  }
+
+  Future<void> _updateLocalVariant({
+    required StoreScope scope,
+    required String variantLocalId,
+    String? packageName,
+    String? productName,
+    double? sellPrice,
+    String? unitLabel,
+    double? unitQty,
+    String? taxLabel,
+    String? description,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    await _productRepo.updateLocalVariant(
+      scope: scope,
+      variantLocalId: variantLocalId,
+      packageName: packageName,
+      productName: productName,
+      sellPrice: sellPrice,
+      unitLabel: unitLabel,
+      unitQty: unitQty,
+      taxLabel: taxLabel,
+      description: description,
+    );
+  }
+
+  Future<void> _softDeleteVariant({
+    required StoreScope scope,
+    required String variantLocalId,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    await _productRepo.softDeleteVariant(scope, variantLocalId);
+  }
+
+  Future<void> _softDeleteCategory({
+    required StoreScope scope,
+    required String categoryLocalId,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    await _productRepo.softDeleteCategory(scope, categoryLocalId);
+  }
+
+  Future<void> _softDeleteOffer({
+    required StoreScope scope,
+    required String offerLocalId,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    await _productRepo.softDeleteOffer(scope, offerLocalId);
+  }
+
+  Future<void> _softDeleteAddonGroup({
+    required StoreScope scope,
+    required String groupLocalId,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    await _productRepo.softDeleteAddonGroup(scope, groupLocalId);
+  }
+
+  Future<void> _renameCategory({
+    required StoreScope scope,
+    required String categoryLocalId,
+    required String name,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    await _productRepo.renameCategory(scope, categoryLocalId, name: name);
+  }
+
+  Future<List<Map<String, dynamic>>> _listMasterProducts() async {
+    await _requireRole('member');
+    return _productRepo.listMasterProducts(orgId);
+  }
+
+  Future<Map<String, dynamic>> _linkMasterProductToStore({
+    required StoreScope scope,
+    required String masterLocalId,
+    required String categoryLocalId,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    return _productRepo.linkMasterProductToStore(
+      scope: scope,
+      masterLocalId: masterLocalId,
+      categoryLocalId: categoryLocalId,
+    );
+  }
+
+  Future<Map<String, dynamic>> _upsertLocalOffer({
+    required StoreScope scope,
+    String? localId,
+    required String name,
+    required String offerType,
+    double? percentageValue,
+    double? flatValue,
+    double? minimumBillAmount,
+    String? description,
+    List<String> targetVariantLocalIds = const [],
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    return _productRepo.upsertLocalOffer(
+      scope: scope,
+      localId: localId,
+      name: name,
+      offerType: offerType,
+      percentageValue: percentageValue,
+      flatValue: flatValue,
+      minimumBillAmount: minimumBillAmount,
+      description: description,
+      targetVariantLocalIds: targetVariantLocalIds,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> _listLocalOffers(StoreScope scope) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    return _productRepo.listLocalOffers(scope);
+  }
+
+  Future<List<String>> _listOfferTargetVariantIds(
+    StoreScope scope,
+    String offerLocalId,
+  ) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    return _productRepo.listOfferTargetVariantIds(scope, offerLocalId);
+  }
+
+  Future<void> _setVariantOfferLinks({
+    required StoreScope scope,
+    required String variantLocalId,
+    required Set<String> selectedOfferLocalIds,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    final variantId = variantLocalId.trim();
+    if (variantId.isEmpty) return;
+
+    final offers = await _productRepo.listLocalOffers(scope);
+    for (final offer in offers) {
+      final offerId = '${offer['local_id'] ?? offer['localId'] ?? ''}'.trim();
+      if (offerId.isEmpty) continue;
+      final targets = await _productRepo.listOfferTargetVariantIds(scope, offerId);
+      final currentlyLinked = targets.contains(variantId);
+      final shouldLink = selectedOfferLocalIds.contains(offerId);
+      if (currentlyLinked == shouldLink) continue;
+
+      final next = <String>[
+        for (final t in targets)
+          if (t != variantId) t,
+      ];
+      if (shouldLink) next.add(variantId);
+
+      await _productRepo.upsertLocalOffer(
+        scope: scope,
+        localId: offerId,
+        name: '${offer['name'] ?? ''}'.trim().isEmpty
+            ? 'Offer'
+            : '${offer['name']}'.trim(),
+        offerType: '${offer['offer_type'] ?? 'percentage'}',
+        percentageValue: (offer['percentage_value'] as num?)?.toDouble(),
+        flatValue: (offer['flat_value'] as num?)?.toDouble(),
+        minimumBillAmount: (offer['minimum_bill_amount'] as num?)?.toDouble(),
+        description: '${offer['description'] ?? ''}',
+        targetVariantLocalIds: next,
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> _upsertAddonGroup({
+    required StoreScope scope,
+    String? localId,
+    required String name,
+    int minSelect = 0,
+    int maxSelect = 1,
+    List<({String name, double price})> items = const [],
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    return _productRepo.upsertAddonGroup(
+      scope: scope,
+      localId: localId,
+      name: name,
+      minSelect: minSelect,
+      maxSelect: maxSelect,
+      items: items,
+    );
+  }
+
+  Future<void> _linkAddonGroupToVariant({
+    required StoreScope scope,
+    required String variantLocalId,
+    required String groupLocalId,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    await _productRepo.linkAddonGroupToVariant(
+      scope: scope,
+      variantLocalId: variantLocalId,
+      groupLocalId: groupLocalId,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> _listAddonGroups(StoreScope scope) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    return _productRepo.listAddonGroups(scope);
+  }
+
+  Future<List<Map<String, dynamic>>> _listAddonItemsForGroup(
+    StoreScope scope,
+    String groupLocalId,
+  ) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    return _productRepo.listAddonItemsForGroup(scope, groupLocalId);
   }
 
   Future<int> _markProductVariantsExported(
@@ -4274,6 +5387,21 @@ class Store {
       offset: offset,
       roles: CustomerRepository.directoryCustomerRoles,
     );
+  }
+
+  /// Operators for staff unlock — branch-scoped via store_roles, no session.
+  Future<List<StoreCustomer>> _listStoreOperatorsForUnlock({
+    required StoreScope scope,
+    int limit = 500,
+    int offset = 0,
+  }) async {
+    _validateScope(scope);
+    final rows = await _customerRepo.listStoreOperators(
+      scope: scope,
+      limit: limit,
+      offset: offset,
+    );
+    return rows.map(StoreCustomer.fromRow).toList(growable: false);
   }
 
   Future<String?> _recordDirectoryCustomer({
@@ -4803,9 +5931,12 @@ class Store {
   Future<List<StoreWalletRecord>> _listWalletRecords(
     StoreScope scope, {
     bool includeInactive = false,
+    bool skipAuth = false,
   }) async {
     _validateScope(scope);
-    await _requireRole('member');
+    if (!skipAuth) {
+      await _requireRole('member');
+    }
     final where = StringBuffer('orgId = ? AND storeId = ?');
     final args = <Object?>[scope.orgId, scope.storeId];
     if (!includeInactive) {
@@ -4908,6 +6039,197 @@ class Store {
           whereArgs: [existing.first['id']],
         );
       }
+    }
+
+    final rawVariants = data['variants'];
+    if (rawVariants is List && rawVariants.isNotEmpty) {
+      await _saveWalletVariantCatalogue(
+        scope,
+        [
+          for (final row in rawVariants.whereType<Map>())
+            Map<String, dynamic>.from(row),
+        ],
+      );
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _listWalletVariantCatalogue(
+    StoreScope scope,
+  ) async {
+    _validateScope(scope);
+    await BackendSetup.ensureSchemaRepairs(_db);
+    final rows = await _db.query(
+      'wallet_variants',
+      where: 'orgId = ? AND storeId = ?',
+      whereArgs: [scope.orgId, scope.storeId],
+      orderBy: 'sorting_order ASC, variant_id ASC',
+    );
+    return [
+      for (final row in rows)
+        {
+          'id': row['variant_id'],
+          'key': row['key'],
+          'name': row['name'],
+          'type': row['type'],
+          'type_name': row['type_name'],
+          'pg_type': row['pg_type'],
+          'pg_name': row['pg_name'],
+          'logo': row['logo'],
+          'locked': ((row['locked'] as num?)?.toInt() ?? 1) == 1,
+        },
+    ];
+  }
+
+  Future<void> _saveWalletVariantCatalogue(
+    StoreScope scope,
+    List<Map<String, dynamic>> variants,
+  ) async {
+    _validateScope(scope);
+    if (variants.isEmpty) return;
+    await BackendSetup.ensureSchemaRepairs(_db);
+    final now = DateTime.now().toIso8601String();
+    await _db.delete(
+      'wallet_variants',
+      where: 'orgId = ? AND storeId = ?',
+      whereArgs: [scope.orgId, scope.storeId],
+    );
+    var order = 0;
+    for (final raw in variants) {
+      final variantId = (raw['id'] as num?)?.toInt();
+      if (variantId == null) continue;
+      final name = '${raw['name'] ?? ''}'.trim();
+      if (name.isEmpty) continue;
+      order += 1;
+      await _db.insert('wallet_variants', {
+        'orgId': scope.orgId,
+        'storeId': scope.storeId,
+        'variant_id': variantId,
+        'key': '${raw['key'] ?? ''}'.trim().isEmpty
+            ? null
+            : '${raw['key']}'.trim(),
+        'name': name,
+        'type': (raw['type'] as num?)?.toInt(),
+        'type_name': '${raw['type_name'] ?? ''}'.trim().isEmpty
+            ? null
+            : '${raw['type_name']}'.trim(),
+        'pg_type': (raw['pg_type'] as num?)?.toInt(),
+        'pg_name': '${raw['pg_name'] ?? ''}'.trim().isEmpty
+            ? null
+            : '${raw['pg_name']}'.trim(),
+        'logo': '${raw['logo'] ?? ''}'.trim().isEmpty
+            ? null
+            : '${raw['logo']}'.trim(),
+        'locked': raw['locked'] == false ? 0 : 1,
+        'sorting_order': (raw['sorting_order'] as num?)?.toInt() ?? order,
+        'synced_on': now,
+      });
+    }
+  }
+
+  Future<StoreWalletRecord> _addLocalWalletVariant(
+    StoreScope scope, {
+    required int variantId,
+    required String label,
+    String? variantName,
+    int? variantType,
+    int? variantPgType,
+    String? paymentMode,
+  }) async {
+    _validateScope(scope);
+    final trimmed = label.trim().isEmpty
+        ? (variantName ?? 'Wallet').trim()
+        : label.trim();
+    final modeRaw = (paymentMode ?? '').trim().toLowerCase();
+    final mode = StoreOrderPaymentMode.supported.contains(modeRaw)
+        ? modeRaw
+        : _paymentModeForWalletVariant(
+            variantType: variantType,
+            variantName: variantName ?? trimmed,
+          );
+
+    final existing = await _db.query(
+      'wallets',
+      where: 'orgId = ? AND storeId = ? AND wallet_variant_id = ? AND active = 1',
+      whereArgs: [scope.orgId, scope.storeId, variantId],
+      limit: 1,
+    );
+    if (existing.isNotEmpty) {
+      final id = existing.first['id'] as int;
+      await _db.update(
+        'wallets',
+        {
+          'label': trimmed,
+          'acc_name': trimmed,
+          'wallet_variant_name': variantName ?? trimmed,
+          'wallet_variant_type': variantType,
+          'wallet_variant_pg_type': variantPgType,
+          'payment_mode': mode,
+          'active': 1,
+        },
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      final rows = await _db.query('wallets', where: 'id = ?', whereArgs: [id]);
+      return StoreWalletRecord.fromRow(rows.first);
+    }
+
+    final sortRows = await _db.rawQuery(
+      'SELECT MAX(sorting_order) AS m FROM wallets WHERE orgId = ? AND storeId = ?',
+      [scope.orgId, scope.storeId],
+    );
+    final nextSort = ((sortRows.first['m'] as num?)?.toInt() ?? 0) + 1;
+    final localId = _newLocalSyncId('wallet');
+    final id = await _db.insert('wallets', {
+      'orgId': scope.orgId,
+      'storeId': scope.storeId,
+      'local_id': localId,
+      'remote_id': null,
+      'wallet_variant_id': variantId,
+      'wallet_variant_type': variantType,
+      'wallet_variant_pg_type': variantPgType,
+      'wallet_variant_name': variantName ?? trimmed,
+      'acc_name': trimmed,
+      'label': trimmed,
+      'payment_mode': mode,
+      'currency': null,
+      'sorting_order': nextSort,
+      'active': 1,
+    });
+    final rows = await _db.query('wallets', where: 'id = ?', whereArgs: [id]);
+    return StoreWalletRecord.fromRow(rows.first);
+  }
+
+  String _paymentModeForWalletVariant({
+    int? variantType,
+    required String variantName,
+  }) {
+    final name = variantName.trim().toLowerCase();
+    if (name.contains('card') || name.contains('bank')) {
+      return StoreOrderPaymentMode.card;
+    }
+    if (name.contains('credit') ||
+        name.contains('pay later') ||
+        name.contains('paylater')) {
+      return StoreOrderPaymentMode.credit;
+    }
+    if (name.contains('upi') ||
+        name.contains('g-pay') ||
+        name.contains('gpay') ||
+        name.contains('wallet') ||
+        name.contains('online')) {
+      return StoreOrderPaymentMode.online;
+    }
+    // WalletTypeChoices: Cash=1, Gateway=2, Bank=3, EWallet=4, UPI=5
+    switch (variantType) {
+      case 3:
+        return StoreOrderPaymentMode.card;
+      case 2:
+      case 4:
+      case 5:
+      case 6:
+        return StoreOrderPaymentMode.online;
+      default:
+        return StoreOrderPaymentMode.cash;
     }
   }
 
@@ -6470,6 +7792,9 @@ class Store {
       );
     }
     if (storeId == this.storeId) {
+      // Same branch after org login / staff logout: restore session on the
+      // already-open DB instead of returning a store with no login session.
+      await _rebindOrganisationLogin(login);
       return this;
     }
 
@@ -6494,7 +7819,10 @@ class Store {
         sessionDuration: _sessionDuration,
         config: _config,
       );
-      await close();
+      // Organisation DB is shared across branches. Closing the previous Store
+      // handle after openAccessibleStore would close the new store's connection
+      // under sqflite single-instance. Drop the old handle without close().
+      sync.stopAutoSync();
       if (resumeAutoSync) {
         nextStore.sync.startAutoSync(nextStore.scope);
       }
@@ -6505,6 +7833,48 @@ class Store {
       }
       rethrow;
     }
+  }
+
+  /// Persist the signed-in operator + session onto this open store DB.
+  Future<void> _rebindOrganisationLogin(
+    StoreOrganisationLoginResult login,
+  ) async {
+    StoreAccessibleStore? accessibleStore;
+    for (final entry in login.accessibleStores) {
+      if (entry.store.storeId == storeId) {
+        accessibleStore = entry;
+        break;
+      }
+    }
+    if (accessibleStore == null) {
+      throw StoreAuthorizationException(
+        'Customer does not have access to storeId=$storeId.',
+      );
+    }
+
+    await _ensureLoggedInCustomerPersisted(
+      _db,
+      login: login,
+      storeId: storeId,
+    );
+    for (final entry in login.accessibleStores.where(
+      (entry) => entry.access.orgId == orgId,
+    )) {
+      await _saveStoreRoleAccess(_db, entry.access);
+    }
+
+    final session = StoreSession(
+      customerId: login.customerId,
+      email: login.email,
+      loginAt: DateTime.now().toIso8601String(),
+      organisationRole: login.organisationRole,
+      storeRole: accessibleStore.access.storeRole,
+    );
+    await _saveSession(_db, session);
+    _sessionCache = session;
+    _sessionCacheAt = DateTime.now();
+    _localAccessCheckedAt = null;
+    await _ensureLocalAccessAllowed(clearSessionOnFailure: true);
   }
 
   Future<String?> _resolveCurrentDatabaseRootPath() async {

@@ -37,6 +37,36 @@ class CustomerRepository {
     return sha256.convert(utf8.encode(password)).toString();
   }
 
+  /// Default offline bootstrap password hash (`pos123`) — must not overwrite a
+  /// verified operator hash on catalogue sync.
+  static String get defaultOfflinePasswordHash => hashPassword('pos123');
+
+  /// Keep a verified local password when sync sends an empty / default hash.
+  static Future<String> resolveImportedPassword({
+    required Database db,
+    required String customerId,
+    required String incomingPassword,
+  }) async {
+    final incoming = incomingPassword.trim();
+    if (customerId.isEmpty) return incoming;
+    final existing = await db.query(
+      'customers',
+      columns: ['password'],
+      where: 'customerId = ?',
+      whereArgs: [customerId],
+      limit: 1,
+    );
+    if (existing.isEmpty) return incoming;
+    final existingPw = '${existing.first['password'] ?? ''}'.trim();
+    if (existingPw.isEmpty) return incoming;
+    if (incoming.isEmpty) return existingPw;
+    if (incoming == defaultOfflinePasswordHash &&
+        existingPw != defaultOfflinePasswordHash) {
+      return existingPw;
+    }
+    return incoming;
+  }
+
   static String _digitsOnly(String value) =>
       value.replaceAll(RegExp(r'[^0-9]'), '');
 
@@ -350,7 +380,11 @@ class CustomerRepository {
         'country': customerRow['country'],
         'status': customerRow['status'],
         'role': customerRow['role'],
-        'password': normalizedPassword,
+        'password': await resolveImportedPassword(
+          db: db,
+          customerId: canonicalId,
+          incomingPassword: normalizedPassword,
+        ),
         'usr_reg_num':
             '${customerRow['usr_reg_num'] ?? customerRow['reg_num'] ?? ''}',
       };
@@ -439,6 +473,67 @@ class CustomerRepository {
       limit: limit,
       offset: offset,
       roles: directoryCustomerRoles,
+    );
+  }
+
+  /// POS operators with enabled access on this store (staff unlock).
+  ///
+  /// Uses ``store_roles`` for the branch — not org-wide customers, and not
+  /// retail/business directory customers.
+  Future<List<Map<String, dynamic>>> listStoreOperators({
+    required StoreScope scope,
+    int limit = 500,
+    int offset = 0,
+  }) async {
+    final placeholders =
+        List.filled(directoryCustomerRoles.length, '?').join(', ');
+    final rows = await db.rawQuery(
+      '''
+      SELECT DISTINCT c.*, sr.role AS role
+      FROM customers c
+      INNER JOIN store_roles sr
+        ON sr.orgId = c.orgId
+       AND sr.storeId = ?
+       AND COALESCE(sr.access_enabled, 1) = 1
+       AND LOWER(COALESCE(sr.role, '')) NOT IN ($placeholders)
+       AND (
+         sr.customerId = c.customerId
+         OR sr.customerId = REPLACE(c.customerId, 'user_', '')
+         OR ('user_' || sr.customerId) = c.customerId
+       )
+      WHERE c.orgId = ?
+      ORDER BY c.name COLLATE NOCASE ASC
+      LIMIT ? OFFSET ?
+      ''',
+      [
+        scope.storeId,
+        ...directoryCustomerRoles,
+        scope.orgId,
+        limit,
+        offset,
+      ],
+    );
+    if (rows.isNotEmpty) return rows;
+
+    // Fallback when store_roles were not imported yet: operators whose
+    // customer.storeId matches this branch (exclude directory customers).
+    return db.rawQuery(
+      '''
+      SELECT c.*
+      FROM customers c
+      WHERE c.orgId = ?
+        AND c.storeId = ?
+        AND LOWER(COALESCE(c.role, '')) NOT IN ($placeholders)
+      ORDER BY c.name COLLATE NOCASE ASC
+      LIMIT ? OFFSET ?
+      ''',
+      [
+        scope.orgId,
+        scope.storeId,
+        ...directoryCustomerRoles,
+        limit,
+        offset,
+      ],
     );
   }
 
@@ -590,12 +685,13 @@ class CustomerRepository {
     final key = identifier.trim();
     if (key.isEmpty) return null;
 
+    // Operators may have empty/legacy status; treat those as active.
     final where = storeId == null || storeId.isEmpty
-        ? 'orgId = ? AND status = ?'
-        : 'orgId = ? AND storeId = ? AND status = ?';
+        ? "orgId = ? AND COALESCE(status, '') IN ('', 'active', 'approved', '1')"
+        : "orgId = ? AND storeId = ? AND COALESCE(status, '') IN ('', 'active', 'approved', '1')";
     final whereArgs = storeId == null || storeId.isEmpty
-        ? <Object?>[orgId, 'active']
-        : <Object?>[orgId, storeId, 'active'];
+        ? <Object?>[orgId]
+        : <Object?>[orgId, storeId];
 
     final rows = await db.query(
       'customers',
@@ -639,13 +735,22 @@ class CustomerRepository {
     if (email.isNotEmpty && email == keyLower) return true;
 
     final phone = _digitsOnly(customer['phone'] as String? ?? '');
-    if (digits.isNotEmpty && phone.isNotEmpty && phone == digits) return true;
+    if (_phonesMatch(digits, phone)) return true;
 
     final reg = '${customer['usr_reg_num'] ?? ''}'.trim().toLowerCase();
-    if (reg.isNotEmpty && (reg == keyLower || (digits.isNotEmpty && reg == digits))) {
+    if (reg.isNotEmpty &&
+        (reg == keyLower || (digits.isNotEmpty && reg == digits))) {
       return true;
     }
     return false;
+  }
+
+  /// Match phone numbers allowing country-code / leading-zero differences.
+  static bool _phonesMatch(String a, String b) {
+    if (a.isEmpty || b.isEmpty) return false;
+    if (a == b) return true;
+    if (a.length < 7 || b.length < 7) return false;
+    return a.endsWith(b) || b.endsWith(a);
   }
 
   Future<Map<String, dynamic>?> authenticateCustomerForOrganisation({
@@ -677,13 +782,25 @@ class CustomerRepository {
     required String customerId,
     required String storeId,
   }) async {
-    final rows = await db.query(
-      'store_roles',
-      where: 'orgId = ? AND customerId = ? AND storeId = ? AND access_enabled = ?',
-      whereArgs: [orgId, customerId, storeId, 1],
-      limit: 1,
-    );
-    return rows.isEmpty ? null : rows.first;
+    final raw = customerId.trim();
+    if (raw.isEmpty || storeId.trim().isEmpty) return null;
+    final candidates = <String>{
+      raw,
+      if (raw.startsWith('user_')) raw.substring(5),
+      if (!raw.startsWith('user_') && int.tryParse(raw) != null) 'user_$raw',
+    };
+    for (final id in candidates) {
+      if (id.isEmpty) continue;
+      final rows = await db.query(
+        'store_roles',
+        where:
+            'orgId = ? AND customerId = ? AND storeId = ? AND COALESCE(access_enabled, 1) = 1',
+        whereArgs: [orgId, id, storeId],
+        limit: 1,
+      );
+      if (rows.isNotEmpty) return rows.first;
+    }
+    return null;
   }
 
   Future<Map<String, dynamic>?> getCustomerById(String customerId) async {

@@ -43,6 +43,7 @@
   "dashboardMetricOrders": "Orders",
   "dashboardMetricTotalSales": "Total Sales",
   "dashboardTopCategories": "Top Categories",
+  "dashboardTopProducts": "Top Products",
   "unsupportedDeviceTitle": "Device Not Supported",
   "unsupportedDeviceDesc": "NexPOS is designed specifically for tablets and large screens.\n\nPlease access the app from an iPad or Android Tablet in landscape orientation.",
   "errorRequiredField": "This field is required",

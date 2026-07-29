@@ -48,6 +48,7 @@ dependencies:
   sqflite: ^2.3.3
   path: ^1.9.0
   path_provider: ^2.1.0
+  image_picker: ^1.1.2
 
   pos_orders_offline:
     git:
@@ -55,6 +56,8 @@ dependencies:
       ref: main
   sqlite3_flutter_libs: ^0.5.42
   timezone: ^0.11.1
+  sqflite_common_ffi_web: ^1.1.1
+  flutter_dotenv: ^6.0.1
 
 dev_dependencies:
   flutter_test:
@@ -79,10 +82,9 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-#  assets:
-#     - config/
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - .env
+    - .env.example
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

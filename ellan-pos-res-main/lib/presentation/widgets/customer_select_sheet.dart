@@ -21,16 +21,19 @@ class CustomerSelectResult {
 }
 
 /// Search / select / create a directory customer (same form as order start).
-Future<CustomerSelectResult?> showCustomerSelectSheet(
+  Future<CustomerSelectResult?> showCustomerSelectSheet(
   BuildContext context, {
   String title = 'Select customer',
   String? subtitle,
   String confirmLabel = 'Continue',
+  bool isDismissible = true,
 }) {
   return showModalBottomSheet<CustomerSelectResult>(
     context: context,
     isScrollControlled: true,
     useRootNavigator: true,
+    isDismissible: isDismissible,
+    enableDrag: isDismissible,
     backgroundColor: Colors.transparent,
     builder: (_) => CustomerSelectSheet(
       title: title,

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/first_launch.dart';
+import 'package:pos_tablet/core/utils/user_facing_error.dart';
 import '../../data/models/store_model.dart';
 import 'store_list_state.dart';
 
@@ -25,10 +26,26 @@ class StoreListCubit extends Cubit<StoreListState> {
       : controller = getIt<UiStoreController>(),
         super(const StoreListInitial());
 
+  /// Snapshot used by the UI while verification is in progress / failed.
+  List<StoreModel> get allStores => List.unmodifiable(_allStores);
+
+  String? get selectedStoreId => _selectedStoreId;
+
+  void _emitLoaded({List<StoreModel>? filteredStores}) {
+    emit(StoreListLoaded(
+      stores: _allStores,
+      selectedStoreId: _selectedStoreId,
+      filteredStores: filteredStores,
+    ));
+  }
+
   /// Loads available stores from the UiStoreController
   Future<void> loadStores() async {
     emit(const StoreListLoading());
     try {
+      if (controller.accessibleStores().isEmpty) {
+        await controller.restoreOrganisationLoginFromCache();
+      }
       _allStores = controller.accessibleStores().map((s) => StoreModel(
             storeId: s.store.storeId,
             storeName: s.store.storeName,
@@ -36,62 +53,75 @@ class StoreListCubit extends Cubit<StoreListState> {
           )).toList();
 
       if (_allStores.isEmpty) {
-        emit(const StoreListError(errorMessage: 'No stores available. Please contact support.'));
+        emit(const StoreListError(
+          errorMessage:
+              'No stores available for this login. Sign in online again, '
+              'or ask an admin to grant store access.',
+        ));
         return;
       }
 
-      emit(StoreListLoaded(stores: _allStores, selectedStoreId: _selectedStoreId));
+      _emitLoaded();
     } catch (e) {
-      emit(StoreListError(errorMessage: 'Failed to load stores: ${e.toString()}'));
+      emit(StoreListError(
+        errorMessage: 'Failed to load stores: ${userFacingError(e)}',
+      ));
     }
   }
 
-  /// Select a store by id
+  /// Select a store by id — keeps [StoreListLoaded] so the list never blanks.
   void selectStore(String storeId) {
-    _selectedStoreId = storeId;
+    StoreModel? selectedStore;
+    for (final store in _allStores) {
+      if (store.storeId == storeId) {
+        selectedStore = store;
+        break;
+      }
+    }
 
-    final selectedStore = _allStores.firstWhere(
-      (store) => store.storeId == storeId,
-      orElse: () => const StoreModel(storeId: '', storeName: '', storeRole: ''),
-    );
-
-    if (selectedStore.storeId.isEmpty) {
-      emit(const StoreListError(errorMessage: 'Selected store not found'));
+    if (selectedStore == null) {
+      emit(const StoreVerificationFailure(
+        errorMessage: 'Selected store not found',
+      ));
+      _emitLoaded();
       return;
     }
 
-    if (state is StoreListLoaded) {
-      final current = state as StoreListLoaded;
-      emit(StoreListLoaded(
-        stores: current.stores,
-        selectedStoreId: _selectedStoreId,
-        filteredStores: current.filteredStores,
-      ));
-    } else {
-      emit(StoreListLoaded(stores: _allStores, selectedStoreId: _selectedStoreId));
-    }
-
-    emit(StoreSelectionChanged(selectedStore: selectedStore, allStores: _allStores));
+    _selectedStoreId = storeId;
+    final filtered = state is StoreListLoaded
+        ? (state as StoreListLoaded).filteredStores
+        : null;
+    _emitLoaded(filteredStores: filtered);
   }
 
   /// Verify the currently selected store
   Future<void> verifySelectedStore() async {
     if (_selectedStoreId == null || _selectedStoreId!.isEmpty) {
-      emit(const StoreListError(errorMessage: 'Please select a store first'));
+      emit(const StoreVerificationFailure(
+        errorMessage: 'Please select a store first',
+      ));
+      _emitLoaded();
       return;
     }
 
-    final selectedStore = _allStores.firstWhere(
-      (s) => s.storeId == _selectedStoreId,
-      orElse: () => const StoreModel(storeId: '', storeName: '', storeRole: ''),
-    );
+    StoreModel? selectedStore;
+    for (final store in _allStores) {
+      if (store.storeId == _selectedStoreId) {
+        selectedStore = store;
+        break;
+      }
+    }
 
-    if (selectedStore.storeId.isEmpty) {
-      emit(const StoreListError(errorMessage: 'Selected store not found'));
+    if (selectedStore == null) {
+      emit(const StoreVerificationFailure(
+        errorMessage: 'Selected store not found',
+      ));
+      _emitLoaded();
       return;
     }
 
-    emit(StoreVerificationLoading(store: selectedStore));
+    final store = selectedStore;
+    emit(StoreVerificationLoading(store: store));
 
     try {
       final prefs = getIt<SharedPreferences>();
@@ -103,7 +133,7 @@ class StoreListCubit extends Cubit<StoreListState> {
           if (isClosed) return;
           emit(
             StoreVerificationLoading(
-              store: selectedStore,
+              store: store,
               message: _syncMessage(update),
             ),
           );
@@ -111,16 +141,33 @@ class StoreListCubit extends Cubit<StoreListState> {
       );
       await controller.refreshAccessControl();
 
+      // Only block when access is explicitly disabled. Missing local access
+      // rows (common right after company signup) must not wipe the store list.
       final storeAccess = await controller.currentStoreAccess();
-      if (storeAccess == null || !storeAccess.accessEnabled) {
-        throw StateError('Customer does not have access to the selected store.');
+      if (storeAccess != null && !storeAccess.accessEnabled) {
+        throw StateError(
+          'You do not have access to the selected store. '
+          'Ask an administrator to enable access, then try again.',
+        );
       }
 
-      await prefs.setString('selectedStoreId', _selectedStoreId!);
+      await controller.persistSelectedStore(
+        storeId: _selectedStoreId!,
+        storeName: store.storeName,
+      );
 
-      emit(StoreVerificationSuccess(store: selectedStore));
+      emit(StoreVerificationSuccess(store: store));
     } catch (e) {
-      emit(StoreVerificationFailure(errorMessage: 'Failed to verify store: ${e.toString()}', store: selectedStore));
+      if (isClosed) return;
+      emit(StoreVerificationFailure(
+        errorMessage: userFacingError(
+          e,
+          fallback: 'Failed to open store. Check your connection and try again.',
+        ),
+        store: store,
+      ));
+      // Restore the selectable list so the operator can retry another store.
+      _emitLoaded();
     }
   }
 
@@ -142,18 +189,20 @@ class StoreListCubit extends Cubit<StoreListState> {
 
   /// Search / filter stores by query
   void searchStores(String query) {
-    if (state is! StoreListLoaded) return;
-
-    final current = state as StoreListLoaded;
     final q = query.trim().toLowerCase();
 
     if (q.isEmpty) {
-      emit(StoreListLoaded(stores: current.stores, selectedStoreId: current.selectedStoreId));
+      _emitLoaded();
       return;
     }
 
-    final filtered = _allStores.where((s) => s.storeName.toLowerCase().contains(q) || s.storeId.toLowerCase().contains(q)).toList();
-    emit(StoreListLoaded(stores: current.stores, selectedStoreId: current.selectedStoreId, filteredStores: filtered));
+    final filtered = _allStores
+        .where(
+          (s) =>
+              s.storeName.toLowerCase().contains(q) ||
+              s.storeId.toLowerCase().contains(q),
+        )
+        .toList();
+    _emitLoaded(filteredStores: filtered);
   }
 }
-

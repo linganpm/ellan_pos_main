@@ -9,7 +9,14 @@ import 'forgot_password_screen.dart';
 import '../../core/routes.dart';
 
 class SignInScreen extends StatelessWidget {
-  const SignInScreen({super.key});
+  const SignInScreen({
+    super.key,
+    this.initialIdentifier,
+    this.companyIdentifierHint,
+  });
+
+  final String? initialIdentifier;
+  final String? companyIdentifierHint;
 
   static const _primary = Color(0xFF4A00E0);
 
@@ -43,8 +50,14 @@ class SignInScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          SignInCubit(prefs: context.read<SharedPreferences>()),
+      create: (context) {
+        final cubit = SignInCubit(prefs: context.read<SharedPreferences>());
+        final seed = initialIdentifier?.trim() ?? '';
+        if (seed.isNotEmpty) {
+          cubit.identifierChanged(seed);
+        }
+        return cubit;
+      },
       child: Scaffold(
         backgroundColor: const Color(0xFFF3F5F9),
         body: SafeArea(
@@ -71,164 +84,278 @@ class SignInScreen extends StatelessWidget {
                     }
                   },
                   builder: (context, state) {
-                    return Material(
-                      color: Colors.white,
-                      elevation: 2,
-                      shadowColor: Colors.black.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(24),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(36, 32, 36, 28),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(
-                                AppLocalizations.of(context)!.signInWelcome,
-                                textAlign: TextAlign.center,
-                                style: FontUtility.heading.copyWith(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF1F2937),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Sign in to renew this device',
-                                textAlign: TextAlign.center,
-                                style: FontUtility.body.copyWith(
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              if (state.errorMessage != null) ...[
-                                const SizedBox(height: 20),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                    horizontal: 16,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red.shade50,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: Colors.red.shade200,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    state.errorMessage!,
-                                    style: FontUtility.body.copyWith(
-                                      color: Colors.red.shade700,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 24),
-                              TextField(
-                                onChanged: (value) => context
-                                    .read<SignInCubit>()
-                                    .identifierChanged(value),
-                                style: FontUtility.body.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 17,
-                                ),
-                                decoration: _fieldDecoration('Staff ID'),
-                              ),
-                              const SizedBox(height: 14),
-                              TextField(
-                                onChanged: (value) => context
-                                    .read<SignInCubit>()
-                                    .passwordChanged(value),
-                                obscureText: state.obscurePassword,
-                                style: FontUtility.body.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 17,
-                                ),
-                                decoration: _fieldDecoration(
-                                  'Password',
-                                  suffixIcon: IconButton(
-                                    onPressed: () => context
-                                        .read<SignInCubit>()
-                                        .togglePasswordVisibility(),
-                                    icon: Icon(
-                                      state.obscurePassword
-                                          ? Icons.visibility_rounded
-                                          : Icons.visibility_off_rounded,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const ForgotPasswordScreen(),
-                                      ),
-                                    );
-                                  },
-                                  child: Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    )!.signInForgotPasswordPrompt,
-                                    style: FontUtility.body.copyWith(
-                                      color: _primary,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                height: 56,
-                                child: FilledButton(
-                                  onPressed: state.isValid && !state.isLoading
-                                      ? () =>
-                                          context.read<SignInCubit>().submit()
-                                      : null,
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: _primary,
-                                    disabledBackgroundColor:
-                                        Colors.grey.shade300,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                  ),
-                                  child: state.isLoading
-                                      ? const SizedBox(
-                                          height: 22,
-                                          width: 22,
-                                          child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2.5,
-                                          ),
-                                        )
-                                      : Text(
-                                          AppLocalizations.of(
-                                            context,
-                                          )!.signInButton,
-                                          style: FontUtility.button.copyWith(
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                            ],
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () {
+                              if (Navigator.of(context).canPop()) {
+                                Navigator.of(context).pop();
+                              } else {
+                                Navigator.pushReplacementNamed(
+                                  context,
+                                  AppRoutes.authEntry,
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.arrow_back_rounded),
+                            label: const Text('Back'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFF374151),
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 8),
+                        Expanded(
+                          child: Center(
+                            child: SingleChildScrollView(
+                              child: _SignInForm(
+                                state: state,
+                                fieldDecoration: _fieldDecoration,
+                                companyIdentifierHint: companyIdentifierHint,
+                                initialIdentifier: initialIdentifier,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     );
                   },
                 ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SignInForm extends StatefulWidget {
+  const _SignInForm({
+    required this.state,
+    required this.fieldDecoration,
+    this.companyIdentifierHint,
+    this.initialIdentifier,
+  });
+
+  final SignInState state;
+  final InputDecoration Function(String hint, {Widget? suffixIcon})
+      fieldDecoration;
+  final String? companyIdentifierHint;
+  final String? initialIdentifier;
+
+  @override
+  State<_SignInForm> createState() => _SignInFormState();
+}
+
+class _SignInFormState extends State<_SignInForm> {
+  late final TextEditingController _identifierController;
+
+  @override
+  void initState() {
+    super.initState();
+    _identifierController = TextEditingController(
+      text: widget.initialIdentifier?.trim() ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _identifierController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = widget.state;
+    final companyIdentifierHint = widget.companyIdentifierHint;
+    return Material(
+      color: Colors.white,
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(24),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(36, 32, 36, 28),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                AppLocalizations.of(context)!.signInWelcome,
+                textAlign: TextAlign.center,
+                style: FontUtility.heading.copyWith(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF1F2937),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Sign in to renew this device',
+                textAlign: TextAlign.center,
+                style: FontUtility.body.copyWith(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (companyIdentifierHint != null &&
+                  companyIdentifierHint.trim().isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Company: ${companyIdentifierHint.trim()}',
+                  textAlign: TextAlign.center,
+                  style: FontUtility.body.copyWith(
+                    color: SignInScreen._primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+              if (state.errorMessage != null) ...[
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.red.shade200,
+                    ),
+                  ),
+                  child: Text(
+                    state.errorMessage!,
+                    style: FontUtility.body.copyWith(
+                      color: Colors.red.shade700,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+              TextField(
+                controller: _identifierController,
+                onChanged: (value) =>
+                    context.read<SignInCubit>().identifierChanged(value),
+                style: FontUtility.body.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 17,
+                ),
+                decoration: widget.fieldDecoration('Email / phone / staff ID'),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                onChanged: (value) =>
+                    context.read<SignInCubit>().passwordChanged(value),
+                obscureText: state.obscurePassword,
+                style: FontUtility.body.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 17,
+                ),
+                decoration: widget.fieldDecoration(
+                  'Password',
+                  suffixIcon: IconButton(
+                    onPressed: () =>
+                        context.read<SignInCubit>().togglePasswordVisibility(),
+                    icon: Icon(
+                      state.obscurePassword
+                          ? Icons.visibility_rounded
+                          : Icons.visibility_off_rounded,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ForgotPasswordScreen(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    AppLocalizations.of(context)!.signInForgotPasswordPrompt,
+                    style: FontUtility.body.copyWith(
+                      color: SignInScreen._primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: state.isValid && !state.isLoading
+                      ? () => context.read<SignInCubit>().submit()
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: SignInScreen._primary,
+                    disabledBackgroundColor: Colors.grey.shade300,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: state.isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          AppLocalizations.of(context)!.signInButton,
+                          style: FontUtility.button.copyWith(
+                            color: state.isValid
+                                ? Colors.white
+                                : Colors.grey.shade500,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'New company?',
+                    style: FontUtility.body.copyWith(
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: state.isLoading
+                        ? null
+                        : () {
+                            Navigator.pushReplacementNamed(
+                              context,
+                              AppRoutes.onboarding,
+                            );
+                          },
+                    child: Text(
+                      'Sign up',
+                      style: FontUtility.body.copyWith(
+                        color: SignInScreen._primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

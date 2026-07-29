@@ -333,6 +333,37 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final store = getIt<UiStoreController>().store;
+                    if (store == null) return;
+                    final ok = await store.auth.hasStoreRole('admin');
+                    if (!context.mounted) return;
+                    if (!ok) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Store Admin access required.'),
+                        ),
+                      );
+                      return;
+                    }
+                    Navigator.pushNamed(context, AppRoutes.company);
+                  },
+                  icon: const Icon(Icons.apartment_rounded),
+                  label: const Text('Company (settings & staff)'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _primary,
+                    side: const BorderSide(color: _primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

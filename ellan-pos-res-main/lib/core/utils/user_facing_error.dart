@@ -31,6 +31,20 @@ String userFacingError(
     return 'Sign-in failed. Check your email and password, then try again.';
   }
 
+  if (lower.contains('databaseexception') ||
+      lower.contains('sqliteexception') ||
+      lower.contains('no such column') ||
+      lower.contains('no such table')) {
+    final noSuch = RegExp(
+      r'no such (?:column|table):\s*([^\s,]+)',
+      caseSensitive: false,
+    ).firstMatch(raw);
+    if (noSuch != null) {
+      return 'Local database is outdated (${noSuch.group(0)}). Fully restart the app, then Sync again.';
+    }
+    return 'Local database needs an update. Fully restart the app, then try Sync again.';
+  }
+
   if (lower.contains('403') || lower.contains('forbidden')) {
     return 'Access denied. Ask an administrator to check this device and account.';
   }
@@ -43,9 +57,11 @@ String userFacingError(
       firstLine.startsWith('#')) {
     return fallback;
   }
-  // Strip noisy ClientException prefixes when somehow not caught above.
+  // Strip noisy ClientException / StateError / Exception prefixes.
   final cleaned = firstLine
       .replaceFirst(RegExp(r'^ClientException[^:]*:\s*', caseSensitive: false), '')
+      .replaceFirst(RegExp(r'^Bad state:\s*', caseSensitive: false), '')
+      .replaceFirst(RegExp(r'^Exception:\s*', caseSensitive: false), '')
       .trim();
   return cleaned.isEmpty ? fallback : cleaned;
 }

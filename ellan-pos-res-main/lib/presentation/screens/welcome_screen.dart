@@ -127,6 +127,28 @@ class _WelcomeViewState extends State<_WelcomeView> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextButton.icon(
+                                onPressed: state.isLoading
+                                    ? null
+                                    : () {
+                                        Navigator.pushNamedAndRemoveUntil(
+                                          context,
+                                          AppRoutes.authEntry,
+                                          (route) => false,
+                                        );
+                                      },
+                                icon: const Icon(Icons.arrow_back_rounded),
+                                label: Text(
+                                  'Back to Get started',
+                                  style: FontUtility.body.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
                             Text(
                               AppLocalizations.of(context)!.welcomeGetStarted,
                               style: FontUtility.heading.copyWith(
@@ -386,6 +408,47 @@ class _WelcomeViewState extends State<_WelcomeView> {
                                                 : Colors.grey.shade500,
                                           ),
                                         ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Center(
+                              child: TextButton(
+                                onPressed: state.isLoading
+                                    ? null
+                                    : () {
+                                        Navigator.pushNamedAndRemoveUntil(
+                                          context,
+                                          AppRoutes.login,
+                                          (route) => false,
+                                        );
+                                      },
+                                child: Text(
+                                  'Already set up? Sign in',
+                                  style: FontUtility.body.copyWith(
+                                    color: const Color(0xFF4A00E0),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Center(
+                              child: TextButton(
+                                onPressed: state.isLoading
+                                    ? null
+                                    : () {
+                                        Navigator.pushNamedAndRemoveUntil(
+                                          context,
+                                          AppRoutes.onboarding,
+                                          (route) => false,
+                                        );
+                                      },
+                                child: Text(
+                                  'Create a new company instead',
+                                  style: FontUtility.body.copyWith(
+                                    color: Colors.black54,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ),

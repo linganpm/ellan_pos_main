@@ -27,12 +27,17 @@ class UserLoaded extends UserState {
 /// Does not auto-login the previous operator (many staff share one tablet).
 class UserNeedsStaffUnlock extends UserState {
   final String? storeId;
+  final String? storeName;
   final bool leaseExpired;
 
-  const UserNeedsStaffUnlock({this.storeId, this.leaseExpired = false});
+  const UserNeedsStaffUnlock({
+    this.storeId,
+    this.storeName,
+    this.leaseExpired = false,
+  });
 
   @override
-  List<Object?> get props => [storeId, leaseExpired];
+  List<Object?> get props => [storeId, storeName, leaseExpired];
 }
 
 class UserError extends UserState {

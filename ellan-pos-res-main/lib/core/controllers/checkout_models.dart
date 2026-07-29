@@ -11,6 +11,9 @@ class PosCatalogCategory {
 /// A sellable product variant (package) from the store's synced catalogue.
 class PosCatalogProduct {
   final String id;
+  /// On-device SQLite local id (`pv_…`); order lines often store this even after
+  /// catalogue [id] switches to exported `unique_id`.
+  final String localId;
   /// Display name (package / variant preferred).
   final String name;
   /// Parent product name from catalogue.
@@ -33,6 +36,7 @@ class PosCatalogProduct {
 
   const PosCatalogProduct({
     required this.id,
+    this.localId = '',
     required this.name,
     this.productName = '',
     this.packageName = '',
@@ -211,6 +215,7 @@ class PosDashboardSnapshot {
   final double refundsAmount;
   final List<PosDashboardSalesPoint> salesPoints;
   final List<({String name, int count})> topCategories;
+  final List<({String name, int count})> topProducts;
   final List<PosDashboardStaffSales> staffSales;
   final List<({String customerName, double amount, String date})> creditOrders;
 
@@ -230,6 +235,7 @@ class PosDashboardSnapshot {
     this.refundsAmount = 0,
     required this.salesPoints,
     required this.topCategories,
+    this.topProducts = const [],
     this.staffSales = const [],
     required this.creditOrders,
   });
@@ -262,6 +268,7 @@ class PosDashboardSnapshot {
       refundsAmount: 0,
       salesPoints: [],
       topCategories: [],
+      topProducts: [],
       staffSales: [],
       creditOrders: [],
     );

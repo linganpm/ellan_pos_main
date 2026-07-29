@@ -142,6 +142,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardTopCategories => 'Top Categories';
 
   @override
+  String get dashboardTopProducts => 'Top Products';
+
+  @override
   String get unsupportedDeviceTitle => 'Device Not Supported';
 
   @override

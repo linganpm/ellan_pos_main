@@ -133,10 +133,15 @@ class OffersRepository {
     StoreScope scope, {
     bool activeOnly = false,
   }) async {
+    final where = activeOnly
+        ? 'orgId = ? AND storeId = ? AND active = ? AND COALESCE(deleted, 0) = 0'
+        : 'orgId = ? AND storeId = ? AND COALESCE(deleted, 0) = 0';
     final rows = await db.query(
       'offers',
-      where: activeOnly ? 'orgId = ? AND storeId = ? AND active = ?' : 'orgId = ? AND storeId = ?',
-      whereArgs: activeOnly ? [scope.orgId, scope.storeId, 1] : [scope.orgId, scope.storeId],
+      where: where,
+      whereArgs: activeOnly
+          ? [scope.orgId, scope.storeId, 1]
+          : [scope.orgId, scope.storeId],
       orderBy: 'updated_on DESC, id DESC',
     );
     final targets = await _loadTargetsByOffer(scope);
@@ -163,18 +168,17 @@ class OffersRepository {
   }
 
   Future<int> deleteOffer(StoreScope scope, String localId) async {
-    return db.transaction((txn) async {
-      await txn.delete(
-        'offer_targets',
-        where: 'orgId = ? AND storeId = ? AND offer_local_id = ?',
-        whereArgs: [scope.orgId, scope.storeId, localId],
-      );
-      return txn.delete(
-        'offers',
-        where: 'orgId = ? AND storeId = ? AND local_id = ?',
-        whereArgs: [scope.orgId, scope.storeId, localId],
-      );
-    });
+    return db.update(
+      'offers',
+      {
+        'deleted': 1,
+        'exported': 0,
+        'active': 0,
+        'updated_on': DateTime.now().toIso8601String(),
+      },
+      where: 'orgId = ? AND storeId = ? AND local_id = ?',
+      whereArgs: [scope.orgId, scope.storeId, localId],
+    );
   }
 
   Future<int> setOfferActive(StoreScope scope, String localId, {required bool active}) {

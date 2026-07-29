@@ -11,7 +11,7 @@
     "linux_x64": {
       "package:sqlite3/src/ffi/libsqlite3.g.dart": [
         "absolute",
-        "/home/lingaraja/work/ellanone/ellan-one-container/pos-core-ib-main/.dart_tool/lib/libsqlite3.so"
+        "/home/lingaraja/work/ellanone/ellan-one-container/ellan-pos/pos-core-ib-main/.dart_tool/lib/libsqlite3.so"
       ]
     }
   }

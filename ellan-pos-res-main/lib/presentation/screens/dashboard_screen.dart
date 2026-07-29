@@ -9,6 +9,10 @@ import '../widgets/dashboard/sales_chart.dart';
 import '../widgets/dashboard/top_items_list.dart';
 import '../widgets/dashboard/payment_types_chart.dart';
 import '../widgets/dashboard/credit_orders_table.dart';
+import 'credits_screen.dart';
+import 'order_list_screen.dart';
+import 'refunds_screen.dart';
+import 'scheduled_payments_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -151,7 +155,7 @@ class _DashboardView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildOverviewMetrics(context, snapshot),
+        _buildOverviewMetrics(context, snapshot, state.filter),
         const SizedBox(height: 32),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -195,10 +199,11 @@ class _DashboardView extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final stack = constraints.maxWidth < 900;
-            final top = SizedBox(
+            final l10n = AppLocalizations.of(context)!;
+            final topCategories = SizedBox(
               height: 450,
               child: TopItemsList(
-                title: AppLocalizations.of(context)!.dashboardTopCategories,
+                title: l10n.dashboardTopCategories,
                 items: snapshot.topCategories.isEmpty
                     ? [
                         TopItem(
@@ -209,6 +214,28 @@ class _DashboardView extends StatelessWidget {
                       ]
                     : [
                         for (final row in snapshot.topCategories)
+                          TopItem(
+                            name: row.name,
+                            count: row.count,
+                            imageUrl: '',
+                          ),
+                      ],
+              ),
+            );
+            final topProducts = SizedBox(
+              height: 450,
+              child: TopItemsList(
+                title: l10n.dashboardTopProducts,
+                items: snapshot.topProducts.isEmpty
+                    ? [
+                        TopItem(
+                          name: 'No product sales yet',
+                          count: 0,
+                          imageUrl: '',
+                        ),
+                      ]
+                    : [
+                        for (final row in snapshot.topProducts)
                           TopItem(
                             name: row.name,
                             count: row.count,
@@ -241,18 +268,26 @@ class _DashboardView extends StatelessWidget {
             if (stack) {
               return Column(
                 children: [
-                  top,
+                  topCategories,
+                  const SizedBox(height: 24),
+                  topProducts,
                   const SizedBox(height: 24),
                   credits,
                 ],
               );
             }
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            return Column(
               children: [
-                Expanded(flex: 6, child: top),
-                const SizedBox(width: 24),
-                Expanded(flex: 6, child: credits),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: topCategories),
+                    const SizedBox(width: 24),
+                    Expanded(child: topProducts),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                credits,
               ],
             );
           },
@@ -264,6 +299,7 @@ class _DashboardView extends StatelessWidget {
   Widget _buildOverviewMetrics(
     BuildContext context,
     PosDashboardSnapshot snapshot,
+    String periodFilter,
   ) {
     final cards = <Widget>[
       for (final type in snapshot.orderTypeCounts)
@@ -272,48 +308,78 @@ class _DashboardView extends StatelessWidget {
           '${type.count}',
           _iconForOrderType(type.key),
           _colorForOrderType(type.key),
+          onTap: () => _openOrders(
+            context,
+            periodFilter: periodFilter,
+            typeFilter: type.key,
+          ),
         ),
       _buildOverviewCard(
         AppLocalizations.of(context)!.dashboardMetricCancelled,
         '${snapshot.cancelledCount}',
         Icons.cancel_rounded,
         const Color(0xFFFF512F),
+        onTap: () => _openOrders(
+          context,
+          periodFilter: periodFilter,
+          statusFilter: 'Cancelled',
+        ),
       ),
       _buildOverviewCard(
         AppLocalizations.of(context)!.dashboardMetricOrders,
         '${snapshot.totalOrders}',
         Icons.receipt_long_rounded,
         const Color(0xFF92FE9D),
+        onTap: () => _openOrders(context, periodFilter: periodFilter),
       ),
       _buildOverviewCard(
         AppLocalizations.of(context)!.dashboardMetricTotalSales,
         '\$${snapshot.totalSales.toStringAsFixed(0)}',
         Icons.attach_money_rounded,
         const Color(0xFFFF9A9E),
+        onTap: () => _openOrders(context, periodFilter: periodFilter),
       ),
       _buildOverviewCard(
         'Credits',
         '${snapshot.creditCount}',
         Icons.account_balance_wallet_rounded,
         const Color(0xFF7C4DFF),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CreditsScreen()),
+        ),
       ),
       _buildOverviewCard(
         'Credit amount',
         '\$${snapshot.creditOutstandingAmount.toStringAsFixed(0)}',
         Icons.money_off_csred_rounded,
         const Color(0xFFFF7043),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CreditsScreen()),
+        ),
       ),
       _buildOverviewCard(
         'Repayments',
         '\$${snapshot.repaymentsAmount.toStringAsFixed(0)}',
         Icons.payments_rounded,
         const Color(0xFF26A69A),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ScheduledPaymentsScreen()),
+        ),
       ),
       _buildOverviewCard(
         'Refunds',
         '${snapshot.refundsCount} · \$${snapshot.refundsAmount.toStringAsFixed(0)}',
         Icons.undo_rounded,
         const Color(0xFFE53935),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RefundsScreen(periodFilter: periodFilter),
+          ),
+        ),
       ),
     ];
 
@@ -340,6 +406,24 @@ class _DashboardView extends StatelessWidget {
     );
   }
 
+  void _openOrders(
+    BuildContext context, {
+    required String periodFilter,
+    String? typeFilter,
+    String? statusFilter,
+  }) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OrderListScreen(
+          initialTypeFilter: typeFilter,
+          initialStatusFilter: statusFilter,
+          periodFilter: periodFilter,
+        ),
+      ),
+    );
+  }
+
   IconData _iconForOrderType(String key) {
     final normalized = key.replaceAll(RegExp(r'[^A-Z]'), '');
     if (normalized.contains('DINE')) return Icons.restaurant_rounded;
@@ -360,13 +444,15 @@ class _DashboardView extends StatelessWidget {
     String title,
     String value,
     IconData icon,
-    Color color,
-  ) {
+    Color color, {
+    VoidCallback? onTap,
+  }) {
     return OverviewCard(
       title: title,
       value: value,
       icon: icon,
       color: color,
+      onTap: onTap,
     );
   }
 

@@ -451,7 +451,12 @@ class DeviceSetupStore {
     final phone = '${row['phone'] ?? ''}'.replaceAll(RegExp(r'[^0-9]'), '');
     final matchesIdentifier = (cachedEmail.isNotEmpty && cachedEmail == key) ||
         (reg.isNotEmpty && (reg == key || (digits.isNotEmpty && reg == digits))) ||
-        (digits.isNotEmpty && phone.isNotEmpty && phone == digits);
+        (digits.isNotEmpty &&
+            phone.isNotEmpty &&
+            (phone == digits ||
+                (digits.length >= 7 &&
+                    phone.length >= 7 &&
+                    (phone.endsWith(digits) || digits.endsWith(phone)))));
     if (!matchesIdentifier) return null;
 
     final stored = '${row['password'] ?? ''}';
@@ -511,6 +516,51 @@ class DeviceSetupStore {
     final customersPath = await customersFile();
     await customersPath.writeAsString(jsonEncode(customersPayload));
     await prefs.setString('cachedCustomersPath', customersPath.path);
+  }
+
+  /// Persist a verified staff password into the organisation-login cache and
+  /// bootstrap so offline unlock works for the rest of the lease.
+  Future<void> persistVerifiedStaffCredential({
+    required String identifier,
+    required String password,
+    String? customerId,
+    String? email,
+  }) async {
+    final hash = sha256.convert(utf8.encode(password)).toString();
+    final cached = loadOrganisationLogin();
+    if (cached == null) return;
+
+    final row = Map<String, dynamic>.from(
+      cached.customerRow ?? const <String, dynamic>{},
+    );
+    row['password'] = hash;
+    if ((email ?? '').trim().isNotEmpty) {
+      row['email'] = email!.trim();
+    }
+    final phoneDigits = identifier.replaceAll(RegExp(r'[^0-9]'), '');
+    if (phoneDigits.length >= 7 && '${row['phone'] ?? ''}'.trim().isEmpty) {
+      row['phone'] = phoneDigits;
+    }
+
+    final updated = StoreOrganisationLoginResult(
+      organisation: cached.organisation,
+      customerId: (customerId ?? cached.customerId).trim().isNotEmpty
+          ? (customerId ?? cached.customerId)
+          : cached.customerId,
+      customerName: cached.customerName,
+      email: (email ?? cached.email).trim().isNotEmpty
+          ? (email ?? cached.email)
+          : cached.email,
+      organisationRole: cached.organisationRole,
+      accessibleStores: cached.accessibleStores,
+      customerRow: row,
+      accessToken: cached.accessToken,
+      refreshToken: cached.refreshToken,
+      sessionId: cached.sessionId,
+      serviceInstanceId: cached.serviceInstanceId,
+    );
+    await saveOrganisationLogin(updated);
+    await patchBootstrapOperatorCredential(updated);
   }
 
   /// 4-digit organisation POS code from the gateway config (if assigned).

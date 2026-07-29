@@ -67,6 +67,10 @@ class StoreDirectoryEntry {
   final String contactPerson;
   final String status;
   final String serviceVariantType;
+  final String address;
+  final String registrationNumber;
+  final String taxNumber;
+  final String identifier;
 
   const StoreDirectoryEntry({
     required this.orgId,
@@ -83,6 +87,10 @@ class StoreDirectoryEntry {
     required this.contactPerson,
     required this.status,
     required this.serviceVariantType,
+    this.address = '',
+    this.registrationNumber = '',
+    this.taxNumber = '',
+    this.identifier = '',
   });
 
   factory StoreDirectoryEntry.fromRow(Map<String, dynamic> row) {
@@ -114,6 +122,16 @@ class StoreDirectoryEntry {
           row['serviceVariantType'] as String? ??
           row['service_variant_type'] as String? ??
           '',
+      address: row['address'] as String? ?? row['location'] as String? ?? '',
+      registrationNumber:
+          row['registration_number'] as String? ??
+          row['company_registration_number'] as String? ??
+          '',
+      taxNumber:
+          row['tax_number'] as String? ??
+          row['company_tax_number'] as String? ??
+          '',
+      identifier: row['identifier'] as String? ?? '',
     );
   }
 
@@ -133,6 +151,10 @@ class StoreDirectoryEntry {
       'contactPerson': contactPerson,
       'status': status,
       'serviceVariantType': serviceVariantType,
+      'address': address,
+      'registration_number': registrationNumber,
+      'tax_number': taxNumber,
+      'identifier': identifier,
     };
   }
 }
@@ -198,6 +220,14 @@ class StoreOrganisationLoginResult {
   final List<StoreAccessibleStore> accessibleStores;
   final Map<String, dynamic>? customerRow;
 
+  /// Org JWT from `/api/pos/login` — used for online staff/admin APIs.
+  final String? accessToken;
+  final String? refreshToken;
+  final String? sessionId;
+
+  /// Tenant/org service instance id (string or numeric) from login.
+  final String? serviceInstanceId;
+
   const StoreOrganisationLoginResult({
     required this.organisation,
     required this.customerId,
@@ -206,6 +236,10 @@ class StoreOrganisationLoginResult {
     required this.organisationRole,
     required this.accessibleStores,
     this.customerRow,
+    this.accessToken,
+    this.refreshToken,
+    this.sessionId,
+    this.serviceInstanceId,
   });
 
   Map<String, dynamic> toJson() {
@@ -223,6 +257,13 @@ class StoreOrganisationLoginResult {
           },
       ],
       if (customerRow != null) 'customer': customerRow,
+      if (accessToken != null && accessToken!.isNotEmpty)
+        'access_token': accessToken,
+      if (refreshToken != null && refreshToken!.isNotEmpty)
+        'refresh_token': refreshToken,
+      if (sessionId != null && sessionId!.isNotEmpty) 'session_id': sessionId,
+      if (serviceInstanceId != null && serviceInstanceId!.isNotEmpty)
+        'service_instance_id': serviceInstanceId,
     };
   }
 
@@ -249,6 +290,7 @@ class StoreOrganisationLoginResult {
       }
     }
     final organisationRaw = json['organisation'];
+    final si = json['service_instance_id'];
     return StoreOrganisationLoginResult(
       organisation: organisationRaw is Map
           ? StoreOrganisation.fromRow(organisationRaw.cast<String, dynamic>())
@@ -267,6 +309,16 @@ class StoreOrganisationLoginResult {
       customerRow: json['customer'] is Map
           ? (json['customer'] as Map).cast<String, dynamic>()
           : null,
+      accessToken: '${json['access_token'] ?? json['accessToken'] ?? ''}'.trim().isEmpty
+          ? null
+          : '${json['access_token'] ?? json['accessToken']}'.trim(),
+      refreshToken: '${json['refresh_token'] ?? json['refreshToken'] ?? ''}'.trim().isEmpty
+          ? null
+          : '${json['refresh_token'] ?? json['refreshToken']}'.trim(),
+      sessionId: '${json['session_id'] ?? json['sessionId'] ?? ''}'.trim().isEmpty
+          ? null
+          : '${json['session_id'] ?? json['sessionId']}'.trim(),
+      serviceInstanceId: si == null ? null : '$si'.trim().isEmpty ? null : '$si'.trim(),
     );
   }
 }
@@ -1969,6 +2021,7 @@ class StoreCustomer {
   final String status;
   final String role;
   final String usrRegNum;
+  final String photoPath;
 
   const StoreCustomer({
     required this.customerId,
@@ -1982,6 +2035,7 @@ class StoreCustomer {
     required this.status,
     required this.role,
     this.usrRegNum = '',
+    this.photoPath = '',
   });
 
   factory StoreCustomer.fromRow(Map<String, dynamic> row) {
@@ -1997,6 +2051,7 @@ class StoreCustomer {
       status: row['status'] as String? ?? '',
       role: row['role'] as String? ?? '',
       usrRegNum: '${row['usr_reg_num'] ?? row['reg_num'] ?? ''}',
+      photoPath: '${row['photo_path'] ?? ''}',
     );
   }
 }
@@ -2174,6 +2229,7 @@ class StoreProductVariantRecord {
   final String localId;
   final String? uniqueId;
   final int? variantId;
+  final String categoryLocalId;
   final int categoryId;
   final String productName;
   final String productVariantName;
@@ -2188,6 +2244,7 @@ class StoreProductVariantRecord {
   final String? sellUnitShort;
   final String? sellUnitLabel;
   final double? sellUnitBaseQty;
+  final String? taxLabel;
 
   const StoreProductVariantRecord({
     required this.orgId,
@@ -2195,6 +2252,7 @@ class StoreProductVariantRecord {
     required this.localId,
     required this.uniqueId,
     required this.variantId,
+    this.categoryLocalId = '',
     required this.categoryId,
     required this.productName,
     required this.productVariantName,
@@ -2209,6 +2267,7 @@ class StoreProductVariantRecord {
     this.sellUnitShort,
     this.sellUnitLabel,
     this.sellUnitBaseQty,
+    this.taxLabel,
   });
 
   factory StoreProductVariantRecord.fromRow(Map<String, dynamic> row) {
@@ -2219,6 +2278,7 @@ class StoreProductVariantRecord {
       localId: row['localId'] as String? ?? '',
       uniqueId: row['unique_id'] as String?,
       variantId: (row['variantId'] as num?)?.toInt(),
+      categoryLocalId: categoryLocalId,
       categoryId: int.tryParse(categoryLocalId.replaceFirst('cat_', '')) ?? 0,
       productName: row['product_name'] as String? ?? '',
       productVariantName: row['product_variant_name'] as String? ?? '',
@@ -2235,6 +2295,7 @@ class StoreProductVariantRecord {
       sellUnitShort: row['sell_unit_short'] as String?,
       sellUnitLabel: row['sell_unit_label'] as String?,
       sellUnitBaseQty: _doubleFromMap(row, 'sell_unit_base_qty'),
+      taxLabel: (row['tax_label'] as String?)?.trim(),
     );
   }
 }

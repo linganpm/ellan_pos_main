@@ -16,6 +16,7 @@ import '../widgets/billing/billing_summary_card.dart';
 import '../widgets/billing/calculation_input_section.dart';
 import '../widgets/billing/order_add_payment_dialog.dart';
 import '../widgets/customer_select_sheet.dart';
+import '../widgets/pos_toast.dart';
 import 'invoice_screen.dart';
 import 'order_create_screen.dart';
 
@@ -155,7 +156,6 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     required DeviceSetupStore setupStore,
   }) async {
     final controller = context.read<UiStoreController>();
-    final messenger = ScaffoldMessenger.of(context);
     double outstanding = 0;
     double? customerLimit;
     final customerId = customerUniqueId?.trim();
@@ -189,12 +189,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
 
     if (setupStore.creditLimitHardBlock) {
       if (!mounted) return false;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
+      PosToast.failed(context, detail: message);
       return false;
     }
 
@@ -230,6 +225,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
   Future<bool> _ensureCreditCustomer({
     required double remaining,
   }) async {
+    // Reuse a customer already chosen on this billing screen.
     final existingId = _customerUniqueId?.trim();
     if (existingId != null && existingId.isNotEmpty) return true;
 
@@ -239,15 +235,168 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       subtitle:
           'Select or add the customer to put ${PosCurrency.format(remaining)} on their credit account.',
       confirmLabel: 'Use customer',
+      isDismissible: false,
     );
-    if (!mounted || selected == null) return false;
+    if (!mounted) return false;
+    if (selected == null) {
+      PosToast.failed(
+        context,
+        detail: 'Select a customer to put the balance on credit.',
+      );
+      return false;
+    }
+    final id = selected.customerUniqueId.trim();
+    if (id.isEmpty) {
+      PosToast.failed(
+        context,
+        detail: 'Credit requires a saved customer. Try again.',
+      );
+      return false;
+    }
     setState(() {
-      _customerUniqueId = selected.customerUniqueId;
+      _customerUniqueId = id;
       _customerName = selected.name;
       _customerPhone = selected.phone;
       _customerEmail = selected.email;
     });
     return true;
+  }
+
+  Future<void> _pickBillingCustomer() async {
+    if (_isCheckingOut) return;
+    final selected = await showCustomerSelectSheet(
+      context,
+      title: 'Select customer',
+      subtitle: 'Attach a customer to this bill (required for credit).',
+      confirmLabel: 'Use customer',
+    );
+    if (!mounted || selected == null) return;
+    final id = selected.customerUniqueId.trim();
+    if (id.isEmpty) {
+      PosToast.failed(context, detail: 'Could not use that customer. Try again.');
+      return;
+    }
+    setState(() {
+      _customerUniqueId = id;
+      _customerName = selected.name;
+      _customerPhone = selected.phone;
+      _customerEmail = selected.email;
+    });
+  }
+
+  void _clearBillingCustomer() {
+    if (_isCheckingOut) return;
+    setState(() {
+      _customerUniqueId = null;
+      _customerName = null;
+      _customerPhone = null;
+      _customerEmail = null;
+    });
+  }
+
+  Widget _buildCustomerPickerRow() {
+    final id = _customerUniqueId?.trim() ?? '';
+    final hasCustomer = id.isNotEmpty;
+    final name = (_customerName ?? '').trim();
+    final phone = (_customerPhone ?? '').trim();
+    final title = hasCustomer
+        ? (name.isNotEmpty ? name : 'Customer')
+        : 'Select customer';
+    final subtitle = hasCustomer
+        ? [
+            if (phone.isNotEmpty) phone,
+            if ((_customerEmail ?? '').trim().isNotEmpty)
+              (_customerEmail ?? '').trim(),
+          ].join(' · ')
+        : 'Optional — required when paying on credit';
+
+    return Material(
+      color: hasCustomer
+          ? const Color(0xFF4A00E0).withValues(alpha: 0.06)
+          : const Color(0xFFF7F8FB),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: _isCheckingOut ? null : _pickBillingCustomer,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: hasCustomer
+                  ? const Color(0xFF4A00E0).withValues(alpha: 0.35)
+                  : Colors.grey.withValues(alpha: 0.25),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: hasCustomer
+                      ? const Color(0xFF4A00E0).withValues(alpha: 0.12)
+                      : Colors.grey.shade200,
+                  child: Icon(
+                    hasCustomer
+                        ? Icons.person_rounded
+                        : Icons.person_add_alt_1_rounded,
+                    size: 20,
+                    color: hasCustomer
+                        ? const Color(0xFF4A00E0)
+                        : Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: FontUtility.subheading.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: FontUtility.body.copyWith(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (hasCustomer)
+                  IconButton(
+                    tooltip: 'Clear customer',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: _isCheckingOut ? null : _clearBillingCustomer,
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                  )
+                else
+                  IconButton(
+                    tooltip: 'Select customer',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: _isCheckingOut ? null : _pickBillingCustomer,
+                    icon: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Color(0xFF4A00E0),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<_CreditCheckoutChoice?> _promptCreditPlan({
@@ -404,7 +553,14 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     if (!ready || !mounted) return false;
 
     final plan = await _promptCreditPlan(remaining: remaining);
-    if (!mounted || plan == null) return false;
+    if (!mounted) return false;
+    if (plan == null) {
+      PosToast.failed(
+        context,
+        detail: 'Credit cancelled. Checkout was not completed.',
+      );
+      return false;
+    }
 
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return false;
@@ -434,7 +590,6 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
   Future<void> _saveDraft(BuildContext context, CartState state) async {
     if (_isCheckingOut || state.cartItems.isEmpty) return;
     setState(() => _isCheckingOut = true);
-    final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final cartBloc = context.read<CartBloc>();
     final controller = context.read<UiStoreController>();
@@ -471,15 +626,11 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       );
       if (!mounted) return;
       cartBloc.add(ClearCart());
-      messenger.showSnackBar(
-        SnackBar(content: Text('Draft order #$orderId saved.')),
-      );
+      PosToast.success(context, detail: 'Draft order #$orderId saved.');
       navigator.popUntil((route) => route.isFirst);
     } catch (error) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(content: Text('Could not save draft: $error')),
-      );
+      PosToast.failed(context, detail: 'Could not save draft: $error');
     } finally {
       if (mounted) setState(() => _isCheckingOut = false);
     }
@@ -492,44 +643,89 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
   }) async {
     if (_isCheckingOut || state.cartItems.isEmpty) return;
 
-    var remaining = _remainingDue(state.netTotal);
-    if (_tenders.isEmpty && remaining > 0.0001 && !allowBalanceDue) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add at least one payment first.')),
-      );
-      return;
-    }
-    if (remaining > 0.0001 && !allowBalanceDue) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Remaining ${PosCurrency.format(remaining)}. Add another payment or place with balance due.',
-          ),
-        ),
-      );
-      return;
-    }
-
-    // Remaining balance → customer credit account (select/create customer).
-    if (remaining > 0.0001 && allowBalanceDue) {
-      final attached = await _attachRemainingAsCredit(remaining: remaining);
-      if (!attached || !mounted) return;
-      remaining = _remainingDue(state.netTotal);
-      if (remaining > 0.0001) return;
-    }
-
+    // Lock immediately so double-taps cannot complete while the credit
+    // customer sheet / plan dialog is open.
     setState(() => _isCheckingOut = true);
+
+    try {
+      var remaining = _remainingDue(state.netTotal);
+      if (_tenders.isEmpty && remaining > 0.0001 && !allowBalanceDue) {
+        if (!mounted) return;
+        PosToast.failed(context, detail: 'Add at least one payment first.');
+        return;
+      }
+      if (remaining > 0.0001 && !allowBalanceDue) {
+        if (!mounted) return;
+        PosToast.failed(
+          context,
+          detail:
+              'Remaining ${PosCurrency.format(remaining)}. Add another payment or place with balance due.',
+        );
+        return;
+      }
+
+      // Remaining balance → customer credit account (select/create customer).
+      if (remaining > 0.0001 && allowBalanceDue) {
+        final attached = await _attachRemainingAsCredit(remaining: remaining);
+        if (!attached || !mounted) return;
+        remaining = _remainingDue(state.netTotal);
+        if (remaining > 0.0001) {
+          PosToast.failed(
+            context,
+            detail:
+                'Could not place remaining balance on credit. Checkout cancelled.',
+          );
+          return;
+        }
+      }
+
+      remaining = _remainingDue(state.netTotal);
+      if (_tenders.isEmpty || remaining > 0.0001) {
+        if (!mounted) return;
+        PosToast.failed(
+          context,
+          detail:
+              'Cover the full amount or put the balance on credit with a customer.',
+        );
+        return;
+      }
+
+      final hasCreditTender = _tenders.any(
+        (line) => line.paymentMethod == StoreOrderPaymentMode.credit,
+      );
+      final creditCustomerId = _customerUniqueId?.trim();
+      if (hasCreditTender &&
+          (creditCustomerId == null || creditCustomerId.isEmpty)) {
+        if (!mounted) return;
+        PosToast.failed(
+          context,
+          detail: 'Credit payment needs a customer. Select a customer and try again.',
+        );
+        return;
+      }
+
+      await _runCheckout(context, state, creditCustomerId: creditCustomerId);
+    } finally {
+      if (mounted) {
+        setState(() => _isCheckingOut = false);
+      }
+    }
+  }
+
+  Future<void> _runCheckout(
+    BuildContext context,
+    CartState state, {
+    required String? creditCustomerId,
+  }) async {
     if (_tenders.isNotEmpty) {
       context.read<CartBloc>().add(
             SelectPaymentMethod(_tenders.first.paymentMethod),
           );
     }
 
-    final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final cartBloc = context.read<CartBloc>();
     final controller = context.read<UiStoreController>();
-    final creditCustomerId = _customerUniqueId?.trim();
 
     try {
       final result = await controller.completeCheckout(
@@ -586,17 +782,12 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       final usedCredit = _tenders.any(
         (line) => line.paymentMethod == StoreOrderPaymentMode.credit,
       );
-      final message = usedCredit
+      final detail = usedCredit
           ? 'Order #${result.orderId} — balance added to customer credit'
           : result.balanceDue > 0.0001
               ? 'Order #${result.orderId} placed with balance ${PosCurrency.format(result.balanceDue)}'
               : 'Order #${result.orderId} paid via ${result.paymentMode}';
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.green,
-        ),
-      );
+      PosToast.success(context, detail: detail);
 
       navigator.pushReplacement(
         MaterialPageRoute(
@@ -608,16 +799,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       );
     } catch (error) {
       if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Checkout failed: $error'),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isCheckingOut = false);
-      }
+      PosToast.failed(context, detail: 'Checkout failed: $error');
     }
   }
 
@@ -737,9 +919,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
 
     final remaining = _remainingDue(state.netTotal);
     if (remaining <= 0.0001) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Order is already fully covered.')),
-      );
+      PosToast.failed(context, detail: 'Order is already fully covered.');
       return;
     }
 
@@ -886,7 +1066,16 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                       child: Container(
                         color: Colors.white,
                         padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
-                        child: _buildRightPanel(context, state),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildCustomerPickerRow(),
+                            const SizedBox(height: 14),
+                            Expanded(
+                              child: _buildRightPanel(context, state),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -1103,9 +1292,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
               onApply: (val) {
                 context.read<CartBloc>().add(ApplyServiceTax(val));
                 setState(() => _rightPanelMode = RightPanelMode.payment);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Service Tax Applied')),
-                );
+                PosToast.success(context, detail: 'Service tax applied');
               },
               onCancel: () {
                 setState(() => _rightPanelMode = RightPanelMode.payment);
@@ -1138,9 +1325,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
               onApply: (val) {
                 context.read<CartBloc>().add(ApplyTips(val));
                 setState(() => _rightPanelMode = RightPanelMode.payment);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Tips Applied')),
-                );
+                PosToast.success(context, detail: 'Tips applied');
               },
               onCancel: () {
                 setState(() => _rightPanelMode = RightPanelMode.payment);
@@ -1462,11 +1647,51 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
               child: ElevatedButton(
                 onPressed: _isCheckingOut
                     ? null
-                    : () => _completeCheckout(
+                    : () async {
+                        // Include typed tender when deciding Complete vs balance.
+                        final coversDue = remaining <= 0.0001 ||
+                            typedAmount + 0.0001 >= remaining;
+                        final creditWalletSelected = _selectedWallet
+                                ?.paymentMode ==
+                            StoreOrderPaymentMode.credit;
+                        if (!coversDue) {
+                          // Partial typed amount: commit it, then place remainder on credit.
+                          if (typedAmount > 0.0001) {
+                            final added = await _addInlineTender(
+                              context,
+                              state,
+                              remaining,
+                            );
+                            if (!mounted) return;
+                            // Credit wallet cancelled at customer/plan — do not
+                            // continue into unpaid/balance checkout.
+                            if (creditWalletSelected && !added) return;
+                          }
+                          if (!mounted) return;
+                          await _completeCheckout(
+                            context,
+                            state,
+                            allowBalanceDue: true,
+                          );
+                          return;
+                        }
+                        // Exact or higher tender (or already fully paid).
+                        if (remaining > 0.0001 && typedAmount > 0.0001) {
+                          final added = await _addInlineTender(
+                            context,
+                            state,
+                            remaining,
+                          );
+                          if (!mounted) return;
+                          if (creditWalletSelected && !added) return;
+                        }
+                        if (!mounted) return;
+                        await _completeCheckout(
                           context,
                           state,
-                          allowBalanceDue: remaining > 0.0001,
-                        ),
+                          allowBalanceDue: false,
+                        );
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4A00E0),
                   disabledBackgroundColor: Colors.grey.shade300,
@@ -1475,7 +1700,9 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                   ),
                 ),
                 child: Text(
-                  remaining <= 0.0001 ? 'COMPLETE' : 'PLACE WITH BALANCE',
+                  (remaining <= 0.0001 || typedAmount + 0.0001 >= remaining)
+                      ? 'COMPLETE'
+                      : 'PLACE WITH BALANCE',
                   style: FontUtility.heading.copyWith(
                     color: Colors.white,
                     fontSize: 18,
@@ -1508,15 +1735,16 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     }
   }
 
-  Future<void> _addInlineTender(
+  /// Returns true when a tender line was added.
+  Future<bool> _addInlineTender(
     BuildContext context,
     CartState state,
     double remaining,
   ) async {
     final wallet = _selectedWallet;
-    if (wallet == null) return;
+    if (wallet == null) return false;
     var amount = double.tryParse(_tenderAmountController.text.trim()) ?? 0;
-    if (amount <= 0) return;
+    if (amount <= 0) return false;
     // Cash may exceed remaining (change); other modes are capped to remaining.
     final isCash = wallet.paymentMode == StoreOrderPaymentMode.cash;
     if (!isCash && amount - remaining > 0.0001) {
@@ -1525,14 +1753,15 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     final applied = isCash
         ? (amount > remaining ? remaining : amount)
         : amount;
-    if (applied <= 0.0001) return;
+    if (applied <= 0.0001) return false;
 
     final paymentMethod = wallet.paymentMode;
     final paymentLabel =
         wallet.label.trim().isEmpty ? wallet.paymentMode : wallet.label.trim();
     if (paymentMethod == StoreOrderPaymentMode.credit) {
+      final before = _tenders.length;
       await _addPaymentFromWallet(context, state, wallet);
-      return;
+      return _tenders.length > before;
     }
 
     setState(() {
@@ -1547,6 +1776,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       _tenderAmountController.text =
           nextRemaining > 0.0001 ? nextRemaining.toStringAsFixed(2) : '';
     });
+    return true;
   }
 }
 
@@ -1592,8 +1822,9 @@ class _DiscountPanelState extends State<_DiscountPanel> {
   void _apply() {
     final pct = double.tryParse(_percentController.text.trim());
     if (pct == null || pct <= 0 || pct > 100) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a discount percentage between 1 and 100')),
+      PosToast.failed(
+        context,
+        detail: 'Enter a discount percentage between 1 and 100',
       );
       return;
     }
@@ -1618,9 +1849,7 @@ class _DiscountPanelState extends State<_DiscountPanel> {
           ),
         );
     _percentController.clear();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Added "$title"')),
-    );
+    PosToast.success(context, detail: 'Added "$title"');
   }
 
   @override

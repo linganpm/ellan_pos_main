@@ -333,6 +333,7 @@ class StoreSyncConfig {
   final StoreSyncEndpointConfig tables;
   final StoreSyncEndpointConfig wallets;
   final StoreSyncEndpointConfig offers;
+  final StoreSyncEndpointConfig subscribers;
 
   const StoreSyncConfig({
     required this.baseUrl,
@@ -345,6 +346,12 @@ class StoreSyncConfig {
     required this.tables,
     required this.wallets,
     this.offers = const StoreSyncEndpointConfig(
+      importUrl: '',
+      exportUrl: '',
+      exportToken: '',
+      importBatchSize: 500,
+    ),
+    this.subscribers = const StoreSyncEndpointConfig(
       importUrl: '',
       exportUrl: '',
       exportToken: '',
@@ -386,6 +393,10 @@ class StoreSyncConfig {
       ),
       offers: StoreSyncEndpointConfig.fromJson(
         _optionalMap(json, 'offers') ?? const {},
+        baseUrl: baseUrl,
+      ),
+      subscribers: StoreSyncEndpointConfig.fromJson(
+        _optionalMap(json, 'subscribers') ?? const {},
         baseUrl: baseUrl,
       ),
     );

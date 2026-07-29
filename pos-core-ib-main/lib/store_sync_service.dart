@@ -875,7 +875,46 @@ class StoreSyncService {
             skipAuth: true,
             replaceScope: isFirstBatch,
           );
+          final rawVariants = payload['variants'];
+          if (rawVariants is List && rawVariants.isNotEmpty) {
+            await _store._saveWalletVariantCatalogue(
+              scope,
+              [
+                for (final row in rawVariants.whereType<Map>())
+                  Map<String, dynamic>.from(row),
+              ],
+            );
+          }
           isFirstBatch = false;
+          return rows.length;
+        },
+        onProgress: onProgress,
+      );
+    }, onProgress: onProgress);
+  }
+
+  Future<StoreSyncOperationResult> importSubscribers(
+    StoreScope scope, {
+    void Function(StoreSyncProgressUpdate update)? onProgress,
+  }) async {
+    return _runOperation('subscribers', 'import', (startedAt) async {
+      final config = _store._config.sync.subscribers;
+      return _importInBatches(
+        entity: 'subscribers',
+        startedAt: startedAt,
+        scope: scope,
+        config: config,
+        skipMessage: 'Subscribers import URL is not configured.',
+        startMessage: 'Fetching subscribers from remote server.',
+        completeMessage: (processedCount) =>
+            'Imported $processedCount subscriber(s).',
+        importBatch: (payload) async {
+          final rows = Store._extractRowList(payload['data']);
+          await _store._importSubscribersFromData(
+            scope,
+            payload,
+            skipAuth: true,
+          );
           return rows.length;
         },
         onProgress: onProgress,
@@ -1013,25 +1052,82 @@ class StoreSyncService {
             advancesOffset: false,
             count: () => _store._countPendingExportProductVariants(scope),
             loadBatch: (limit, offset) =>
-                _store._listPendingExportProductVariants(
+                _store._listPendingExportCatalogRows(
                   scope,
                   limit: limit,
                   offset: offset,
                 ),
           ),
+          _StoreSyncExportSection(
+            payloadKey: 'offers',
+            advancesOffset: false,
+            count: () => _store._countPendingExportOffers(scope),
+            loadBatch: (limit, offset) => _store._listPendingExportOffers(
+              scope,
+              limit: limit,
+              offset: offset,
+            ),
+          ),
         ],
-        emptyMessage: 'No pending product variants to export.',
+        emptyMessage: 'No pending catalogue or offer changes to export.',
         successMessage: (sectionTotals) =>
-            'Exported ${sectionTotals['data'] ?? 0} product variants.',
+            'Exported ${sectionTotals['data'] ?? 0} product variants and ${sectionTotals['offers'] ?? 0} offers.',
         onBatchSucceeded: (batchPayload, [responseJson]) async {
-          final localIds =
+          final accepted = responseJson == null ||
+              responseJson['accepted'] != false;
+          if (!accepted) {
+            throw StateError(
+              '${responseJson['message'] ?? 'Products export was not accepted by the server.'}',
+            );
+          }
+          final acceptedFromServer =
+              (responseJson?['accepted_local_ids'] as List?)
+                  ?.map((id) => '$id'.trim())
+                  .where((id) => id.isNotEmpty)
+                  .toList();
+          final batchLocalIds =
               (batchPayload['data'] ?? const <Map<String, dynamic>>[])
                   .map((row) => row['localId'] as String?)
                   .whereType<String>()
                   .toList();
+          // Only clear pending for rows the server accepted; never the whole batch.
+          final localIds = (acceptedFromServer != null)
+              ? acceptedFromServer
+              : batchLocalIds;
+
+          final mappingsRaw = responseJson?['mappings'];
+          if (mappingsRaw is List && mappingsRaw.isNotEmpty) {
+            await _store._applyProductExportMappings(
+              scope,
+              mappingsRaw
+                  .whereType<Map>()
+                  .map((row) => Map<String, dynamic>.from(row))
+                  .toList(),
+            );
+          }
+
           await _store._markProductVariantsExported(
             scope,
             localIds,
+            exported: true,
+          );
+          await _store._markCatalogRelatedExported(scope, localIds);
+
+          final offerIdsFromServer =
+              (responseJson?['accepted_offer_local_ids'] as List?)
+                  ?.map((id) => '$id'.trim())
+                  .where((id) => id.isNotEmpty)
+                  .toList();
+          final offerIds = (offerIdsFromServer != null &&
+                  offerIdsFromServer.isNotEmpty)
+              ? offerIdsFromServer
+              : (batchPayload['offers'] ?? const <Map<String, dynamic>>[])
+                  .map((row) => '${row['local_id'] ?? row['localId'] ?? ''}'.trim())
+                  .where((id) => id.isNotEmpty)
+                  .toList();
+          await _store._markOffersExported(
+            scope,
+            offerIds,
             exported: true,
           );
         },
@@ -1206,6 +1302,100 @@ class StoreSyncService {
     }, onProgress: onProgress);
   }
 
+  Future<StoreSyncOperationResult> exportSubscribers(
+    StoreScope scope, {
+    void Function(StoreSyncProgressUpdate update)? onProgress,
+    int batchSize = defaultExportBatchSize,
+  }) async {
+    return _runOperation('subscribers', 'export', (startedAt) async {
+      final config = _store._config.sync.subscribers;
+      if (!config.canExport) {
+        final result = StoreSyncOperationResult(
+          entity: 'subscribers',
+          direction: 'export',
+          processedCount: 0,
+          successCount: 0,
+          failureCount: 0,
+          skipped: true,
+          success: true,
+          startedAt: startedAt,
+          completedAt: DateTime.now().toIso8601String(),
+          message: 'Subscribers export URL is not configured.',
+        );
+        _emitProgress(
+          onProgress,
+          _progressUpdate(
+            entity: 'subscribers',
+            direction: 'export',
+            stage: StoreSyncProgressStage.skipped,
+            message: result.message,
+          ),
+        );
+        return result;
+      }
+      if (config.exportToken.isEmpty) {
+        throw StateError(
+          'Subscribers export token is required when export URL is configured.',
+        );
+      }
+
+      return _exportSnapshotInChunks(
+        entity: 'subscribers',
+        startedAt: startedAt,
+        exportUrl: config.exportUrl,
+        exportToken: config.exportToken,
+        sections: [
+          _StoreSyncExportSection(
+            payloadKey: 'data',
+            count: () => _store._countSubscriberExportRows(scope),
+            loadBatch: (limit, offset) => _store._listSubscriberExportRows(
+              scope,
+              limit: limit,
+              offset: offset,
+            ),
+          ),
+        ],
+        emptyMessage: 'No pending subscribers to export.',
+        successMessage: (sectionTotals) =>
+            'Exported ${sectionTotals['data'] ?? 0} subscriber(s).',
+        onBatchSucceeded: (batchPayload, [responseJson]) async {
+          final accepted =
+              responseJson == null || responseJson['accepted'] != false;
+          if (!accepted) {
+            throw StateError(
+              '${responseJson['message'] ?? 'Subscribers export was not accepted by the server.'}',
+            );
+          }
+          final acceptedFromServer =
+              (responseJson?['accepted_local_ids'] as List?)
+                  ?.map((id) => '$id'.trim())
+                  .where((id) => id.isNotEmpty)
+                  .toList();
+          final batchLocalIds =
+              (batchPayload['data'] ?? const <Map<String, dynamic>>[])
+                  .map((row) => '${row['local_id'] ?? row['localId'] ?? ''}'.trim())
+                  .where((id) => id.isNotEmpty)
+                  .toList();
+          final localIds = acceptedFromServer ?? batchLocalIds;
+          final mappingsRaw = responseJson?['mappings'];
+          final mappings = mappingsRaw is List
+              ? mappingsRaw
+                  .whereType<Map>()
+                  .map((row) => Map<String, dynamic>.from(row))
+                  .toList()
+              : const <Map<String, dynamic>>[];
+          await _store._markSubscribersExported(
+            scope,
+            localIds,
+            mappings: mappings,
+          );
+        },
+        onProgress: onProgress,
+        batchSize: batchSize,
+      );
+    }, onProgress: onProgress);
+  }
+
   /// Import catalogue entities for the configured store.
   ///
   /// Routine Sync uses [fullOrderRestore]=false (watermarked order drifts).
@@ -1246,6 +1436,9 @@ class StoreSyncService {
     if (syncConfig.wallets.canImport) {
       operations.add(await importWallets(scope, onProgress: onProgress));
     }
+    if (syncConfig.subscribers.canImport) {
+      operations.add(await importSubscribers(scope, onProgress: onProgress));
+    }
 
     return StoreSyncBatchResult(operations: operations);
   }
@@ -1281,6 +1474,7 @@ class StoreSyncService {
       await importCredits(scope, onProgress: onProgress),
       await importTables(scope, onProgress: onProgress),
       await importWallets(scope, onProgress: onProgress),
+      await importSubscribers(scope, onProgress: onProgress),
       await exportCustomers(
         scope,
         onProgress: onProgress,
@@ -1297,6 +1491,11 @@ class StoreSyncService {
         batchSize: exportBatchSize,
       ),
       await exportTables(
+        scope,
+        onProgress: onProgress,
+        batchSize: exportBatchSize,
+      ),
+      await exportSubscribers(
         scope,
         onProgress: onProgress,
         batchSize: exportBatchSize,
@@ -1344,6 +1543,9 @@ class StoreSyncService {
     if (syncConfig.wallets.canImport) {
       operations.add(await importWallets(scope, onProgress: onProgress));
     }
+    if (syncConfig.subscribers.canImport) {
+      operations.add(await importSubscribers(scope, onProgress: onProgress));
+    }
     if (syncConfig.customers.canExport) {
       operations.add(
         await exportCustomers(
@@ -1374,6 +1576,15 @@ class StoreSyncService {
     if (syncConfig.tables.canExport) {
       operations.add(
         await exportTables(
+          scope,
+          onProgress: onProgress,
+          batchSize: exportBatchSize,
+        ),
+      );
+    }
+    if (syncConfig.subscribers.canExport) {
+      operations.add(
+        await exportSubscribers(
           scope,
           onProgress: onProgress,
           batchSize: exportBatchSize,

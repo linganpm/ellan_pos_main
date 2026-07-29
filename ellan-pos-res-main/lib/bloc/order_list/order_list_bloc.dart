@@ -16,13 +16,21 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
   final UiStoreController _controller;
   final String? customerIdFilter;
   final String? customerNameFilter;
+  final String initialTypeFilter;
+  final String? initialStatusFilter;
+  final String? periodFilter;
   List<OrderListModel> _allOrders = [];
   List<PosOrderType> _orderTypes = OrderTypesRepository.defaults;
+  DateTime? _periodStart;
+  DateTime? _periodEnd;
 
   OrderListBloc({
     UiStoreController? controller,
     this.customerIdFilter,
     this.customerNameFilter,
+    this.initialTypeFilter = 'All',
+    this.initialStatusFilter,
+    this.periodFilter,
   }) : _controller = controller ?? getIt<UiStoreController>(),
         super(OrderListInitial()) {
     on<FetchInitialOrders>(_onFetchInitialOrders);
@@ -105,14 +113,43 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
     emit(OrderListLoading());
     try {
       await _loadOrdersFromDb();
-      final initialData = _applyFiltersAndPagination('All', null, '', 0);
+      _resolvePeriodWindow();
+      final typeFilter =
+          (initialTypeFilter.trim().isEmpty) ? 'All' : initialTypeFilter.trim();
+      final statusFilter = (initialStatusFilter ?? '').trim().isEmpty
+          ? null
+          : initialStatusFilter!.trim();
+      final initialData =
+          _applyFiltersAndPagination(typeFilter, statusFilter, '', 0);
       emit(OrderListLoaded(
         orders: initialData,
         availableOrderTypes: List.unmodifiable(_orderTypes),
+        selectedTypeFilter: typeFilter,
+        selectedStatusFilter: statusFilter,
+        periodFilter: (periodFilter ?? '').trim().isEmpty
+            ? null
+            : periodFilter!.trim(),
         hasReachedMax: initialData.length < _pageSize,
       ));
     } catch (e) {
       emit(const OrderListError('Failed to fetch orders.'));
+    }
+  }
+
+  void _resolvePeriodWindow() {
+    final period = (periodFilter ?? '').trim();
+    if (period.isEmpty) {
+      _periodStart = null;
+      _periodEnd = null;
+      return;
+    }
+    try {
+      final range = _controller.dashboardDateRangeForFilter(period);
+      _periodStart = range.start;
+      _periodEnd = range.end;
+    } catch (_) {
+      _periodStart = null;
+      _periodEnd = null;
     }
   }
 
@@ -212,6 +249,7 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
         availableOrderTypes: currentState.availableOrderTypes,
         selectedTypeFilter: currentState.selectedTypeFilter,
         selectedStatusFilter: null,
+        periodFilter: currentState.periodFilter,
         searchQuery: currentState.searchQuery,
         hasReachedMax: filteredData.length < _pageSize,
       ));
@@ -249,6 +287,7 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
       emit(OrderListLoading());
 
       await _loadOrdersFromDb();
+      _resolvePeriodWindow();
       final refreshedData = _applyFiltersAndPagination(
         currentState.selectedTypeFilter,
         currentState.selectedStatusFilter,
@@ -261,6 +300,7 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
         availableOrderTypes: List.unmodifiable(_orderTypes),
         selectedTypeFilter: currentState.selectedTypeFilter,
         selectedStatusFilter: currentState.selectedStatusFilter,
+        periodFilter: currentState.periodFilter,
         searchQuery: currentState.searchQuery,
         hasReachedMax: refreshedData.length < _pageSize,
       ));
@@ -349,6 +389,15 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
           .toList();
     }
 
+    final start = _periodStart;
+    final end = _periodEnd;
+    if (start != null && end != null) {
+      filtered = filtered.where((o) {
+        final when = o.timestamp;
+        return !when.isBefore(start) && when.isBefore(end);
+      }).toList();
+    }
+
     if (typeFilter != 'All') {
       final wanted = _normalizeTypeToken(typeFilter);
       filtered = filtered
@@ -361,7 +410,14 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
     }
 
     if (statusFilter != null && statusFilter.isNotEmpty) {
-      filtered = filtered.where((o) => o.orderStatus == statusFilter).toList();
+      final wantedStatus = statusFilter.toLowerCase();
+      filtered = filtered.where((o) {
+        final status = o.orderStatus.toLowerCase();
+        if (wantedStatus.contains('cancel')) {
+          return status.contains('cancel');
+        }
+        return status == wantedStatus;
+      }).toList();
     }
 
     if (searchQuery.isNotEmpty) {

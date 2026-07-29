@@ -58,4 +58,17 @@ class StoreAuthService {
       newPassword: newPassword,
     );
   }
+
+  /// Store a verified plaintext password as the offline hash for this operator.
+  Future<void> persistVerifiedOfflinePassword({
+    required String password,
+    String? customerId,
+    String? identifier,
+  }) {
+    return _store._persistVerifiedOfflinePassword(
+      password: password,
+      customerId: customerId,
+      identifier: identifier,
+    );
+  }
 }

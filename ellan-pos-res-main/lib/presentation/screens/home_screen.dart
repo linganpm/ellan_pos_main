@@ -9,6 +9,7 @@ import 'package:pos_tablet/presentation/screens/order_create_screen.dart';
 import 'package:pos_tablet/presentation/screens/scheduled_payments_screen.dart';
 import 'package:pos_tablet/presentation/widgets/order_creation_sheet.dart';
 import 'package:pos_tablet/presentation/widgets/org_local_clock_badge.dart';
+import 'package:pos_tablet/presentation/widgets/staff_logout_confirm_dialog.dart';
 import '../../bloc/cart/cart_event.dart';
 import '../../core/localization/l10n/app_localizations.dart';
 import '../../core/utils/font_utility.dart';
@@ -447,6 +448,47 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 20),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _buildMenuCard(
+                                context,
+                                title: 'Company',
+                                iconData: Icons.apartment_rounded,
+                                color: const Color(0xFF1B5E20),
+                                onTap: () async {
+                                  final store =
+                                      getIt<UiStoreController>().store;
+                                  if (store == null) return;
+                                  final ok =
+                                      await store.auth.hasStoreRole('admin');
+                                  if (!context.mounted) return;
+                                  if (!ok) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Store Admin access required for Company.',
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.company,
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                            const Expanded(child: SizedBox.shrink()),
+                            const SizedBox(width: 20),
+                            const Expanded(child: SizedBox.shrink()),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -621,6 +663,25 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           },
         ),
+        IconButton(
+          tooltip: 'Store setup',
+          onPressed: () async {
+            final store = getIt<UiStoreController>().store;
+            if (store == null) return;
+            final ok = await store.auth.hasStoreRole('admin');
+            if (!context.mounted) return;
+            if (!ok) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Store Admin access required for Store setup.'),
+                ),
+              );
+              return;
+            }
+            Navigator.pushNamed(context, AppRoutes.storeSetup);
+          },
+          icon: const Icon(Icons.storefront_rounded, color: Color(0xFF4A00E0)),
+        ),
         Padding(
           padding: const EdgeInsets.only(right: 4),
           child: ValueListenableBuilder<bool>(
@@ -667,38 +728,21 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         TextButton.icon(
           onPressed: () async {
-            final confirmed = await showDialog<bool>(
-              context: context,
-              builder: (dialogContext) => AlertDialog(
-                title: const Text('Logout'),
-                content: const Text(
-                  'Logout so the next staff member can unlock with their ID?',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(dialogContext, false),
-                    child: const Text('Cancel'),
-                  ),
-                  FilledButton(
-                    onPressed: () => Navigator.pop(dialogContext, true),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF512F),
-                    ),
-                    child: const Text('Logout'),
-                  ),
-                ],
-              ),
-            );
-            if (confirmed != true || !context.mounted) return;
-            final storeId =
-                getIt<UiStoreController>().store?.scope.storeId;
-            await getIt<UiStoreController>().lockStaff();
+            final confirmed = await showStaffLogoutConfirmDialog(context);
+            if (!confirmed || !context.mounted) return;
+            final controller = getIt<UiStoreController>();
+            final storeId = controller.store?.scope.storeId;
+            final storeName = controller.store?.storeName;
+            await controller.lockStaff();
             if (!context.mounted) return;
             Navigator.pushNamedAndRemoveUntil(
               context,
               AppRoutes.staffLock,
               (route) => false,
-              arguments: storeId,
+              arguments: {
+                'storeId': storeId,
+                'storeName': storeName,
+              },
             );
           },
           icon: const Icon(Icons.logout_rounded, color: Color(0xFFFF512F)),

@@ -9,7 +9,7 @@ import 'store_models.dart';
 /// Call [setupDatabase] with a dbName to initialize and get the database instance.
 
 class BackendSetup {
-  static const int schemaVersion = 40;
+  static const int schemaVersion = 51;
 
   /// Public method to create all tables for testing or custom DB setups.
   static Future<void> createTablesForTest(Database db) async {
@@ -129,6 +129,11 @@ class BackendSetup {
         contactPerson TEXT NOT NULL,
         status TEXT NOT NULL,
         serviceVariantType TEXT NOT NULL,
+        address TEXT,
+        registration_number TEXT,
+        tax_number TEXT,
+        identifier TEXT,
+        logo_pending_sync INTEGER DEFAULT 0,
         FOREIGN KEY(orgId) REFERENCES organisation(orgId)
       )
     ''');
@@ -330,7 +335,10 @@ class BackendSetup {
         get_quantity INTEGER,
         active INTEGER NOT NULL DEFAULT 1,
         created_on TEXT NOT NULL,
-        updated_on TEXT NOT NULL
+        updated_on TEXT NOT NULL,
+        exported INTEGER NOT NULL DEFAULT 1,
+        description TEXT,
+        deleted INTEGER NOT NULL DEFAULT 0
       )
     ''');
     await db.execute('''
@@ -355,7 +363,56 @@ class BackendSetup {
         status TEXT,
         role TEXT,
         password TEXT,
-        usr_reg_num TEXT
+        usr_reg_num TEXT,
+        photo_path TEXT
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS subscribers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        local_id TEXT,
+        remote_id INTEGER,
+        orgId TEXT NOT NULL,
+        storeId TEXT NOT NULL,
+        name TEXT NOT NULL,
+        user_id TEXT,
+        email TEXT,
+        phone_number TEXT,
+        country_id TEXT,
+        type TEXT NOT NULL DEFAULT 'report',
+        notification_type TEXT NOT NULL DEFAULT 'email',
+        periodicity TEXT NOT NULL DEFAULT 'daily',
+        deleted INTEGER NOT NULL DEFAULT 0,
+        active INTEGER NOT NULL DEFAULT 1,
+        is_owner_default INTEGER NOT NULL DEFAULT 0,
+        created_by TEXT,
+        created_on TEXT NOT NULL,
+        updated_on TEXT,
+        pending_sync INTEGER NOT NULL DEFAULT 0,
+        exported INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_subscribers_email_type_channel ON subscribers(orgId, storeId, email, type, notification_type)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_subscribers_local_id ON subscribers(orgId, storeId, local_id)',
+    );
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS store_email_config (
+        orgId TEXT NOT NULL,
+        storeId TEXT NOT NULL,
+        purpose TEXT NOT NULL,
+        host TEXT NOT NULL,
+        port INTEGER NOT NULL,
+        username TEXT NOT NULL,
+        password TEXT NOT NULL,
+        from_email TEXT NOT NULL,
+        from_name TEXT NOT NULL,
+        use_tls INTEGER NOT NULL DEFAULT 1,
+        locked INTEGER NOT NULL DEFAULT 0,
+        pending_sync INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (orgId, storeId, purpose)
       )
     ''');
     await db.execute('''
@@ -414,6 +471,27 @@ class BackendSetup {
       )
     ''');
     await db.execute('''
+      CREATE TABLE IF NOT EXISTS wallet_variants (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        orgId TEXT NOT NULL,
+        storeId TEXT NOT NULL,
+        variant_id INTEGER NOT NULL,
+        key TEXT,
+        name TEXT NOT NULL,
+        type INTEGER,
+        type_name TEXT,
+        pg_type INTEGER,
+        pg_name TEXT,
+        logo TEXT,
+        locked INTEGER NOT NULL DEFAULT 1,
+        sorting_order INTEGER NOT NULL DEFAULT 0,
+        synced_on TEXT NOT NULL
+      )
+    ''');
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_wallet_variants_scope_variant ON wallet_variants(orgId, storeId, variant_id)',
+    );
+    await db.execute('''
       CREATE TABLE IF NOT EXISTS categories (
         localId TEXT PRIMARY KEY,
         orgId TEXT NOT NULL,
@@ -429,7 +507,11 @@ class BackendSetup {
         short_code TEXT,
         depth INTEGER,
         path TEXT,
-        id INTEGER
+        id INTEGER,
+        master_unique_id TEXT,
+        exported INTEGER NOT NULL DEFAULT 1,
+        last_exported_at TEXT,
+        deleted INTEGER NOT NULL DEFAULT 0
       )
     ''');
     await db.execute('''
@@ -459,9 +541,12 @@ class BackendSetup {
         review_value_data REAL,
         review_max_value_data REAL,
         review_count INTEGER,
+        tax_label TEXT,
+        master_unique_id TEXT,
         exported INTEGER NOT NULL DEFAULT 0,
         last_imported_at TEXT,
-        last_exported_at TEXT
+        last_exported_at TEXT,
+        deleted INTEGER NOT NULL DEFAULT 0
       )
     ''');
     await db.execute('''
@@ -492,7 +577,11 @@ class BackendSetup {
         type INTEGER,
         description TEXT,
         is_preorder INTEGER,
-        is_allergens INTEGER
+        is_allergens INTEGER,
+        categoryLocalId TEXT,
+        master_unique_id TEXT,
+        exported INTEGER NOT NULL DEFAULT 1,
+        deleted INTEGER NOT NULL DEFAULT 0
       )
     ''');
     await db.execute('''
@@ -641,6 +730,67 @@ class BackendSetup {
         min_selections INTEGER NOT NULL DEFAULT 0,
         max_selections INTEGER,
         data TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS master_categories (
+        localId TEXT PRIMARY KEY,
+        orgId TEXT NOT NULL,
+        unique_id TEXT,
+        name TEXT NOT NULL,
+        short_code TEXT,
+        service_variant_type TEXT,
+        exported INTEGER NOT NULL DEFAULT 0,
+        last_exported_at TEXT
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS master_products (
+        localId TEXT PRIMARY KEY,
+        orgId TEXT NOT NULL,
+        unique_id TEXT,
+        master_category_unique_id TEXT,
+        name TEXT NOT NULL,
+        description TEXT,
+        exported INTEGER NOT NULL DEFAULT 0,
+        last_exported_at TEXT
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS catalog_addon_groups (
+        localId TEXT PRIMARY KEY,
+        orgId TEXT NOT NULL,
+        storeId TEXT NOT NULL,
+        unique_id TEXT,
+        name TEXT NOT NULL,
+        min_select INTEGER NOT NULL DEFAULT 0,
+        max_select INTEGER NOT NULL DEFAULT 1,
+        exported INTEGER NOT NULL DEFAULT 0,
+        last_exported_at TEXT,
+        deleted INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS catalog_addon_items (
+        localId TEXT PRIMARY KEY,
+        orgId TEXT NOT NULL,
+        storeId TEXT NOT NULL,
+        groupLocalId TEXT NOT NULL,
+        unique_id TEXT,
+        name TEXT NOT NULL,
+        price TEXT,
+        exported INTEGER NOT NULL DEFAULT 0,
+        deleted INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS catalog_variant_addon_links (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        orgId TEXT NOT NULL,
+        storeId TEXT NOT NULL,
+        variantLocalId TEXT NOT NULL,
+        groupLocalId TEXT NOT NULL,
+        UNIQUE(orgId, storeId, variantLocalId, groupLocalId)
       )
     ''');
     await db.execute('''
@@ -1229,13 +1379,27 @@ class BackendSetup {
         'final_value',
         'REAL NOT NULL DEFAULT 0',
       );
-      await db.execute('''
-        UPDATE orders
-        SET total_value = COALESCE(total_value, total, 0),
-            offer_applied_value = COALESCE(offer_applied_value, 0),
-            final_value = COALESCE(final_value, total, 0),
-            total = COALESCE(final_value, total, 0)
-      ''');
+      // Legacy DBs may lack `total`; only reference columns that exist.
+      final orderCols = await db.rawQuery('PRAGMA table_info(orders)');
+      final orderColNames = {
+        for (final row in orderCols) '${row['name'] ?? ''}',
+      };
+      if (orderColNames.contains('total')) {
+        await db.execute('''
+          UPDATE orders
+          SET total_value = COALESCE(total_value, total, 0),
+              offer_applied_value = COALESCE(offer_applied_value, 0),
+              final_value = COALESCE(final_value, total, 0),
+              total = COALESCE(final_value, total, 0)
+        ''');
+      } else {
+        await db.execute('''
+          UPDATE orders
+          SET total_value = COALESCE(total_value, 0),
+              offer_applied_value = COALESCE(offer_applied_value, 0),
+              final_value = COALESCE(final_value, total_value, 0)
+        ''');
+      }
     }
     if (oldVersion < 26) {
       await db.execute('''
@@ -1279,13 +1443,19 @@ class BackendSetup {
     if (oldVersion < 27) {
       // Stable customer sync key on orders — never use SQLite autoincrement PKs.
       await _addColumnIfMissing(db, 'orders', 'customer_unique_id', 'TEXT');
-      await db.execute(
+      await _executeIfTableExists(
+        db,
+        'orders',
         'CREATE INDEX IF NOT EXISTS idx_orders_customer_unique_id ON orders(orgId, storeId, customer_unique_id)',
       );
-      await db.execute(
+      await _executeIfTableExists(
+        db,
+        'customers',
         'CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(orgId, phone)',
       );
-      await db.execute(
+      await _executeIfTableExists(
+        db,
+        'customers',
         'CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(orgId, email)',
       );
     }
@@ -1379,7 +1549,9 @@ class BackendSetup {
     }
     if (oldVersion < 33) {
       await _addColumnIfMissing(db, 'customers', 'usr_reg_num', 'TEXT');
-      await db.execute(
+      await _executeIfTableExists(
+        db,
+        'customers',
         'CREATE INDEX IF NOT EXISTS idx_customers_org_reg_num ON customers(orgId, usr_reg_num)',
       );
     }
@@ -1443,13 +1615,21 @@ class BackendSetup {
     }
     if (oldVersion < 37) {
       await _addColumnIfMissing(db, 'orders', 'updated_on', 'TEXT');
+      final orderCols = await db.rawQuery('PRAGMA table_info(orders)');
+      final names = {
+        for (final row in orderCols) '${row['name'] ?? ''}',
+      };
+      final coalesceParts = <String>[
+        "NULLIF(TRIM(updated_on), '')",
+        if (names.contains('last_exported_at'))
+          "NULLIF(TRIM(last_exported_at), '')",
+        if (names.contains('created_on')) "NULLIF(TRIM(created_on), '')",
+        "datetime('now')",
+      ];
       await db.execute('''
         UPDATE orders
         SET updated_on = COALESCE(
-          NULLIF(TRIM(updated_on), ''),
-          NULLIF(TRIM(last_exported_at), ''),
-          NULLIF(TRIM(created_on), ''),
-          datetime('now')
+          ${coalesceParts.join(',\n          ')}
         )
         WHERE updated_on IS NULL OR TRIM(updated_on) = ''
       ''');
@@ -1464,15 +1644,29 @@ class BackendSetup {
       ''');
     }
     if (oldVersion < 38) {
-      await db.execute(
+      await _addColumnIfMissing(
+        db,
+        'orders',
+        'exported',
+        'INTEGER NOT NULL DEFAULT 0',
+      );
+      await _createIndexIfColumnsExist(
+        db,
+        'orders',
+        ['orgId', 'storeId', 'exported', 'updated_on'],
         'CREATE INDEX IF NOT EXISTS idx_orders_scope_exported_updated '
         'ON orders(orgId, storeId, exported, updated_on)',
       );
-      await db.execute(
+      await _createIndexIfColumnsExist(
+        db,
+        'orders',
+        ['orgId', 'storeId', 'exported'],
         'CREATE INDEX IF NOT EXISTS idx_orders_scope_status_exported '
         'ON orders(orgId, storeId, exported)',
       );
-      await db.execute(
+      await _executeIfTableExists(
+        db,
+        'sync_attempts',
         'CREATE INDEX IF NOT EXISTS idx_sync_attempts_started_at '
         'ON sync_attempts(started_at)',
       );
@@ -1502,70 +1696,659 @@ class BackendSetup {
         )
       ''');
     }
+    if (oldVersion < 41) {
+      await _addColumnIfMissing(db, 'categories', 'master_unique_id', 'TEXT');
+      await _addColumnIfMissing(
+        db,
+        'categories',
+        'exported',
+        'INTEGER NOT NULL DEFAULT 1',
+      );
+      await _addColumnIfMissing(db, 'categories', 'last_exported_at', 'TEXT');
+      await _addColumnIfMissing(db, 'products', 'categoryLocalId', 'TEXT');
+      await _addColumnIfMissing(db, 'products', 'master_unique_id', 'TEXT');
+      await _addColumnIfMissing(
+        db,
+        'products',
+        'exported',
+        'INTEGER NOT NULL DEFAULT 1',
+      );
+      await _addColumnIfMissing(db, 'product_variants', 'tax_label', 'TEXT');
+      await _addColumnIfMissing(
+        db,
+        'product_variants',
+        'master_unique_id',
+        'TEXT',
+      );
+      await _addColumnIfMissing(
+        db,
+        'offers',
+        'exported',
+        'INTEGER NOT NULL DEFAULT 1',
+      );
+      await _addColumnIfMissing(db, 'offers', 'description', 'TEXT');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS master_categories (
+          localId TEXT PRIMARY KEY,
+          orgId TEXT NOT NULL,
+          unique_id TEXT,
+          name TEXT NOT NULL,
+          short_code TEXT,
+          service_variant_type TEXT,
+          exported INTEGER NOT NULL DEFAULT 0,
+          last_exported_at TEXT
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS master_products (
+          localId TEXT PRIMARY KEY,
+          orgId TEXT NOT NULL,
+          unique_id TEXT,
+          master_category_unique_id TEXT,
+          name TEXT NOT NULL,
+          description TEXT,
+          exported INTEGER NOT NULL DEFAULT 0,
+          last_exported_at TEXT
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS catalog_addon_groups (
+          localId TEXT PRIMARY KEY,
+          orgId TEXT NOT NULL,
+          storeId TEXT NOT NULL,
+          unique_id TEXT,
+          name TEXT NOT NULL,
+          min_select INTEGER NOT NULL DEFAULT 0,
+          max_select INTEGER NOT NULL DEFAULT 1,
+          exported INTEGER NOT NULL DEFAULT 0,
+          last_exported_at TEXT
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS catalog_addon_items (
+          localId TEXT PRIMARY KEY,
+          orgId TEXT NOT NULL,
+          storeId TEXT NOT NULL,
+          groupLocalId TEXT NOT NULL,
+          unique_id TEXT,
+          name TEXT NOT NULL,
+          price TEXT,
+          exported INTEGER NOT NULL DEFAULT 0
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS catalog_variant_addon_links (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          orgId TEXT NOT NULL,
+          storeId TEXT NOT NULL,
+          variantLocalId TEXT NOT NULL,
+          groupLocalId TEXT NOT NULL,
+          UNIQUE(orgId, storeId, variantLocalId, groupLocalId)
+        )
+      ''');
+    }
+    if (oldVersion < 42) {
+      await _ensureSoftDeleteColumns(db);
+    }
+    if (oldVersion < 43) {
+      await _ensureCompanyProfileColumns(db);
+    }
+    if (oldVersion < 44) {
+      // Repair DBs that landed on 42/43 without columns (web/hot-restart edge cases).
+      await _ensureSoftDeleteColumns(db);
+      await _ensureCompanyProfileColumns(db);
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS offer_targets (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          orgId TEXT NOT NULL,
+          storeId TEXT NOT NULL,
+          offer_local_id TEXT NOT NULL,
+          target_value TEXT NOT NULL
+        )
+      ''');
+      await db.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_offer_targets_scope_value ON offer_targets(orgId, storeId, offer_local_id, target_value)',
+      );
+    }
+    if (oldVersion < 45) {
+      await _upgradeToV45(db);
+    }
+    if (oldVersion < 46) {
+      await _upgradeToV46(db);
+    }
+    if (oldVersion < 47) {
+      await _upgradeToV47(db);
+    }
+    if (oldVersion < 48) {
+      await _upgradeToV48(db);
+    }
+    if (oldVersion < 49) {
+      await _upgradeToV49(db);
+    }
+    if (oldVersion < 50) {
+      await _upgradeToV50(db);
+    }
+    if (oldVersion < 51) {
+      await _upgradeToV51(db);
+    }
+  }
+
+  /// Idempotent repairs for tables/columns that sync and store-setup need.
+  /// Safe to call from onOpen even when user_version is already current.
+  static Future<void> ensureSchemaRepairs(Database db) async {
+    await _upgradeToV48(db);
+    await _upgradeToV49(db);
+    await _upgradeToV50(db);
+    await _upgradeToV51(db);
+  }
+
+  static Future<void> _upgradeToV49(Database db) async {
+    await _ensureOfferTargetsTable(db);
+    await _ensureSoftDeleteColumns(db);
+    await _ensureCompanyProfileColumns(db);
+    await _addColumnIfMissing(db, 'product_variants', 'tax_label', 'TEXT');
+    // Re-run wallet_variants create for DBs that landed on v48 without the table.
+    await _upgradeToV48(db);
+  }
+
+  /// Idempotent catalogue tables for DBs that skipped / partially ran v41.
+  static Future<void> _upgradeToV50(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS master_categories (
+        localId TEXT PRIMARY KEY,
+        orgId TEXT NOT NULL,
+        unique_id TEXT,
+        name TEXT NOT NULL,
+        short_code TEXT,
+        service_variant_type TEXT,
+        exported INTEGER NOT NULL DEFAULT 0,
+        last_exported_at TEXT
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS master_products (
+        localId TEXT PRIMARY KEY,
+        orgId TEXT NOT NULL,
+        unique_id TEXT,
+        master_category_unique_id TEXT,
+        name TEXT NOT NULL,
+        description TEXT,
+        exported INTEGER NOT NULL DEFAULT 0,
+        last_exported_at TEXT
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS catalog_addon_groups (
+        localId TEXT PRIMARY KEY,
+        orgId TEXT NOT NULL,
+        storeId TEXT NOT NULL,
+        unique_id TEXT,
+        name TEXT NOT NULL,
+        min_select INTEGER NOT NULL DEFAULT 0,
+        max_select INTEGER NOT NULL DEFAULT 1,
+        exported INTEGER NOT NULL DEFAULT 0,
+        last_exported_at TEXT,
+        deleted INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS catalog_addon_items (
+        localId TEXT PRIMARY KEY,
+        orgId TEXT NOT NULL,
+        storeId TEXT NOT NULL,
+        groupLocalId TEXT NOT NULL,
+        unique_id TEXT,
+        name TEXT NOT NULL,
+        price TEXT,
+        exported INTEGER NOT NULL DEFAULT 0,
+        deleted INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS catalog_variant_addon_links (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        orgId TEXT NOT NULL,
+        storeId TEXT NOT NULL,
+        variantLocalId TEXT NOT NULL,
+        groupLocalId TEXT NOT NULL,
+        UNIQUE(orgId, storeId, variantLocalId, groupLocalId)
+      )
+    ''');
+    await _ensureSoftDeleteColumns(db);
+    await _addColumnIfMissing(db, 'products', 'productId', 'INTEGER');
+    await _addColumnIfMissing(db, 'categories', 'categoryId', 'INTEGER');
+    await _addColumnIfMissing(db, 'categories', 'id', 'INTEGER');
+  }
+
+  /// Master unique indexes + one-shot cleanup of duplicate master/catalogue rows.
+  static Future<void> _upgradeToV51(Database db) async {
+    await _dedupeMasterRows(db, 'master_categories');
+    await _dedupeMasterRows(db, 'master_products');
+    await _dedupeStoreCatalogByUniqueId(db, 'categories');
+    await _dedupeStoreCatalogByUniqueId(db, 'products');
+    await _dedupeStoreCatalogByUniqueId(db, 'product_variants');
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_master_categories_org_unique '
+      'ON master_categories(orgId, unique_id)',
+    );
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_master_products_org_unique '
+      'ON master_products(orgId, unique_id)',
+    );
+  }
+
+  static Future<void> _dedupeMasterRows(Database db, String table) async {
+    final rows = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+      [table],
+    );
+    if (rows.isEmpty) return;
+
+    // Same unique_id → keep lexicographically smallest localId.
+    final byUnique = await db.rawQuery('''
+      SELECT orgId, unique_id, MIN(localId) AS keepId, COUNT(*) AS c
+      FROM $table
+      WHERE unique_id IS NOT NULL AND TRIM(unique_id) != ''
+      GROUP BY orgId, unique_id
+      HAVING c > 1
+    ''');
+    for (final row in byUnique) {
+      await db.delete(
+        table,
+        where: 'orgId = ? AND unique_id = ? AND localId != ?',
+        whereArgs: [row['orgId'], row['unique_id'], row['keepId']],
+      );
+    }
+
+    // Same name, different unique_ids → keep numeric/server unique_id when present.
+    final byName = await db.rawQuery('''
+      SELECT orgId, lower(trim(name)) AS n, COUNT(*) AS c
+      FROM $table
+      WHERE name IS NOT NULL AND TRIM(name) != ''
+      GROUP BY orgId, lower(trim(name))
+      HAVING c > 1
+    ''');
+    for (final group in byName) {
+      final orgId = '${group['orgId']}';
+      final nameKey = '${group['n']}';
+      final dupes = await db.query(
+        table,
+        where: 'orgId = ? AND lower(trim(name)) = ?',
+        whereArgs: [orgId, nameKey],
+        orderBy: 'localId ASC',
+      );
+      if (dupes.length < 2) continue;
+      Map<String, Object?> keep = dupes.first;
+      for (final row in dupes) {
+        final uid = '${row['unique_id'] ?? ''}'.trim();
+        final keepUid = '${keep['unique_id'] ?? ''}'.trim();
+        final rowNumeric = RegExp(r'^\d+$').hasMatch(uid);
+        final keepNumeric = RegExp(r'^\d+$').hasMatch(keepUid);
+        if (rowNumeric && !keepNumeric) {
+          keep = row;
+        }
+      }
+      final keepId = '${keep['localId']}';
+      final keepUnique = '${keep['unique_id'] ?? keepId}'.trim();
+      for (final row in dupes) {
+        final id = '${row['localId']}';
+        if (id == keepId) continue;
+        // Point store rows at the surviving master unique_id, then drop the dupe.
+        if (table == 'master_categories') {
+          await db.rawUpdate(
+            '''
+            UPDATE categories
+            SET master_unique_id = ?
+            WHERE orgId = ? AND master_unique_id = ?
+            ''',
+            [keepUnique, orgId, row['unique_id'] ?? row['localId']],
+          );
+        } else if (table == 'master_products') {
+          await db.rawUpdate(
+            '''
+            UPDATE products
+            SET master_unique_id = ?
+            WHERE orgId = ? AND master_unique_id = ?
+            ''',
+            [keepUnique, orgId, row['unique_id'] ?? row['localId']],
+          );
+          await db.rawUpdate(
+            '''
+            UPDATE product_variants
+            SET master_unique_id = ?
+            WHERE orgId = ? AND master_unique_id = ?
+            ''',
+            [keepUnique, orgId, row['unique_id'] ?? row['localId']],
+          );
+        }
+        await db.delete(table, where: 'localId = ?', whereArgs: [id]);
+      }
+    }
+  }
+
+  static Future<void> _dedupeStoreCatalogByUniqueId(
+    Database db,
+    String table,
+  ) async {
+    final rows = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+      [table],
+    );
+    if (rows.isEmpty) return;
+    final dupes = await db.rawQuery('''
+      SELECT orgId, storeId, unique_id, MIN(localId) AS keepId, COUNT(*) AS c
+      FROM $table
+      WHERE unique_id IS NOT NULL AND TRIM(unique_id) != ''
+      GROUP BY orgId, storeId, unique_id
+      HAVING c > 1
+    ''');
+    for (final row in dupes) {
+      final keepId = '${row['keepId']}';
+      final losers = await db.query(
+        table,
+        columns: ['localId'],
+        where: 'orgId = ? AND storeId = ? AND unique_id = ? AND localId != ?',
+        whereArgs: [row['orgId'], row['storeId'], row['unique_id'], keepId],
+      );
+      for (final loser in losers) {
+        final localId = '${loser['localId']}';
+        // Soft-delete when possible so selling/history stay safe.
+        final info = await db.rawQuery('PRAGMA table_info($table)');
+        final hasDeleted = info.any((c) => c['name'] == 'deleted');
+        if (hasDeleted) {
+          await db.update(
+            table,
+            {'deleted': 1, 'exported': 0},
+            where: 'localId = ?',
+            whereArgs: [localId],
+          );
+        } else {
+          await db.delete(table, where: 'localId = ?', whereArgs: [localId]);
+        }
+      }
+    }
+  }
+
+  static Future<void> _ensureOfferTargetsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS offer_targets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        orgId TEXT NOT NULL,
+        storeId TEXT NOT NULL,
+        offer_local_id TEXT NOT NULL,
+        target_value TEXT NOT NULL
+      )
+    ''');
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_offer_targets_scope_value ON offer_targets(orgId, storeId, offer_local_id, target_value)',
+    );
+  }
+
+  static Future<void> _upgradeToV48(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS wallet_variants (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        orgId TEXT NOT NULL,
+        storeId TEXT NOT NULL,
+        variant_id INTEGER NOT NULL,
+        key TEXT,
+        name TEXT NOT NULL,
+        type INTEGER,
+        type_name TEXT,
+        pg_type INTEGER,
+        pg_name TEXT,
+        logo TEXT,
+        locked INTEGER NOT NULL DEFAULT 1,
+        sorting_order INTEGER NOT NULL DEFAULT 0,
+        synced_on TEXT NOT NULL
+      )
+    ''');
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_wallet_variants_scope_variant ON wallet_variants(orgId, storeId, variant_id)',
+    );
+  }
+
+  static Future<void> _upgradeToV45(Database db) async {
+    await _addColumnIfMissing(db, 'store_info', 'logo_pending_sync', 'INTEGER DEFAULT 0');
+    await _addColumnIfMissing(db, 'customers', 'photo_path', 'TEXT');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS report_subscribers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        orgId TEXT NOT NULL,
+        storeId TEXT NOT NULL,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        cadence TEXT NOT NULL,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        is_owner_default INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_report_subscribers_email ON report_subscribers(orgId, storeId, email)',
+    );
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS store_email_config (
+        orgId TEXT NOT NULL,
+        storeId TEXT NOT NULL,
+        purpose TEXT NOT NULL,
+        host TEXT NOT NULL,
+        port INTEGER NOT NULL,
+        username TEXT NOT NULL,
+        password TEXT NOT NULL,
+        from_email TEXT NOT NULL,
+        from_name TEXT NOT NULL,
+        use_tls INTEGER NOT NULL DEFAULT 1,
+        locked INTEGER NOT NULL DEFAULT 0,
+        pending_sync INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (orgId, storeId, purpose)
+      )
+    ''');
+  }
+
+  static Future<void> _upgradeToV46(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS subscribers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        local_id TEXT,
+        remote_id INTEGER,
+        orgId TEXT NOT NULL,
+        storeId TEXT NOT NULL,
+        name TEXT NOT NULL,
+        user_id TEXT,
+        email TEXT,
+        phone_number TEXT,
+        country_id TEXT,
+        type TEXT NOT NULL DEFAULT 'report',
+        notification_type TEXT NOT NULL DEFAULT 'email',
+        periodicity TEXT NOT NULL DEFAULT 'daily',
+        deleted INTEGER NOT NULL DEFAULT 0,
+        active INTEGER NOT NULL DEFAULT 1,
+        is_owner_default INTEGER NOT NULL DEFAULT 0,
+        created_by TEXT,
+        created_on TEXT NOT NULL,
+        updated_on TEXT,
+        pending_sync INTEGER NOT NULL DEFAULT 0,
+        exported INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_subscribers_email_type_channel ON subscribers(orgId, storeId, email, type, notification_type)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_subscribers_local_id ON subscribers(orgId, storeId, local_id)',
+    );
+
+    // Migrate any legacy report_subscribers rows into the multipurpose table.
+    try {
+      final legacy = await db.query('report_subscribers');
+      final now = DateTime.now().toIso8601String();
+      for (final row in legacy) {
+        final email = (row['email'] as String?)?.trim().toLowerCase() ?? '';
+        if (email.isEmpty) continue;
+        var cadence = (row['cadence'] as String?)?.trim().toLowerCase() ?? 'daily';
+        if (cadence == 'annual' || cadence == 'yearly') cadence = 'annually';
+        final existing = await db.query(
+          'subscribers',
+          where: 'orgId = ? AND storeId = ? AND email = ? AND type = ?',
+          whereArgs: [row['orgId'], row['storeId'], email, 'report'],
+          limit: 1,
+        );
+        if (existing.isNotEmpty) continue;
+        await db.insert('subscribers', {
+          'local_id': 'legacy-report-${row['id']}',
+          'orgId': row['orgId'],
+          'storeId': row['storeId'],
+          'name': row['name'] ?? email,
+          'email': email,
+          'type': 'report',
+          'notification_type': 'email',
+          'periodicity': cadence,
+          'deleted': 0,
+          'active': ((row['enabled'] as num?)?.toInt() ?? 1) == 0 ? 0 : 1,
+          'is_owner_default': (row['is_owner_default'] as num?)?.toInt() ?? 0,
+          'created_on': row['created_at'] ?? now,
+          'updated_on': now,
+          'pending_sync': 1,
+          'exported': 0,
+        });
+      }
+    } catch (_) {
+      // Legacy table may not exist on fresh installs.
+    }
+  }
+
+  static Future<void> _upgradeToV47(Database db) async {
+    await _addColumnIfMissing(
+      db,
+      'subscribers',
+      'notification_type',
+      "TEXT NOT NULL DEFAULT 'email'",
+    );
+    try {
+      await db.execute('DROP INDEX IF EXISTS idx_subscribers_email_type');
+    } catch (_) {}
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_subscribers_email_type_channel ON subscribers(orgId, storeId, email, type, notification_type)',
+    );
+  }
+
+  static Future<void> _ensureSoftDeleteColumns(Database db) async {
+    for (final table in [
+      'categories',
+      'products',
+      'product_variants',
+      'offers',
+      'catalog_addon_groups',
+      'catalog_addon_items',
+    ]) {
+      // Prefer nullable-with-default ALTER for broader SQLite/web compatibility.
+      await _addColumnIfMissing(db, table, 'deleted', 'INTEGER DEFAULT 0');
+    }
+  }
+
+  static Future<void> _ensureCompanyProfileColumns(Database db) async {
+    await _addColumnIfMissing(db, 'store_info', 'address', 'TEXT');
+    await _addColumnIfMissing(db, 'store_info', 'registration_number', 'TEXT');
+    await _addColumnIfMissing(db, 'store_info', 'tax_number', 'TEXT');
+    await _addColumnIfMissing(db, 'store_info', 'identifier', 'TEXT');
   }
 
   static Future<void> _createUniqueIndexes(Database db) async {
-    await db.execute(
+    Future<void> indexIfTable(
+      String table,
+      String sql,
+    ) async {
+      final rows = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+        [table],
+      );
+      if (rows.isEmpty) return;
+      await db.execute(sql);
+    }
+
+    await indexIfTable(
+      'orders',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_scope_local_id ON orders(orgId, storeId, local_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'orders',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_scope_remote_id ON orders(orgId, storeId, remote_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'order_payments',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_order_payments_scope_local_id ON order_payments(orgId, storeId, local_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'order_payments',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_order_payments_scope_remote_id ON order_payments(orgId, storeId, remote_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'order_refunds',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_order_refunds_scope_local_id ON order_refunds(orgId, storeId, local_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'order_refunds',
       'CREATE INDEX IF NOT EXISTS idx_order_refunds_order ON order_refunds(orgId, storeId, order_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'order_refunds',
       'CREATE INDEX IF NOT EXISTS idx_order_refunds_payment ON order_refunds(orgId, storeId, payment_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'credits',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_credits_scope_local_id ON credits(orgId, storeId, local_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'credits',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_credits_scope_remote_id ON credits(orgId, storeId, remote_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'credit_accounts',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_credit_accounts_scope_customer ON credit_accounts(orgId, storeId, customerId)',
     );
-    await db.execute(
+    await indexIfTable(
+      'credit_accounts',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_credit_accounts_scope_local_id ON credit_accounts(orgId, storeId, local_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'credit_accounts',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_credit_accounts_scope_remote_id ON credit_accounts(orgId, storeId, remote_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'credit_repayments',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_credit_repayments_scope_local_id ON credit_repayments(orgId, storeId, local_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'credit_repayments',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_credit_repayments_scope_remote_id ON credit_repayments(orgId, storeId, remote_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'credit_installments',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_credit_installments_scope_local_id ON credit_installments(orgId, storeId, local_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'credit_installments',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_credit_installments_scope_remote_id ON credit_installments(orgId, storeId, remote_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'credit_installments',
       'CREATE INDEX IF NOT EXISTS idx_credit_installments_credit_id ON credit_installments(credit_id, sequence)',
     );
-    await db.execute(
+    await indexIfTable(
+      'wallets',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_wallets_scope_local_id ON wallets(orgId, storeId, local_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'wallets',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_wallets_scope_remote_id ON wallets(orgId, storeId, remote_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'credit_scheduled_repayments',
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_credit_scheduled_repayments_scope_local_id ON credit_scheduled_repayments(orgId, storeId, local_id)',
     );
-    await db.execute(
+    await indexIfTable(
+      'credit_scheduled_repayments',
       'CREATE INDEX IF NOT EXISTS idx_credit_scheduled_repayments_customer ON credit_scheduled_repayments(orgId, storeId, customerId, due_date)',
     );
     await _createUniqueIndexIfColumnExists(
@@ -1701,6 +2484,13 @@ class BackendSetup {
     String column,
     String indexName,
   ) async {
+    final tableRows = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+      [table],
+    );
+    if (tableRows.isEmpty) {
+      return;
+    }
     final rows = await db.rawQuery('PRAGMA table_info($table)');
     final hasColumn = rows.any((row) => row['name'] == column);
     if (!hasColumn) {
@@ -1717,11 +2507,50 @@ class BackendSetup {
     String column,
     String definition,
   ) async {
+    final tableRows = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+      [table],
+    );
+    if (tableRows.isEmpty) {
+      return;
+    }
     final rows = await db.rawQuery('PRAGMA table_info($table)');
     final hasColumn = rows.any((row) => row['name'] == column);
     if (!hasColumn) {
       await db.execute('ALTER TABLE $table ADD COLUMN $column $definition');
     }
+  }
+
+  static Future<void> _executeIfTableExists(
+    Database db,
+    String table,
+    String sql,
+  ) async {
+    final tableRows = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+      [table],
+    );
+    if (tableRows.isEmpty) return;
+    await db.execute(sql);
+  }
+
+  static Future<void> _createIndexIfColumnsExist(
+    Database db,
+    String table,
+    List<String> columns,
+    String sql,
+  ) async {
+    final tableRows = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+      [table],
+    );
+    if (tableRows.isEmpty) return;
+    final info = await db.rawQuery('PRAGMA table_info($table)');
+    final names = {for (final row in info) '${row['name'] ?? ''}'};
+    for (final column in columns) {
+      if (!names.contains(column)) return;
+    }
+    await db.execute(sql);
   }
 
   static Future<void> _backfillScopedData(Database db) async {

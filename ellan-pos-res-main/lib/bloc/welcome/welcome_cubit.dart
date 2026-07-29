@@ -1,7 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:pos_orders_offline/store_config.dart';
@@ -13,6 +14,7 @@ import '../../core/di/service_locator.dart';
 import '../../core/device_approval.dart';
 import '../../core/device_setup_store.dart';
 import '../../core/offline_pos_config.dart';
+import '../../core/utils/user_facing_error.dart';
 import 'welcome_state.dart';
 
 /// One-time device setup: pick a server, register the device, bootstrap offline.
@@ -46,8 +48,12 @@ class WelcomeCubit extends Cubit<WelcomeState> {
 
     emit(state.copyWith(
       savedServers: entries,
-      serverUrl: serverUrl.isEmpty ? kDefaultDiscoveryUrl : discoveryOrigin(serverUrl),
-      organizationName: orgId,
+      // Welcome field is origin only (e.g. http://127.0.0.1:8000) — never /api/...
+      serverUrl: serverUrl.isEmpty
+          ? kDefaultServerOrigin
+          : discoveryOrigin(serverUrl),
+      organizationName:
+          orgId.isEmpty ? kDefaultRootOrgInstanceId : orgId,
     ));
   }
 
@@ -106,17 +112,22 @@ class WelcomeCubit extends Cubit<WelcomeState> {
       String model = '';
       String deviceId = '';
 
-      if (Platform.isAndroid) {
+      if (kIsWeb) {
+        final info = await deviceInfo.webBrowserInfo;
+        make = info.vendor ?? 'Web';
+        model = info.userAgent ?? 'Browser';
+        deviceId = info.userAgent ?? 'web';
+      } else if (defaultTargetPlatform == TargetPlatform.android) {
         final info = await deviceInfo.androidInfo;
         make = info.manufacturer;
         model = info.model;
         deviceId = info.id;
-      } else if (Platform.isIOS) {
+      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
         final info = await deviceInfo.iosInfo;
         make = info.name;
         model = info.model;
         deviceId = info.identifierForVendor ?? '';
-      } else if (Platform.isLinux) {
+      } else if (defaultTargetPlatform == TargetPlatform.linux) {
         final info = await deviceInfo.linuxInfo;
         make = info.name.isNotEmpty ? info.name : 'Linux';
         final pretty = info.prettyName;
@@ -125,12 +136,12 @@ class WelcomeCubit extends Cubit<WelcomeState> {
             ? pretty
             : (versionId != null && versionId.isNotEmpty ? versionId : 'Desktop');
         deviceId = info.machineId ?? '';
-      } else if (Platform.isMacOS) {
+      } else if (defaultTargetPlatform == TargetPlatform.macOS) {
         final info = await deviceInfo.macOsInfo;
         make = 'Apple';
         model = info.model;
         deviceId = info.systemGUID ?? '';
-      } else if (Platform.isWindows) {
+      } else if (defaultTargetPlatform == TargetPlatform.windows) {
         final info = await deviceInfo.windowsInfo;
         make = 'Windows';
         model = info.computerName;
@@ -174,12 +185,14 @@ class WelcomeCubit extends Cubit<WelcomeState> {
       // Approval gate first: the organisation must recognise this device as
       // registered, approved and active before any org data is fetched.
       await _collectAndStoreDeviceInfo();
-      final approval = await DeviceApprovalService(prefs).registerAndCheck(
-        orgRef: orgCode,
-        deviceId: _deviceId,
-        make: posDeviceMake(prefs),
-        model: posDeviceModel(prefs),
-      );
+      final approval = await DeviceApprovalService(prefs)
+          .registerAndCheck(
+            orgRef: orgCode,
+            deviceId: _deviceId,
+            make: posDeviceMake(prefs),
+            model: posDeviceModel(prefs),
+          )
+          .timeout(const Duration(seconds: 20));
       if (!approval.approved) {
         emit(state.copyWith(
           isLoading: false,
@@ -200,7 +213,9 @@ class WelcomeCubit extends Cubit<WelcomeState> {
           'environment': 'development',
         },
       );
-      final bootstrapResponse = await http.get(bootstrapUri);
+      final bootstrapResponse = await http
+          .get(bootstrapUri)
+          .timeout(const Duration(seconds: 20));
       if (bootstrapResponse.statusCode == 404) {
         emit(state.copyWith(
           isLoading: false,
@@ -310,13 +325,16 @@ class WelcomeCubit extends Cubit<WelcomeState> {
         errorMessage: e.userMessage,
       ));
     } catch (e, st) {
+      // ignore: avoid_print
       print('WelcomeCubit::submit error: $e\n$st');
-      final detail = e.toString().replaceFirst(RegExp(r'^(Bad state|FormatException): '), '');
       emit(state.copyWith(
         isLoading: false,
         savedServers: _setupStore.listServerEntries(),
-        errorMessage:
-            'Unable to complete device setup. $detail',
+        errorMessage: userFacingError(
+          e,
+          fallback:
+              'Unable to complete device setup. Check the server address and try again.',
+        ),
       ));
     }
   }

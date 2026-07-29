@@ -7,6 +7,7 @@ import 'package:pos_tablet/core/org_timezone.dart';
 import 'package:pos_tablet/core/routes.dart';
 import 'package:pos_tablet/core/utils/customer_identity.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
+import 'package:pos_tablet/presentation/widgets/staff_logout_confirm_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Read-only profile / account screen for the signed-in POS operator.
@@ -64,34 +65,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _confirmLogout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text(
-          'Logout so the next staff member can unlock with their ID?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF512F),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
+    final confirmed = await showStaffLogoutConfirmDialog(context);
+    if (!confirmed) return;
 
-    final storeId = getIt<UiStoreController>().store?.scope.storeId;
+    final controller = getIt<UiStoreController>();
+    final storeId = controller.store?.scope.storeId;
+    final storeName = controller.store?.storeName;
     try {
-      await getIt<UiStoreController>().lockStaff();
+      await controller.lockStaff();
     } catch (_) {
       // Still return to the lock screen.
     }
@@ -100,7 +81,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context,
       AppRoutes.staffLock,
       (route) => false,
-      arguments: storeId,
+      arguments: {
+        'storeId': storeId,
+        'storeName': storeName,
+      },
     );
   }
 

@@ -11,8 +11,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Device lease stays valid; only the operator session changes here.
 class StaffLockScreen extends StatelessWidget {
   final String? storeId;
+  final String? storeNameHint;
 
-  const StaffLockScreen({super.key, this.storeId});
+  const StaffLockScreen({super.key, this.storeId, this.storeNameHint});
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +21,7 @@ class StaffLockScreen extends StatelessWidget {
       create: (context) => StaffLockCubit(
         prefs: context.read<SharedPreferences>(),
         preferredStoreId: storeId,
+        storeNameHint: storeNameHint,
       ),
       child: _StaffLockView(storeId: storeId),
     );
@@ -126,7 +128,9 @@ class _StaffLockViewState extends State<_StaffLockView> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'All staff',
+                  (state.storeName ?? '').trim().isNotEmpty
+                      ? 'Staff · ${state.storeName!.trim()}'
+                      : 'All staff',
                   style: FontUtility.heading.copyWith(fontSize: 20),
                 ),
                 const SizedBox(height: 12),
@@ -239,6 +243,18 @@ class _StaffLockViewState extends State<_StaffLockView> {
                               style: FontUtility.heading.copyWith(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              (state.storeName ?? '').trim().isNotEmpty
+                                  ? state.storeName!.trim()
+                                  : 'Branch not loaded',
+                              textAlign: TextAlign.center,
+                              style: FontUtility.subheading.copyWith(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: _primary,
                               ),
                             ),
                             if (state.loadingStaff) ...[
@@ -366,9 +382,36 @@ class _StaffLockViewState extends State<_StaffLockView> {
                             ),
                             const SizedBox(height: 8),
                             TextButton(
-                              onPressed: () {
-                                Navigator.pushNamed(context, AppRoutes.login);
-                              },
+                              onPressed: state.isLoading
+                                  ? null
+                                  : () {
+                                      Navigator.pushNamedAndRemoveUntil(
+                                        context,
+                                        AppRoutes.storeList,
+                                        (route) => false,
+                                        arguments: {
+                                          'returnToStaffLock': true,
+                                        },
+                                      );
+                                    },
+                              child: Text(
+                                'Switch store',
+                                style: FontUtility.body.copyWith(
+                                  color: Colors.black54,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: state.isLoading
+                                  ? null
+                                  : () {
+                                      Navigator.pushNamedAndRemoveUntil(
+                                        context,
+                                        AppRoutes.login,
+                                        (route) => false,
+                                      );
+                                    },
                               child: Text(
                                 'Online device sign-in',
                                 style: FontUtility.body.copyWith(
