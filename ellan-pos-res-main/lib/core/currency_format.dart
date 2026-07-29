@@ -9,13 +9,15 @@ class PosCurrency {
 
   static String symbol({String? storeId}) {
     try {
-      final sid = (storeId ??
-              getIt<UiStoreController>().store?.scope.storeId ??
-              getIt<UiStoreController>().store?.storeId ??
-              '')
-          .trim();
-      return DeviceSetupStore(getIt<SharedPreferences>())
-          .currencySymbolForStore(sid.isEmpty ? null : sid);
+      final sid =
+          (storeId ??
+                  getIt<UiStoreController>().store?.scope.storeId ??
+                  getIt<UiStoreController>().store?.storeId ??
+                  '')
+              .trim();
+      return DeviceSetupStore(
+        getIt<SharedPreferences>(),
+      ).currencySymbolForStore(sid.isEmpty ? null : sid);
     } catch (_) {
       return '';
     }

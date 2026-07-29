@@ -32,11 +32,11 @@ class PosOrderType {
   }
 
   Map<String, dynamic> toJson() => {
-        'key': key,
-        'label': label,
-        'sorting_order': sortingOrder,
-        'address_required': addressRequired,
-      };
+    'key': key,
+    'label': label,
+    'sorting_order': sortingOrder,
+    'address_required': addressRequired,
+  };
 }
 
 /// Fetches order types from the POS gateway and caches them on-device so the
@@ -64,12 +64,13 @@ class OrderTypesRepository {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! List) return defaults;
-      final types = decoded
-          .whereType<Map>()
-          .map((row) => PosOrderType.fromJson(row.cast<String, dynamic>()))
-          .where((type) => type.key.isNotEmpty)
-          .toList()
-        ..sort((a, b) => a.sortingOrder.compareTo(b.sortingOrder));
+      final types =
+          decoded
+              .whereType<Map>()
+              .map((row) => PosOrderType.fromJson(row.cast<String, dynamic>()))
+              .where((type) => type.key.isNotEmpty)
+              .toList()
+            ..sort((a, b) => a.sortingOrder.compareTo(b.sortingOrder));
       return types.isEmpty ? defaults : types;
     } catch (_) {
       return defaults;
@@ -98,7 +99,8 @@ class OrderTypesRepository {
     final response = await http.get(
       uri,
       headers: {
-        if (deviceId != null && deviceId.isNotEmpty) 'X-Pos-Device-Id': deviceId,
+        if (deviceId != null && deviceId.isNotEmpty)
+          'X-Pos-Device-Id': deviceId,
       },
     );
     if (response.statusCode != 200) {
@@ -111,12 +113,13 @@ class OrderTypesRepository {
     if (rows is! List) {
       throw StateError('Order types sync returned no data.');
     }
-    final types = rows
-        .whereType<Map>()
-        .map((row) => PosOrderType.fromJson(row.cast<String, dynamic>()))
-        .where((type) => type.key.isNotEmpty)
-        .toList()
-      ..sort((a, b) => a.sortingOrder.compareTo(b.sortingOrder));
+    final types =
+        rows
+            .whereType<Map>()
+            .map((row) => PosOrderType.fromJson(row.cast<String, dynamic>()))
+            .where((type) => type.key.isNotEmpty)
+            .toList()
+          ..sort((a, b) => a.sortingOrder.compareTo(b.sortingOrder));
 
     final prefs = await SharedPreferences.getInstance();
     if (types.isEmpty) {

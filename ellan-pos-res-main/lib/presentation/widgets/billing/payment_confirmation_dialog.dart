@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/font_utility.dart';
+import '../../../core/localization/l10n_context.dart';
 
 class PaymentConfirmationDialog extends StatelessWidget {
   final String paymentMethod;
@@ -50,7 +51,7 @@ class PaymentConfirmationDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Confirm Payment',
+                  context.l10n.commonConfirmPayment,
                   style: FontUtility.heading.copyWith(fontSize: 22),
                 ),
                 const SizedBox(height: 8),
@@ -76,7 +77,7 @@ class PaymentConfirmationDialog extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        'Amount to Pay',
+                        context.l10n.commonAmountToPay,
                         style: FontUtility.subheading.copyWith(
                           color: Colors.grey.shade600,
                         ),
@@ -108,7 +109,7 @@ class PaymentConfirmationDialog extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'CONFIRM PAYMENT',
+                      context.l10n.commonConfirmPaymentCaps,
                       style: FontUtility.heading.copyWith(
                         color: Colors.white,
                         fontSize: 15,
@@ -128,7 +129,7 @@ class PaymentConfirmationDialog extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Change Payment Method',
+                      context.l10n.commonChangePaymentMethod,
                       style: FontUtility.subheading.copyWith(
                         color: Colors.grey.shade600,
                         fontSize: 15,

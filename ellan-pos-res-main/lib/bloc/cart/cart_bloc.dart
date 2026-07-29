@@ -32,7 +32,10 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<SelectPaymentMethod>(_onSelectPaymentMethod);
   }
 
-  void _onLoadInitialData(LoadInitialData event, Emitter<CartState> emit) async {
+  void _onLoadInitialData(
+    LoadInitialData event,
+    Emitter<CartState> emit,
+  ) async {
     emit(state.copyWith(isLoading: true));
 
     try {
@@ -45,7 +48,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         for (final category in catalogue.categories)
           CategoryModel(
             id: category.id.toString(),
-            name: category.name.isEmpty ? 'Category ${category.id}' : category.name,
+            name: category.name.isEmpty
+                ? 'Category ${category.id}'
+                : category.name,
             imageUrl: '',
           ),
       ];
@@ -67,27 +72,31 @@ class CartBloc extends Bloc<CartEvent, CartState> {
           ),
       ];
 
-      emit(state.copyWith(
-        isLoading: false,
-        categories: categories,
-        products: products,
-        selectedCategoryId: 'all',
-        cartItems: event.draft?.items ?? const [],
-        discounts: event.draft?.discounts ?? const [],
-        serviceTaxPercentage: event.draft?.serviceTaxPercentage ?? 0,
-        tipsAmount: event.draft?.tipsAmount ?? 0,
-        deliveryCharge: event.draft?.deliveryCharge ?? 0,
-      ));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          categories: categories,
+          products: products,
+          selectedCategoryId: 'all',
+          cartItems: event.draft?.items ?? const [],
+          discounts: event.draft?.discounts ?? const [],
+          serviceTaxPercentage: event.draft?.serviceTaxPercentage ?? 0,
+          tipsAmount: event.draft?.tipsAmount ?? 0,
+          deliveryCharge: event.draft?.deliveryCharge ?? 0,
+        ),
+      );
       await _refreshOffers(emit);
     } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        categories: const [
-          CategoryModel(id: 'all', name: 'All Items', imageUrl: ''),
-        ],
-        products: const [],
-        selectedCategoryId: 'all',
-      ));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          categories: const [
+            CategoryModel(id: 'all', name: 'All Items', imageUrl: ''),
+          ],
+          products: const [],
+          selectedCategoryId: 'all',
+        ),
+      );
     }
   }
 
@@ -107,22 +116,21 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     );
     final existingIndex = event.product.isMisc
         ? -1
-        : updatedCart
-            .indexWhere((item) => item.lineSignature == incoming.lineSignature);
+        : updatedCart.indexWhere(
+            (item) => item.lineSignature == incoming.lineSignature,
+          );
     final addQty = incoming.quantity;
 
     if (existingIndex >= 0) {
       final existingItem = updatedCart[existingIndex];
-      updatedCart[existingIndex] =
-          existingItem.copyWith(quantity: existingItem.quantity + addQty);
+      updatedCart[existingIndex] = existingItem.copyWith(
+        quantity: existingItem.quantity + addQty,
+      );
     } else {
       updatedCart.add(incoming);
     }
 
-    emit(state.copyWith(
-      cartItems: updatedCart,
-      isHistoryTabActive: false,
-    ));
+    emit(state.copyWith(cartItems: updatedCart, isHistoryTabActive: false));
     await _refreshOffers(emit);
   }
 
@@ -131,8 +139,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     Emitter<CartState> emit,
   ) async {
     final updatedCart = List<CartItem>.from(state.cartItems);
-    final index = updatedCart
-        .indexWhere((item) => item.lineSignature == event.cartItem.lineSignature);
+    final index = updatedCart.indexWhere(
+      (item) => item.lineSignature == event.cartItem.lineSignature,
+    );
 
     if (index >= 0) {
       if (event.quantity <= 0) {
@@ -167,15 +176,17 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   }
 
   void _onClearCart(ClearCart event, Emitter<CartState> emit) {
-    emit(state.copyWith(
-      cartItems: const [],
-      discounts: const [],
-      offerAppliedAmount: 0,
-      offerLabels: const [],
-      serviceTaxPercentage: 0.0,
-      tipsAmount: 0.0,
-      clearPaymentMethod: true,
-    ));
+    emit(
+      state.copyWith(
+        cartItems: const [],
+        discounts: const [],
+        offerAppliedAmount: 0,
+        offerLabels: const [],
+        serviceTaxPercentage: 0.0,
+        tipsAmount: 0.0,
+        clearPaymentMethod: true,
+      ),
+    );
   }
 
   void _onToggleCheckoutTab(ToggleCheckoutTab event, Emitter<CartState> emit) {
@@ -203,19 +214,21 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     final priorForOrder = event.orderId == null
         ? const <OrderHistoryModel>[]
         : state.orderHistory
-            .where((row) => row.orderId == event.orderId)
-            .toList(growable: false);
-    emit(state.copyWith(
-      cartItems: const [],
-      discounts: const [],
-      offerAppliedAmount: 0,
-      offerLabels: const [],
-      serviceTaxPercentage: 0,
-      tipsAmount: 0,
-      clearPaymentMethod: true,
-      isHistoryTabActive: true,
-      orderHistory: [history, ...priorForOrder],
-    ));
+              .where((row) => row.orderId == event.orderId)
+              .toList(growable: false);
+    emit(
+      state.copyWith(
+        cartItems: const [],
+        discounts: const [],
+        offerAppliedAmount: 0,
+        offerLabels: const [],
+        serviceTaxPercentage: 0,
+        tipsAmount: 0,
+        clearPaymentMethod: true,
+        isHistoryTabActive: true,
+        orderHistory: [history, ...priorForOrder],
+      ),
+    );
   }
 
   /// Legacy event — clear cart into history.
@@ -250,10 +263,12 @@ class CartBloc extends Bloc<CartEvent, CartState> {
             sellUnitShort: item.product.sellUnitShort,
           ),
       ]);
-      emit(state.copyWith(
-        offerAppliedAmount: preview.amount,
-        offerLabels: preview.labels,
-      ));
+      emit(
+        state.copyWith(
+          offerAppliedAmount: preview.amount,
+          offerLabels: preview.labels,
+        ),
+      );
     } catch (_) {
       // Offer preview is best-effort while browsing the cart.
     }
@@ -277,11 +292,13 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       emit(state.copyWith(discounts: const []));
       return;
     }
-    emit(state.copyWith(
-      discounts: state.discounts
-          .where((d) => d.id != event.discountId)
-          .toList(growable: false),
-    ));
+    emit(
+      state.copyWith(
+        discounts: state.discounts
+            .where((d) => d.id != event.discountId)
+            .toList(growable: false),
+      ),
+    );
   }
 
   void _onApplyServiceTax(ApplyServiceTax event, Emitter<CartState> emit) {

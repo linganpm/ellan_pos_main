@@ -72,7 +72,11 @@ class CartItemTile extends StatelessWidget {
                   width: 36,
                   height: 36,
                   color: Colors.grey.shade100,
-                  child: const Icon(Icons.fastfood, size: 16, color: Colors.grey),
+                  child: const Icon(
+                    Icons.fastfood,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
                 ),
               ),
             ),
@@ -97,8 +101,8 @@ class CartItemTile extends StatelessWidget {
                   cartItem.sellUnit == null
                       ? PosCurrency.format(unitPrice)
                       : '${PosCurrency.format(unitPrice)} / '
-                          '${formatSellQty(cartItem.sellUnit!.baseQty)} '
-                          '${cartItem.sellUnit!.unitShort}',
+                            '${formatSellQty(cartItem.sellUnit!.baseQty)} '
+                            '${cartItem.sellUnit!.unitShort}',
                   style: FontUtility.body.copyWith(
                     fontSize: 12,
                     color: Colors.black54,
@@ -194,10 +198,7 @@ class _QtyControls extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _TapBtn(
-            icon: Icons.remove_rounded,
-            onTap: onDecrease,
-          ),
+          _TapBtn(icon: Icons.remove_rounded, onTap: onDecrease),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: SizedBox(
@@ -227,11 +228,7 @@ class _TapBtn extends StatelessWidget {
   final VoidCallback? onTap;
   final Color color;
 
-  const _TapBtn({
-    required this.icon,
-    this.onTap,
-    this.color = Colors.black87,
-  });
+  const _TapBtn({required this.icon, this.onTap, this.color = Colors.black87});
 
   @override
   Widget build(BuildContext context) {

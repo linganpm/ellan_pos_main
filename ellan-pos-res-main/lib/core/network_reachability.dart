@@ -18,9 +18,7 @@ class NetworkReachability {
     HttpClient? client;
     try {
       client = HttpClient()..connectionTimeout = timeout;
-      final request = await client
-          .openUrl('HEAD', probe)
-          .timeout(timeout);
+      final request = await client.openUrl('HEAD', probe).timeout(timeout);
       request.followRedirects = false;
       final response = await request.close().timeout(timeout);
       // Any HTTP response (even 404/405) means the host is reachable.

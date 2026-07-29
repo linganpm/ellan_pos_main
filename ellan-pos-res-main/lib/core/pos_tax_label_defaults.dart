@@ -6,16 +6,8 @@ class PosTaxLabelDefaults {
   PosTaxLabelDefaults._();
 
   static const List<Map<String, dynamic>> common = [
-    {
-      'local_id': 'tax-fallback-0',
-      'name': 'Tax 0%',
-      'total_percentage': 0.0,
-    },
-    {
-      'local_id': 'tax-fallback-5',
-      'name': 'Tax 5%',
-      'total_percentage': 5.0,
-    },
+    {'local_id': 'tax-fallback-0', 'name': 'Tax 0%', 'total_percentage': 0.0},
+    {'local_id': 'tax-fallback-5', 'name': 'Tax 5%', 'total_percentage': 5.0},
     {
       'local_id': 'tax-fallback-12',
       'name': 'Tax 12%',

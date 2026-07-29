@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 class CreditCollectPaymentResult {
   final double amount;
@@ -56,7 +57,7 @@ class _CreditCollectPaymentDialogState
     final amount = double.tryParse(_amountController.text.trim()) ?? 0;
     if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter an amount greater than zero.')),
+        SnackBar(content: Text(context.l10n.amountGreaterThanZero)),
       );
       return;
     }
@@ -83,9 +84,11 @@ class _CreditCollectPaymentDialogState
 
   @override
   Widget build(BuildContext context) {
-    final name = widget.customerName.isEmpty ? 'Customer' : widget.customerName;
+    final name = widget.customerName.isEmpty
+        ? context.l10n.commonCustomer
+        : widget.customerName;
     return AlertDialog(
-      title: const Text('Collect payment'),
+      title: Text(context.l10n.creditsCollectPayment),
       content: SizedBox(
         width: 420,
         child: Column(
@@ -101,35 +104,36 @@ class _CreditCollectPaymentDialogState
             const SizedBox(height: 16),
             TextField(
               controller: _amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
               ],
-              decoration: const InputDecoration(
-                labelText: 'Amount',
+              decoration: InputDecoration(
+                labelText: context.l10n.commonAmount,
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _paymentMode,
-              decoration: const InputDecoration(
-                labelText: 'Payment mode',
+              decoration: InputDecoration(
+                labelText: context.l10n.commonPaymentMode,
                 border: OutlineInputBorder(),
               ),
-              items: const [
+              items: [
                 DropdownMenuItem(
                   value: StoreCreditRepaymentMode.cash,
-                  child: Text('Cash'),
+                  child: Text(context.l10n.commonCash),
                 ),
                 DropdownMenuItem(
                   value: StoreCreditRepaymentMode.card,
-                  child: Text('Card'),
+                  child: Text(context.l10n.commonCard),
                 ),
                 DropdownMenuItem(
                   value: StoreCreditRepaymentMode.voucher,
-                  child: Text('Voucher'),
+                  child: Text(context.l10n.commonVoucher),
                 ),
               ],
               onChanged: (value) {
@@ -140,8 +144,8 @@ class _CreditCollectPaymentDialogState
             const SizedBox(height: 12),
             TextField(
               controller: _referenceController,
-              decoration: const InputDecoration(
-                labelText: 'Reference (optional)',
+              decoration: InputDecoration(
+                labelText: context.l10n.commonReferenceOptional,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -150,10 +154,11 @@ class _CreditCollectPaymentDialogState
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () {
-                  _amountController.text =
-                      widget.outstanding.toStringAsFixed(2);
+                  _amountController.text = widget.outstanding.toStringAsFixed(
+                    2,
+                  );
                 },
-                child: const Text('Settle full balance'),
+                child: Text(context.l10n.commonSettleFullBalance),
               ),
             ),
           ],
@@ -162,11 +167,11 @@ class _CreditCollectPaymentDialogState
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.actionCancel),
         ),
         FilledButton(
           onPressed: _submit,
-          child: const Text('Collect'),
+          child: Text(context.l10n.creditsCollect),
         ),
       ],
     );

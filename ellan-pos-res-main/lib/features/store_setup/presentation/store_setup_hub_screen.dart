@@ -9,6 +9,7 @@ import 'package:pos_tablet/features/store_setup/presentation/categories_setup_sc
 import 'package:pos_tablet/features/store_setup/presentation/offers_setup_screen.dart';
 import 'package:pos_tablet/features/store_setup/presentation/products_setup_screen.dart';
 import 'package:pos_tablet/features/store_setup/presentation/staff_signup_screen.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 /// Offline-first store setup hub. Catalogue edits stay local until Sync exports.
 class StoreSetupHubScreen extends StatelessWidget {
@@ -37,72 +38,96 @@ class StoreSetupHubScreen extends StatelessWidget {
           foregroundColor: Colors.black87,
           elevation: 0.5,
           title: Text(
-            'Store setup',
+            context.l10n.storeSetupTitle,
             style: FontUtility.heading.copyWith(fontSize: 22),
           ),
           actions: [
-            TextButton.icon(
-              onPressed: !hasStore
-                  ? null
-                  : () async {
-                      final messenger = ScaffoldMessenger.of(context);
-                      messenger.showSnackBar(
-                        const SnackBar(content: Text('Exporting catalogue…')),
-                      );
-                      try {
-                        final batch = await controller.syncFromRemote();
-                        final productOps = batch.operations.where(
-                          (op) =>
-                              op.entity == 'products' &&
-                              op.direction == 'export',
-                        );
-                        final productExport =
-                            productOps.isEmpty ? null : productOps.first;
-                        if (productExport != null && productExport.skipped) {
+            Tooltip(
+              message: context.l10n.storeSetupSyncExport,
+              child: Semantics(
+                label: context.l10n.storeSetupSyncExport,
+                button: true,
+                child: IconButton(
+                  onPressed: !hasStore
+                      ? null
+                      : () async {
+                          final messenger = ScaffoldMessenger.of(context);
                           messenger.showSnackBar(
                             SnackBar(
-                              content: Text(
-                                productExport.message.trim().isNotEmpty
-                                    ? productExport.message
-                                    : 'Catalogue export not configured — local edits stayed on this tablet.',
-                              ),
+                              content: Text(context.l10n.commonExporting),
                             ),
                           );
-                          return;
-                        }
-                        if (productExport != null && !productExport.success) {
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Catalogue export failed: ${productExport.message}',
+                          try {
+                            final batch = await controller.syncFromRemote();
+                            final productOps = batch.operations.where(
+                              (op) =>
+                                  op.entity == 'products' &&
+                                  op.direction == 'export',
+                            );
+                            final productExport = productOps.isEmpty
+                                ? null
+                                : productOps.first;
+                            if (productExport != null &&
+                                productExport.skipped) {
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    productExport.message.trim().isNotEmpty
+                                        ? productExport.message
+                                        : context
+                                              .l10n
+                                              .storeSetupExportNotConfigured,
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            if (productExport != null &&
+                                !productExport.success) {
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    context.l10n
+                                        .storeSetupCatalogueExportFailed(
+                                          productExport.message,
+                                        ),
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            final exported = productExport?.successCount ?? 0;
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  exported > 0
+                                      ? context.l10n
+                                            .storeSetupSyncFinishedExported(
+                                              exported,
+                                            )
+                                      : context.l10n.storeSetupSyncFinishedNone,
+                                ),
                               ),
-                            ),
-                          );
-                          return;
-                        }
-                        final exported = productExport?.successCount ?? 0;
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              exported > 0
-                                  ? 'Sync finished — exported $exported catalogue row(s).'
-                                  : 'Sync finished — no pending catalogue changes to export.',
-                            ),
-                          ),
-                        );
-                        await controller.loadCatalogue();
-                      } catch (e) {
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Sync failed: ${userFacingError(e, fallback: 'Could not sync. Try again.')}',
-                            ),
-                          ),
-                        );
-                      }
-                    },
-              icon: const Icon(Icons.sync_rounded),
-              label: const Text('Sync / export'),
+                            );
+                            await controller.loadCatalogue();
+                          } catch (e) {
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  context.l10n.storeSetupSyncFailed(
+                                    userFacingError(
+                                      e,
+                                      fallback: context.l10n.errorCouldNotSync,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                  icon: const Icon(Icons.sync_rounded),
+                ),
+              ),
             ),
             const SizedBox(width: 8),
           ],
@@ -110,7 +135,7 @@ class StoreSetupHubScreen extends StatelessWidget {
         body: !hasStore
             ? Center(
                 child: Text(
-                  'Open a store first',
+                  context.l10n.homeOpenStoreFirst,
                   style: FontUtility.body.copyWith(color: Colors.black54),
                 ),
               )
@@ -134,7 +159,7 @@ class StoreSetupHubScreen extends StatelessWidget {
                           _tile(
                             context,
                             icon: Icons.category_rounded,
-                            title: 'Categories',
+                            title: context.l10n.commonCategories,
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -145,7 +170,7 @@ class StoreSetupHubScreen extends StatelessWidget {
                           _tile(
                             context,
                             icon: Icons.inventory_2_rounded,
-                            title: 'Products',
+                            title: context.l10n.commonProducts,
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -156,7 +181,7 @@ class StoreSetupHubScreen extends StatelessWidget {
                           _tile(
                             context,
                             icon: Icons.local_offer_rounded,
-                            title: 'Offers',
+                            title: context.l10n.commonOffers,
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -167,7 +192,7 @@ class StoreSetupHubScreen extends StatelessWidget {
                           _tile(
                             context,
                             icon: Icons.extension_rounded,
-                            title: 'Add-ons',
+                            title: context.l10n.commonAddons,
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -178,7 +203,7 @@ class StoreSetupHubScreen extends StatelessWidget {
                           _tile(
                             context,
                             icon: Icons.person_add_alt_1_rounded,
-                            title: 'Add cashier',
+                            title: context.l10n.storeSetupAddCashier,
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -189,7 +214,7 @@ class StoreSetupHubScreen extends StatelessWidget {
                           _tile(
                             context,
                             icon: Icons.point_of_sale_rounded,
-                            title: 'Back to selling',
+                            title: context.l10n.commonBackToSelling,
                             onTap: () async {
                               try {
                                 await controller.loadCatalogue();

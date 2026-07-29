@@ -3,16 +3,13 @@ import 'package:intl/intl.dart';
 
 import '../../../core/controllers/checkout_models.dart';
 import '../../../core/utils/font_utility.dart';
+import '../../../core/localization/l10n_context.dart';
 
 class StaffSalesTable extends StatelessWidget {
   final String title;
   final List<PosDashboardStaffSales> rows;
 
-  const StaffSalesTable({
-    super.key,
-    required this.title,
-    required this.rows,
-  });
+  const StaffSalesTable({super.key, required this.title, required this.rows});
 
   @override
   Widget build(BuildContext context) {
@@ -35,15 +32,7 @@ class StaffSalesTable extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: FontUtility.heading.copyWith(fontSize: 20),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Orders · amount · credit by checkout staff',
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-          ),
+          Text(title, style: FontUtility.heading.copyWith(fontSize: 20)),
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -52,7 +41,7 @@ class StaffSalesTable extends StatelessWidget {
                 Expanded(
                   flex: 4,
                   child: Text(
-                    'Staff',
+                    context.l10n.commonStaff,
                     style: FontUtility.body.copyWith(
                       color: Colors.grey.shade600,
                       fontWeight: FontWeight.w600,
@@ -62,7 +51,7 @@ class StaffSalesTable extends StatelessWidget {
                 ),
                 Expanded(
                   child: Text(
-                    'Orders',
+                    context.l10n.commonOrders,
                     textAlign: TextAlign.right,
                     style: FontUtility.body.copyWith(
                       color: Colors.grey.shade600,
@@ -74,7 +63,7 @@ class StaffSalesTable extends StatelessWidget {
                 Expanded(
                   flex: 2,
                   child: Text(
-                    'Amount',
+                    context.l10n.commonAmount,
                     textAlign: TextAlign.right,
                     style: FontUtility.body.copyWith(
                       color: Colors.grey.shade600,
@@ -86,7 +75,7 @@ class StaffSalesTable extends StatelessWidget {
                 Expanded(
                   flex: 2,
                   child: Text(
-                    'Credit',
+                    context.l10n.commonCredit,
                     textAlign: TextAlign.right,
                     style: FontUtility.body.copyWith(
                       color: Colors.grey.shade600,
@@ -103,8 +92,11 @@ class StaffSalesTable extends StatelessWidget {
             child: empty
                 ? Center(
                     child: Text(
-                      'No staff sales in this period.',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                      context.l10n.dashboardNoStaffSales,
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
                     ),
                   )
                 : ListView.separated(
@@ -127,8 +119,9 @@ class StaffSalesTable extends StatelessWidget {
                                 children: [
                                   CircleAvatar(
                                     radius: 18,
-                                    backgroundColor:
-                                        const Color(0xFF0F766E).withValues(alpha: 0.12),
+                                    backgroundColor: const Color(
+                                      0xFF0F766E,
+                                    ).withValues(alpha: 0.12),
                                     child: Text(
                                       initial,
                                       style: const TextStyle(
@@ -140,7 +133,8 @@ class StaffSalesTable extends StatelessWidget {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           row.staffName,
@@ -152,7 +146,8 @@ class StaffSalesTable extends StatelessWidget {
                                         ),
                                         if (row.staffReg.isNotEmpty)
                                           Text(
-                                            'Reg ${row.staffReg}',
+                                            '${context.l10n.commonRegNo} '
+                                            '${row.staffReg}',
                                             style: TextStyle(
                                               color: Colors.grey.shade600,
                                               fontSize: 12,

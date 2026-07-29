@@ -9,6 +9,110 @@ import '../lib/store_models.dart';
 import 'test_store_helper.dart';
 
 void main() {
+  test('Store sync uses persisted watermark for customer imports', () async {
+    final seenSince = <String?>[];
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+
+    server.listen((request) async {
+      if (request.uri.path == '/customers/import') {
+        seenSince.add(request.uri.queryParameters['since']);
+        request.response
+          ..statusCode = HttpStatus.ok
+          ..write('{"data": [{"id": "cust_1", "updated_on": "2026-03-29T10:00:00.000Z"}]}');
+      } else {
+        request.response.statusCode = HttpStatus.notFound;
+      }
+      await request.response.close();
+    });
+
+    final config = StoreConfig.fromJson({
+      'db_name_id': 'store',
+      'sync': {
+        'base_url': 'http://${server.address.host}:${server.port}',
+        'auto_sync_enabled': false,
+        'periodic_duration_seconds': 1,
+        'orders': {'import_path': '', 'export_path': '', 'export_token': ''},
+        'products': {'import_path': '', 'export_path': '', 'export_token': ''},
+        'customers': {
+          'import_path': '/customers/import',
+          'export_path': '',
+          'export_token': '',
+        },
+        'credits': {'import_path': '', 'export_path': '', 'export_token': ''},
+        'tables': {'import_path': '', 'export_path': '', 'export_token': ''},
+      },
+      'session_duration_hours': 12,
+      'default_store': {
+        'org_id': 'org_001',
+        'org_name': 'Sync Test Organisation',
+        'org_code': '200001',
+        'store_id': 'store_001',
+        'service_instance_id': 1,
+        'store_name': 'Main Store',
+        'logo': 'logo.png',
+        'unique_id': '12345678',
+        'contact_email': 'store@example.com',
+        'phone': '+1234567890',
+        'contact_person': 'Manager',
+        'status': 'active',
+        'service_variant_type': 'standard',
+      },
+      'test_store': {
+        'org_id': 'org_001',
+        'org_name': 'Sync Test Organisation',
+        'org_code': '200001',
+        'store_id': 'store_001',
+        'service_instance_id': 1,
+        'store_name': 'Test Store',
+        'logo': 'logo.png',
+        'unique_id': '12345678',
+        'contact_email': 'test@store.com',
+        'phone': '+1234567890',
+        'contact_person': 'Test Person',
+        'status': 'active',
+        'service_variant_type': 'standard',
+      },
+      'asset_paths': {
+        'orders': 'fixtures/order_list.json',
+        'products': 'fixtures/product_data.json',
+        'customers': 'fixtures/customer_data.json',
+      },
+      'default_login': {'email': 'alice@example.com', 'password': 'alicepass'},
+    });
+
+    final metadata = config.testStore ?? StoreConfig.defaultTestStoreMetadata;
+    final store = await Store.createInMemory(
+      orgId: metadata.orgId,
+      orgName: metadata.orgName,
+      orgCode: metadata.orgCode,
+      storeId: metadata.storeId,
+      serviceInstanceId: metadata.serviceInstanceId,
+      storeName: metadata.storeName,
+      logo: metadata.logo,
+      uniqueId: metadata.uniqueId,
+      contactEmail: metadata.contactEmail,
+      phone: metadata.phone,
+      contactPerson: metadata.contactPerson,
+      status: metadata.status,
+      serviceVariantType: metadata.serviceVariantType,
+      orderJson: null,
+      productJson: null,
+      customerJson: config.assetPaths.customers,
+      config: config,
+    );
+    addTearDown(store.close);
+
+    await loginAsAdmin(store);
+
+    await store.sync.importCustomers(store.scope);
+    await store.sync.importCustomers(store.scope);
+
+    expect(seenSince.length, 2);
+    expect(seenSince.first, isNull);
+    expect(seenSince.last, '2026-03-29T10:00:00.000Z');
+  });
+
   test('Store sync runConfigured uses configured endpoints only', () async {
     final requestCounts = <String, int>{
       '/orders/import': 0,

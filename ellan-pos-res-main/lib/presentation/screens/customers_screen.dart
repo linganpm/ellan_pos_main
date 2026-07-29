@@ -4,6 +4,7 @@ import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/screens/customer_profile_screen.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 class CustomersScreen extends StatefulWidget {
   const CustomersScreen({super.key});
@@ -61,14 +62,21 @@ class _CustomersScreenState extends State<CustomersScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text('Customers', style: FontUtility.heading.copyWith(fontSize: 22)),
+        title: Text(
+          context.l10n.customersTitle,
+          style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
         leading: IconButton(
+          tooltip: context.l10n.actionBack,
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: Colors.grey.withValues(alpha: 0.2)),
+          child: Container(
+            height: 1,
+            color: Colors.grey.withValues(alpha: 0.2),
+          ),
         ),
       ),
       body: SafeArea(
@@ -80,9 +88,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 controller: _searchController,
                 onSubmitted: (value) => _load(query: value),
                 decoration: InputDecoration(
-                  hintText: 'Search by name, phone, or email',
+                  hintText: context.l10n.customersSearchHint,
                   prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: IconButton(
+                    tooltip: context.l10n.commonClear,
                     icon: const Icon(Icons.clear_rounded),
                     onPressed: () {
                       _searchController.clear();
@@ -120,7 +129,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(_error!, style: FontUtility.body.copyWith(color: Colors.red)),
-            TextButton(onPressed: _load, child: const Text('Retry')),
+            TextButton(onPressed: _load, child: Text(context.l10n.actionRetry)),
           ],
         ),
       );
@@ -128,7 +137,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
     if (_customers.isEmpty) {
       return Center(
         child: Text(
-          'No retail or business customers for this store yet. Add them under Retail Customers / Business Customers, then sync.',
+          context.l10n.customersEmpty,
           style: FontUtility.body.copyWith(color: Colors.black54),
           textAlign: TextAlign.center,
         ),
@@ -166,8 +175,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor:
-                        const Color(0xFF4A00E0).withValues(alpha: 0.1),
+                    backgroundColor: const Color(
+                      0xFF4A00E0,
+                    ).withValues(alpha: 0.1),
                     child: Text(
                       initial,
                       style: const TextStyle(
@@ -183,7 +193,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       children: [
                         Text(
                           customer.name.isEmpty
-                              ? 'Unnamed customer'
+                              ? context.l10n.commonUnnamedCustomer
                               : customer.name,
                           style: FontUtility.subheading.copyWith(fontSize: 16),
                         ),
@@ -213,15 +223,18 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       ),
                       child: Text(
                         customer.role == 'business_customer'
-                            ? 'Business'
+                            ? context.l10n.commonBusiness
                             : customer.role == 'retail_customer'
-                                ? 'Retail'
-                                : customer.role,
+                            ? context.l10n.commonRetail
+                            : customer.role,
                         style: FontUtility.body.copyWith(fontSize: 12),
                       ),
                     ),
                   const SizedBox(width: 8),
-                  const Icon(Icons.chevron_right_rounded, color: Colors.black38),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.black38,
+                  ),
                 ],
               ),
             ),

@@ -12,6 +12,7 @@ import 'package:pos_tablet/presentation/widgets/org_local_clock_badge.dart';
 import 'package:pos_tablet/presentation/widgets/staff_logout_confirm_dialog.dart';
 import '../../bloc/cart/cart_event.dart';
 import '../../core/localization/l10n/app_localizations.dart';
+import '../../core/localization/l10n_context.dart';
 import '../../core/utils/font_utility.dart';
 import '../../bloc/language/language_bloc.dart';
 import '../../bloc/language/language_event.dart';
@@ -74,9 +75,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     setState(() => _draftCount = drafts.length);
     if (drafts.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No saved drafts yet.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.homeNoSavedDrafts)));
       return;
     }
 
@@ -107,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Saved drafts',
+                  context.l10n.homeSavedDrafts,
                   style: FontUtility.heading.copyWith(fontSize: 20),
                 ),
                 const SizedBox(height: 12),
@@ -123,7 +124,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       final draft = drafts[index];
                       final itemLines = draft.items
                           .map((item) {
-                            final qty = item.quantity == item.quantity.roundToDouble()
+                            final qty =
+                                item.quantity == item.quantity.roundToDouble()
                                 ? '${item.quantity.toInt()}'
                                 : item.quantity.toStringAsFixed(2);
                             return '$qty × ${item.product.name}';
@@ -143,7 +145,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                itemLines.isEmpty ? 'No items' : itemLines,
+                                itemLines.isEmpty
+                                    ? context.l10n.homeNoItems
+                                    : itemLines,
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
                                 style: FontUtility.body.copyWith(
@@ -207,9 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => OrderCreateScreen(args: args),
-      ),
+      MaterialPageRoute(builder: (_) => OrderCreateScreen(args: args)),
     );
     if (mounted) await _loadDraftCount();
   }
@@ -283,8 +285,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              '$_scheduledTodayCount scheduled payment'
-                              '${_scheduledTodayCount == 1 ? '' : 's'} due today',
+                              '$_scheduledTodayCount · '
+                              '${context.l10n.creditsTodayScheduled}',
                               style: FontUtility.subheading.copyWith(
                                 fontSize: 14,
                                 color: const Color(0xFFE65100),
@@ -304,242 +306,251 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
               Expanded(
                 child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: Colors.black.withValues(alpha: 0.05),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 24,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            // Home icons sit on top of this internal card.
-            child: Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(28, 44, 28, 28),
-                  child: Column(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: Colors.black.withValues(alpha: 0.05),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  // Home icons sit on top of this internal card.
+                  child: Stack(
                     children: [
-                      Expanded(
-                        child: Row(
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(28, 44, 28, 28),
+                        child: Column(
                           children: [
                             Expanded(
-                              child: _buildMenuCard(
-                                context,
-                                title: AppLocalizations.of(context)!
-                                    .homePosDashboard,
-                                iconData: Icons.dashboard_rounded,
-                                color: const Color(0xFF4A00E0),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const DashboardScreen(),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildMenuCard(
+                                      context,
+                                      title: AppLocalizations.of(
+                                        context,
+                                      )!.homePosDashboard,
+                                      iconData: Icons.dashboard_rounded,
+                                      color: const Color(0xFF4A00E0),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const DashboardScreen(),
+                                          ),
+                                        );
+                                      },
                                     ),
-                                  );
-                                },
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    child: _buildMenuCard(
+                                      context,
+                                      title: AppLocalizations.of(
+                                        context,
+                                      )!.homeOrdersList,
+                                      iconData: Icons.receipt_long_rounded,
+                                      color: const Color(0xFF8E2DE2),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const OrderListScreen(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    child: _buildMenuCard(
+                                      context,
+                                      title: context.l10n.homeCustomers,
+                                      iconData: Icons.people_alt_rounded,
+                                      color: const Color(0xFF00C9FF),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const CustomersScreen(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 20),
+                            const SizedBox(height: 20),
                             Expanded(
-                              child: _buildMenuCard(
-                                context,
-                                title: AppLocalizations.of(context)!
-                                    .homeOrdersList,
-                                iconData: Icons.receipt_long_rounded,
-                                color: const Color(0xFF8E2DE2),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const OrderListScreen(),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildMenuCard(
+                                      context,
+                                      title: context.l10n.homeCatalogs,
+                                      iconData: Icons.inventory_2_rounded,
+                                      color: const Color(0xFFFFA751),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const CatalogScreen(),
+                                          ),
+                                        );
+                                      },
                                     ),
-                                  );
-                                },
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    child: _buildMenuCard(
+                                      context,
+                                      title: context.l10n.homeCredits,
+                                      iconData:
+                                          Icons.account_balance_wallet_rounded,
+                                      color: const Color(0xFFFF512F),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const CreditsScreen(),
+                                          ),
+                                        ).then((_) => _loadScheduledToday());
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    child: _buildMenuCard(
+                                      context,
+                                      title: context.l10n.homeRefunds,
+                                      iconData: Icons.undo_rounded,
+                                      color: const Color(0xFFE53935),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const RefundsScreen(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 20),
+                            const SizedBox(height: 20),
                             Expanded(
-                              child: _buildMenuCard(
-                                context,
-                                title: 'Customers',
-                                iconData: Icons.people_alt_rounded,
-                                color: const Color(0xFF00C9FF),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const CustomersScreen(),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildMenuCard(
+                                      context,
+                                      title: context.l10n.homeCompany,
+                                      iconData: Icons.apartment_rounded,
+                                      color: const Color(0xFF1B5E20),
+                                      onTap: () async {
+                                        final store =
+                                            getIt<UiStoreController>().store;
+                                        if (store == null) return;
+                                        final ok = await store.auth
+                                            .hasStoreRole('admin');
+                                        if (!context.mounted) return;
+                                        if (!ok) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                context
+                                                    .l10n
+                                                    .homeStoreAdminRequiredCompany,
+                                              ),
+                                            ),
+                                          );
+                                          return;
+                                        }
+                                        Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.company,
+                                        );
+                                      },
                                     ),
-                                  );
-                                },
+                                  ),
+                                  const SizedBox(width: 20),
+                                  const Expanded(child: SizedBox.shrink()),
+                                  const SizedBox(width: 20),
+                                  const Expanded(child: SizedBox.shrink()),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildMenuCard(
-                                context,
-                                title: 'Catalogs',
-                                iconData: Icons.inventory_2_rounded,
-                                color: const Color(0xFFFFA751),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const CatalogScreen(),
-                                    ),
-                                  );
-                                },
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: IconButton(
+                          tooltip: context.l10n.homeSavedDrafts,
+                          onPressed: _openDraftsSheet,
+                          icon: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              const Icon(
+                                Icons.drafts_rounded,
+                                color: Color(0xFF4A00E0),
                               ),
-                            ),
-                            const SizedBox(width: 20),
-                            Expanded(
-                              child: _buildMenuCard(
-                                context,
-                                title: 'Credits',
-                                iconData:
-                                    Icons.account_balance_wallet_rounded,
-                                color: const Color(0xFFFF512F),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const CreditsScreen(),
+                              if (_draftCount > 0)
+                                Positioned(
+                                  right: -6,
+                                  top: -4,
+                                  child: Container(
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
                                     ),
-                                  ).then((_) => _loadScheduledToday());
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            Expanded(
-                              child: _buildMenuCard(
-                                context,
-                                title: 'Refunds',
-                                iconData: Icons.undo_rounded,
-                                color: const Color(0xFFE53935),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const RefundsScreen(),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
                                     ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildMenuCard(
-                                context,
-                                title: 'Company',
-                                iconData: Icons.apartment_rounded,
-                                color: const Color(0xFF1B5E20),
-                                onTap: () async {
-                                  final store =
-                                      getIt<UiStoreController>().store;
-                                  if (store == null) return;
-                                  final ok =
-                                      await store.auth.hasStoreRole('admin');
-                                  if (!context.mounted) return;
-                                  if (!ok) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Store Admin access required for Company.',
-                                        ),
+                                    height: 16,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFF512F),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 1.5,
                                       ),
-                                    );
-                                    return;
-                                  }
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.company,
-                                  );
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            const Expanded(child: SizedBox.shrink()),
-                            const SizedBox(width: 20),
-                            const Expanded(child: SizedBox.shrink()),
-                          ],
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      _draftCount > 99 ? '99+' : '$_draftCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: IconButton(
-                    tooltip: 'Saved drafts',
-                    onPressed: _openDraftsSheet,
-                    icon: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        const Icon(
-                          Icons.drafts_rounded,
-                          color: Color(0xFF4A00E0),
-                        ),
-                        if (_draftCount > 0)
-                          Positioned(
-                            right: -6,
-                            top: -4,
-                            child: Container(
-                              constraints: const BoxConstraints(minWidth: 16),
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 4),
-                              height: 16,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFF512F),
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 1.5,
-                                ),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                _draftCount > 99 ? '99+' : '$_draftCount',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
               ),
             ],
           ),
@@ -554,9 +565,7 @@ class _HomeScreenState extends State<HomeScreen> {
         foregroundColor: Colors.white,
         elevation: 4,
         highlightElevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.add_rounded, size: 28),
         label: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
@@ -610,7 +619,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () {
           // TODO: Open drawer
         },
-        tooltip: 'Menu',
+        tooltip: context.l10n.homeMenu,
       ),
       actions: [
         const Padding(
@@ -626,8 +635,10 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.only(right: 8),
               child: Center(
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF4A00E0).withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(999),
@@ -664,7 +675,7 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
         IconButton(
-          tooltip: 'Store setup',
+          tooltip: context.l10n.homeStoreSetup,
           onPressed: () async {
             final store = getIt<UiStoreController>().store;
             if (store == null) return;
@@ -672,8 +683,8 @@ class _HomeScreenState extends State<HomeScreen> {
             if (!context.mounted) return;
             if (!ok) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Store Admin access required for Store setup.'),
+                SnackBar(
+                  content: Text(context.l10n.homeStoreAdminRequiredSetup),
                 ),
               );
               return;
@@ -688,7 +699,9 @@ class _HomeScreenState extends State<HomeScreen> {
             valueListenable: getIt<UiStoreController>().autoSyncFailed,
             builder: (context, failed, _) {
               return IconButton(
-                tooltip: failed ? 'Sync failed — tap to retry' : 'Sync',
+                tooltip: failed
+                    ? context.l10n.homeSyncFailedRetry
+                    : context.l10n.syncTitle,
                 onPressed: () {
                   Navigator.pushNamed(context, AppRoutes.sync);
                 },
@@ -739,15 +752,12 @@ class _HomeScreenState extends State<HomeScreen> {
               context,
               AppRoutes.staffLock,
               (route) => false,
-              arguments: {
-                'storeId': storeId,
-                'storeName': storeName,
-              },
+              arguments: {'storeId': storeId, 'storeName': storeName},
             );
           },
           icon: const Icon(Icons.logout_rounded, color: Color(0xFFFF512F)),
           label: Text(
-            'Logout',
+            context.l10n.actionLogout,
             style: FontUtility.button.copyWith(
               color: const Color(0xFFFF512F),
               fontWeight: FontWeight.w600,
@@ -755,50 +765,55 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         IconButton(
-          tooltip: 'Device settings',
+          tooltip: context.l10n.homeDeviceSettings,
           onPressed: () {
             Navigator.pushNamed(context, AppRoutes.deviceSettings);
           },
           icon: const Icon(Icons.settings_rounded, color: Colors.black87),
         ),
         PopupMenuButton<Locale>(
+          tooltip: context.l10n.languageLabel,
           onSelected: (Locale locale) {
             context.read<LanguageBloc>().add(ChangeLanguageEvent(locale));
           },
           icon: const Icon(Icons.language_rounded, color: Colors.black87),
           itemBuilder: (BuildContext context) => <PopupMenuEntry<Locale>>[
-            const PopupMenuItem<Locale>(
-              value: Locale('en'),
-              child: Text('English'),
+            PopupMenuItem<Locale>(
+              value: const Locale('en'),
+              child: Text(context.l10n.languageEnglish),
             ),
-            const PopupMenuItem<Locale>(
-              value: Locale('ta'),
-              child: Text('Tamil'),
+            PopupMenuItem<Locale>(
+              value: const Locale('ta'),
+              child: Text(context.l10n.languageTamil),
             ),
           ],
         ),
         const SizedBox(width: 16),
-         Padding(
-           padding: const EdgeInsets.only(right: 24.0),
-           child: InkWell(
-             onTap: () {
-               Navigator.pushNamed(context, AppRoutes.profile);
-             },
-             borderRadius: BorderRadius.circular(24),
-             child: const CircleAvatar(
-               backgroundColor: Color(0xFF4A00E0),
-               radius: 20,
-               child: Icon(Icons.person_rounded, color: Colors.white, size: 24),
-             ),
-           ),
-         ),
+        Padding(
+          padding: const EdgeInsets.only(right: 24.0),
+          child: Tooltip(
+            message: context.l10n.profileMyProfile,
+            child: InkWell(
+              onTap: () {
+                Navigator.pushNamed(context, AppRoutes.profile);
+              },
+              borderRadius: BorderRadius.circular(24),
+              child: const CircleAvatar(
+                backgroundColor: Color(0xFF4A00E0),
+                radius: 20,
+                child: Icon(
+                  Icons.person_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1.0),
-        child: Container(
-          color: Colors.grey.withOpacity(0.2),
-          height: 1.0,
-        ),
+        child: Container(color: Colors.grey.withOpacity(0.2), height: 1.0),
       ),
     );
   }

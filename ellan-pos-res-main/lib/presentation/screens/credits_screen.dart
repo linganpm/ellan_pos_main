@@ -6,6 +6,7 @@ import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/screens/credit_account_detail_screen.dart';
 import 'package:pos_tablet/presentation/screens/scheduled_payments_screen.dart';
 import 'package:pos_tablet/presentation/widgets/credit/credit_collect_payment_dialog.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 enum _CreditSortMode { highest, longPending }
 
@@ -14,11 +15,7 @@ class CreditsScreen extends StatefulWidget {
   final String? customerId;
   final String? customerName;
 
-  const CreditsScreen({
-    super.key,
-    this.customerId,
-    this.customerName,
-  });
+  const CreditsScreen({super.key, this.customerId, this.customerName});
 
   @override
   State<CreditsScreen> createState() => _CreditsScreenState();
@@ -91,8 +88,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
   int _creditAgeDays(StoreCreditRecord credit, DateTime now) {
     if (credit.settled || credit.outstandingAmount <= 0.0001) return -1;
     final due = credit.dueDate?.trim();
-    final raw =
-        (due != null && due.isNotEmpty) ? due : credit.createdOn.trim();
+    final raw = (due != null && due.isNotEmpty) ? due : credit.createdOn.trim();
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) return 0;
     return now.difference(parsed.toLocal()).inDays;
@@ -119,19 +115,21 @@ class _CreditsScreenState extends State<CreditsScreen> {
   List<StoreCustomerCreditSummary> get _filteredSummaries {
     final query = _searchController.text.trim().toLowerCase();
     final scopedId = _normalizeCustomerId(_scopedCustomerId);
-    return _summaries.where((row) {
-      if (scopedId.isNotEmpty &&
-          _normalizeCustomerId(row.customerId) != scopedId) {
-        return false;
-      }
-      if (_outstandingOnly && row.totalOutstandingAmount <= 0.0001) {
-        return false;
-      }
-      if (query.isEmpty) return true;
-      final name = row.customerName.toLowerCase();
-      final id = row.customerId.toLowerCase();
-      return name.contains(query) || id.contains(query);
-    }).toList(growable: false);
+    return _summaries
+        .where((row) {
+          if (scopedId.isNotEmpty &&
+              _normalizeCustomerId(row.customerId) != scopedId) {
+            return false;
+          }
+          if (_outstandingOnly && row.totalOutstandingAmount <= 0.0001) {
+            return false;
+          }
+          if (query.isEmpty) return true;
+          final name = row.customerName.toLowerCase();
+          final id = row.customerId.toLowerCase();
+          return name.contains(query) || id.contains(query);
+        })
+        .toList(growable: false);
   }
 
   String _normalizeCustomerId(String value) {
@@ -150,7 +148,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
   }) async {
     if (outstanding <= 0.0001) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nothing outstanding for this customer.')),
+        SnackBar(content: Text(context.l10n.creditsNothingOutstanding)),
       );
       return;
     }
@@ -178,7 +176,10 @@ class _CreditsScreenState extends State<CreditsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Collected \$${result.amount.toStringAsFixed(2)} via ${result.paymentMode}',
+            context.l10n.creditsCollectedVia(
+              '\$${result.amount.toStringAsFixed(2)}',
+              result.paymentMode,
+            ),
           ),
           backgroundColor: Colors.green.shade700,
         ),
@@ -188,7 +189,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Collect failed: $error'),
+          content: Text(context.l10n.errorCollectFailed(error.toString())),
           backgroundColor: Colors.red.shade700,
         ),
       );
@@ -225,8 +226,12 @@ class _CreditsScreenState extends State<CreditsScreen> {
         elevation: 0,
         title: Text(
           _isCustomerScoped
-              ? 'Credit · ${(widget.customerName ?? '').trim().isEmpty ? 'Customer' : widget.customerName!.trim()}'
-              : 'Credit',
+              ? context.l10n.creditsCustomerScopedTitle(
+                  (widget.customerName ?? '').trim().isEmpty
+                      ? context.l10n.commonCustomer
+                      : widget.customerName!.trim(),
+                )
+              : context.l10n.commonCredit,
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
         leading: IconButton(
@@ -235,13 +240,17 @@ class _CreditsScreenState extends State<CreditsScreen> {
         ),
         actions: [
           IconButton(
+            tooltip: context.l10n.actionRefresh,
             onPressed: _load,
             icon: const Icon(Icons.refresh_rounded, color: Color(0xFF4A00E0)),
           ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: Colors.grey.withValues(alpha: 0.2)),
+          child: Container(
+            height: 1,
+            color: Colors.grey.withValues(alpha: 0.2),
+          ),
         ),
       ),
       body: SafeArea(
@@ -262,7 +271,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                       ).then((_) => _load());
                     },
                     icon: const Icon(Icons.event_note_rounded),
-                    label: const Text('Schedule Payments'),
+                    label: Text(context.l10n.creditsSchedulePayments),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 18,
@@ -281,7 +290,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                       children: [
                         Expanded(
                           child: _summaryChip(
-                            'Outstanding',
+                            context.l10n.commonOutstanding,
                             '\$${outstanding.toStringAsFixed(2)}',
                             const Color(0xFFFF512F),
                           ),
@@ -323,7 +332,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                       controller: _searchController,
                       onChanged: (_) => setState(() {}),
                       decoration: InputDecoration(
-                        hintText: 'Search customer name or id',
+                        hintText: context.l10n.creditsSearchHint,
                         prefixIcon: const Icon(Icons.search_rounded),
                         filled: true,
                         fillColor: Colors.white,
@@ -344,7 +353,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                   ),
                   const SizedBox(width: 12),
                   FilterChip(
-                    label: const Text('Outstanding only'),
+                    label: Text(context.l10n.creditsOutstandingOnly),
                     selected: _outstandingOnly,
                     onSelected: (value) {
                       setState(() => _outstandingOnly = value);
@@ -356,26 +365,28 @@ class _CreditsScreenState extends State<CreditsScreen> {
               Row(
                 children: [
                   Text(
-                    'Sort',
+                    context.l10n.creditsSort,
                     style: FontUtility.body.copyWith(color: Colors.black54),
                   ),
                   const SizedBox(width: 10),
                   _sortButton(
-                    label: 'Highest',
+                    label: context.l10n.creditsSortHighest,
                     selected: _sortMode == _CreditSortMode.highest,
                     onTap: () => _setSortMode(_CreditSortMode.highest),
                   ),
                   const SizedBox(width: 8),
                   _sortButton(
-                    label: 'Long pending',
+                    label: context.l10n.creditsSortLongPending,
                     selected: _sortMode == _CreditSortMode.longPending,
                     onTap: () => _setSortMode(_CreditSortMode.longPending),
                   ),
                   const Spacer(),
                   Text(
-                    '${_filteredSummaries.length} account(s)',
-                    style: FontUtility.body
-                        .copyWith(fontSize: 13, color: Colors.black54),
+                    context.l10n.creditsAccountCount(_filteredSummaries.length),
+                    style: FontUtility.body.copyWith(
+                      fontSize: 13,
+                      color: Colors.black54,
+                    ),
                   ),
                 ],
               ),
@@ -443,7 +454,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(_error!, style: FontUtility.body.copyWith(color: Colors.red)),
-            TextButton(onPressed: _load, child: const Text('Retry')),
+            TextButton(onPressed: _load, child: Text(context.l10n.actionRetry)),
           ],
         ),
       );
@@ -451,10 +462,10 @@ class _CreditsScreenState extends State<CreditsScreen> {
 
     final rows = _filteredSummaries;
     if (_summaries.isEmpty) {
-      return _empty('No credit accounts on this device yet.');
+      return _empty(context.l10n.creditsNoAccountsYet);
     }
     if (rows.isEmpty) {
-      return _empty('No accounts match the current filters.');
+      return _empty(context.l10n.creditsNoAccountsMatch);
     }
 
     return ListView.separated(
@@ -463,8 +474,9 @@ class _CreditsScreenState extends State<CreditsScreen> {
       itemBuilder: (context, index) {
         final row = rows[index];
         final canCollect = row.totalOutstandingAmount > 0.0001;
-        final name =
-            row.customerName.trim().isEmpty ? 'Customer' : row.customerName;
+        final name = row.customerName.trim().isEmpty
+            ? context.l10n.commonCustomer
+            : row.customerName;
         final pendingDays = _pendingDaysFor(row);
         return Material(
           color: Colors.white,
@@ -481,8 +493,9 @@ class _CreditsScreenState extends State<CreditsScreen> {
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor:
-                        const Color(0xFFFF512F).withValues(alpha: 0.12),
+                    backgroundColor: const Color(
+                      0xFFFF512F,
+                    ).withValues(alpha: 0.12),
                     child: Text(
                       name.substring(0, 1).toUpperCase(),
                       style: const TextStyle(
@@ -503,16 +516,18 @@ class _CreditsScreenState extends State<CreditsScreen> {
                         const SizedBox(height: 4),
                         Text(
                           [
-                            '${row.creditCount} sale(s)',
-                            'credit \$${row.totalCreditAmount.toStringAsFixed(2)}',
-                            'repaid \$${row.totalPaidAmount.toStringAsFixed(2)}',
+                            '${row.creditCount} ${context.l10n.creditsCreditSales}',
+                            '${context.l10n.creditsCreditSoFar} '
+                                '\$${row.totalCreditAmount.toStringAsFixed(2)}',
+                            '${context.l10n.creditsRepaid} '
+                                '\$${row.totalPaidAmount.toStringAsFixed(2)}',
                             if (pendingDays != null)
-                              pendingDays <= 0
-                                  ? 'pending today'
-                                  : 'pending ${pendingDays}d',
+                              '${context.l10n.commonPending}: ${pendingDays}d',
                           ].join(' · '),
-                          style: FontUtility.body
-                              .copyWith(fontSize: 13, color: Colors.black54),
+                          style: FontUtility.body.copyWith(
+                            fontSize: 13,
+                            color: Colors.black54,
+                          ),
                         ),
                       ],
                     ),
@@ -529,30 +544,22 @@ class _CreditsScreenState extends State<CreditsScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Outstanding',
-                        style: FontUtility.body
-                            .copyWith(fontSize: 12, color: Colors.black45),
+                        context.l10n.commonOutstanding,
+                        style: FontUtility.body.copyWith(
+                          fontSize: 12,
+                          color: Colors.black45,
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextButton(
-                            onPressed: () => _openAccount(row),
-                            child: const Text('View'),
-                          ),
-                          const SizedBox(width: 4),
-                          FilledButton.tonal(
-                            onPressed: canCollect
-                                ? () => _openCollectPayment(
-                                      customerId: row.customerId,
-                                      customerName: row.customerName,
-                                      outstanding: row.totalOutstandingAmount,
-                                    )
-                                : null,
-                            child: const Text('Collect'),
-                          ),
-                        ],
+                      FilledButton.tonal(
+                        onPressed: canCollect
+                            ? () => _openCollectPayment(
+                                customerId: row.customerId,
+                                customerName: row.customerName,
+                                outstanding: row.totalOutstandingAmount,
+                              )
+                            : null,
+                        child: Text(context.l10n.creditsCollect),
                       ),
                     ],
                   ),

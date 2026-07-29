@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pos_tablet/core/currency_format.dart';
 import '../../../core/utils/font_utility.dart';
 import '../../../data/models/cart_item_model.dart';
+import '../../../core/localization/l10n_context.dart';
 
 class BillingItemsTable extends StatelessWidget {
   final List<CartItem> items;
@@ -9,11 +10,7 @@ class BillingItemsTable extends StatelessWidget {
   /// Tighter row padding when the cart is short so the block sits at the top.
   final bool dense;
 
-  const BillingItemsTable({
-    super.key,
-    required this.items,
-    this.dense = false,
-  });
+  const BillingItemsTable({super.key, required this.items, this.dense = false});
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +34,9 @@ class BillingItemsTable extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
               border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
             ),
             child: Row(
@@ -46,7 +44,7 @@ class BillingItemsTable extends StatelessWidget {
                 Expanded(
                   flex: 1,
                   child: Text(
-                    'Qty',
+                    context.l10n.commonQty,
                     style: FontUtility.subheading.copyWith(
                       fontSize: 13,
                       color: Colors.grey.shade700,
@@ -56,7 +54,7 @@ class BillingItemsTable extends StatelessWidget {
                 Expanded(
                   flex: 4,
                   child: Text(
-                    'Item',
+                    context.l10n.commonItem,
                     style: FontUtility.subheading.copyWith(
                       fontSize: 13,
                       color: Colors.grey.shade700,
@@ -66,7 +64,7 @@ class BillingItemsTable extends StatelessWidget {
                 Expanded(
                   flex: 2,
                   child: Text(
-                    'Price',
+                    context.l10n.commonPrice,
                     textAlign: TextAlign.right,
                     style: FontUtility.subheading.copyWith(
                       fontSize: 13,

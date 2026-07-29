@@ -43,20 +43,27 @@ SellUnitInfo? resolveSellUnitFromProportions(dynamic raw) {
     final proportionData = row['proportion_data'] is Map
         ? (row['proportion_data'] as Map).cast<String, dynamic>()
         : row;
-    final unitCode = int.tryParse('${proportionData['unit'] ?? row['unit'] ?? ''}');
+    final unitCode = int.tryParse(
+      '${proportionData['unit'] ?? row['unit'] ?? ''}',
+    );
     if (unitCode == null || !kMeasurableSellUnitShort.containsKey(unitCode)) {
       continue;
     }
-    final baseQty = double.tryParse(
+    final baseQty =
+        double.tryParse(
           '${proportionData['quantity'] ?? row['quantity'] ?? proportionData['value'] ?? row['value'] ?? ''}',
         ) ??
         1.0;
     if (baseQty <= 0) continue;
     final short = kMeasurableSellUnitShort[unitCode]!;
-    final label = (proportionData['label'] ?? row['label'] ?? '').toString().trim();
+    final label = (proportionData['label'] ?? row['label'] ?? '')
+        .toString()
+        .trim();
     return SellUnitInfo(
       unitCode: unitCode,
-      unitLabel: label.isEmpty ? (kMeasurableSellUnitLong[unitCode] ?? short) : label,
+      unitLabel: label.isEmpty
+          ? (kMeasurableSellUnitLong[unitCode] ?? short)
+          : label,
       unitShort: short,
       baseQty: baseQty,
     );
@@ -66,7 +73,10 @@ SellUnitInfo? resolveSellUnitFromProportions(dynamic raw) {
 
 String formatSellQty(double qty) {
   if (qty == qty.roundToDouble()) return '${qty.toInt()}';
-  return qty.toStringAsFixed(3).replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+  return qty
+      .toStringAsFixed(3)
+      .replaceFirst(RegExp(r'0+$'), '')
+      .replaceFirst(RegExp(r'\.$'), '');
 }
 
 String formatSellQtyWithUnit(double qty, SellUnitInfo? unit) {
@@ -83,6 +93,10 @@ double sellUnitBillableQty(double enteredQty, SellUnitInfo? unit) {
 
 /// Line total: sell_price × ceil(qty / sell_unit_qty).
 /// Example: £10 for 4kg, buy 5kg → £20.
-double computeSellLineTotal(double unitPrice, double enteredQty, SellUnitInfo? unit) {
+double computeSellLineTotal(
+  double unitPrice,
+  double enteredQty,
+  SellUnitInfo? unit,
+) {
   return unitPrice * sellUnitBillableQty(enteredQty, unit);
 }

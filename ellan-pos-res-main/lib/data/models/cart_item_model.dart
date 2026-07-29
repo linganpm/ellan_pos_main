@@ -45,6 +45,7 @@ class CartItem {
   final Product product;
   final double quantity;
   final List<CartAddonSelection> addons;
+
   /// Quantity already sent to kitchen (KOT) for this line.
   final double kotSentQuantity;
 
@@ -65,8 +66,10 @@ class CartItem {
     );
   }
 
-  double get addonUnitTotal =>
-      addons.fold(0.0, (sum, addon) => sum + (addon.unitPrice * addon.quantity));
+  double get addonUnitTotal => addons.fold(
+    0.0,
+    (sum, addon) => sum + (addon.unitPrice * addon.quantity),
+  );
 
   String get lineSignature {
     final addonKey = addons.map((a) => a.signature).toList()..sort();

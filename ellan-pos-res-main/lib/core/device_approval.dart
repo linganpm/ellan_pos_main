@@ -53,12 +53,14 @@ class DeviceApproval {
     final regMap = registration is Map
         ? registration.cast<String, dynamic>()
         : const <String, dynamic>{};
-    int? lease = _asInt(json['login_lease_minutes']) ??
+    int? lease =
+        _asInt(json['login_lease_minutes']) ??
         _asInt(json['loginLeaseMinutes']) ??
         _asInt(regMap['login_lease_minutes']) ??
         _asInt(regMap['loginLeaseMinutes']);
     if (lease == null) {
-      final days = _asDouble(json['login_lease_days']) ??
+      final days =
+          _asDouble(json['login_lease_days']) ??
           _asDouble(json['loginLeaseDays']) ??
           _asDouble(regMap['login_lease_days']) ??
           _asDouble(regMap['loginLeaseDays']);
@@ -103,7 +105,7 @@ class DeviceApprovalService {
   final http.Client client;
 
   DeviceApprovalService(this.prefs, {http.Client? client})
-      : client = client ?? http.Client();
+    : client = client ?? http.Client();
 
   /// Registers this tablet against [orgRef] and reports its approval state.
   ///
@@ -162,9 +164,7 @@ class DeviceApprovalService {
     }
     // 403 is the expected response for a device that is not yet approved.
     if (response.statusCode >= 400 && response.statusCode != 403) {
-      throw StateError(
-        '${body['message'] ?? 'Device approval check failed.'}',
-      );
+      throw StateError('${body['message'] ?? 'Device approval check failed.'}');
     }
     final approval = DeviceApproval.fromJson(body);
     prefs.setString(statusKey, approval.status);

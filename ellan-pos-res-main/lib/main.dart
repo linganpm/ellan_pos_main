@@ -12,7 +12,6 @@ import 'core/localization/l10n/app_localizations.dart';
 import 'presentation/screens/splash_screen.dart';
 import 'core/routes.dart';
 import 'presentation/widgets/device_restriction_wrapper.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'bloc/language/language_bloc.dart';
 import 'bloc/language/language_state.dart';
 import 'core/utils/font_utility.dart';
@@ -76,48 +75,34 @@ class PosTabletApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
       providers: [
-        RepositoryProvider<SharedPreferences>(
-          create: (context) => prefs,
-        ),
+        RepositoryProvider<SharedPreferences>(create: (context) => prefs),
         RepositoryProvider<UiStoreController>(
           create: (context) => getIt<UiStoreController>(),
         ),
       ],
       child: MultiBlocProvider(
         providers: [
-          BlocProvider<SplashBloc>(
-            create: (context) => SplashBloc(),
-          ),
+          BlocProvider<SplashBloc>(create: (context) => SplashBloc()),
           BlocProvider<LanguageBloc>(
-            create: (context) => LanguageBloc(),
+            create: (context) => LanguageBloc.fromPrefs(prefs),
           ),
-           BlocProvider<UserBloc>(
-             create: (context) => UserBloc(),
-           ),
-           // Provide the global StoreBloc from the service locator so every
-           // widget can access app-level store state.
-           BlocProvider<StoreBloc>(
-             create: (context) => getIt<StoreBloc>(),
-           ),
+          BlocProvider<UserBloc>(create: (context) => UserBloc()),
+          // Provide the global StoreBloc from the service locator so every
+          // widget can access app-level store state.
+          BlocProvider<StoreBloc>(create: (context) => getIt<StoreBloc>()),
         ],
         child: BlocBuilder<LanguageBloc, LanguageState>(
           builder: (context, languageState) {
             return MaterialApp(
-              title: 'NexPOS Tablet',
+              title: 'EllanPos',
               debugShowCheckedModeBanner: false,
               locale: languageState.locale,
-              supportedLocales: const [
-                Locale('en'),
-                Locale('ta'),
-              ],
-              localizationsDelegates: const [
-                AppLocalizations.delegate,
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
+              supportedLocales: AppLocalizations.supportedLocales,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
               theme: ThemeData(
-                colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4A00E0)),
+                colorScheme: ColorScheme.fromSeed(
+                  seedColor: const Color(0xFF4A00E0),
+                ),
                 useMaterial3: true,
                 textTheme: TextTheme(
                   headlineMedium: FontUtility.heading,

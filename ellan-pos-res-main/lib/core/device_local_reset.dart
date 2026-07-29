@@ -67,7 +67,10 @@ class DeviceLocalResetService {
             ? entity.uri.pathSegments.last
             : entity.path;
         final lower = name.toLowerCase();
-        if (!lower.endsWith('.db') && !lower.endsWith('.db-journal') && !lower.endsWith('.db-wal') && !lower.endsWith('.db-shm')) {
+        if (!lower.endsWith('.db') &&
+            !lower.endsWith('.db-journal') &&
+            !lower.endsWith('.db-wal') &&
+            !lower.endsWith('.db-shm')) {
           continue;
         }
         try {

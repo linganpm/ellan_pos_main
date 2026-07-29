@@ -5,6 +5,7 @@ import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/screens/credit_account_detail_screen.dart';
 import 'package:pos_tablet/presentation/widgets/credit/credit_collect_payment_dialog.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 /// Lists all open scheduled credit repayments across customers.
 class ScheduledPaymentsScreen extends StatefulWidget {
@@ -14,7 +15,8 @@ class ScheduledPaymentsScreen extends StatefulWidget {
   const ScheduledPaymentsScreen({super.key, this.todayOnly = false});
 
   @override
-  State<ScheduledPaymentsScreen> createState() => _ScheduledPaymentsScreenState();
+  State<ScheduledPaymentsScreen> createState() =>
+      _ScheduledPaymentsScreenState();
 }
 
 class _ScheduledPaymentsScreenState extends State<ScheduledPaymentsScreen> {
@@ -81,16 +83,19 @@ class _ScheduledPaymentsScreenState extends State<ScheduledPaymentsScreen> {
     if (name.isNotEmpty && !name.toLowerCase().startsWith('user_')) {
       return name;
     }
-    return 'Customer';
+    return context.l10n.commonCustomer;
   }
 
-  String _subtitleFor(StoreScheduledCreditRepayment row, {required bool overdue}) {
+  String _subtitleFor(
+    StoreScheduledCreditRepayment row, {
+    required bool overdue,
+  }) {
     final info = _customers[row.customerId];
     final reg = (info?.regNum ?? '').trim();
     final parts = <String>[
-      if (reg.isNotEmpty) 'Reg $reg',
-      'Due ${row.dueDate}',
-      if (overdue) 'Overdue',
+      if (reg.isNotEmpty) context.l10n.commonRegValue(reg),
+      context.l10n.commonDueValue(row.dueDate),
+      if (overdue) context.l10n.commonOverdue,
     ];
     return parts.join(' · ');
   }
@@ -119,7 +124,7 @@ class _ScheduledPaymentsScreenState extends State<ScheduledPaymentsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Collect failed: $error'),
+          content: Text(context.l10n.errorCollectFailed(error.toString())),
           backgroundColor: Colors.red.shade700,
         ),
       );
@@ -134,15 +139,19 @@ class _ScheduledPaymentsScreenState extends State<ScheduledPaymentsScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          widget.todayOnly ? 'Today\'s scheduled payments' : 'Scheduled payments',
+          widget.todayOnly
+              ? context.l10n.creditsTodayScheduled
+              : context.l10n.scheduledPaymentsTitle,
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
         leading: IconButton(
+          tooltip: context.l10n.actionBack,
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
+            tooltip: context.l10n.actionRefresh,
             onPressed: _load,
             icon: const Icon(Icons.refresh_rounded, color: Color(0xFF4A00E0)),
           ),
@@ -152,80 +161,80 @@ class _ScheduledPaymentsScreenState extends State<ScheduledPaymentsScreen> {
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Center(child: Text(_error!))
-                : _rows.isEmpty
-                    ? Center(
-                        child: Text(
-                          widget.todayOnly
-                              ? 'No scheduled payments due today.'
-                              : 'No open scheduled payments.',
-                          style: FontUtility.body.copyWith(color: Colors.black54),
+            ? Center(child: Text(_error!))
+            : _rows.isEmpty
+            ? Center(
+                child: Text(
+                  widget.todayOnly
+                      ? context.l10n.creditsNoScheduledToday
+                      : context.l10n.creditsNoOpenScheduled,
+                  style: FontUtility.body.copyWith(color: Colors.black54),
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: _load,
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(24),
+                  itemCount: _rows.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final row = _rows[index];
+                    final name = _titleFor(row);
+                    final overdue = row.isOverdue;
+                    return Material(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: _load,
-                        child: ListView.separated(
-                          padding: const EdgeInsets.all(24),
-                          itemCount: _rows.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 10),
-                          itemBuilder: (context, index) {
-                            final row = _rows[index];
-                            final name = _titleFor(row);
-                            final overdue = row.isOverdue;
-                            return Material(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                title: Text(
-                                  name,
-                                  style: FontUtility.subheading.copyWith(fontSize: 15),
-                                ),
-                                subtitle: Text(
-                                  _subtitleFor(row, overdue: overdue),
-                                  style: FontUtility.body.copyWith(
-                                    fontSize: 12,
-                                    color: overdue
-                                        ? const Color(0xFFB71C1C)
-                                        : Colors.black54,
-                                  ),
-                                ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      '\$${row.amount.toStringAsFixed(2)}',
-                                      style: FontUtility.subheading.copyWith(
-                                        fontSize: 15,
-                                        color: const Color(0xFF4A00E0),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    TextButton(
-                                      onPressed: () => _collect(row),
-                                      child: const Text('Collect'),
-                                    ),
-                                  ],
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => CreditAccountDetailScreen(
-                                        customerId: row.customerId,
-                                        customerName: name,
-                                      ),
-                                    ),
-                                  ).then((_) => _load());
-                                },
+                        title: Text(
+                          name,
+                          style: FontUtility.subheading.copyWith(fontSize: 15),
+                        ),
+                        subtitle: Text(
+                          _subtitleFor(row, overdue: overdue),
+                          style: FontUtility.body.copyWith(
+                            fontSize: 12,
+                            color: overdue
+                                ? const Color(0xFFB71C1C)
+                                : Colors.black54,
+                          ),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '\$${row.amount.toStringAsFixed(2)}',
+                              style: FontUtility.subheading.copyWith(
+                                fontSize: 15,
+                                color: const Color(0xFF4A00E0),
                               ),
-                            );
-                          },
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton(
+                              onPressed: () => _collect(row),
+                              child: Text(context.l10n.creditsCollect),
+                            ),
+                          ],
                         ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CreditAccountDetailScreen(
+                                customerId: row.customerId,
+                                customerName: name,
+                              ),
+                            ),
+                          ).then((_) => _load());
+                        },
                       ),
+                    );
+                  },
+                ),
+              ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/features/store_setup/presentation/store_setup_ui.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 class OffersSetupScreen extends StatefulWidget {
   const OffersSetupScreen({super.key});
@@ -51,8 +52,8 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
     final selected = <String>{};
     if (existing != null) {
       final store = context.read<UiStoreController>().store!;
-      final localId =
-          '${existing['local_id'] ?? existing['localId'] ?? ''}'.trim();
+      final localId = '${existing['local_id'] ?? existing['localId'] ?? ''}'
+          .trim();
       if (localId.isNotEmpty) {
         final targets = await store.products.listOfferTargetVariantIds(
           store.scope,
@@ -64,7 +65,9 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
 
     final ok = await StoreSetupUi.showFormDialog(
       context: context,
-      title: existing == null ? 'New offer' : 'Edit offer',
+      title: existing == null
+          ? context.l10n.storeSetupNewOffer
+          : context.l10n.storeSetupEditOffer,
       accent: _accent,
       width: 480,
       child: StatefulBuilder(
@@ -76,7 +79,7 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
               controller: nameCtrl,
               decoration: StoreSetupUi.field(
                 hint: 'e.g. Lunch special',
-                label: 'Name *',
+                label: context.l10n.storeSetupNameRequired,
                 icon: Icons.local_offer_rounded,
                 accent: _accent,
               ),
@@ -87,7 +90,7 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
               keyboardType: TextInputType.number,
               decoration: StoreSetupUi.field(
                 hint: 'e.g. 10',
-                label: 'Percent off',
+                label: context.l10n.storeSetupPercentOff,
                 icon: Icons.percent_rounded,
                 accent: _accent,
               ),
@@ -97,27 +100,20 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
               controller: minCtrl,
               keyboardType: TextInputType.number,
               decoration: StoreSetupUi.field(
-                hint: 'Optional minimum bill',
-                label: 'Min bill',
+                hint: context.l10n.storeSetupOptionalMinBill,
+                label: context.l10n.storeSetupMinBill,
                 icon: Icons.shopping_bag_outlined,
                 accent: _accent,
               ),
             ),
             StoreSetupUi.sectionLabel(
-              'Link to packages (optional)',
+              context.l10n.storeSetupLinkPackagesOptional,
               accent: StoreSetupUi.productsAccent,
-            ),
-            Text(
-              'Leave empty for a whole-bill offer. Select packages to limit where it applies.',
-              style: FontUtility.body.copyWith(
-                fontSize: 12,
-                color: StoreSetupUi.muted,
-              ),
             ),
             const SizedBox(height: 8),
             if (_variants.isEmpty)
               Text(
-                'No packages yet — create products first.',
+                context.l10n.storeSetupNoPackagesCreateProducts,
                 style: FontUtility.body.copyWith(color: StoreSetupUi.muted),
               )
             else
@@ -130,7 +126,9 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
                   value: checked,
                   title: Text(
                     '${v.productName} · ${v.productVariantName}',
-                    style: FontUtility.body.copyWith(fontWeight: FontWeight.w700),
+                    style: FontUtility.body.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   onChanged: (value) {
                     setLocal(() {
@@ -149,8 +147,8 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
     );
     if (ok != true || nameCtrl.text.trim().isEmpty) return;
     final store = context.read<UiStoreController>().store!;
-    final localId =
-        '${existing?['local_id'] ?? existing?['localId'] ?? ''}'.trim();
+    final localId = '${existing?['local_id'] ?? existing?['localId'] ?? ''}'
+        .trim();
     await store.products.upsertOffer(
       scope: store.scope,
       localId: localId.isEmpty ? null : localId,
@@ -164,7 +162,9 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          existing == null ? 'Offer saved offline' : 'Offer updated offline',
+          existing == null
+              ? context.l10n.storeSetupOfferSavedOffline
+              : context.l10n.storeSetupOfferUpdatedOffline,
         ),
       ),
     );
@@ -178,17 +178,19 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Delete offer?'),
-        content: Text('Remove "${offer['name']}". Sync to export.'),
+        title: Text(context.l10n.storeSetupDeleteOffer),
+        content: Text(
+          context.l10n.storeSetupRemoveEntitySync('${offer['name']}'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.actionCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.actionDelete),
           ),
         ],
       ),
@@ -201,7 +203,7 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Offer deleted offline. Sync to export.')),
+      SnackBar(content: Text(context.l10n.storeSetupOfferDeletedOffline)),
     );
     await _reload();
   }
@@ -210,58 +212,59 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: StoreSetupUi.canvas,
-      appBar: StoreSetupUi.appBar(title: 'Offers', accent: _accent),
-      floatingActionButton: FloatingActionButton.extended(
+      appBar: StoreSetupUi.appBar(
+        title: context.l10n.commonOffers,
+        accent: _accent,
+      ),
+      floatingActionButton: StoreSetupUi.addButton(
+        label: context.l10n.storeSetupAddOffer,
         onPressed: () => _upsert(),
-        backgroundColor: _accent,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add offer'),
+        accent: _accent,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: _accent))
           : _offers.isEmpty
-              ? StoreSetupUi.emptyState(
-                  icon: Icons.local_offer_outlined,
-                  title: 'No offers yet',
+          ? StoreSetupUi.emptyState(
+              icon: Icons.local_offer_outlined,
+              title: context.l10n.storeSetupNoOffersEmpty,
+              accent: _accent,
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              itemCount: _offers.length,
+              itemBuilder: (_, i) {
+                final o = _offers[i];
+                final targetType = '${o['target_type'] ?? 'bill'}';
+                final pending = o['exported'] == 0;
+                return StoreSetupUi.cardTile(
                   accent: _accent,
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                  itemCount: _offers.length,
-                  itemBuilder: (_, i) {
-                    final o = _offers[i];
-                    final targetType = '${o['target_type'] ?? 'bill'}';
-                    final pending = o['exported'] == 0;
-                    return StoreSetupUi.cardTile(
-                      accent: _accent,
-                      icon: Icons.local_offer_rounded,
-                      title: '${o['name']}',
-                      subtitle:
-                          '${o['percentage_value'] ?? o['flat_value'] ?? ''}% · '
-                          '${targetType == 'product' ? 'Linked packages' : 'Whole bill'}',
-                      onTap: () => _upsert(existing: o),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          StoreSetupUi.statusChip(
-                            pending ? 'Pending' : 'Synced',
-                            pending: pending,
-                            accent: _accent,
-                          ),
-                          IconButton(
-                            tooltip: 'Delete',
-                            icon: Icon(
-                              Icons.delete_outline_rounded,
-                              color: Colors.red.shade400,
-                            ),
-                            onPressed: () => _delete(o),
-                          ),
-                        ],
+                  icon: Icons.local_offer_rounded,
+                  title: '${o['name']}',
+                  subtitle:
+                      '${o['percentage_value'] ?? o['flat_value'] ?? ''}% · '
+                      '${targetType == 'product' ? 'Linked packages' : 'Whole bill'}',
+                  onTap: () => _upsert(existing: o),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      StoreSetupUi.statusChip(
+                        pending
+                            ? context.l10n.commonPending
+                            : context.l10n.commonSynced,
+                        pending: pending,
+                        accent: _accent,
                       ),
-                    );
-                  },
-                ),
+                      StoreSetupUi.iconAction(
+                        label: context.l10n.actionDelete,
+                        icon: Icons.delete_outline_rounded,
+                        color: Colors.red.shade400,
+                        onPressed: () => _delete(o),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
     );
   }
 }

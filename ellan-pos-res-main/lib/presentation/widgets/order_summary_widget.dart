@@ -3,6 +3,7 @@ import '../../core/currency_format.dart';
 import '../../core/utils/font_utility.dart';
 import '../../data/models/cart_item_model.dart';
 import '../../data/models/cart_discount_line.dart';
+import '../../core/localization/l10n_context.dart';
 
 class OrderSummaryWidget extends StatelessWidget {
   final double subTotal;
@@ -55,11 +56,14 @@ class OrderSummaryWidget extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildSummaryRow('Sub Total', PosCurrency.format(subTotal)),
+                  _buildSummaryRow(
+                    context.l10n.commonSubtotal,
+                    PosCurrency.format(subTotal),
+                  ),
                   if (deliveryCharge > 0.0001) ...[
                     const SizedBox(height: 6),
                     _buildSummaryRow(
-                      'Delivery Charge',
+                      context.l10n.commonDeliveryCharge,
                       PosCurrency.format(deliveryCharge),
                     ),
                   ],
@@ -67,7 +71,7 @@ class OrderSummaryWidget extends StatelessWidget {
                     const SizedBox(height: 6),
                     _buildSummaryRow(
                       offerLabels.isEmpty
-                          ? 'Offer applied'
+                          ? context.l10n.commonOfferApplied
                           : 'Offer · ${offerLabels.take(2).join(', ')}',
                       '-${PosCurrency.format(offerAppliedAmount)}',
                       color: Colors.green.shade700,
@@ -92,7 +96,7 @@ class OrderSummaryWidget extends StatelessWidget {
                   if (tipsAmount > 0.0001) ...[
                     const SizedBox(height: 6),
                     _buildSummaryRow(
-                      'Tips',
+                      context.l10n.commonTips,
                       '+${PosCurrency.format(tipsAmount)}',
                       color: Colors.blue.shade700,
                     ),
@@ -100,7 +104,7 @@ class OrderSummaryWidget extends StatelessWidget {
                   if (_addonLines.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Text(
-                      'Add-ons',
+                      context.l10n.commonAddons,
                       style: FontUtility.body.copyWith(
                         fontSize: 12,
                         color: Colors.black54,
@@ -129,7 +133,7 @@ class OrderSummaryWidget extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Net Total',
+                        context.l10n.commonNetTotal,
                         style: FontUtility.heading.copyWith(fontSize: 16),
                       ),
                       Text(

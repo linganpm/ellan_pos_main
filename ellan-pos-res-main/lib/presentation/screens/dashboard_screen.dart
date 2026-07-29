@@ -50,7 +50,10 @@ class _DashboardView extends StatelessWidget {
           style: FontUtility.heading.copyWith(fontSize: 24),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.black87,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         bottom: PreferredSize(
@@ -85,14 +88,18 @@ class _DashboardView extends StatelessWidget {
                           children: [
                             Text(
                               state.errorMessage!,
-                              style: FontUtility.body.copyWith(color: Colors.red),
+                              style: FontUtility.body.copyWith(
+                                color: Colors.red,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 12),
                             TextButton(
                               onPressed: () =>
                                   context.read<DashboardCubit>().load(),
-                              child: const Text('Retry'),
+                              child: Text(
+                                AppLocalizations.of(context)!.actionRetry,
+                              ),
                             ),
                           ],
                         ),
@@ -133,7 +140,7 @@ class _DashboardView extends StatelessWidget {
                         color: const Color(0xFF4A00E0).withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
-                      )
+                      ),
                     ]
                   : [],
             ),
@@ -163,7 +170,7 @@ class _DashboardView extends StatelessWidget {
             final sales = SizedBox(
               height: 420,
               child: SalesChart(
-                filterSelected: state.filter,
+                filterSelected: _getLocalizedFilter(context, state.filter),
                 points: snapshot.salesPoints,
               ),
             );
@@ -178,11 +185,7 @@ class _DashboardView extends StatelessWidget {
             );
             if (stack) {
               return Column(
-                children: [
-                  sales,
-                  const SizedBox(height: 24),
-                  payments,
-                ],
+                children: [sales, const SizedBox(height: 24), payments],
               );
             }
             return Row(
@@ -207,7 +210,7 @@ class _DashboardView extends StatelessWidget {
                 items: snapshot.topCategories.isEmpty
                     ? [
                         TopItem(
-                          name: 'No category sales yet',
+                          name: l10n.dashboardNoCategorySales,
                           count: 0,
                           imageUrl: '',
                         ),
@@ -229,7 +232,7 @@ class _DashboardView extends StatelessWidget {
                 items: snapshot.topProducts.isEmpty
                     ? [
                         TopItem(
-                          name: 'No product sales yet',
+                          name: l10n.dashboardNoProductSales,
                           count: 0,
                           imageUrl: '',
                         ),
@@ -250,9 +253,9 @@ class _DashboardView extends StatelessWidget {
                 orders: snapshot.creditOrders.isEmpty
                     ? [
                         CreditOrder(
-                          customerName: 'No open credits',
+                          customerName: l10n.dashboardNoOpenCredits,
                           amount: 0,
-                          date: '—',
+                          date: l10n.commonEmpty,
                         ),
                       ]
                     : [
@@ -340,7 +343,7 @@ class _DashboardView extends StatelessWidget {
         onTap: () => _openOrders(context, periodFilter: periodFilter),
       ),
       _buildOverviewCard(
-        'Credits',
+        AppLocalizations.of(context)!.dashboardCredits,
         '${snapshot.creditCount}',
         Icons.account_balance_wallet_rounded,
         const Color(0xFF7C4DFF),
@@ -350,7 +353,7 @@ class _DashboardView extends StatelessWidget {
         ),
       ),
       _buildOverviewCard(
-        'Credit amount',
+        AppLocalizations.of(context)!.dashboardCreditAmount,
         '\$${snapshot.creditOutstandingAmount.toStringAsFixed(0)}',
         Icons.money_off_csred_rounded,
         const Color(0xFFFF7043),
@@ -360,7 +363,7 @@ class _DashboardView extends StatelessWidget {
         ),
       ),
       _buildOverviewCard(
-        'Repayments',
+        AppLocalizations.of(context)!.dashboardRepayments,
         '\$${snapshot.repaymentsAmount.toStringAsFixed(0)}',
         Icons.payments_rounded,
         const Color(0xFF26A69A),
@@ -370,7 +373,7 @@ class _DashboardView extends StatelessWidget {
         ),
       ),
       _buildOverviewCard(
-        'Refunds',
+        AppLocalizations.of(context)!.dashboardRefunds,
         '${snapshot.refundsCount} · \$${snapshot.refundsAmount.toStringAsFixed(0)}',
         Icons.undo_rounded,
         const Color(0xFFE53935),
@@ -389,10 +392,10 @@ class _DashboardView extends StatelessWidget {
         final crossAxisCount = width >= 1200
             ? 4
             : width >= 900
-                ? 3
-                : width >= 600
-                    ? 2
-                    : 1;
+            ? 3
+            : width >= 600
+            ? 2
+            : 1;
         return GridView.count(
           crossAxisCount: crossAxisCount,
           shrinkWrap: true,

@@ -8,6 +8,7 @@ import 'package:pos_tablet/core/org_timezone.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/screens/order_details_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/localization/l10n_context.dart';
 
 /// Lists local order refunds for the open store.
 class RefundsScreen extends StatefulWidget {
@@ -51,12 +52,15 @@ class _RefundsScreenState extends State<RefundsScreen> {
           final prefs = getIt<SharedPreferences>();
           final storeId = controller.store?.storeId;
           final tzName = DeviceSetupStore(prefs).timezoneForStore(storeId);
-          rows = rows.where((row) {
-            final when = OrgTimezone.tryParseWallClock(row.createdOn, tzName) ??
-                DateTime.tryParse(row.createdOn);
-            if (when == null) return false;
-            return !when.isBefore(range.start) && when.isBefore(range.end);
-          }).toList(growable: false);
+          rows = rows
+              .where((row) {
+                final when =
+                    OrgTimezone.tryParseWallClock(row.createdOn, tzName) ??
+                    DateTime.tryParse(row.createdOn);
+                if (when == null) return false;
+                return !when.isBefore(range.start) && when.isBefore(range.end);
+              })
+              .toList(growable: false);
         } catch (_) {}
       }
       if (!mounted) return;
@@ -92,12 +96,13 @@ class _RefundsScreenState extends State<RefundsScreen> {
         elevation: 0,
         title: Text(
           (widget.periodFilter ?? '').trim().isEmpty
-              ? 'Refunds'
-              : 'Refunds · ${widget.periodFilter!.trim()}',
+              ? context.l10n.commonRefunds
+              : context.l10n.refundsPeriodTitle(widget.periodFilter!.trim()),
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
         actions: [
           IconButton(
+            tooltip: context.l10n.actionRefresh,
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh_rounded),
           ),
@@ -108,137 +113,143 @@ class _RefundsScreenState extends State<RefundsScreen> {
         child: _loading
             ? const Center(child: CircularProgressIndicator(color: _primary))
             : _error != null
-                ? Center(child: Text(_error!))
-                : Column(
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.black.withValues(alpha: 0.04),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              '${_refunds.length} refunds',
-                              style: FontUtility.heading.copyWith(fontSize: 18),
-                            ),
-                            const Spacer(),
-                            Text(
-                              _currency.format(total),
-                              style: FontUtility.heading.copyWith(fontSize: 22),
-                            ),
-                          ],
-                        ),
+            ? Center(child: Text(_error!))
+            : Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.black.withValues(alpha: 0.04),
                       ),
-                      Expanded(
-                        child: _refunds.isEmpty
-                            ? Center(
-                                child: Text(
-                                  'No refunds recorded yet.',
-                                  style: FontUtility.body
-                                      .copyWith(color: Colors.black54),
-                                ),
-                              )
-                            : ListView.separated(
-                                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                                itemCount: _refunds.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(height: 10),
-                                itemBuilder: (context, index) {
-                                  final refund = _refunds[index];
-                                  return Material(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(16),
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => OrderDetailsScreen(
-                                              orderId: refund.orderId,
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          context.l10n.refundsCount(_refunds.length),
+                          style: FontUtility.heading.copyWith(fontSize: 18),
+                        ),
+                        const Spacer(),
+                        Text(
+                          _currency.format(total),
+                          style: FontUtility.heading.copyWith(fontSize: 22),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: _refunds.isEmpty
+                        ? Center(
+                            child: Text(
+                              context.l10n.refundsEmpty,
+                              style: FontUtility.body.copyWith(
+                                color: Colors.black54,
+                              ),
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                            itemCount: _refunds.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 10),
+                            itemBuilder: (context, index) {
+                              final refund = _refunds[index];
+                              return Material(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(16),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => OrderDetailsScreen(
+                                          orderId: refund.orderId,
+                                        ),
+                                      ),
+                                    ).then((_) => _load());
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 44,
+                                          height: 44,
+                                          decoration: BoxDecoration(
+                                            color: _primary.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
                                             ),
                                           ),
-                                        ).then((_) => _load());
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: Row(
-                                          children: [
-                                            Container(
-                                              width: 44,
-                                              height: 44,
-                                              decoration: BoxDecoration(
-                                                color: _primary
-                                                    .withValues(alpha: 0.12),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
+                                          child: const Icon(
+                                            Icons.undo_rounded,
+                                            color: _primary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 14),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                context.l10n.orderNumber(
+                                                  refund.orderId,
+                                                ),
+                                                style: FontUtility.subheading
+                                                    .copyWith(fontSize: 16),
                                               ),
-                                              child: const Icon(
-                                                Icons.undo_rounded,
-                                                color: _primary,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 14),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    'Order #${refund.orderId}',
-                                                    style: FontUtility.subheading
-                                                        .copyWith(fontSize: 16),
-                                                  ),
-                                                  const SizedBox(height: 4),
-                                                  Text(
-                                                    _formatTime(refund.createdOn),
-                                                    style: FontUtility.body
-                                                        .copyWith(
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                _formatTime(refund.createdOn),
+                                                style: FontUtility.body
+                                                    .copyWith(
                                                       fontSize: 12,
                                                       color: Colors.black54,
                                                     ),
-                                                  ),
-                                                  if ((refund.reason ?? '')
-                                                      .trim()
-                                                      .isNotEmpty) ...[
-                                                    const SizedBox(height: 2),
-                                                    Text(
-                                                      refund.reason!,
-                                                      style: FontUtility.body
-                                                          .copyWith(
+                                              ),
+                                              if ((refund.reason ?? '')
+                                                  .trim()
+                                                  .isNotEmpty) ...[
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  refund.reason!,
+                                                  style: FontUtility.body
+                                                      .copyWith(
                                                         fontSize: 12,
                                                         color: Colors.black45,
                                                       ),
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                    ),
-                                                  ],
-                                                ],
-                                              ),
-                                            ),
-                                            Text(
-                                              _currency.format(refund.amount),
-                                              style: FontUtility.heading
-                                                  .copyWith(fontSize: 18),
-                                            ),
-                                          ],
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ],
+                                          ),
                                         ),
-                                      ),
+                                        Text(
+                                          _currency.format(refund.amount),
+                                          style: FontUtility.heading.copyWith(
+                                            fontSize: 18,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  );
-                                },
-                              ),
-                      ),
-                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                   ),
+                ],
+              ),
       ),
     );
   }

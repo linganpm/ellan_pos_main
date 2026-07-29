@@ -20,7 +20,7 @@ void main() {
     try {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
-      
+
       // Ensure a writable directory exists for the test and configure the factory to use it
       try {
         final tempDir = Directory.systemTemp.path;

@@ -21,9 +21,7 @@ import 'welcome_state.dart';
 class WelcomeCubit extends Cubit<WelcomeState> {
   final SharedPreferences prefs;
 
-  WelcomeCubit({
-    required this.prefs,
-  }) : super(const WelcomeState()) {
+  WelcomeCubit({required this.prefs}) : super(const WelcomeState()) {
     _loadSavedServers();
   }
 
@@ -34,10 +32,16 @@ class WelcomeCubit extends Cubit<WelcomeState> {
     final activeUrl = _setupStore.activeServerUrl;
     final activeOrg = _setupStore.activeOrgInstanceId;
 
-    var serverUrl = activeUrl ?? '';
-    var orgId = activeOrg ?? '';
+    var serverUrl = kIsPosDiscoveryConfiguredByEnv
+        ? kDefaultServerOrigin
+        : (activeUrl ?? '');
+    var orgId = kIsPosDiscoveryConfiguredByEnv
+        ? kDefaultRootOrgInstanceId
+        : (activeOrg ?? '');
 
-    if ((serverUrl.isEmpty || orgId.isEmpty) && entries.isNotEmpty) {
+    if (!kIsPosDiscoveryConfiguredByEnv &&
+        (serverUrl.isEmpty || orgId.isEmpty) &&
+        entries.isNotEmpty) {
       serverUrl = entries.first.serverUrl;
       orgId = entries.first.orgInstanceId;
     }
@@ -46,15 +50,16 @@ class WelcomeCubit extends Cubit<WelcomeState> {
       setActiveDiscoveryUrl(serverUrl);
     }
 
-    emit(state.copyWith(
-      savedServers: entries,
-      // Welcome field is origin only (e.g. http://127.0.0.1:8000) — never /api/...
-      serverUrl: serverUrl.isEmpty
-          ? kDefaultServerOrigin
-          : discoveryOrigin(serverUrl),
-      organizationName:
-          orgId.isEmpty ? kDefaultRootOrgInstanceId : orgId,
-    ));
+    emit(
+      state.copyWith(
+        savedServers: entries,
+        // Welcome field is origin only (e.g. http://127.0.0.1:8000) — never /api/...
+        serverUrl: serverUrl.isEmpty
+            ? kDefaultServerOrigin
+            : discoveryOrigin(serverUrl),
+        organizationName: orgId.isEmpty ? kDefaultRootOrgInstanceId : orgId,
+      ),
+    );
   }
 
   void serverUrlChanged(String value) {
@@ -67,11 +72,13 @@ class WelcomeCubit extends Cubit<WelcomeState> {
 
   void selectSavedServer(PosServerEntry entry) {
     setActiveDiscoveryUrl(entry.serverUrl);
-    emit(state.copyWith(
-      serverUrl: discoveryOrigin(entry.serverUrl),
-      organizationName: entry.orgInstanceId,
-      clearError: true,
-    ));
+    emit(
+      state.copyWith(
+        serverUrl: discoveryOrigin(entry.serverUrl),
+        organizationName: entry.orgInstanceId,
+        clearError: true,
+      ),
+    );
   }
 
   Future<void> deleteSavedServer(PosServerEntry entry) async {
@@ -95,12 +102,14 @@ class WelcomeCubit extends Cubit<WelcomeState> {
       }
     }
 
-    emit(state.copyWith(
-      savedServers: remaining,
-      serverUrl: nextUrl,
-      organizationName: nextOrg,
-      clearError: true,
-    ));
+    emit(
+      state.copyWith(
+        savedServers: remaining,
+        serverUrl: nextUrl,
+        organizationName: nextOrg,
+        clearError: true,
+      ),
+    );
   }
 
   String get _deviceId => posDeviceId(prefs);
@@ -134,7 +143,9 @@ class WelcomeCubit extends Cubit<WelcomeState> {
         final versionId = info.versionId;
         model = pretty.isNotEmpty
             ? pretty
-            : (versionId != null && versionId.isNotEmpty ? versionId : 'Desktop');
+            : (versionId != null && versionId.isNotEmpty
+                  ? versionId
+                  : 'Desktop');
         deviceId = info.machineId ?? '';
       } else if (defaultTargetPlatform == TargetPlatform.macOS) {
         final info = await deviceInfo.macOsInfo;
@@ -194,14 +205,16 @@ class WelcomeCubit extends Cubit<WelcomeState> {
           )
           .timeout(const Duration(seconds: 20));
       if (!approval.approved) {
-        emit(state.copyWith(
-          isLoading: false,
-          savedServers: setupStore.listServerEntries(),
-          errorMessage: approval.message.isNotEmpty
-              ? approval.message
-              : 'This device is not approved for "$orgCode". '
-                  'Contact your organisation administrator.',
-        ));
+        emit(
+          state.copyWith(
+            isLoading: false,
+            savedServers: setupStore.listServerEntries(),
+            errorMessage: approval.message.isNotEmpty
+                ? approval.message
+                : 'This device is not approved for "$orgCode". '
+                      'Contact your organisation administrator.',
+          ),
+        );
         return;
       }
 
@@ -217,23 +230,27 @@ class WelcomeCubit extends Cubit<WelcomeState> {
           .get(bootstrapUri)
           .timeout(const Duration(seconds: 20));
       if (bootstrapResponse.statusCode == 404) {
-        emit(state.copyWith(
-          isLoading: false,
-          savedServers: setupStore.listServerEntries(),
-          errorMessage:
-              'We could not find an organisation for "$orgCode". '
-              'Please check the organisation instance id and try again.',
-        ));
+        emit(
+          state.copyWith(
+            isLoading: false,
+            savedServers: setupStore.listServerEntries(),
+            errorMessage:
+                'We could not find an organisation for "$orgCode". '
+                'Please check the organisation instance id and try again.',
+          ),
+        );
         return;
       }
       if (bootstrapResponse.statusCode == 403) {
-        emit(state.copyWith(
-          isLoading: false,
-          savedServers: setupStore.listServerEntries(),
-          errorMessage:
-              'This device is not approved for "$orgCode". Contact your '
-              'organisation administrator.',
-        ));
+        emit(
+          state.copyWith(
+            isLoading: false,
+            savedServers: setupStore.listServerEntries(),
+            errorMessage:
+                'This device is not approved for "$orgCode". Contact your '
+                'organisation administrator.',
+          ),
+        );
         return;
       }
       if (bootstrapResponse.statusCode < 200 ||
@@ -247,13 +264,15 @@ class WelcomeCubit extends Cubit<WelcomeState> {
           jsonDecode(bootstrapResponse.body) as Map<String, dynamic>;
       final organisation = bootstrapPayload['organisation'];
       if (organisation is! Map) {
-        emit(state.copyWith(
-          isLoading: false,
-          savedServers: setupStore.listServerEntries(),
-          errorMessage:
-              'We could not find an organisation for "$orgCode". '
-              'Please check the organisation instance id and try again.',
-        ));
+        emit(
+          state.copyWith(
+            isLoading: false,
+            savedServers: setupStore.listServerEntries(),
+            errorMessage:
+                'We could not find an organisation for "$orgCode". '
+                'Please check the organisation instance id and try again.',
+          ),
+        );
         return;
       }
 
@@ -277,8 +296,7 @@ class WelcomeCubit extends Cubit<WelcomeState> {
             'Config lookup failed with status ${configResponse.statusCode}.',
           );
         }
-        remoteConfig =
-            jsonDecode(configResponse.body) as Map<String, dynamic>;
+        remoteConfig = jsonDecode(configResponse.body) as Map<String, dynamic>;
       }
 
       final customersPath = (await setupStore.customersFile()).path;
@@ -312,30 +330,36 @@ class WelcomeCubit extends Cubit<WelcomeState> {
         lan: 0,
       );
 
-      emit(state.copyWith(
-        isLoading: false,
-        isSuccess: true,
-        savedServers: setupStore.listServerEntries(),
-        clearError: true,
-      ));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          isSuccess: true,
+          savedServers: setupStore.listServerEntries(),
+          clearError: true,
+        ),
+      );
     } on OrganisationNotFoundException catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        savedServers: _setupStore.listServerEntries(),
-        errorMessage: e.userMessage,
-      ));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          savedServers: _setupStore.listServerEntries(),
+          errorMessage: e.userMessage,
+        ),
+      );
     } catch (e, st) {
       // ignore: avoid_print
       print('WelcomeCubit::submit error: $e\n$st');
-      emit(state.copyWith(
-        isLoading: false,
-        savedServers: _setupStore.listServerEntries(),
-        errorMessage: userFacingError(
-          e,
-          fallback:
-              'Unable to complete device setup. Check the server address and try again.',
+      emit(
+        state.copyWith(
+          isLoading: false,
+          savedServers: _setupStore.listServerEntries(),
+          errorMessage: userFacingError(
+            e,
+            fallback:
+                'Unable to complete device setup. Check the server address and try again.',
+          ),
         ),
-      ));
+      );
     }
   }
 }

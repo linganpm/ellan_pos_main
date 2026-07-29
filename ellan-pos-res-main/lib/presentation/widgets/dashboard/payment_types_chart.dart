@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../../core/localization/l10n_context.dart';
 import '../../../core/utils/font_utility.dart';
 
 class PaymentTypesChart extends StatelessWidget {
@@ -19,7 +20,8 @@ class PaymentTypesChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasData =
-        cashPercentage + cardPercentage + onlinePercentage + creditPercentage > 0;
+        cashPercentage + cardPercentage + onlinePercentage + creditPercentage >
+        0;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -38,7 +40,7 @@ class PaymentTypesChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Payment Types',
+            context.l10n.dashboardPaymentTypes,
             style: FontUtility.heading.copyWith(fontSize: 20),
           ),
           const SizedBox(height: 24),
@@ -46,7 +48,7 @@ class PaymentTypesChart extends StatelessWidget {
             child: !hasData
                 ? Center(
                     child: Text(
-                      'No payments yet',
+                      context.l10n.dashboardNoPaymentsYet,
                       style: FontUtility.body.copyWith(color: Colors.black45),
                     ),
                   )
@@ -118,16 +120,28 @@ class PaymentTypesChart extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildIndicator(const Color(0xFF00C9FF), 'Cash'),
+                            _buildIndicator(
+                              const Color(0xFF00C9FF),
+                              context.l10n.commonCash,
+                            ),
                             const SizedBox(height: 12),
-                            _buildIndicator(const Color(0xFF4A00E0), 'Card'),
+                            _buildIndicator(
+                              const Color(0xFF4A00E0),
+                              context.l10n.commonCard,
+                            ),
                             if (onlinePercentage > 0) ...[
                               const SizedBox(height: 12),
-                              _buildIndicator(const Color(0xFF92FE9D), 'Online'),
+                              _buildIndicator(
+                                const Color(0xFF92FE9D),
+                                context.l10n.commonOnline,
+                              ),
                             ],
                             if (creditPercentage > 0) ...[
                               const SizedBox(height: 12),
-                              _buildIndicator(const Color(0xFFFFA751), 'Credit'),
+                              _buildIndicator(
+                                const Color(0xFFFFA751),
+                                context.l10n.commonCredit,
+                              ),
                             ],
                           ],
                         ),
@@ -146,16 +160,13 @@ class PaymentTypesChart extends StatelessWidget {
         Container(
           width: 16,
           height: 16,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color,
-          ),
+          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
         ),
         const SizedBox(width: 8),
         Text(
           text,
           style: FontUtility.body.copyWith(fontWeight: FontWeight.w600),
-        )
+        ),
       ],
     );
   }

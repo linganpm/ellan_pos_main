@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 const _kAccent = Color(0xFF4A00E0);
 const _kDefaultCustomerName = 'Guest';
@@ -21,13 +22,15 @@ class CustomerSelectResult {
 }
 
 /// Search / select / create a directory customer (same form as order start).
-  Future<CustomerSelectResult?> showCustomerSelectSheet(
+Future<CustomerSelectResult?> showCustomerSelectSheet(
   BuildContext context, {
-  String title = 'Select customer',
+  String? title,
   String? subtitle,
-  String confirmLabel = 'Continue',
+  String? confirmLabel,
   bool isDismissible = true,
 }) {
+  final resolvedTitle = title ?? context.l10n.commonSelectCustomer;
+  final resolvedConfirm = confirmLabel ?? context.l10n.actionContinue;
   return showModalBottomSheet<CustomerSelectResult>(
     context: context,
     isScrollControlled: true,
@@ -36,9 +39,9 @@ class CustomerSelectResult {
     enableDrag: isDismissible,
     backgroundColor: Colors.transparent,
     builder: (_) => CustomerSelectSheet(
-      title: title,
+      title: resolvedTitle,
       subtitle: subtitle,
-      confirmLabel: confirmLabel,
+      confirmLabel: resolvedConfirm,
     ),
   );
 }
@@ -52,7 +55,7 @@ class CustomerSelectSheet extends StatefulWidget {
     super.key,
     required this.title,
     this.subtitle,
-    this.confirmLabel = 'Continue',
+    required this.confirmLabel,
   });
 
   @override
@@ -199,7 +202,7 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
       final phone = _phoneController.text.trim();
       final email = _emailController.text.trim();
       if (!RegExp(r'^\d{10}$').hasMatch(phone)) {
-        setState(() => _formError = 'Enter a valid 10-digit phone');
+        setState(() => _formError = context.l10n.customerEnterValidPhone);
         return;
       }
       setState(() {
@@ -207,25 +210,24 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
         _formError = null;
       });
       try {
-        final customer = await getIt<UiStoreController>().createDirectoryCustomer(
-          name: name.isEmpty ? _kDefaultCustomerName : name,
-          phone: phone,
-          email: email.isEmpty ? null : email,
-        );
+        final customer = await getIt<UiStoreController>()
+            .createDirectoryCustomer(
+              name: name.isEmpty ? _kDefaultCustomerName : name,
+              phone: phone,
+              email: email.isEmpty ? null : email,
+            );
         if (!mounted) return;
         if (customer == null || customer.customerId.trim().isEmpty) {
           setState(() {
             _saving = false;
-            _formError = 'Could not save customer';
+            _formError = context.l10n.customerCouldNotSave;
           });
           return;
         }
         Navigator.of(context).pop(
           CustomerSelectResult(
             customerUniqueId: customer.customerId,
-            name: customer.name.isEmpty
-                ? _kDefaultCustomerName
-                : customer.name,
+            name: customer.name.isEmpty ? _kDefaultCustomerName : customer.name,
             phone: customer.phone,
             email: customer.email,
           ),
@@ -242,7 +244,7 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
 
     final selected = _selected;
     if (selected == null) {
-      setState(() => _formError = 'Select or add a customer to continue');
+      setState(() => _formError = context.l10n.customerSelectOrAdd);
       return;
     }
     Navigator.of(context).pop(selected);
@@ -332,8 +334,9 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                           child: Row(
                             children: [
                               CircleAvatar(
-                                backgroundColor:
-                                    _kAccent.withValues(alpha: 0.12),
+                                backgroundColor: _kAccent.withValues(
+                                  alpha: 0.12,
+                                ),
                                 child: const Icon(
                                   Icons.person_rounded,
                                   color: _kAccent,
@@ -371,8 +374,9 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                                 ),
                               ),
                               IconButton(
-                                tooltip: 'Change',
-                                onPressed: () => setState(() => _selected = null),
+                                tooltip: context.l10n.actionChange,
+                                onPressed: () =>
+                                    setState(() => _selected = null),
                                 icon: const Icon(Icons.close_rounded),
                               ),
                             ],
@@ -399,7 +403,7 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                             fontSize: 16,
                           ),
                           decoration: _fieldDecoration(
-                            hint: 'Search phone, email, or name',
+                            hint: context.l10n.customerSearchHintFull,
                             prefixIcon: const Icon(Icons.search_rounded),
                             suffixIcon: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -420,11 +424,11 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                                     icon: const Icon(Icons.clear_rounded),
                                     onPressed: () {
                                       _searchController.clear();
-                                      setState(() => _searchHits = const []);
+                                      setState(() => _searchHits = []);
                                     },
                                   ),
                                 IconButton(
-                                  tooltip: 'New customer',
+                                  tooltip: context.l10n.customersNew,
                                   onPressed: _openCreateMode,
                                   icon: const Icon(
                                     Icons.add_rounded,
@@ -471,12 +475,11 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                                 return ListTile(
                                   dense: true,
                                   leading: CircleAvatar(
-                                    backgroundColor:
-                                        _kAccent.withValues(alpha: 0.12),
+                                    backgroundColor: _kAccent.withValues(
+                                      alpha: 0.12,
+                                    ),
                                     child: Text(
-                                      displayName
-                                          .substring(0, 1)
-                                          .toUpperCase(),
+                                      displayName.substring(0, 1).toUpperCase(),
                                       style: const TextStyle(
                                         color: _kAccent,
                                         fontWeight: FontWeight.bold,
@@ -508,7 +511,7 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                           children: [
                             Expanded(
                               child: Text(
-                                'New customer',
+                                context.l10n.customersNew,
                                 style: FontUtility.subheading.copyWith(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
@@ -517,7 +520,7 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                             ),
                             TextButton(
                               onPressed: _saving ? null : _closeCreateMode,
-                              child: const Text('Back to search'),
+                              child: Text(context.l10n.customersBackToSearch),
                             ),
                           ],
                         ),
@@ -529,7 +532,9 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
                           ),
-                          decoration: _fieldDecoration(hint: 'Name (optional)'),
+                          decoration: _fieldDecoration(
+                            hint: context.l10n.customerNameOptional,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         TextField(
@@ -539,7 +544,9 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
                           ),
-                          decoration: _fieldDecoration(hint: 'Phone'),
+                          decoration: _fieldDecoration(
+                            hint: context.l10n.commonPhone,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         TextField(
@@ -549,8 +556,9 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
                           ),
-                          decoration:
-                              _fieldDecoration(hint: 'Email (optional)'),
+                          decoration: _fieldDecoration(
+                            hint: context.l10n.customerEmailOptional,
+                          ),
                         ),
                       ],
                       if (_formError != null) ...[
@@ -572,7 +580,7 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                                 ? null
                                 : () => Navigator.of(context).pop(),
                             child: Text(
-                              'Cancel',
+                              context.l10n.actionCancel,
                               style: FontUtility.button.copyWith(
                                 color: Colors.black54,
                               ),
@@ -605,7 +613,7 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                                     )
                                   : Text(
                                       _creatingCustomer
-                                          ? 'Save & continue'
+                                          ? context.l10n.customerSaveContinue
                                           : widget.confirmLabel,
                                       style: FontUtility.button.copyWith(
                                         color: Colors.white,

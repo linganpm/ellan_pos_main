@@ -4,6 +4,7 @@ import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/features/store_setup/presentation/store_setup_ui.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 class AddonsSetupScreen extends StatefulWidget {
   const AddonsSetupScreen({super.key});
@@ -59,7 +60,9 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
 
     final ok = await StoreSetupUi.showFormDialog(
       context: context,
-      title: isEdit ? 'Edit add-on group' : 'Add-on group',
+      title: isEdit
+          ? context.l10n.storeSetupEditAddonGroup
+          : context.l10n.storeSetupAddonGroup,
       accent: _accent,
       child: StatefulBuilder(
         builder: (ctx, setLocal) => Column(
@@ -69,7 +72,7 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
               controller: nameCtrl,
               decoration: StoreSetupUi.field(
                 hint: 'e.g. Extra toppings',
-                label: 'Group name *',
+                label: context.l10n.storeSetupGroupName,
                 icon: Icons.playlist_add_rounded,
                 accent: _accent,
               ),
@@ -79,7 +82,7 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
               controller: itemCtrl,
               decoration: StoreSetupUi.field(
                 hint: 'e.g. Cheese',
-                label: 'First item name *',
+                label: context.l10n.storeSetupFirstItemName,
                 icon: Icons.egg_alt_rounded,
                 accent: _accent,
               ),
@@ -90,7 +93,7 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
               keyboardType: TextInputType.number,
               decoration: StoreSetupUi.field(
                 hint: '0.00',
-                label: 'Item price *',
+                label: context.l10n.storeSetupItemPrice,
                 icon: Icons.payments_rounded,
                 accent: _accent,
               ),
@@ -108,8 +111,8 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
                 ],
                 onChanged: (v) => setLocal(() => variantLocalId = v),
                 decoration: StoreSetupUi.field(
-                  hint: 'Choose a package',
-                  label: 'Link to package',
+                  hint: context.l10n.storeSetupChoosePackage,
+                  label: context.l10n.storeSetupLinkToPackage,
                   icon: Icons.link_rounded,
                   accent: _accent,
                 ),
@@ -117,18 +120,9 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
             ],
             if (isEdit) ...[
               const SizedBox(height: 12),
-              StoreSetupUi.sectionLabel('Link to package', accent: _accent),
-              Text(
-                'Choose which package should offer this add-on group.',
-                style: FontUtility.body.copyWith(
-                  fontSize: 12,
-                  color: StoreSetupUi.muted,
-                ),
-              ),
-              const SizedBox(height: 8),
               if (_variants.isEmpty)
                 Text(
-                  'No packages yet.',
+                  context.l10n.storeSetupNoPackagesYetShort,
                   style: FontUtility.body.copyWith(color: StoreSetupUi.muted),
                 )
               else
@@ -138,14 +132,15 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
                     for (final v in _variants)
                       DropdownMenuItem(
                         value: v.localId,
-                        child:
-                            Text('${v.productName} · ${v.productVariantName}'),
+                        child: Text(
+                          '${v.productName} · ${v.productVariantName}',
+                        ),
                       ),
                   ],
                   onChanged: (v) => setLocal(() => variantLocalId = v),
                   decoration: StoreSetupUi.field(
-                    hint: 'Choose a package',
-                    label: 'Package',
+                    hint: context.l10n.storeSetupChoosePackage,
+                    label: context.l10n.storeSetupPackage,
                     accent: _accent,
                   ),
                 ),
@@ -177,7 +172,9 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(isEdit ? 'Add-on updated offline' : 'Add-on saved offline'),
+        content: Text(
+          isEdit ? 'Add-on updated offline' : 'Add-on saved offline',
+        ),
       ),
     );
     await _reload();
@@ -190,17 +187,19 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Delete add-on group?'),
-        content: Text('Remove "${group['name']}". Sync to export.'),
+        title: Text(context.l10n.storeSetupDeleteAddonGroup),
+        content: Text(
+          context.l10n.storeSetupRemoveEntitySync('${group['name']}'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.actionCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.actionDelete),
           ),
         ],
       ),
@@ -213,9 +212,7 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Add-on deleted offline. Sync to export.'),
-      ),
+      SnackBar(content: Text(context.l10n.storeSetupAddonDeletedOffline)),
     );
     await _reload();
   }
@@ -224,54 +221,55 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: StoreSetupUi.canvas,
-      appBar: StoreSetupUi.appBar(title: 'Add-ons', accent: _accent),
-      floatingActionButton: FloatingActionButton.extended(
+      appBar: StoreSetupUi.appBar(
+        title: context.l10n.commonAddons,
+        accent: _accent,
+      ),
+      floatingActionButton: StoreSetupUi.addButton(
+        label: context.l10n.storeSetupAddGroup,
         onPressed: () => _upsert(),
-        backgroundColor: _accent,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add group'),
+        accent: _accent,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: _accent))
           : _groups.isEmpty
-              ? StoreSetupUi.emptyState(
-                  icon: Icons.playlist_add_check_rounded,
-                  title: 'No add-ons yet',
+          ? StoreSetupUi.emptyState(
+              icon: Icons.playlist_add_check_rounded,
+              title: context.l10n.storeSetupNoAddonsYet,
+              accent: _accent,
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              itemCount: _groups.length,
+              itemBuilder: (_, i) {
+                final g = _groups[i];
+                final pending = g['exported'] == 0;
+                return StoreSetupUi.cardTile(
                   accent: _accent,
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                  itemCount: _groups.length,
-                  itemBuilder: (_, i) {
-                    final g = _groups[i];
-                    final pending = g['exported'] == 0;
-                    return StoreSetupUi.cardTile(
-                      accent: _accent,
-                      icon: Icons.playlist_add_rounded,
-                      title: '${g['name']}',
-                      onTap: () => _upsert(existing: g),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          StoreSetupUi.statusChip(
-                            pending ? 'Pending' : 'Synced',
-                            pending: pending,
-                            accent: _accent,
-                          ),
-                          IconButton(
-                            tooltip: 'Delete',
-                            icon: Icon(
-                              Icons.delete_outline_rounded,
-                              color: Colors.red.shade400,
-                            ),
-                            onPressed: () => _delete(g),
-                          ),
-                        ],
+                  icon: Icons.playlist_add_rounded,
+                  title: '${g['name']}',
+                  onTap: () => _upsert(existing: g),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      StoreSetupUi.statusChip(
+                        pending
+                            ? context.l10n.commonPending
+                            : context.l10n.commonSynced,
+                        pending: pending,
+                        accent: _accent,
                       ),
-                    );
-                  },
-                ),
+                      StoreSetupUi.iconAction(
+                        label: context.l10n.actionDelete,
+                        icon: Icons.delete_outline_rounded,
+                        color: Colors.red.shade400,
+                        onPressed: () => _delete(g),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
     );
   }
 }

@@ -68,8 +68,7 @@ class CompanySignupState {
   bool get canContinueServerParent =>
       serverUrl.trim().isNotEmpty && parentOrgIdentifier.trim().isNotEmpty;
 
-  bool get passwordsMatch =>
-      password.isNotEmpty && password == passwordConfirm;
+  bool get passwordsMatch => password.isNotEmpty && password == passwordConfirm;
 
   bool get canContinueCompanyDetails =>
       companyName.trim().isNotEmpty &&

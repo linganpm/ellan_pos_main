@@ -2,6 +2,7 @@ class OrderListModel {
   final String id;
   final String orderId;
   final String orderType;
+
   /// Normalized backend key used for type filters (e.g. PICKUP, DINEIN).
   final String orderTypeKey;
   final String? floorName;
@@ -9,6 +10,7 @@ class OrderListModel {
   final String customerName;
   final String? phoneNumber;
   final String? email;
+
   /// Links this row to a directory customer (`user_{id}`).
   final String? customerUniqueId;
 

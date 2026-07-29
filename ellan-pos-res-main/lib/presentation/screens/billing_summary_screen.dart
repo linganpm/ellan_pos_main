@@ -19,6 +19,7 @@ import '../widgets/customer_select_sheet.dart';
 import '../widgets/pos_toast.dart';
 import 'invoice_screen.dart';
 import 'order_create_screen.dart';
+import '../../core/localization/l10n_context.dart';
 
 class _TenderLine {
   final String paymentMethod;
@@ -59,10 +60,7 @@ enum RightPanelMode { payment, discount, tax, tips }
 class BillingSummaryScreen extends StatefulWidget {
   final OrderCreateScreenArgs orderArgs;
 
-  const BillingSummaryScreen({
-    super.key,
-    required this.orderArgs,
-  });
+  const BillingSummaryScreen({super.key, required this.orderArgs});
 
   @override
   State<BillingSummaryScreen> createState() => _BillingSummaryScreenState();
@@ -163,7 +161,9 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       try {
         final account = await controller.loadCreditAccount(customerId);
         customerLimit = account?.creditLimitAmount;
-        final records = await controller.loadCreditRecords(customerId: customerId);
+        final records = await controller.loadCreditRecords(
+          customerId: customerId,
+        );
         if (!mounted) return false;
         outstanding = records.fold<double>(
           0,
@@ -182,10 +182,11 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     final projected = outstanding + amountDue;
     if (projected <= limit + 0.0001) return true;
 
-    final message =
-        'Credit limit ${PosCurrency.format(limit)} would be exceeded '
-        '(outstanding ${PosCurrency.format(outstanding)} + '
-        'this sale ${PosCurrency.format(amountDue)}).';
+    final message = context.l10n.billingCreditLimitExceeded(
+      PosCurrency.format(limit),
+      PosCurrency.format(outstanding),
+      PosCurrency.format(amountDue),
+    );
 
     if (setupStore.creditLimitHardBlock) {
       if (!mounted) return false;
@@ -197,16 +198,16 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     final proceed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Credit limit warning'),
-        content: Text('$message\n\nContinue anyway?'),
+        title: Text(context.l10n.billingCreditLimitWarningTitle),
+        content: Text(context.l10n.billingCreditLimitContinue(message)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.actionCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Continue'),
+            child: Text(context.l10n.actionContinue),
           ),
         ],
       ),
@@ -222,26 +223,25 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     return remaining <= 0 ? 0 : double.parse(remaining.toStringAsFixed(2));
   }
 
-  Future<bool> _ensureCreditCustomer({
-    required double remaining,
-  }) async {
+  Future<bool> _ensureCreditCustomer({required double remaining}) async {
     // Reuse a customer already chosen on this billing screen.
     final existingId = _customerUniqueId?.trim();
     if (existingId != null && existingId.isNotEmpty) return true;
 
     final selected = await showCustomerSelectSheet(
       context,
-      title: 'Customer for credit',
-      subtitle:
-          'Select or add the customer to put ${PosCurrency.format(remaining)} on their credit account.',
-      confirmLabel: 'Use customer',
+      title: context.l10n.billingCustomerForCredit,
+      subtitle: context.l10n.billingSelectCustomerCredit(
+        PosCurrency.format(remaining),
+      ),
+      confirmLabel: context.l10n.commonUseCustomer,
       isDismissible: false,
     );
     if (!mounted) return false;
     if (selected == null) {
       PosToast.failed(
         context,
-        detail: 'Select a customer to put the balance on credit.',
+        detail: context.l10n.errorSelectCustomerForCredit,
       );
       return false;
     }
@@ -249,7 +249,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     if (id.isEmpty) {
       PosToast.failed(
         context,
-        detail: 'Credit requires a saved customer. Try again.',
+        detail: context.l10n.errorCreditRequiresCustomer,
       );
       return false;
     }
@@ -266,14 +266,14 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     if (_isCheckingOut) return;
     final selected = await showCustomerSelectSheet(
       context,
-      title: 'Select customer',
-      subtitle: 'Attach a customer to this bill (required for credit).',
-      confirmLabel: 'Use customer',
+      title: context.l10n.commonSelectCustomer,
+      subtitle: context.l10n.billingAttachCustomer,
+      confirmLabel: context.l10n.commonUseCustomer,
     );
     if (!mounted || selected == null) return;
     final id = selected.customerUniqueId.trim();
     if (id.isEmpty) {
-      PosToast.failed(context, detail: 'Could not use that customer. Try again.');
+      PosToast.failed(context, detail: context.l10n.errorCouldNotUseCustomer);
       return;
     }
     setState(() {
@@ -300,15 +300,15 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     final name = (_customerName ?? '').trim();
     final phone = (_customerPhone ?? '').trim();
     final title = hasCustomer
-        ? (name.isNotEmpty ? name : 'Customer')
-        : 'Select customer';
+        ? (name.isNotEmpty ? name : context.l10n.commonCustomer)
+        : context.l10n.commonSelectCustomer;
     final subtitle = hasCustomer
         ? [
             if (phone.isNotEmpty) phone,
             if ((_customerEmail ?? '').trim().isNotEmpty)
               (_customerEmail ?? '').trim(),
           ].join(' · ')
-        : 'Optional — required when paying on credit';
+        : null;
 
     return Material(
       color: hasCustomer
@@ -361,29 +361,31 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                           color: Colors.black87,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: FontUtility.body.copyWith(
-                          fontSize: 12,
-                          color: Colors.black54,
+                      if (subtitle != null && subtitle.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: FontUtility.body.copyWith(
+                            fontSize: 12,
+                            color: Colors.black54,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
                 if (hasCustomer)
                   IconButton(
-                    tooltip: 'Clear customer',
+                    tooltip: context.l10n.commonClearCustomer,
                     visualDensity: VisualDensity.compact,
                     onPressed: _isCheckingOut ? null : _clearBillingCustomer,
                     icon: const Icon(Icons.close_rounded, size: 20),
                   )
                 else
                   IconButton(
-                    tooltip: 'Select customer',
+                    tooltip: context.l10n.commonSelectCustomer,
                     visualDensity: VisualDensity.compact,
                     onPressed: _isCheckingOut ? null : _pickBillingCustomer,
                     icon: const Icon(
@@ -401,8 +403,9 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
 
   Future<_CreditCheckoutChoice?> _promptCreditPlan({
     required double remaining,
-    String paymentLabel = 'Credit',
+    String? paymentLabel,
   }) async {
+    final resolvedPaymentLabel = paymentLabel ?? context.l10n.commonCredit;
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return null;
     final setupStore = DeviceSetupStore(prefs);
@@ -418,7 +421,9 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text('$paymentLabel sale'),
+              title: Text(
+                context.l10n.billingPaymentSale(resolvedPaymentLabel),
+              ),
               content: SizedBox(
                 width: 420,
                 child: SingleChildScrollView(
@@ -427,23 +432,28 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Remaining on credit: ${PosCurrency.format(remaining)}',
+                        context.l10n.billingRemainingOnCredit(
+                          PosCurrency.format(remaining),
+                        ),
                         style: FontUtility.body,
                       ),
                       const SizedBox(height: 16),
-                      Text('Plan', style: FontUtility.subheading),
+                      Text(
+                        context.l10n.commonPlan,
+                        style: FontUtility.subheading,
+                      ),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         children: [
                           ChoiceChip(
-                            label: const Text('One-shot'),
+                            label: Text(context.l10n.creditsOneShot),
                             selected: mode == 'oneshot',
                             onSelected: (_) =>
                                 setDialogState(() => mode = 'oneshot'),
                           ),
                           ChoiceChip(
-                            label: const Text('Installments'),
+                            label: Text(context.l10n.creditsInstallments),
                             selected: mode == 'installments',
                             onSelected: (_) =>
                                 setDialogState(() => mode = 'installments'),
@@ -452,22 +462,27 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                       ),
                       const SizedBox(height: 16),
                       if (mode == 'oneshot') ...[
-                        Text('Due date (optional)',
-                            style: FontUtility.subheading),
+                        Text(
+                          context.l10n.commonDueDateOptional,
+                          style: FontUtility.subheading,
+                        ),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
                           children: [
                             for (final days in {
-                                  0,
-                                  7,
-                                  14,
-                                  30,
-                                  defaultNetDays,
-                                }.toList()
-                                  ..sort())
+                              0,
+                              7,
+                              14,
+                              30,
+                              defaultNetDays,
+                            }.toList()..sort())
                               ChoiceChip(
-                                label: Text(days == 0 ? 'None' : 'Net $days'),
+                                label: Text(
+                                  days == 0
+                                      ? context.l10n.commonNone
+                                      : context.l10n.commonNetDays(days),
+                                ),
                                 selected: dueInDays == days,
                                 onSelected: (_) =>
                                     setDialogState(() => dueInDays = days),
@@ -475,7 +490,10 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                           ],
                         ),
                       ] else ...[
-                        Text('Payments', style: FontUtility.subheading),
+                        Text(
+                          context.l10n.commonPayments,
+                          style: FontUtility.subheading,
+                        ),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
@@ -491,19 +509,22 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        Text('Frequency', style: FontUtility.subheading),
+                        Text(
+                          context.l10n.commonFrequency,
+                          style: FontUtility.subheading,
+                        ),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
                           children: [
                             ChoiceChip(
-                              label: const Text('Weekly'),
+                              label: Text(context.l10n.commonWeekly),
                               selected: cadence == 'weekly',
                               onSelected: (_) =>
                                   setDialogState(() => cadence = 'weekly'),
                             ),
                             ChoiceChip(
-                              label: const Text('Monthly'),
+                              label: Text(context.l10n.commonMonthly),
                               selected: cadence == 'monthly',
                               onSelected: (_) =>
                                   setDialogState(() => cadence = 'monthly'),
@@ -518,7 +539,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancel'),
+                  child: Text(context.l10n.actionCancel),
                 ),
                 FilledButton(
                   onPressed: () {
@@ -526,14 +547,16 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                       dialogContext,
                       _CreditCheckoutChoice(
                         dueInDays: mode == 'oneshot' ? dueInDays : null,
-                        installmentCount:
-                            mode == 'installments' ? installmentCount : null,
-                        installmentCadence:
-                            mode == 'installments' ? cadence : null,
+                        installmentCount: mode == 'installments'
+                            ? installmentCount
+                            : null,
+                        installmentCadence: mode == 'installments'
+                            ? cadence
+                            : null,
                       ),
                     );
                   },
-                  child: const Text('Continue'),
+                  child: Text(context.l10n.actionContinue),
                 ),
               ],
             );
@@ -544,9 +567,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
   }
 
   /// Converts remaining balance into a credit tender after customer + plan.
-  Future<bool> _attachRemainingAsCredit({
-    required double remaining,
-  }) async {
+  Future<bool> _attachRemainingAsCredit({required double remaining}) async {
     if (remaining <= 0.0001) return true;
 
     final ready = await _ensureCreditCustomer(remaining: remaining);
@@ -555,10 +576,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     final plan = await _promptCreditPlan(remaining: remaining);
     if (!mounted) return false;
     if (plan == null) {
-      PosToast.failed(
-        context,
-        detail: 'Credit cancelled. Checkout was not completed.',
-      );
+      PosToast.failed(context, detail: context.l10n.billingCreditCancelled);
       return false;
     }
 
@@ -576,7 +594,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       _tenders.add(
         _TenderLine(
           paymentMethod: StoreOrderPaymentMode.credit,
-          paymentLabel: 'Credit',
+          paymentLabel: context.l10n.commonCredit,
           amount: double.parse(remaining.toStringAsFixed(2)),
           creditDueInDays: plan.dueInDays,
           creditInstallmentCount: plan.installmentCount,
@@ -610,14 +628,16 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
               ),
             )
             .toList(growable: false),
-        orderType: (widget.orderArgs.orderTypeKey != null &&
+        orderType:
+            (widget.orderArgs.orderTypeKey != null &&
                 widget.orderArgs.orderTypeKey!.trim().isNotEmpty)
             ? widget.orderArgs.orderTypeKey!.trim()
             : widget.orderArgs.orderType,
         customerName: _customerName ?? widget.orderArgs.name,
         customerPhone: _customerPhone ?? widget.orderArgs.phone,
         customerEmail: _customerEmail ?? widget.orderArgs.email,
-        customerUniqueId: _customerUniqueId ?? widget.orderArgs.customerUniqueId,
+        customerUniqueId:
+            _customerUniqueId ?? widget.orderArgs.customerUniqueId,
         tableId: widget.orderArgs.table,
         tipsAmount: state.tipsAmount,
         serviceTaxAmount: state.serviceTaxValue,
@@ -626,11 +646,17 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       );
       if (!mounted) return;
       cartBloc.add(ClearCart());
-      PosToast.success(context, detail: 'Draft order #$orderId saved.');
+      PosToast.success(
+        context,
+        detail: context.l10n.billingDraftSaved(orderId),
+      );
       navigator.popUntil((route) => route.isFirst);
     } catch (error) {
       if (!mounted) return;
-      PosToast.failed(context, detail: 'Could not save draft: $error');
+      PosToast.failed(
+        context,
+        detail: context.l10n.errorCouldNotSaveDraft(error.toString()),
+      );
     } finally {
       if (mounted) setState(() => _isCheckingOut = false);
     }
@@ -651,15 +677,19 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       var remaining = _remainingDue(state.netTotal);
       if (_tenders.isEmpty && remaining > 0.0001 && !allowBalanceDue) {
         if (!mounted) return;
-        PosToast.failed(context, detail: 'Add at least one payment first.');
+        PosToast.failed(
+          context,
+          detail: context.l10n.billingAddOnePaymentFirst,
+        );
         return;
       }
       if (remaining > 0.0001 && !allowBalanceDue) {
         if (!mounted) return;
         PosToast.failed(
           context,
-          detail:
-              'Remaining ${PosCurrency.format(remaining)}. Add another payment or place with balance due.',
+          detail: context.l10n.billingRemainingAddPayment(
+            PosCurrency.format(remaining),
+          ),
         );
         return;
       }
@@ -672,8 +702,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
         if (remaining > 0.0001) {
           PosToast.failed(
             context,
-            detail:
-                'Could not place remaining balance on credit. Checkout cancelled.',
+            detail: context.l10n.billingCreditPlaceFailed,
           );
           return;
         }
@@ -682,11 +711,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       remaining = _remainingDue(state.netTotal);
       if (_tenders.isEmpty || remaining > 0.0001) {
         if (!mounted) return;
-        PosToast.failed(
-          context,
-          detail:
-              'Cover the full amount or put the balance on credit with a customer.',
-        );
+        PosToast.failed(context, detail: context.l10n.billingCoverFullOrCredit);
         return;
       }
 
@@ -699,7 +724,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
         if (!mounted) return;
         PosToast.failed(
           context,
-          detail: 'Credit payment needs a customer. Select a customer and try again.',
+          detail: context.l10n.billingCreditNeedsCustomer,
         );
         return;
       }
@@ -719,8 +744,8 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
   }) async {
     if (_tenders.isNotEmpty) {
       context.read<CartBloc>().add(
-            SelectPaymentMethod(_tenders.first.paymentMethod),
-          );
+        SelectPaymentMethod(_tenders.first.paymentMethod),
+      );
     }
 
     final navigator = Navigator.of(context);
@@ -756,7 +781,8 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
               ),
             )
             .toList(growable: false),
-        orderType: (widget.orderArgs.orderTypeKey != null &&
+        orderType:
+            (widget.orderArgs.orderTypeKey != null &&
                 widget.orderArgs.orderTypeKey!.trim().isNotEmpty)
             ? widget.orderArgs.orderTypeKey!.trim()
             : widget.orderArgs.orderType,
@@ -783,10 +809,16 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
         (line) => line.paymentMethod == StoreOrderPaymentMode.credit,
       );
       final detail = usedCredit
-          ? 'Order #${result.orderId} — balance added to customer credit'
+          ? context.l10n.billingOrderCreditBalance(result.orderId)
           : result.balanceDue > 0.0001
-              ? 'Order #${result.orderId} placed with balance ${PosCurrency.format(result.balanceDue)}'
-              : 'Order #${result.orderId} paid via ${result.paymentMode}';
+          ? context.l10n.billingOrderPlacedBalance(
+              result.orderId,
+              PosCurrency.format(result.balanceDue),
+            )
+          : context.l10n.billingOrderPaidVia(
+              result.orderId,
+              result.paymentMode,
+            );
       PosToast.success(context, detail: detail);
 
       navigator.pushReplacement(
@@ -799,7 +831,10 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       );
     } catch (error) {
       if (!mounted) return;
-      PosToast.failed(context, detail: 'Checkout failed: $error');
+      PosToast.failed(
+        context,
+        detail: context.l10n.errorCheckoutFailed(error.toString()),
+      );
     }
   }
 
@@ -814,8 +849,10 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          insetPadding:
-              const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 40,
+            vertical: 24,
+          ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: Padding(
@@ -824,7 +861,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Remaining',
+                    context.l10n.commonRemaining,
                     style: FontUtility.body.copyWith(
                       fontSize: 12,
                       color: Colors.grey.shade600,
@@ -863,7 +900,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                         ),
                       ),
                       child: Text(
-                        'COMPLETE',
+                        context.l10n.billingComplete,
                         style: FontUtility.heading.copyWith(
                           color: Colors.white,
                           fontSize: 15,
@@ -886,7 +923,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                         ),
                       ),
                       child: Text(
-                        'ADD PAYMENT',
+                        context.l10n.billingAddPayment,
                         style: FontUtility.heading.copyWith(fontSize: 15),
                       ),
                     ),
@@ -895,7 +932,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                   TextButton(
                     onPressed: () => Navigator.pop(dialogContext),
                     child: Text(
-                      'Cancel',
+                      context.l10n.actionCancel,
                       style: FontUtility.subheading.copyWith(
                         color: Colors.grey.shade600,
                       ),
@@ -919,7 +956,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
 
     final remaining = _remainingDue(state.netTotal);
     if (remaining <= 0.0001) {
-      PosToast.failed(context, detail: 'Order is already fully covered.');
+      PosToast.failed(context, detail: context.l10n.billingOrderFullyCovered);
       return;
     }
 
@@ -958,8 +995,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     }
 
     if (isCredit) {
-      final customerReady =
-          await _ensureCreditCustomer(remaining: remaining);
+      final customerReady = await _ensureCreditCustomer(remaining: remaining);
       if (!customerReady || !mounted) return;
       final value = await _promptCreditPlan(
         remaining: remaining,
@@ -979,8 +1015,8 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
         remainingAmount: remaining,
         paymentMode: paymentMethod,
         paymentLabel: paymentLabel,
-        title: 'Add payment',
-        confirmLabel: 'Add payment',
+        title: context.l10n.billingAddPaymentTitle,
+        confirmLabel: context.l10n.billingAddPaymentTitle,
       ),
     );
     if (!mounted || added == null) return;
@@ -1020,11 +1056,12 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
+          tooltip: context.l10n.actionBack,
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: _isCheckingOut ? null : () => Navigator.pop(context),
         ),
         title: Text(
-          'Billing & Payment',
+          context.l10n.billingTitle,
           style: FontUtility.heading.copyWith(fontSize: 20),
         ),
         centerTitle: false,
@@ -1040,7 +1077,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
               if (state.cartItems.isEmpty) {
                 return Center(
                   child: Text(
-                    'No items to bill.',
+                    context.l10n.billingNoItems,
                     style: FontUtility.heading.copyWith(color: Colors.grey),
                   ),
                 );
@@ -1071,9 +1108,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                           children: [
                             _buildCustomerPickerRow(),
                             const SizedBox(height: 14),
-                            Expanded(
-                              child: _buildRightPanel(context, state),
-                            ),
+                            Expanded(child: _buildRightPanel(context, state)),
                           ],
                         ),
                       ),
@@ -1086,16 +1121,16 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
           if (_isCheckingOut)
             Container(
               color: Colors.black.withOpacity(0.25),
-              child: const Center(
+              child: Center(
                 child: Card(
                   child: Padding(
-                    padding: EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(24),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text('Completing checkout...'),
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text(context.l10n.billingCompletingCheckout),
                       ],
                     ),
                   ),
@@ -1131,16 +1166,15 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
           child: _squareActionCard(
             icon: Icons.percent_rounded,
             label: state.discounts.isEmpty
-                ? 'Add Discount'
+                ? context.l10n.billingAddDiscount
                 : state.discounts.length == 1
-                    ? state.discounts.first.title
-                    : 'Discounts (${state.discounts.length})',
+                ? state.discounts.first.title
+                : context.l10n.billingDiscountsCount(state.discounts.length),
             active: state.discounts.isNotEmpty,
             onTap: _isCheckingOut
                 ? null
-                : () => setState(
-                      () => _rightPanelMode = RightPanelMode.discount,
-                    ),
+                : () =>
+                      setState(() => _rightPanelMode = RightPanelMode.discount),
           ),
         ),
         const SizedBox(width: 12),
@@ -1148,14 +1182,14 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
           child: _squareActionCard(
             icon: Icons.receipt_long_rounded,
             label: state.serviceTaxPercentage > 0
-                ? 'Tax ${state.serviceTaxPercentage.toStringAsFixed(0)}%'
-                : 'Service Tax',
+                ? context.l10n.billingTaxPct(
+                    state.serviceTaxPercentage.toStringAsFixed(0),
+                  )
+                : context.l10n.billingServiceTaxLabel,
             active: state.serviceTaxPercentage > 0,
             onTap: _isCheckingOut
                 ? null
-                : () => setState(
-                      () => _rightPanelMode = RightPanelMode.tax,
-                    ),
+                : () => setState(() => _rightPanelMode = RightPanelMode.tax),
           ),
         ),
         const SizedBox(width: 12),
@@ -1163,14 +1197,14 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
           child: _squareActionCard(
             icon: Icons.volunteer_activism_rounded,
             label: state.tipsAmount > 0
-                ? 'Tips ${PosCurrency.format(state.tipsAmount)}'
-                : 'Add Tips',
+                ? context.l10n.billingTipsAmount(
+                    PosCurrency.format(state.tipsAmount),
+                  )
+                : context.l10n.billingAddTips,
             active: state.tipsAmount > 0,
             onTap: _isCheckingOut
                 ? null
-                : () => setState(
-                      () => _rightPanelMode = RightPanelMode.tips,
-                    ),
+                : () => setState(() => _rightPanelMode = RightPanelMode.tips),
           ),
         ),
       ],
@@ -1210,11 +1244,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                productsTable,
-                const SizedBox(height: 14),
-                actionRow,
-              ],
+              children: [productsTable, const SizedBox(height: 14), actionRow],
             ),
           ),
         ),
@@ -1280,19 +1310,23 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       case RightPanelMode.discount:
         return _DiscountPanel(
           state: state,
-          onDone: () => setState(() => _rightPanelMode = RightPanelMode.payment),
+          onDone: () =>
+              setState(() => _rightPanelMode = RightPanelMode.payment),
         );
 
       case RightPanelMode.tax:
         return Column(
           children: [
             CalculationInputSection(
-              title: 'Apply Service Tax',
-              placeholder: 'Enter tax percentage (1-100)',
+              title: context.l10n.billingApplyServiceTax,
+              placeholder: context.l10n.billingTaxPlaceholder,
               onApply: (val) {
                 context.read<CartBloc>().add(ApplyServiceTax(val));
                 setState(() => _rightPanelMode = RightPanelMode.payment);
-                PosToast.success(context, detail: 'Service tax applied');
+                PosToast.success(
+                  context,
+                  detail: context.l10n.billingServiceTaxApplied,
+                );
               },
               onCancel: () {
                 setState(() => _rightPanelMode = RightPanelMode.payment);
@@ -1307,11 +1341,11 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                 },
                 icon: const Icon(Icons.delete_outline, color: Colors.red),
                 label: Text(
-                  'Remove Existing Tax',
+                  context.l10n.billingRemoveExistingTax,
                   style: FontUtility.subheading.copyWith(color: Colors.red),
                 ),
-              )
-            ]
+              ),
+            ],
           ],
         );
 
@@ -1319,13 +1353,16 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
         return Column(
           children: [
             CalculationInputSection(
-              title: 'Add Tips',
-              placeholder: 'Enter tip amount',
+              title: context.l10n.billingAddTips,
+              placeholder: context.l10n.billingTipsPlaceholder,
               isAmount: true,
               onApply: (val) {
                 context.read<CartBloc>().add(ApplyTips(val));
                 setState(() => _rightPanelMode = RightPanelMode.payment);
-                PosToast.success(context, detail: 'Tips applied');
+                PosToast.success(
+                  context,
+                  detail: context.l10n.billingTipsApplied,
+                );
               },
               onCancel: () {
                 setState(() => _rightPanelMode = RightPanelMode.payment);
@@ -1340,11 +1377,11 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                 },
                 icon: const Icon(Icons.delete_outline, color: Colors.red),
                 label: Text(
-                  'Remove Tips',
+                  context.l10n.billingRemoveTips,
                   style: FontUtility.subheading.copyWith(color: Colors.red),
                 ),
-              )
-            ]
+              ),
+            ],
           ],
         );
 
@@ -1365,7 +1402,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Remaining',
+                      context.l10n.commonRemaining,
                       style: FontUtility.body.copyWith(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -1387,7 +1424,9 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            'To pay  ${PosCurrency.format(state.netTotal)}',
+                            context.l10n.billingToPay(
+                              PosCurrency.format(state.netTotal),
+                            ),
                             style: FontUtility.subheading.copyWith(
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
@@ -1395,7 +1434,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                           ),
                         ),
                         Text(
-                          'Paid  ${PosCurrency.format(covered)}',
+                          context.l10n.billingPaid(PosCurrency.format(covered)),
                           style: FontUtility.subheading.copyWith(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
@@ -1425,18 +1464,19 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                                     Expanded(
                                       child: Text(
                                         '${_tenders[i].paymentLabel}  ${PosCurrency.format(_tenders[i].amount)}',
-                                        style: FontUtility.subheading
-                                            .copyWith(fontSize: 13),
+                                        style: FontUtility.subheading.copyWith(
+                                          fontSize: 13,
+                                        ),
                                       ),
                                     ),
                                     IconButton(
-                                      tooltip: 'Remove',
+                                      tooltip: context.l10n.actionRemove,
                                       visualDensity: VisualDensity.compact,
                                       onPressed: _isCheckingOut
                                           ? null
                                           : () => setState(
-                                                () => _tenders.removeAt(i),
-                                              ),
+                                              () => _tenders.removeAt(i),
+                                            ),
                                       icon: const Icon(
                                         Icons.close_rounded,
                                         size: 18,
@@ -1455,53 +1495,45 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                       child: _walletsLoading
                           ? const Center(child: CircularProgressIndicator())
                           : _wallets.isEmpty
-                              ? Center(
-                                  child: Text(
-                                    _walletsError ??
-                                        'No payment methods configured.',
-                                    style:
-                                        FontUtility.body.copyWith(fontSize: 12),
-                                  ),
-                                )
-                              : ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: _wallets.length,
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(width: 12),
-                                  itemBuilder: (context, index) {
-                                    final wallet = _wallets[index];
-                                    final label = wallet.label.trim().isEmpty
-                                        ? wallet.paymentMode
-                                        : wallet.label.trim();
-                                    final selected =
-                                        _selectedWallet?.localId ==
-                                            wallet.localId;
-                                    return _WalletPayButton(
-                                      label: label,
-                                      icon: _iconForPaymentMode(
-                                        wallet.paymentMode,
-                                      ),
-                                      selected: selected,
-                                      onTap: _isCheckingOut ||
-                                              remaining <= 0.0001
-                                          ? null
-                                          : () {
-                                              setState(() {
-                                                _selectedWallet = wallet;
-                                                if (_tenderAmountController
-                                                    .text
-                                                    .trim()
-                                                    .isEmpty) {
-                                                  _tenderAmountController
-                                                          .text =
-                                                      remaining
-                                                          .toStringAsFixed(2);
-                                                }
-                                              });
-                                            },
-                                    );
-                                  },
-                                ),
+                          ? Center(
+                              child: Text(
+                                _walletsError ??
+                                    context.l10n.billingNoPaymentMethods,
+                                style: FontUtility.body.copyWith(fontSize: 12),
+                              ),
+                            )
+                          : ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: _wallets.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 12),
+                              itemBuilder: (context, index) {
+                                final wallet = _wallets[index];
+                                final label = wallet.label.trim().isEmpty
+                                    ? wallet.paymentMode
+                                    : wallet.label.trim();
+                                final selected =
+                                    _selectedWallet?.localId == wallet.localId;
+                                return _WalletPayButton(
+                                  label: label,
+                                  icon: _iconForPaymentMode(wallet.paymentMode),
+                                  selected: selected,
+                                  onTap: _isCheckingOut || remaining <= 0.0001
+                                      ? null
+                                      : () {
+                                          setState(() {
+                                            _selectedWallet = wallet;
+                                            if (_tenderAmountController.text
+                                                .trim()
+                                                .isEmpty) {
+                                              _tenderAmountController.text =
+                                                  remaining.toStringAsFixed(2);
+                                            }
+                                          });
+                                        },
+                                );
+                              },
+                            ),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -1515,19 +1547,19 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                                 ? null
                                 : () {
                                     setState(() {
-                                      _tenderAmountController.text =
-                                          denom.toStringAsFixed(2);
+                                      _tenderAmountController.text = denom
+                                          .toStringAsFixed(2);
                                     });
                                   },
                           ),
                         _DenomButton(
-                          label: 'Exact',
+                          label: context.l10n.commonExact,
                           onPressed: _isCheckingOut || remaining <= 0.0001
                               ? null
                               : () {
                                   setState(() {
-                                    _tenderAmountController.text =
-                                        remaining.toStringAsFixed(2);
+                                    _tenderAmountController.text = remaining
+                                        .toStringAsFixed(2);
                                   });
                                 },
                         ),
@@ -1540,10 +1572,8 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                         Expanded(
                           child: TextField(
                             controller: _tenderAmountController,
-                            enabled:
-                                !_isCheckingOut && remaining > 0.0001,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(
+                            enabled: !_isCheckingOut && remaining > 0.0001,
+                            keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
                             style: FontUtility.heading.copyWith(fontSize: 22),
@@ -1566,41 +1596,48 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                           width: 56,
                           height: 56,
                           child: Material(
-                            color: (_isCheckingOut ||
+                            color:
+                                (_isCheckingOut ||
                                     remaining <= 0.0001 ||
                                     _selectedWallet == null ||
                                     typedAmount <= 0)
                                 ? Colors.grey.shade300
                                 : const Color(0xFF4A00E0),
                             borderRadius: BorderRadius.circular(14),
-                            elevation: (_isCheckingOut ||
+                            elevation:
+                                (_isCheckingOut ||
                                     remaining <= 0.0001 ||
                                     _selectedWallet == null ||
                                     typedAmount <= 0)
                                 ? 0
                                 : 3,
                             shadowColor: Colors.black.withValues(alpha: 0.25),
-                            child: InkWell(
-                              onTap: _isCheckingOut ||
-                                      remaining <= 0.0001 ||
-                                      _selectedWallet == null ||
-                                      typedAmount <= 0
-                                  ? null
-                                  : () => _addInlineTender(
+                            child: Tooltip(
+                              message: context.l10n.billingAddPayment,
+                              child: InkWell(
+                                onTap:
+                                    _isCheckingOut ||
+                                        remaining <= 0.0001 ||
+                                        _selectedWallet == null ||
+                                        typedAmount <= 0
+                                    ? null
+                                    : () => _addInlineTender(
                                         context,
                                         state,
                                         remaining,
                                       ),
-                              borderRadius: BorderRadius.circular(14),
-                              child: Icon(
-                                Icons.add_rounded,
-                                size: 30,
-                                color: (_isCheckingOut ||
-                                        remaining <= 0.0001 ||
-                                        _selectedWallet == null ||
-                                        typedAmount <= 0)
-                                    ? Colors.grey.shade600
-                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                child: Icon(
+                                  Icons.add_rounded,
+                                  size: 30,
+                                  color:
+                                      (_isCheckingOut ||
+                                          remaining <= 0.0001 ||
+                                          _selectedWallet == null ||
+                                          typedAmount <= 0)
+                                      ? Colors.grey.shade600
+                                      : Colors.white,
+                                ),
                               ),
                             ),
                           ),
@@ -1620,7 +1657,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Change',
+                              context.l10n.actionChange,
                               style: FontUtility.subheading.copyWith(
                                 color: Colors.green.shade800,
                               ),
@@ -1649,10 +1686,11 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                     ? null
                     : () async {
                         // Include typed tender when deciding Complete vs balance.
-                        final coversDue = remaining <= 0.0001 ||
+                        final coversDue =
+                            remaining <= 0.0001 ||
                             typedAmount + 0.0001 >= remaining;
-                        final creditWalletSelected = _selectedWallet
-                                ?.paymentMode ==
+                        final creditWalletSelected =
+                            _selectedWallet?.paymentMode ==
                             StoreOrderPaymentMode.credit;
                         if (!coversDue) {
                           // Partial typed amount: commit it, then place remainder on credit.
@@ -1701,8 +1739,8 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                 ),
                 child: Text(
                   (remaining <= 0.0001 || typedAmount + 0.0001 >= remaining)
-                      ? 'COMPLETE'
-                      : 'PLACE WITH BALANCE',
+                      ? context.l10n.billingComplete
+                      : context.l10n.billingPlaceWithBalance,
                   style: FontUtility.heading.copyWith(
                     color: Colors.white,
                     fontSize: 18,
@@ -1717,17 +1755,17 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                 onPressed: _isCheckingOut
                     ? null
                     : () => _completeCheckout(
-                          context,
-                          state,
-                          allowBalanceDue: true,
-                        ),
-                child: const Text('Place full amount on credit'),
+                        context,
+                        state,
+                        allowBalanceDue: true,
+                      ),
+                child: Text(context.l10n.billingPlaceFullOnCredit),
               ),
               TextButton(
                 onPressed: _isCheckingOut
                     ? null
                     : () => _saveDraft(context, state),
-                child: const Text('Save as Draft'),
+                child: Text(context.l10n.billingSaveAsDraft),
               ),
             ],
           ],
@@ -1750,14 +1788,13 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     if (!isCash && amount - remaining > 0.0001) {
       amount = remaining;
     }
-    final applied = isCash
-        ? (amount > remaining ? remaining : amount)
-        : amount;
+    final applied = isCash ? (amount > remaining ? remaining : amount) : amount;
     if (applied <= 0.0001) return false;
 
     final paymentMethod = wallet.paymentMode;
-    final paymentLabel =
-        wallet.label.trim().isEmpty ? wallet.paymentMode : wallet.label.trim();
+    final paymentLabel = wallet.label.trim().isEmpty
+        ? wallet.paymentMode
+        : wallet.label.trim();
     if (paymentMethod == StoreOrderPaymentMode.credit) {
       final before = _tenders.length;
       await _addPaymentFromWallet(context, state, wallet);
@@ -1773,8 +1810,9 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
         ),
       );
       final nextRemaining = _remainingDue(state.netTotal);
-      _tenderAmountController.text =
-          nextRemaining > 0.0001 ? nextRemaining.toStringAsFixed(2) : '';
+      _tenderAmountController.text = nextRemaining > 0.0001
+          ? nextRemaining.toStringAsFixed(2)
+          : '';
     });
     return true;
   }
@@ -1791,10 +1829,16 @@ class _DiscountPanel extends StatefulWidget {
 }
 
 class _DiscountPanelState extends State<_DiscountPanel> {
-  final _titleController = TextEditingController(text: 'Discount');
+  late final TextEditingController _titleController;
   final _percentController = TextEditingController();
   String? _selectedItemSignature;
   bool _userEditedTitle = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: context.l10n.commonDiscount);
+  }
 
   @override
   void dispose() {
@@ -1808,7 +1852,7 @@ class _DiscountPanelState extends State<_DiscountPanel> {
       _selectedItemSignature = signature;
       if (!_userEditedTitle) {
         if (signature == null) {
-          _titleController.text = 'Discount';
+          _titleController.text = context.l10n.commonDiscount;
         } else {
           final item = widget.state.cartItems.firstWhere(
             (c) => c.lineSignature == signature,
@@ -1822,10 +1866,7 @@ class _DiscountPanelState extends State<_DiscountPanel> {
   void _apply() {
     final pct = double.tryParse(_percentController.text.trim());
     if (pct == null || pct <= 0 || pct > 100) {
-      PosToast.failed(
-        context,
-        detail: 'Enter a discount percentage between 1 and 100',
-      );
+      PosToast.failed(context, detail: context.l10n.billingInvalidDiscountPct);
       return;
     }
     String? itemName;
@@ -1838,18 +1879,20 @@ class _DiscountPanelState extends State<_DiscountPanel> {
       }
     }
     final title = _titleController.text.trim().isEmpty
-        ? (itemName == null ? 'Discount' : '$itemName -discount')
+        ? (itemName == null
+              ? context.l10n.commonDiscount
+              : '$itemName -discount')
         : _titleController.text.trim();
     context.read<CartBloc>().add(
-          ApplyDiscount(
-            pct,
-            title: title,
-            targetLineSignature: _selectedItemSignature,
-            targetItemName: itemName,
-          ),
-        );
+      ApplyDiscount(
+        pct,
+        title: title,
+        targetLineSignature: _selectedItemSignature,
+        targetItemName: itemName,
+      ),
+    );
     _percentController.clear();
-    PosToast.success(context, detail: 'Added "$title"');
+    PosToast.success(context, detail: context.l10n.billingDiscountAdded(title));
   }
 
   @override
@@ -1863,11 +1906,12 @@ class _DiscountPanelState extends State<_DiscountPanel> {
             children: [
               Expanded(
                 child: Text(
-                  'Add Discount',
+                  context.l10n.billingAddDiscount,
                   style: FontUtility.heading.copyWith(fontSize: 18),
                 ),
               ),
               IconButton(
+                tooltip: context.l10n.actionClose,
                 onPressed: widget.onDone,
                 icon: const Icon(Icons.close_rounded, color: Colors.grey),
               ),
@@ -1875,7 +1919,7 @@ class _DiscountPanelState extends State<_DiscountPanel> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Apply to',
+            context.l10n.billingApplyTo,
             style: FontUtility.body.copyWith(color: Colors.black54),
           ),
           const SizedBox(height: 8),
@@ -1889,9 +1933,9 @@ class _DiscountPanelState extends State<_DiscountPanel> {
               ),
             ),
             items: [
-              const DropdownMenuItem<String?>(
+              DropdownMenuItem<String?>(
                 value: null,
-                child: Text('Entire order'),
+                child: Text(context.l10n.billingEntireOrder),
               ),
               for (final item in state.cartItems)
                 DropdownMenuItem<String?>(
@@ -1909,8 +1953,8 @@ class _DiscountPanelState extends State<_DiscountPanel> {
             controller: _titleController,
             onChanged: (_) => _userEditedTitle = true,
             decoration: InputDecoration(
-              labelText: 'Title',
-              hintText: 'Discount',
+              labelText: context.l10n.commonTitleLabel,
+              hintText: context.l10n.commonDiscount,
               filled: true,
               fillColor: Colors.grey.shade50,
               border: OutlineInputBorder(
@@ -1923,8 +1967,8 @@ class _DiscountPanelState extends State<_DiscountPanel> {
             controller: _percentController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
-              labelText: 'Percentage',
-              hintText: '1-100',
+              labelText: context.l10n.commonPercentage,
+              hintText: context.l10n.billingPercentageHint,
               suffixText: '%',
               filled: true,
               fillColor: Colors.grey.shade50,
@@ -1944,12 +1988,12 @@ class _DiscountPanelState extends State<_DiscountPanel> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('ADD DISCOUNT'),
+            child: Text(context.l10n.billingAddDiscountCaps),
           ),
           if (state.discounts.isNotEmpty) ...[
             const SizedBox(height: 20),
             Text(
-              'Applied discounts',
+              context.l10n.billingAppliedDiscounts,
               style: FontUtility.subheading.copyWith(fontSize: 15),
             ),
             const SizedBox(height: 8),
@@ -1962,11 +2006,12 @@ class _DiscountPanelState extends State<_DiscountPanel> {
                   '-${PosCurrency.format(state.amountForDiscount(discount))}',
                 ),
                 trailing: IconButton(
+                  tooltip: context.l10n.actionRemove,
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   onPressed: () {
-                    context
-                        .read<CartBloc>()
-                        .add(RemoveDiscount(discountId: discount.id));
+                    context.read<CartBloc>().add(
+                      RemoveDiscount(discountId: discount.id),
+                    );
                   },
                 ),
               ),
@@ -1975,16 +2020,11 @@ class _DiscountPanelState extends State<_DiscountPanel> {
                 context.read<CartBloc>().add(const RemoveDiscount());
               },
               child: Text(
-                'Remove all discounts',
+                context.l10n.billingRemoveAllDiscounts,
                 style: FontUtility.subheading.copyWith(color: Colors.red),
               ),
             ),
           ],
-          const SizedBox(height: 8),
-          OutlinedButton(
-            onPressed: widget.onDone,
-            child: const Text('Done'),
-          ),
         ],
       ),
     );

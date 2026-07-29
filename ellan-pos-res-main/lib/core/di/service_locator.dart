@@ -23,21 +23,29 @@ Future<void> initServiceLocator({required SharedPreferences prefs}) async {
 
   // Repository that wraps UiStoreController functionality
   if (!getIt.isRegistered<StoreRepositoryImpl>()) {
-    getIt.registerLazySingleton<StoreRepositoryImpl>(() =>
-        StoreRepositoryImpl(getIt<UiStoreController>(), getIt<SharedPreferences>()));
+    getIt.registerLazySingleton<StoreRepositoryImpl>(
+      () => StoreRepositoryImpl(
+        getIt<UiStoreController>(),
+        getIt<SharedPreferences>(),
+      ),
+    );
   }
 
   // Register use-cases
   if (!getIt.isRegistered<InitializeStore>()) {
-    getIt.registerLazySingleton<InitializeStore>(() => InitializeStore(getIt<StoreRepositoryImpl>()));
+    getIt.registerLazySingleton<InitializeStore>(
+      () => InitializeStore(getIt<StoreRepositoryImpl>()),
+    );
   }
 
   // Register StoreBloc as a singleton (global app state)
   if (!getIt.isRegistered<StoreBloc>()) {
-    getIt.registerLazySingleton<StoreBloc>(() => StoreBloc(
-          initializeStore: getIt<InitializeStore>(),
-          repository: getIt<StoreRepositoryImpl>(),
-        ));
+    getIt.registerLazySingleton<StoreBloc>(
+      () => StoreBloc(
+        initializeStore: getIt<InitializeStore>(),
+        repository: getIt<StoreRepositoryImpl>(),
+      ),
+    );
   }
 
   // Note: the legacy StoreRepository class was removed in favor of using

@@ -1,4 +1,7 @@
-import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'dart:async';
+
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,25 +18,29 @@ import '../data/signup_api.dart';
 import 'company_signup_state.dart';
 
 class CompanySignupCubit extends Cubit<CompanySignupState> {
-  CompanySignupCubit({
-    required this.prefs,
-    CompanySignupApi? api,
-  })  : _api = api ?? CompanySignupApi(),
-        super(CompanySignupState(
+  CompanySignupCubit({required this.prefs, CompanySignupApi? api})
+    : _api = api ?? CompanySignupApi(),
+      super(
+        CompanySignupState(
           serverUrl: kDefaultServerOrigin,
           parentOrgIdentifier: kDefaultRootOrgInstanceId,
-        ));
+        ),
+      ) {
+    if (kIsPosDiscoveryConfiguredByEnv) {
+      unawaited(continueFromServerParent());
+    }
+  }
 
   final SharedPreferences prefs;
   final CompanySignupApi _api;
 
-  static const progressSteps = <({String id, String label})>[
-    (id: 'creating_user', label: 'Creating user'),
-    (id: 'creating_company', label: 'Creating company'),
-    (id: 'setting_profile', label: 'Setting profile'),
-    (id: 'setting_up_branch', label: 'Setting up branch'),
-    (id: 'setting_up_account', label: 'Setting up account'),
-    (id: 'success', label: 'Congratulations — success'),
+  static const progressSteps = <({String id, String labelKey})>[
+    (id: 'creating_user', labelKey: 'signupProgressCreatingUser'),
+    (id: 'creating_company', labelKey: 'signupProgressCreatingCompany'),
+    (id: 'setting_profile', labelKey: 'signupProgressSettingProfile'),
+    (id: 'setting_up_branch', labelKey: 'signupProgressSettingBranch'),
+    (id: 'setting_up_account', labelKey: 'signupProgressSettingAccount'),
+    (id: 'success', labelKey: 'signupProgressSuccess'),
   ];
 
   DeviceSetupStore get _setupStore => DeviceSetupStore(prefs);
@@ -94,27 +101,35 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
     if (state.isSubmitting || state.isSuccess) return;
     switch (state.step) {
       case CompanySignupStep.companyDetails:
-        emit(state.copyWith(
-          step: CompanySignupStep.serverParent,
-          clearError: true,
-        ));
+        emit(
+          state.copyWith(
+            step: CompanySignupStep.serverParent,
+            clearError: true,
+          ),
+        );
       case CompanySignupStep.businessType:
-        emit(state.copyWith(
-          step: CompanySignupStep.companyDetails,
-          clearError: true,
-        ));
+        emit(
+          state.copyWith(
+            step: CompanySignupStep.companyDetails,
+            clearError: true,
+          ),
+        );
       case CompanySignupStep.branchDetails:
-        emit(state.copyWith(
-          step: CompanySignupStep.businessType,
-          clearError: true,
-        ));
+        emit(
+          state.copyWith(
+            step: CompanySignupStep.businessType,
+            clearError: true,
+          ),
+        );
       case CompanySignupStep.progress:
-        emit(state.copyWith(
-          step: CompanySignupStep.branchDetails,
-          clearError: true,
-          clearActiveProgress: true,
-          completedProgressIds: const [],
-        ));
+        emit(
+          state.copyWith(
+            step: CompanySignupStep.branchDetails,
+            clearError: true,
+            clearActiveProgress: true,
+            completedProgressIds: const [],
+          ),
+        );
       case CompanySignupStep.serverParent:
         break;
     }
@@ -125,11 +140,9 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
 
     final origin = discoveryOrigin(state.serverUrl.trim());
     setActiveDiscoveryUrl(origin);
-    emit(state.copyWith(
-      serverUrl: origin,
-      isLoadingMeta: true,
-      clearError: true,
-    ));
+    emit(
+      state.copyWith(serverUrl: origin, isLoadingMeta: true, clearError: true),
+    );
 
     try {
       final parent = await _api.resolveParent(state.parentOrgIdentifier.trim());
@@ -155,53 +168,57 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
           defaultCountry = meta.countries.first.id;
         }
       }
-      emit(state.copyWith(
-        isLoadingMeta: false,
-        parentOrgName: parent.name,
-        parentOrgIdentifier: parent.identifier.isNotEmpty
-            ? parent.identifier
-            : state.parentOrgIdentifier.trim(),
-        countries: meta.countries,
-        businessTypes: meta.businessTypes,
-        countryId: defaultCountry,
-        step: CompanySignupStep.companyDetails,
-      ));
+      emit(
+        state.copyWith(
+          isLoadingMeta: false,
+          parentOrgName: parent.name,
+          parentOrgIdentifier: parent.identifier.isNotEmpty
+              ? parent.identifier
+              : state.parentOrgIdentifier.trim(),
+          countries: meta.countries,
+          businessTypes: meta.businessTypes,
+          countryId: defaultCountry,
+          step: CompanySignupStep.companyDetails,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        isLoadingMeta: false,
-        errorMessage: _friendlyError(e),
-        errorCode: e is SignupApiException ? e.code : null,
-      ));
+      emit(
+        state.copyWith(
+          isLoadingMeta: false,
+          errorMessage: _friendlyError(e),
+          errorCode: e is SignupApiException ? e.code : null,
+        ),
+      );
     }
   }
 
   void continueFromCompanyDetails() {
     if (!state.canContinueCompanyDetails) return;
-    emit(state.copyWith(
-      step: CompanySignupStep.businessType,
-      clearError: true,
-    ));
+    emit(
+      state.copyWith(step: CompanySignupStep.businessType, clearError: true),
+    );
   }
 
   void continueFromBusinessType() {
     if (!state.canContinueBusinessType) return;
-    emit(state.copyWith(
-      step: CompanySignupStep.branchDetails,
-      clearError: true,
-    ));
+    emit(
+      state.copyWith(step: CompanySignupStep.branchDetails, clearError: true),
+    );
   }
 
   Future<void> submitBranchAndCreate() async {
     if (!state.canSubmitBranch || state.isSubmitting) return;
 
-    emit(state.copyWith(
-      step: CompanySignupStep.progress,
-      isSubmitting: true,
-      isSuccess: false,
-      completedProgressIds: const [],
-      activeProgressId: progressSteps.first.id,
-      clearError: true,
-    ));
+    emit(
+      state.copyWith(
+        step: CompanySignupStep.progress,
+        isSubmitting: true,
+        isSuccess: false,
+        completedProgressIds: const [],
+        activeProgressId: progressSteps.first.id,
+        clearError: true,
+      ),
+    );
 
     try {
       await _collectAndStoreDeviceInfo();
@@ -232,16 +249,20 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
       final completed = <String>[];
       for (final step in progressSteps) {
         if (step.id == 'success') break;
-        emit(state.copyWith(
-          activeProgressId: step.id,
-          completedProgressIds: List<String>.from(completed),
-        ));
+        emit(
+          state.copyWith(
+            activeProgressId: step.id,
+            completedProgressIds: List<String>.from(completed),
+          ),
+        );
         await Future<void>.delayed(const Duration(milliseconds: 450));
         completed.add(step.id);
-        emit(state.copyWith(
-          completedProgressIds: List<String>.from(completed),
-          clearActiveProgress: true,
-        ));
+        emit(
+          state.copyWith(
+            completedProgressIds: List<String>.from(completed),
+            clearActiveProgress: true,
+          ),
+        );
       }
 
       // Persist gateway + bootstrap so login works immediately.
@@ -293,23 +314,27 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
       );
 
       completed.add('success');
-      emit(state.copyWith(
-        isSubmitting: false,
-        isSuccess: true,
-        companyIdentifier: result.companyIdentifier,
-        orgInstanceId: result.orgInstanceId,
-        completedProgressIds: completed,
-        activeProgressId: null,
-        clearError: true,
-      ));
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          isSuccess: true,
+          companyIdentifier: result.companyIdentifier,
+          orgInstanceId: result.orgInstanceId,
+          completedProgressIds: completed,
+          activeProgressId: null,
+          clearError: true,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        isSubmitting: false,
-        isSuccess: false,
-        errorMessage: _friendlyError(e),
-        errorCode: e is SignupApiException ? e.code : null,
-        clearActiveProgress: true,
-      ));
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          isSuccess: false,
+          errorMessage: _friendlyError(e),
+          errorCode: e is SignupApiException ? e.code : null,
+          clearActiveProgress: true,
+        ),
+      );
     }
   }
 
@@ -327,9 +352,10 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
         _ => e.message,
       };
     }
-    return e
-        .toString()
-        .replaceFirst(RegExp(r'^(Bad state|StateError|Exception): '), '');
+    return e.toString().replaceFirst(
+      RegExp(r'^(Bad state|StateError|Exception): '),
+      '',
+    );
   }
 
   Future<void> _collectAndStoreDeviceInfo() async {

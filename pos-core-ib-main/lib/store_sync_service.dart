@@ -112,6 +112,43 @@ class StoreSyncService {
     return cursor.isEmpty ? null : cursor;
   }
 
+  String? _readLatestTimestamp(Map<String, dynamic> payload) {
+    final timestamps = <String>[];
+    void collect(dynamic value) {
+      if (value is Map) {
+        for (final key in [
+          'updated_on',
+          'updatedOn',
+          'updated_at',
+          'updatedAt',
+          'created_on',
+          'createdOn',
+          'created_at',
+          'createdAt',
+        ]) {
+          final raw = '${value[key] ?? ''}'.trim();
+          if (raw.isNotEmpty) {
+            timestamps.add(raw);
+          }
+        }
+        for (final entry in value.entries) {
+          collect(entry.value);
+        }
+      } else if (value is List) {
+        for (final item in value) {
+          collect(item);
+        }
+      }
+    }
+
+    collect(payload);
+    if (timestamps.isEmpty) {
+      return null;
+    }
+    timestamps.sort();
+    return timestamps.last;
+  }
+
   Future<_StoreSyncImportBatch> _fetchImportBatch(
     StoreScope scope,
     StoreSyncEndpointConfig config, {
@@ -717,15 +754,26 @@ class StoreSyncService {
   }) async {
     return _runOperation('products', 'import', (startedAt) async {
       final config = _store._config.sync.products;
+      final since = await _store._getSyncWatermark(scope, 'products');
+      var maxSeenUpdatedOn = <String>[];
       return _importInBatches(
         entity: 'products',
         startedAt: startedAt,
         scope: scope,
         config: config,
+        since: since,
         skipMessage: 'Products import URL is not configured.',
-        startMessage: 'Fetching products from remote server.',
+        startMessage: since == null
+            ? 'Fetching products from remote server.'
+            : 'Fetching product drifts since $since.',
         completeMessage: (processedCount) =>
             'Imported $processedCount product variants.',
+        onPayload: (payload) {
+          final timestamp = _readLatestTimestamp(payload);
+          if (timestamp != null) {
+            maxSeenUpdatedOn.add(timestamp);
+          }
+        },
         importBatch: (payload) async {
           var count = 0;
           for (final category
@@ -742,7 +790,13 @@ class StoreSyncService {
           return count;
         },
         onProgress: onProgress,
-      );
+      ).then((result) async {
+        if (result.success && !result.skipped && maxSeenUpdatedOn.isNotEmpty) {
+          final watermark = maxSeenUpdatedOn.toList()..sort();
+          await _store._setSyncWatermark(scope, 'products', watermark.last);
+        }
+        return result;
+      });
     }, onProgress: onProgress);
   }
 
@@ -781,22 +835,39 @@ class StoreSyncService {
   }) async {
     return _runOperation('customers', 'import', (startedAt) async {
       final config = _store._config.sync.customers;
+      final since = await _store._getSyncWatermark(scope, 'customers');
+      var maxSeenUpdatedOn = <String>[];
       return _importInBatches(
         entity: 'customers',
         startedAt: startedAt,
         scope: scope,
         config: config,
+        since: since,
         skipMessage: 'Customers import URL is not configured.',
-        startMessage: 'Fetching customers from remote server.',
+        startMessage: since == null
+            ? 'Fetching customers from remote server.'
+            : 'Fetching customer drifts since $since.',
         completeMessage: (processedCount) =>
             'Imported $processedCount customers and roles.',
+        onPayload: (payload) {
+          final timestamp = _readLatestTimestamp(payload);
+          if (timestamp != null) {
+            maxSeenUpdatedOn.add(timestamp);
+          }
+        },
         importBatch: (payload) async {
           final customers = Store._extractRowList(payload['data']);
           await _store._importCustomersFromData(scope, payload);
           return customers.length;
         },
         onProgress: onProgress,
-      );
+      ).then((result) async {
+        if (result.success && !result.skipped && maxSeenUpdatedOn.isNotEmpty) {
+          final watermark = maxSeenUpdatedOn.toList()..sort();
+          await _store._setSyncWatermark(scope, 'customers', watermark.last);
+        }
+        return result;
+      });
     }, onProgress: onProgress);
   }
 
@@ -806,22 +877,39 @@ class StoreSyncService {
   }) async {
     return _runOperation('credits', 'import', (startedAt) async {
       final config = _store._config.sync.credits;
+      final since = await _store._getSyncWatermark(scope, 'credits');
+      var maxSeenUpdatedOn = <String>[];
       return _importInBatches(
         entity: 'credits',
         startedAt: startedAt,
         scope: scope,
         config: config,
+        since: since,
         skipMessage: 'Credits import URL is not configured.',
-        startMessage: 'Fetching credits from remote server.',
+        startMessage: since == null
+            ? 'Fetching credits from remote server.'
+            : 'Fetching credit drifts since $since.',
         completeMessage: (processedCount) =>
             'Imported $processedCount credits.',
+        onPayload: (payload) {
+          final timestamp = _readLatestTimestamp(payload);
+          if (timestamp != null) {
+            maxSeenUpdatedOn.add(timestamp);
+          }
+        },
         importBatch: (payload) async {
           final credits = Store._extractRowList(payload['data']);
           await _store._importCreditsFromData(scope, payload);
           return credits.length;
         },
         onProgress: onProgress,
-      );
+      ).then((result) async {
+        if (result.success && !result.skipped && maxSeenUpdatedOn.isNotEmpty) {
+          final watermark = maxSeenUpdatedOn.toList()..sort();
+          await _store._setSyncWatermark(scope, 'credits', watermark.last);
+        }
+        return result;
+      });
     }, onProgress: onProgress);
   }
 
@@ -831,15 +919,26 @@ class StoreSyncService {
   }) async {
     return _runOperation('tables', 'import', (startedAt) async {
       final config = _store._config.sync.tables;
+      final since = await _store._getSyncWatermark(scope, 'tables');
+      var maxSeenUpdatedOn = <String>[];
       return _importInBatches(
         entity: 'tables',
         startedAt: startedAt,
         scope: scope,
         config: config,
+        since: since,
         skipMessage: 'Tables import URL is not configured.',
-        startMessage: 'Fetching floors and tables from remote server.',
+        startMessage: since == null
+            ? 'Fetching floors and tables from remote server.'
+            : 'Fetching table drifts since $since.',
         completeMessage: (processedCount) =>
             'Imported $processedCount floor and table records.',
+        onPayload: (payload) {
+          final timestamp = _readLatestTimestamp(payload);
+          if (timestamp != null) {
+            maxSeenUpdatedOn.add(timestamp);
+          }
+        },
         importBatch: (payload) async {
           final floors = Store._extractRowList(payload['floors']);
           final tables = Store._extractRowList(payload['tables']);
@@ -847,7 +946,13 @@ class StoreSyncService {
           return floors.length + tables.length;
         },
         onProgress: onProgress,
-      );
+      ).then((result) async {
+        if (result.success && !result.skipped && maxSeenUpdatedOn.isNotEmpty) {
+          final watermark = maxSeenUpdatedOn.toList()..sort();
+          await _store._setSyncWatermark(scope, 'tables', watermark.last);
+        }
+        return result;
+      });
     }, onProgress: onProgress);
   }
 

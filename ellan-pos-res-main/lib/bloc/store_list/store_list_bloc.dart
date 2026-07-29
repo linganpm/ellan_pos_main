@@ -23,8 +23,8 @@ class StoreListCubit extends Cubit<StoreListState> {
   String? _selectedStoreId;
 
   StoreListCubit()
-      : controller = getIt<UiStoreController>(),
-        super(const StoreListInitial());
+    : controller = getIt<UiStoreController>(),
+      super(const StoreListInitial());
 
   /// Snapshot used by the UI while verification is in progress / failed.
   List<StoreModel> get allStores => List.unmodifiable(_allStores);
@@ -32,11 +32,13 @@ class StoreListCubit extends Cubit<StoreListState> {
   String? get selectedStoreId => _selectedStoreId;
 
   void _emitLoaded({List<StoreModel>? filteredStores}) {
-    emit(StoreListLoaded(
-      stores: _allStores,
-      selectedStoreId: _selectedStoreId,
-      filteredStores: filteredStores,
-    ));
+    emit(
+      StoreListLoaded(
+        stores: _allStores,
+        selectedStoreId: _selectedStoreId,
+        filteredStores: filteredStores,
+      ),
+    );
   }
 
   /// Loads available stores from the UiStoreController
@@ -46,26 +48,35 @@ class StoreListCubit extends Cubit<StoreListState> {
       if (controller.accessibleStores().isEmpty) {
         await controller.restoreOrganisationLoginFromCache();
       }
-      _allStores = controller.accessibleStores().map((s) => StoreModel(
-            storeId: s.store.storeId,
-            storeName: s.store.storeName,
-            storeRole: s.store.contactPerson,
-          )).toList();
+      _allStores = controller
+          .accessibleStores()
+          .map(
+            (s) => StoreModel(
+              storeId: s.store.storeId,
+              storeName: s.store.storeName,
+              storeRole: s.store.contactPerson,
+            ),
+          )
+          .toList();
 
       if (_allStores.isEmpty) {
-        emit(const StoreListError(
-          errorMessage:
-              'No stores available for this login. Sign in online again, '
-              'or ask an admin to grant store access.',
-        ));
+        emit(
+          const StoreListError(
+            errorMessage:
+                'No stores available for this login. Sign in online again, '
+                'or ask an admin to grant store access.',
+          ),
+        );
         return;
       }
 
       _emitLoaded();
     } catch (e) {
-      emit(StoreListError(
-        errorMessage: 'Failed to load stores: ${userFacingError(e)}',
-      ));
+      emit(
+        StoreListError(
+          errorMessage: 'Failed to load stores: ${userFacingError(e)}',
+        ),
+      );
     }
   }
 
@@ -80,9 +91,11 @@ class StoreListCubit extends Cubit<StoreListState> {
     }
 
     if (selectedStore == null) {
-      emit(const StoreVerificationFailure(
-        errorMessage: 'Selected store not found',
-      ));
+      emit(
+        const StoreVerificationFailure(
+          errorMessage: 'Selected store not found',
+        ),
+      );
       _emitLoaded();
       return;
     }
@@ -97,9 +110,11 @@ class StoreListCubit extends Cubit<StoreListState> {
   /// Verify the currently selected store
   Future<void> verifySelectedStore() async {
     if (_selectedStoreId == null || _selectedStoreId!.isEmpty) {
-      emit(const StoreVerificationFailure(
-        errorMessage: 'Please select a store first',
-      ));
+      emit(
+        const StoreVerificationFailure(
+          errorMessage: 'Please select a store first',
+        ),
+      );
       _emitLoaded();
       return;
     }
@@ -113,9 +128,11 @@ class StoreListCubit extends Cubit<StoreListState> {
     }
 
     if (selectedStore == null) {
-      emit(const StoreVerificationFailure(
-        errorMessage: 'Selected store not found',
-      ));
+      emit(
+        const StoreVerificationFailure(
+          errorMessage: 'Selected store not found',
+        ),
+      );
       _emitLoaded();
       return;
     }
@@ -159,13 +176,16 @@ class StoreListCubit extends Cubit<StoreListState> {
       emit(StoreVerificationSuccess(store: store));
     } catch (e) {
       if (isClosed) return;
-      emit(StoreVerificationFailure(
-        errorMessage: userFacingError(
-          e,
-          fallback: 'Failed to open store. Check your connection and try again.',
+      emit(
+        StoreVerificationFailure(
+          errorMessage: userFacingError(
+            e,
+            fallback:
+                'Failed to open store. Check your connection and try again.',
+          ),
+          store: store,
         ),
-        store: store,
-      ));
+      );
       // Restore the selectable list so the operator can retry another store.
       _emitLoaded();
     }

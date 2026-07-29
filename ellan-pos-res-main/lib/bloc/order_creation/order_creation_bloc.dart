@@ -14,74 +14,88 @@ class OrderCreationBloc extends Bloc<OrderCreationEvent, OrderCreationState> {
     on<ResetOrderCreation>(_onResetOrderCreation);
   }
 
-  void _onSelectOrderType(SelectOrderType event, Emitter<OrderCreationState> emit) {
-    emit(state.copyWith(
-      orderType: event.type,
-      nameError: null,
-      phoneError: null,
-    ));
+  void _onSelectOrderType(
+    SelectOrderType event,
+    Emitter<OrderCreationState> emit,
+  ) {
+    emit(
+      state.copyWith(orderType: event.type, nameError: null, phoneError: null),
+    );
   }
 
   void _onUpdatePickupDetails(
     UpdatePickupDetails event,
     Emitter<OrderCreationState> emit,
   ) {
-    emit(state.copyWith(
-      pickupName: event.name,
-      pickupPhone: event.phone,
-      pickupEmail: event.email,
-      clearCustomerUniqueId: true,
-      nameError: null,
-      phoneError: null,
-    ));
+    emit(
+      state.copyWith(
+        pickupName: event.name,
+        pickupPhone: event.phone,
+        pickupEmail: event.email,
+        clearCustomerUniqueId: true,
+        nameError: null,
+        phoneError: null,
+      ),
+    );
   }
 
   void _onSelectPickupCustomer(
     SelectPickupCustomer event,
     Emitter<OrderCreationState> emit,
   ) {
-    emit(state.copyWith(
-      customerUniqueId: event.customerUniqueId,
-      pickupName: event.name,
-      pickupPhone: event.phone,
-      pickupEmail: event.email,
-      isPickupValid: true,
-      nameError: null,
-      phoneError: null,
-    ));
+    emit(
+      state.copyWith(
+        customerUniqueId: event.customerUniqueId,
+        pickupName: event.name,
+        pickupPhone: event.phone,
+        pickupEmail: event.email,
+        isPickupValid: true,
+        nameError: null,
+        phoneError: null,
+      ),
+    );
   }
 
   void _onClearPickupCustomer(
     ClearPickupCustomer event,
     Emitter<OrderCreationState> emit,
   ) {
-    emit(state.copyWith(
-      clearCustomerUniqueId: true,
-      pickupName: '',
-      pickupPhone: '',
-      pickupEmail: '',
-      isPickupValid: false,
-      nameError: null,
-      phoneError: null,
-    ));
+    emit(
+      state.copyWith(
+        clearCustomerUniqueId: true,
+        pickupName: '',
+        pickupPhone: '',
+        pickupEmail: '',
+        isPickupValid: false,
+        nameError: null,
+        phoneError: null,
+      ),
+    );
   }
 
-  void _onSelectDineInFloor(SelectDineInFloor event, Emitter<OrderCreationState> emit) {
+  void _onSelectDineInFloor(
+    SelectDineInFloor event,
+    Emitter<OrderCreationState> emit,
+  ) {
     emit(state.copyWith(selectedFloor: event.floor, selectedTable: ''));
   }
 
-  void _onSelectDineInTable(SelectDineInTable event, Emitter<OrderCreationState> emit) {
+  void _onSelectDineInTable(
+    SelectDineInTable event,
+    Emitter<OrderCreationState> emit,
+  ) {
     emit(state.copyWith(selectedTable: event.tableNumber));
   }
 
-  void _onValidatePickupForm(ValidatePickupForm event, Emitter<OrderCreationState> emit) {
+  void _onValidatePickupForm(
+    ValidatePickupForm event,
+    Emitter<OrderCreationState> emit,
+  ) {
     // Selected existing customer (stable unique id) is always valid.
     if (state.hasSelectedCustomer) {
-      emit(state.copyWith(
-        isPickupValid: true,
-        nameError: null,
-        phoneError: null,
-      ));
+      emit(
+        state.copyWith(isPickupValid: true, nameError: null, phoneError: null),
+      );
       return;
     }
 
@@ -100,14 +114,19 @@ class OrderCreationBloc extends Bloc<OrderCreationEvent, OrderCreationState> {
       isValid = false;
     }
 
-    emit(state.copyWith(
-      isPickupValid: isValid,
-      nameError: nameError,
-      phoneError: phoneError,
-    ));
+    emit(
+      state.copyWith(
+        isPickupValid: isValid,
+        nameError: nameError,
+        phoneError: phoneError,
+      ),
+    );
   }
 
-  void _onResetOrderCreation(ResetOrderCreation event, Emitter<OrderCreationState> emit) {
+  void _onResetOrderCreation(
+    ResetOrderCreation event,
+    Emitter<OrderCreationState> emit,
+  ) {
     emit(const OrderCreationState());
   }
 }

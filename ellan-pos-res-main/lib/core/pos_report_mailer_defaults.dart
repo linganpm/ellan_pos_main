@@ -29,25 +29,25 @@ class PosReportMailerDefaults {
   }
 
   static List<Map<String, dynamic>> localPublicRows() => [
-        {
-          'purpose': purpose,
-          'host': host,
-          'port': port,
-          'username': username,
-          'from_email': fromEmail,
-          'from_name': reportsFromName,
-          'use_tls': useTls,
-          'locked': true,
-        },
-        {
-          'purpose': invoicePurpose,
-          'host': host,
-          'port': port,
-          'username': username,
-          'from_email': fromEmail,
-          'from_name': invoicesFromName,
-          'use_tls': useTls,
-          'locked': true,
-        },
-      ];
+    {
+      'purpose': purpose,
+      'host': host,
+      'port': port,
+      'username': username,
+      'from_email': fromEmail,
+      'from_name': reportsFromName,
+      'use_tls': useTls,
+      'locked': true,
+    },
+    {
+      'purpose': invoicePurpose,
+      'host': host,
+      'port': port,
+      'username': username,
+      'from_email': fromEmail,
+      'from_name': invoicesFromName,
+      'use_tls': useTls,
+      'locked': true,
+    },
+  ];
 }

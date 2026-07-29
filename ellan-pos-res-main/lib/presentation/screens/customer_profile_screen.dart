@@ -9,6 +9,7 @@ import 'package:pos_tablet/presentation/screens/credits_screen.dart';
 import 'package:pos_tablet/presentation/screens/order_details_screen.dart';
 import 'package:pos_tablet/presentation/screens/order_list_screen.dart';
 import 'package:pos_tablet/presentation/screens/order_payments_screen.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 /// Directory customer profile: identity, credit balance, and history shortcuts.
 class CustomerProfileScreen extends StatefulWidget {
@@ -32,26 +33,28 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   int _orderCount = 0;
   int _paymentCount = 0;
 
-  List<StoreOrderSummary> _recentOrders = const [];
-  List<StoreCreditRecord> _recentCredits = const [];
-  List<StoreCreditRepaymentRecord> _recentPayments = const [];
+  List<StoreOrderSummary> _recentOrders = [];
+  List<StoreCreditRecord> _recentCredits = [];
+  List<StoreCreditRepaymentRecord> _recentPayments = [];
   int _creditCount = 0;
 
   StoreCustomer get _customer => widget.customer;
 
   String get _displayName {
     final name = _customer.name.trim();
-    return name.isEmpty ? 'Customer' : name;
+    return name.isEmpty ? context.l10n.commonCustomer : name;
   }
 
   String get _roleLabel {
     switch (_customer.role) {
       case 'business_customer':
-        return 'Business';
+        return context.l10n.commonBusiness;
       case 'retail_customer':
-        return 'Retail';
+        return context.l10n.commonRetail;
       default:
-        return _customer.role.isEmpty ? 'Customer' : _customer.role;
+        return _customer.role.isEmpty
+            ? context.l10n.commonCustomer
+            : _customer.role;
     }
   }
 
@@ -78,8 +81,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     final phone = _customer.phone.trim();
     if (phone.isNotEmpty && order.mobile.trim() == phone) return true;
     final email = _customer.email.trim().toLowerCase();
-    if (email.isNotEmpty &&
-        order.customerEmail.trim().toLowerCase() == email) {
+    if (email.isNotEmpty && order.customerEmail.trim().toLowerCase() == email) {
       return true;
     }
     return false;
@@ -133,10 +135,14 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         _orderCount = orders.length;
         _creditCount = sortedCredits.length;
         _paymentCount = sortedPayments.length;
-        _creditTotal =
-            sortedCredits.fold<double>(0, (sum, row) => sum + row.amount);
-        _repaid =
-            sortedCredits.fold<double>(0, (sum, row) => sum + row.paidAmount);
+        _creditTotal = sortedCredits.fold<double>(
+          0,
+          (sum, row) => sum + row.amount,
+        );
+        _repaid = sortedCredits.fold<double>(
+          0,
+          (sum, row) => sum + row.paidAmount,
+        );
         _outstanding = sortedCredits.fold<double>(
           0,
           (sum, row) => sum + row.outstandingAmount,
@@ -208,7 +214,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         builder: (_) => OrderPaymentsScreen(
           orderId: order.orderId,
           orderLabel: order.customerName.isEmpty
-              ? 'Order #${order.orderId}'
+              ? context.l10n.orderNumber(order.orderId)
               : order.customerName,
         ),
       ),
@@ -224,16 +230,17 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          'Customer profile',
+          context.l10n.customerProfileTitle,
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
         leading: IconButton(
+          tooltip: context.l10n.actionBack,
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: context.l10n.actionRefresh,
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh_rounded, color: Colors.black87),
           ),
@@ -243,64 +250,66 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _error!,
-                          style: FontUtility.body.copyWith(color: Colors.red),
-                          textAlign: TextAlign.center,
-                        ),
-                        TextButton(onPressed: _load, child: const Text('Retry')),
-                      ],
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _error!,
+                      style: FontUtility.body.copyWith(color: Colors.red),
+                      textAlign: TextAlign.center,
                     ),
-                  )
-                : RefreshIndicator(
-                    onRefresh: _load,
-                    child: ListView(
-                      padding: const EdgeInsets.all(24),
-                      children: [
-                        _buildHeaderCard(),
-                        const SizedBox(height: 16),
-                        _buildBalanceCard(),
-                        const SizedBox(height: 16),
-                        _buildQuickLinks(),
-                        const SizedBox(height: 24),
-                        _sectionTitle(
-                          'Order history',
-                          count: _orderCount,
-                          onViewAll: _openOrders,
-                        ),
-                        const SizedBox(height: 10),
-                        _buildOrdersSection(),
-                        const SizedBox(height: 24),
-                        _sectionTitle(
-                          'Credit history',
-                          count: _creditCount,
-                          onViewAll: _openCreditList,
-                        ),
-                        const SizedBox(height: 10),
-                        _buildCreditsSection(),
-                        const SizedBox(height: 24),
-                        _sectionTitle(
-                          'Payments',
-                          count: _paymentCount,
-                          onViewAll: _openCreditAccount,
-                        ),
-                        const SizedBox(height: 10),
-                        _buildPaymentsSection(),
-                        const SizedBox(height: 24),
-                      ],
+                    TextButton(
+                      onPressed: _load,
+                      child: Text(context.l10n.actionRetry),
                     ),
-                  ),
+                  ],
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: _load,
+                child: ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    _buildHeaderCard(),
+                    const SizedBox(height: 16),
+                    _buildBalanceCard(),
+                    const SizedBox(height: 24),
+                    _sectionTitle(
+                      context.l10n.customerOrderHistory,
+                      count: _orderCount,
+                      onViewAll: _openOrders,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildOrdersSection(),
+                    const SizedBox(height: 24),
+                    _sectionTitle(
+                      context.l10n.customerCreditHistory,
+                      count: _creditCount,
+                      onViewAll: _openCreditList,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildCreditsSection(),
+                    const SizedBox(height: 24),
+                    _sectionTitle(
+                      context.l10n.commonPayments,
+                      count: _paymentCount,
+                      onViewAll: _openCreditAccount,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildPaymentsSection(),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
       ),
     );
   }
 
   Widget _buildHeaderCard() {
-    final initial =
-        _displayName.isNotEmpty ? _displayName.substring(0, 1).toUpperCase() : '?';
+    final initial = _displayName.isNotEmpty
+        ? _displayName.substring(0, 1).toUpperCase()
+        : '?';
     final contact = [
       if (_customer.phone.trim().isNotEmpty) _customer.phone.trim(),
       if (_customer.email.trim().isNotEmpty) _customer.email.trim(),
@@ -358,7 +367,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                       _chip(_customer.usrRegNum.trim())
                     else if (_customer.customerId.isNotEmpty)
                       _chip(
-                        displayCustomerIdentity(customerId: _customer.customerId),
+                        displayCustomerIdentity(
+                          customerId: _customer.customerId,
+                        ),
                       ),
                     if (_customer.status.isNotEmpty) _chip(_customer.status),
                   ],
@@ -401,7 +412,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Credit account',
+            context.l10n.creditsCreditAccount,
             style: FontUtility.subheading.copyWith(fontSize: 16),
           ),
           const SizedBox(height: 14),
@@ -409,13 +420,18 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             children: [
               Expanded(
                 child: _metricTile(
-                  'Balance due',
+                  context.l10n.customerBalanceDue,
                   _outstanding,
                   emphasize: true,
                 ),
               ),
-              Expanded(child: _metricTile('Credit so far', _creditTotal)),
-              Expanded(child: _metricTile('Repaid', _repaid)),
+              Expanded(
+                child: _metricTile(
+                  context.l10n.creditsCreditSoFar,
+                  _creditTotal,
+                ),
+              ),
+              Expanded(child: _metricTile(context.l10n.creditsRepaid, _repaid)),
             ],
           ),
           const SizedBox(height: 14),
@@ -424,7 +440,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             child: OutlinedButton.icon(
               onPressed: _openCreditAccount,
               icon: const Icon(Icons.account_balance_wallet_rounded),
-              label: const Text('Open credit account'),
+              label: Text(context.l10n.creditsOpenAccount),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _primary,
                 side: const BorderSide(color: _primary),
@@ -446,10 +462,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       children: [
         Text(
           label,
-          style: FontUtility.body.copyWith(
-            fontSize: 12,
-            color: Colors.black54,
-          ),
+          style: FontUtility.body.copyWith(fontSize: 12, color: Colors.black54),
         ),
         const SizedBox(height: 4),
         Text(
@@ -462,68 +475,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildQuickLinks() {
-    return Row(
-      children: [
-        Expanded(
-          child: _linkButton(
-            icon: Icons.receipt_long_rounded,
-            label: 'Orders',
-            onTap: _openOrders,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _linkButton(
-            icon: Icons.credit_score_rounded,
-            label: 'Credits',
-            onTap: _openCreditList,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _linkButton(
-            icon: Icons.payments_rounded,
-            label: 'Payments',
-            onTap: _openCreditAccount,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _linkButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: _primary),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: FontUtility.body.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -540,9 +491,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             style: FontUtility.subheading.copyWith(fontSize: 17),
           ),
         ),
-        TextButton(
+        IconButton(
+          tooltip: count > 0
+              ? context.l10n.commonViewAllCount(count)
+              : context.l10n.actionViewAll,
           onPressed: onViewAll,
-          child: Text(count > 0 ? 'View all ($count)' : 'View all'),
+          icon: const Icon(Icons.arrow_forward_rounded),
         ),
       ],
     );
@@ -566,18 +520,19 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
 
   Widget _buildOrdersSection() {
     if (_recentOrders.isEmpty) {
-      return _emptyBox('No orders for this customer yet.');
+      return _emptyBox(context.l10n.customerNoOrdersYet);
     }
     return Column(
       children: [
         for (final order in _recentOrders) ...[
           _historyTile(
-            title: 'Order #${order.orderId}',
+            title: context.l10n.orderNumber(order.orderId),
             subtitle:
-                '${order.orderType.isEmpty ? 'Order' : order.orderType} · ${order.paymentStatus}',
-            trailing: '\$${(order.finalValue != 0 ? order.finalValue : order.total).toStringAsFixed(2)}',
+                '${order.orderType.isEmpty ? context.l10n.commonOrderLabel : order.orderType} · ${order.paymentStatus}',
+            trailing:
+                '\$${(order.finalValue != 0 ? order.finalValue : order.total).toStringAsFixed(2)}',
             onTap: () => _openOrder(order),
-            actionLabel: 'Pay',
+            actionLabel: context.l10n.commonPay,
             onAction: () => _openOrderPayments(order),
           ),
           const SizedBox(height: 8),
@@ -588,15 +543,16 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
 
   Widget _buildCreditsSection() {
     if (_recentCredits.isEmpty) {
-      return _emptyBox('No credit sales for this customer yet.');
+      return _emptyBox(context.l10n.customerNoCreditSalesYet);
     }
     return Column(
       children: [
         for (final credit in _recentCredits) ...[
           _historyTile(
-            title: 'Credit #${credit.id}',
-            subtitle:
-                'Outstanding \$${credit.outstandingAmount.toStringAsFixed(2)}',
+            title: context.l10n.creditsCreditNumber(credit.id.toString()),
+            subtitle: context.l10n.creditsOutstandingAmount(
+              '\$${credit.outstandingAmount.toStringAsFixed(2)}',
+            ),
             trailing: '\$${credit.amount.toStringAsFixed(2)}',
             onTap: _openCreditAccount,
           ),
@@ -608,14 +564,14 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
 
   Widget _buildPaymentsSection() {
     if (_recentPayments.isEmpty) {
-      return _emptyBox('No credit payments recorded yet.');
+      return _emptyBox(context.l10n.customerNoCreditPaymentsYet);
     }
     return Column(
       children: [
         for (final payment in _recentPayments) ...[
           _historyTile(
             title: payment.paymentMode.isEmpty
-                ? 'Payment #${payment.id}'
+                ? context.l10n.commonPaymentNumber(payment.id.toString())
                 : payment.paymentMode,
             subtitle: payment.createdOn,
             trailing: '\$${payment.totalAmount.toStringAsFixed(2)}',
@@ -676,10 +632,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               ),
               if (actionLabel != null && onAction != null) ...[
                 const SizedBox(width: 8),
-                TextButton(
-                  onPressed: onAction,
-                  child: Text(actionLabel),
-                ),
+                TextButton(onPressed: onAction, child: Text(actionLabel)),
               ] else
                 const Icon(Icons.chevron_right_rounded, color: Colors.black38),
             ],

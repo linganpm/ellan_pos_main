@@ -7,6 +7,7 @@ import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/routes.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/screens/splash_screen.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 /// Device-level POS settings: auto sync, interval, POS code, and sync history.
 class DeviceSettingsScreen extends StatefulWidget {
@@ -80,12 +81,14 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
       await store.saveCashDenominationsRaw(_denominationsController.text);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cash denominations saved.')),
+        SnackBar(content: Text(context.l10n.deviceCashDenomsSaved)),
       );
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save denominations: $error')),
+        SnackBar(
+          content: Text(context.l10n.errorCouldNotSaveDenoms(error.toString())),
+        ),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -103,16 +106,18 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         SnackBar(
           content: Text(
             settings.autoSyncEnabled
-                ? 'Auto sync enabled — ${settings.intervalLabel.toLowerCase()}'
-                : 'Auto sync turned off',
+                ? context.l10n.deviceAutoSyncEnabled(
+                    _intervalLabel(context, settings.intervalSeconds),
+                  )
+                : context.l10n.deviceAutoSyncOff,
           ),
         ),
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -126,7 +131,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          'Device Settings',
+          context.l10n.deviceSettingsTitle,
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
         leading: IconButton(
@@ -135,14 +140,17 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: context.l10n.actionRefresh,
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh_rounded, color: Colors.black87),
           ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: Colors.grey.withValues(alpha: 0.2)),
+          child: Container(
+            height: 1,
+            color: Colors.grey.withValues(alpha: 0.2),
+          ),
         ),
       ),
       body: SafeArea(child: _buildBody()),
@@ -160,9 +168,15 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(_error!, style: FontUtility.body.copyWith(color: Colors.red)),
+              Text(
+                _error!,
+                style: FontUtility.body.copyWith(color: Colors.red),
+              ),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _load, child: const Text('Retry')),
+              ElevatedButton(
+                onPressed: _load,
+                child: Text(context.l10n.actionRetry),
+              ),
             ],
           ),
         ),
@@ -176,38 +190,42 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
       padding: const EdgeInsets.all(24),
       children: [
         _sectionCard(
-          title: 'Device',
+          title: context.l10n.commonDevice,
           child: Column(
             children: [
               _infoRow(
-                'POS code',
+                context.l10n.commonPosCodeLabel,
                 snapshot.posCode.isEmpty ? '—' : snapshot.posCode,
                 emphasize: snapshot.posCode.isNotEmpty,
               ),
               const Divider(height: 24),
               _infoRow(
-                'Device ID',
+                context.l10n.commonDeviceId,
                 snapshot.deviceId.isEmpty ? '—' : snapshot.deviceId,
                 mono: true,
               ),
               if (snapshot.make.isNotEmpty || snapshot.model.isNotEmpty) ...[
                 const Divider(height: 24),
                 _infoRow(
-                  'Hardware',
-                  [snapshot.make, snapshot.model]
-                      .where((part) => part.isNotEmpty)
-                      .join(' '),
+                  context.l10n.commonHardware,
+                  [
+                    snapshot.make,
+                    snapshot.model,
+                  ].where((part) => part.isNotEmpty).join(' '),
                 ),
               ],
               const Divider(height: 24),
-              _infoRow('Store', snapshot.storeName.isEmpty ? '—' : snapshot.storeName),
+              _infoRow(
+                context.l10n.commonStore,
+                snapshot.storeName.isEmpty ? '—' : snapshot.storeName,
+              ),
               const Divider(height: 24),
               _infoRow(
-                'Organisation',
+                context.l10n.commonOrganisation,
                 [
-                  if (snapshot.orgName.isNotEmpty) snapshot.orgName,
-                  if (snapshot.orgCode.isNotEmpty) snapshot.orgCode,
-                ].join(' · ').isEmpty
+                      if (snapshot.orgName.isNotEmpty) snapshot.orgName,
+                      if (snapshot.orgCode.isNotEmpty) snapshot.orgCode,
+                    ].join(' · ').isEmpty
                     ? '—'
                     : [
                         if (snapshot.orgName.isNotEmpty) snapshot.orgName,
@@ -219,48 +237,52 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         ),
         const SizedBox(height: 20),
         _sectionCard(
-          title: 'Login lease',
+          title: context.l10n.deviceLoginLease,
           child: Column(
             children: [
               _infoRow(
-                'Login lease days',
+                context.l10n.deviceLoginLeaseDays,
                 _formatLeaseDays(snapshot.loginLeaseDays),
               ),
               const Divider(height: 24),
               _infoRow(
-                'Last online login',
+                context.l10n.deviceLastOnlineLogin,
                 snapshot.lastOnlineLoginAt == null
                     ? '—'
-                    : DateFormat('dd MMM yyyy · HH:mm')
-                        .format(snapshot.lastOnlineLoginAt!),
+                    : DateFormat(
+                        'dd MMM yyyy · HH:mm',
+                      ).format(snapshot.lastOnlineLoginAt!),
               ),
               const Divider(height: 24),
               _infoRow(
-                'Valid until',
+                context.l10n.deviceValidUntil,
                 snapshot.onlineLoginValidUntil == null
-                    ? 'Online sign-in required'
-                    : DateFormat('dd MMM yyyy · HH:mm')
-                        .format(snapshot.onlineLoginValidUntil!),
+                    ? context.l10n.deviceOnlineSignInRequired
+                    : DateFormat(
+                        'dd MMM yyyy · HH:mm',
+                      ).format(snapshot.onlineLoginValidUntil!),
               ),
             ],
           ),
         ),
         const SizedBox(height: 20),
         _sectionCard(
-          title: 'Auto sync',
+          title: context.l10n.deviceAutoSync,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
                 title: Text(
-                  'Enable auto sync',
+                  context.l10n.deviceEnableAutoSync,
                   style: FontUtility.subheading.copyWith(fontSize: 16),
                 ),
                 subtitle: Text(
                   settings.autoSyncEnabled
-                      ? 'Running in the background${snapshot.autoSyncRunning ? '' : ' (starting…)'}'
-                      : 'Only sync when you tap Sync',
+                      ? (snapshot.autoSyncRunning
+                            ? context.l10n.deviceAutoSyncRunning
+                            : context.l10n.deviceAutoSyncStarting)
+                      : context.l10n.deviceSyncOnTapOnly,
                   style: FontUtility.body.copyWith(
                     fontSize: 13,
                     color: Colors.black54,
@@ -271,12 +293,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 onChanged: _saving
                     ? null
                     : (value) => _saveSettings(
-                          settings.copyWith(autoSyncEnabled: value),
-                        ),
+                        settings.copyWith(autoSyncEnabled: value),
+                      ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Sync interval',
+                context.l10n.deviceSyncInterval,
                 style: FontUtility.body.copyWith(
                   fontSize: 13,
                   color: Colors.black54,
@@ -296,7 +318,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                   for (final option in DeviceSyncSettings.intervalOptions)
                     DropdownMenuItem(
                       value: option.seconds,
-                      child: Text(option.label),
+                      child: Text(_intervalLabel(context, option.seconds)),
                     ),
                 ],
                 onChanged: (_saving || !settings.autoSyncEnabled)
@@ -310,11 +332,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
               ),
               const SizedBox(height: 16),
               _infoRow(
-                'Last successful sync',
+                context.l10n.deviceLastSuccessfulSync,
                 snapshot.lastSuccessfulSyncAt == null
-                    ? 'Never'
-                    : DateFormat('MMM dd, yyyy hh:mm a')
-                        .format(snapshot.lastSuccessfulSyncAt!.toLocal()),
+                    ? context.l10n.commonNever
+                    : DateFormat(
+                        'MMM dd, yyyy hh:mm a',
+                      ).format(snapshot.lastSuccessfulSyncAt!.toLocal()),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -323,7 +346,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () => Navigator.pushNamed(context, AppRoutes.sync),
                   icon: const Icon(Icons.sync_rounded),
-                  label: const Text('Open sync now'),
+                  label: Text(context.l10n.deviceOpenSyncNow),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _primary,
                     side: const BorderSide(color: _primary),
@@ -345,8 +368,8 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                     if (!context.mounted) return;
                     if (!ok) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Store Admin access required.'),
+                        SnackBar(
+                          content: Text(context.l10n.storeAdminAccessRequired),
                         ),
                       );
                       return;
@@ -354,7 +377,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                     Navigator.pushNamed(context, AppRoutes.company);
                   },
                   icon: const Icon(Icons.apartment_rounded),
-                  label: const Text('Company (settings & staff)'),
+                  label: Text(context.l10n.deviceCompanySettingsStaff),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _primary,
                     side: const BorderSide(color: _primary),
@@ -369,18 +392,10 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         ),
         const SizedBox(height: 20),
         _sectionCard(
-          title: 'Cash denominations',
+          title: context.l10n.deviceCashDenominations,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Comma-separated tender chips shown on Billing & Payment.',
-                style: FontUtility.body.copyWith(
-                  fontSize: 13,
-                  color: Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 12),
               TextField(
                 controller: _denominationsController,
                 enabled: !_saving,
@@ -397,7 +412,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 child: FilledButton(
                   onPressed: _saving ? null : _saveDenominations,
                   style: FilledButton.styleFrom(backgroundColor: _primary),
-                  child: const Text('Save denominations'),
+                  child: Text(context.l10n.deviceSaveDenominations),
                 ),
               ),
             ],
@@ -405,12 +420,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         ),
         const SizedBox(height: 20),
         _sectionCard(
-          title: 'Sync history (last 20)',
+          title: context.l10n.deviceSyncHistory,
           child: _history.isEmpty
               ? Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
-                    'No sync attempts recorded on this device yet. Run a sync to populate history.',
+                    context.l10n.syncNoHistory,
                     style: FontUtility.body.copyWith(color: Colors.black54),
                   ),
                 )
@@ -425,12 +440,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         ),
         const SizedBox(height: 20),
         _sectionCard(
-          title: 'Danger zone',
+          title: context.l10n.deviceDangerZone,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Wipe this tablet’s offline database, device setup, login, and sync history so you can test from a clean first launch.',
+                context.l10n.deviceResetLocalBody,
                 style: FontUtility.body.copyWith(
                   fontSize: 13,
                   color: Colors.black54,
@@ -441,7 +456,9 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 width: double.infinity,
                 height: 48,
                 child: OutlinedButton.icon(
-                  onPressed: (_saving || _resetting) ? null : _confirmResetLocalData,
+                  onPressed: (_saving || _resetting)
+                      ? null
+                      : _confirmResetLocalData,
                   icon: _resetting
                       ? const SizedBox(
                           width: 18,
@@ -449,7 +466,11 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.delete_forever_rounded),
-                  label: Text(_resetting ? 'Resetting…' : 'Reset all local data'),
+                  label: Text(
+                    _resetting
+                        ? context.l10n.deviceResetting
+                        : context.l10n.deviceResetAllLocal,
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFB42318),
                     side: const BorderSide(color: Color(0xFFB42318)),
@@ -476,7 +497,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Reset all local data?'),
+              title: Text(context.l10n.deviceResetConfirmTitle),
               content: SizedBox(
                 width: 420,
                 child: Column(
@@ -484,7 +505,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'This permanently deletes local orders, catalogue, customers, sync history, device approval flags, and login on this tablet. It does not delete anything on the server.',
+                      context.l10n.deviceResetConfirmBody,
                       style: FontUtility.body.copyWith(fontSize: 14),
                     ),
                     const SizedBox(height: 12),
@@ -495,14 +516,14 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                         setDialogState(() => keepServers = value ?? true);
                       },
                       title: Text(
-                        'Keep saved server URLs',
+                        context.l10n.deviceKeepSavedServers,
                         style: FontUtility.body.copyWith(fontSize: 14),
                       ),
                       controlAffinity: ListTileControlAffinity.leading,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Type RESET to confirm',
+                      context.l10n.deviceTypeResetConfirm,
                       style: FontUtility.body.copyWith(
                         fontSize: 13,
                         color: Colors.black54,
@@ -512,7 +533,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                     TextField(
                       controller: confirmController,
                       autofocus: true,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'RESET',
                         border: OutlineInputBorder(),
                       ),
@@ -524,16 +545,17 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('Cancel'),
+                  child: Text(context.l10n.actionCancel),
                 ),
                 TextButton(
-                  onPressed: confirmController.text.trim().toUpperCase() == 'RESET'
+                  onPressed:
+                      confirmController.text.trim().toUpperCase() == 'RESET'
                       ? () => Navigator.pop(dialogContext, true)
                       : null,
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFFB42318),
                   ),
-                  child: const Text('Reset'),
+                  child: Text(context.l10n.deviceResetAction),
                 ),
               ],
             );
@@ -558,19 +580,43 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
       if (!mounted) return;
       setState(() => _resetting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Reset failed: $error')),
+        SnackBar(
+          content: Text(context.l10n.deviceResetFailed(error.toString())),
+        ),
       );
     }
   }
 
+  String _intervalLabel(BuildContext context, int seconds) {
+    switch (seconds) {
+      case 60:
+        return context.l10n.deviceInterval1Min;
+      case 300:
+        return context.l10n.deviceInterval5Min;
+      case 900:
+        return context.l10n.deviceInterval15Min;
+      case 1800:
+        return context.l10n.deviceInterval30Min;
+      case 3600:
+        return context.l10n.deviceInterval1Hour;
+      default:
+        final minutes = seconds ~/ 60;
+        if (minutes >= 1) {
+          return context.l10n.deviceIntervalEveryMinutes(minutes);
+        }
+        return context.l10n.deviceIntervalEverySeconds(seconds);
+    }
+  }
 
   String _formatLeaseDays(double days) {
-    if (days <= 0) return '—';
+    if (days <= 0) return context.l10n.commonEmpty;
     if ((days - days.round()).abs() < 0.001) {
       final whole = days.round();
-      return '$whole day${whole == 1 ? '' : 's'}';
+      return whole == 1
+          ? context.l10n.deviceLeaseOneDay
+          : context.l10n.deviceLeaseDaysCount(whole);
     }
-    return '${days.toStringAsFixed(2)} days';
+    return context.l10n.deviceLeaseDaysCount(days.round());
   }
 
   Widget _sectionCard({required String title, required Widget child}) {
@@ -639,7 +685,8 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
     final color = entry.skipped
         ? Colors.orange.shade700
         : (ok ? Colors.green.shade700 : Colors.red.shade700);
-    final when = DateTime.tryParse(entry.completedAt) ??
+    final when =
+        DateTime.tryParse(entry.completedAt) ??
         DateTime.tryParse(entry.startedAt);
     final stamp = when == null
         ? '—'
@@ -648,12 +695,17 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          entry.direction == 'import'
-              ? Icons.cloud_download_rounded
-              : Icons.cloud_upload_rounded,
-          size: 20,
-          color: _primary,
+        Tooltip(
+          message: entry.direction == 'import'
+              ? context.l10n.syncDownloadFromRemote
+              : context.l10n.syncUploadToRemote,
+          child: Icon(
+            entry.direction == 'import'
+                ? Icons.cloud_download_rounded
+                : Icons.cloud_upload_rounded,
+            size: 20,
+            color: _primary,
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -661,7 +713,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${entry.direction} · ${entry.entity}',
+                entry.entity,
                 style: FontUtility.subheading.copyWith(fontSize: 15),
               ),
               const SizedBox(height: 4),
@@ -681,7 +733,11 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
               ],
               const SizedBox(height: 4),
               Text(
-                '${entry.processedCount} processed · ${entry.successCount} ok · ${entry.failureCount} failed',
+                context.l10n.syncHistoryStats(
+                  entry.processedCount,
+                  entry.successCount,
+                  entry.failureCount,
+                ),
                 style: FontUtility.body.copyWith(
                   fontSize: 12,
                   color: Colors.black45,
@@ -692,8 +748,8 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         ),
         Text(
           entry.skipped
-              ? 'Skipped'
-              : (ok ? 'Success' : 'Failed'),
+              ? context.l10n.commonSkipped
+              : (ok ? context.l10n.commonSuccess : context.l10n.commonFailed),
           style: FontUtility.body.copyWith(
             fontSize: 12,
             fontWeight: FontWeight.w600,

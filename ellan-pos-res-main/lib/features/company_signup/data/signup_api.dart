@@ -54,10 +54,7 @@ class SignupMeta {
   final List<SignupCountry> countries;
   final List<SignupBusinessType> businessTypes;
 
-  const SignupMeta({
-    required this.countries,
-    required this.businessTypes,
-  });
+  const SignupMeta({required this.countries, required this.businessTypes});
 }
 
 class ResolvedParentOrg {
@@ -104,14 +101,15 @@ class CompanySignupResult {
 
   factory CompanySignupResult.fromJson(Map<String, dynamic> json) {
     final hints = json['login_hints'];
-    final hintsMap =
-        hints is Map ? hints.cast<String, dynamic>() : <String, dynamic>{};
+    final hintsMap = hints is Map
+        ? hints.cast<String, dynamic>()
+        : <String, dynamic>{};
     final stepsRaw = json['steps'];
     final steps = stepsRaw is List
         ? stepsRaw
-            .whereType<Map>()
-            .map((row) => row.cast<String, dynamic>())
-            .toList(growable: false)
+              .whereType<Map>()
+              .map((row) => row.cast<String, dynamic>())
+              .toList(growable: false)
         : const <Map<String, dynamic>>[];
     return CompanySignupResult(
       companyIdentifier: '${json['company_identifier'] ?? ''}'.trim(),
@@ -198,13 +196,16 @@ class CompanySignupApi {
             .map((row) => SignupCountry.fromJson(row.cast<String, dynamic>()))
             .where((c) => c.id.isNotEmpty)
             .toList(growable: false);
-    final types = (decoded['business_types'] is List
-            ? decoded['business_types'] as List
-            : const [])
-        .whereType<Map>()
-        .map((row) => SignupBusinessType.fromJson(row.cast<String, dynamic>()))
-        .where((t) => t.id.isNotEmpty)
-        .toList(growable: false);
+    final types =
+        (decoded['business_types'] is List
+                ? decoded['business_types'] as List
+                : const [])
+            .whereType<Map>()
+            .map(
+              (row) => SignupBusinessType.fromJson(row.cast<String, dynamic>()),
+            )
+            .where((t) => t.id.isNotEmpty)
+            .toList(growable: false);
     return SignupMeta(
       countries: countries,
       businessTypes: types.isEmpty
@@ -220,12 +221,12 @@ class CompanySignupApi {
 
   Future<ResolvedParentOrg> resolveParent(String ref) async {
     final response = await http.get(
-      _originUri('/api/pos/signup/parent', {
-        'ref': ref.trim(),
-      }),
+      _originUri('/api/pos/signup/parent', {'ref': ref.trim()}),
     );
     final decoded = _decodeMap(response.body);
-    if (response.statusCode < 200 || response.statusCode >= 300 || decoded['ok'] == false) {
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300 ||
+        decoded['ok'] == false) {
       throw SignupApiException.fromResponse(
         statusCode: response.statusCode == 200 ? 404 : response.statusCode,
         body: decoded,
@@ -291,9 +292,7 @@ class CompanySignupApi {
     return decoded;
   }
 
-  Future<Map<String, dynamic>> fetchConfig({
-    required String orgId,
-  }) async {
+  Future<Map<String, dynamic>> fetchConfig({required String orgId}) async {
     final response = await http.get(
       _originUri('/api/pos/config', {
         'orgId': orgId,

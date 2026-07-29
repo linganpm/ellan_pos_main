@@ -9,6 +9,7 @@ import 'package:pos_tablet/core/device_setup_store.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/core/utils/user_facing_error.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Add cashier — online + org JWT. Always creates a Cashier on the open store.
@@ -30,15 +31,25 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
   final _email = TextEditingController();
   final _phone = TextEditingController();
   final _password = TextEditingController();
-  final _country = TextEditingController(text: 'Organisation country');
-  final _role = TextEditingController(text: 'Cashier');
+  final _country = TextEditingController();
+  final _role = TextEditingController();
   bool _loading = false;
   String? _error;
+  bool _localizedDefaultsSeeded = false;
 
   @override
   void initState() {
     super.initState();
     _resolveCountry();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_localizedDefaultsSeeded) return;
+    _localizedDefaultsSeeded = true;
+    _role.text = context.l10n.storeSetupCashier;
+    _country.text = context.l10n.signupCountry;
   }
 
   @override
@@ -67,10 +78,9 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
         meta.code.trim().toUpperCase(),
     ];
     if (!mounted) return;
-    setState(() {
-      _country.text =
-          parts.isEmpty ? 'Organisation country' : parts.join('  ');
-    });
+    if (parts.isNotEmpty) {
+      setState(() => _country.text = parts.join('  '));
+    }
   }
 
   Future<void> _submit() async {
@@ -94,7 +104,9 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
       return;
     }
     if (store == null) {
-      setState(() => _error = 'Open a store first so staff can be posted to it.');
+      setState(
+        () => _error = 'Open a store first so staff can be posted to it.',
+      );
       return;
     }
     if (_first.text.trim().isEmpty ||
@@ -121,8 +133,8 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
       final branchSi = (store.storeRemoteId ?? '').trim().isNotEmpty
           ? store.storeRemoteId!.trim()
           : (store.serviceInstanceId > 0
-              ? '${store.serviceInstanceId}'
-              : store.uniqueId);
+                ? '${store.serviceInstanceId}'
+                : store.uniqueId);
       final response = await http.post(
         uri,
         headers: {
@@ -158,9 +170,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
       } catch (_) {}
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cashier created. They can unlock this store after logout.'),
-        ),
+        SnackBar(content: Text(context.l10n.storeSetupCashierCreated)),
       );
       Navigator.pop(context);
     } catch (e) {
@@ -270,7 +280,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
         foregroundColor: _ink,
         elevation: 0,
         title: Text(
-          'Add cashier',
+          context.l10n.storeSetupAddCashier,
           style: FontUtility.heading.copyWith(
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -304,7 +314,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
               _section(
                 accent: const Color(0xFF0EA5E9),
                 icon: Icons.badge_outlined,
-                title: 'Profile',
+                title: context.l10n.profileTitle,
                 children: [
                   TextField(
                     controller: _first,
@@ -339,7 +349,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                       fontWeight: FontWeight.w600,
                       color: _ink,
                     ),
-                    decoration: _fieldDecoration('Email'),
+                    decoration: _fieldDecoration(context.l10n.commonEmail),
                   ),
                   _gap(),
                   TextField(
@@ -351,7 +361,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                       fontWeight: FontWeight.w600,
                       color: _ink,
                     ),
-                    decoration: _fieldDecoration('Phone'),
+                    decoration: _fieldDecoration(context.l10n.commonPhone),
                   ),
                   _gap(),
                   TextField(
@@ -376,7 +386,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
               _section(
                 accent: const Color(0xFF10B981),
                 icon: Icons.lock_outline_rounded,
-                title: 'Access',
+                title: context.l10n.storeSetupAccess,
                 children: [
                   TextField(
                     controller: _password,
@@ -387,7 +397,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                       fontWeight: FontWeight.w600,
                       color: _ink,
                     ),
-                    decoration: _fieldDecoration('Password'),
+                    decoration: _fieldDecoration(context.l10n.commonPassword),
                   ),
                   _gap(),
                   TextField(
@@ -434,7 +444,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text('Create cashier'),
+                      : Text(context.l10n.storeSetupCreateCashier),
                 ),
               ),
             ],

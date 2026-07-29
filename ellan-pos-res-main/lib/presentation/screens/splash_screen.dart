@@ -6,6 +6,7 @@ import '../../bloc/user/user_state.dart';
 import '../../core/routes.dart';
 import '../../core/utils/font_utility.dart';
 import '../../core/utils/user_facing_error.dart';
+import '../../core/localization/l10n_context.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -72,9 +73,11 @@ class _SplashScreenState extends State<SplashScreen>
               context: context,
               barrierDismissible: false,
               builder: (dialogContext) => AlertDialog(
-                title: const Text('Device not approved'),
+                title: Text(context.l10n.splashDeviceNotApproved),
                 content: Text(
-                  state.message.substring(deviceNotApprovedPrefix.length).trim(),
+                  state.message
+                      .substring(deviceNotApprovedPrefix.length)
+                      .trim(),
                 ),
                 actions: [
                   TextButton(
@@ -82,15 +85,15 @@ class _SplashScreenState extends State<SplashScreen>
                       Navigator.of(dialogContext).pop();
                       context.read<UserBloc>().add(UserInitializeEvent());
                     },
-                    child: const Text('Check again'),
+                    child: Text(context.l10n.splashCheckAgain),
                   ),
                 ],
               ),
             );
-          } else if (state.message.contains("No stored organisation code found") ||
-              state.message.contains("No stored configuration found")) {
+          } else if (state.message.contains(context.l10n.splashNoOrgCode) ||
+              state.message.contains(context.l10n.splashNoConfig)) {
             Navigator.pushReplacementNamed(context, AppRoutes.authEntry);
-          } else if (state.message.contains("Please sign in to continue")) {
+          } else if (state.message.contains(context.l10n.splashPleaseSignIn)) {
             Navigator.pushReplacementNamed(context, AppRoutes.login);
           } else {
             final networkIssue = isNetworkConnectivityError(state.message);
@@ -99,7 +102,9 @@ class _SplashScreenState extends State<SplashScreen>
               barrierDismissible: false,
               builder: (dialogContext) => AlertDialog(
                 title: Text(
-                  networkIssue ? 'Cannot reach server' : 'Initialization Error',
+                  networkIssue
+                      ? context.l10n.errorNetwork
+                      : context.l10n.splashInitError,
                 ),
                 content: Text(state.message),
                 actions: [
@@ -108,14 +113,14 @@ class _SplashScreenState extends State<SplashScreen>
                       Navigator.of(dialogContext).pop();
                       Navigator.pushReplacementNamed(context, AppRoutes.login);
                     },
-                    child: const Text('Sign in'),
+                    child: Text(context.l10n.actionSignIn),
                   ),
                   FilledButton(
                     onPressed: () {
                       Navigator.of(dialogContext).pop();
                       context.read<UserBloc>().add(UserInitializeEvent());
                     },
-                    child: const Text('Retry'),
+                    child: Text(context.l10n.actionRetry),
                   ),
                 ],
               ),
@@ -160,19 +165,11 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                   const SizedBox(height: 32),
                   Text(
-                    'NexPOS',
+                    context.l10n.authEntryBrand,
                     style: FontUtility.heading.copyWith(
                       color: Colors.white,
                       fontSize: 48,
                       letterSpacing: 2,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Precision in every transaction',
-                    style: FontUtility.subheading.copyWith(
-                      color: Colors.white70,
-                      fontWeight: FontWeight.w400,
                     ),
                   ),
                   const SizedBox(height: 48),

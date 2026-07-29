@@ -7,6 +7,7 @@ import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/org_timezone.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/localization/l10n_context.dart';
 
 /// Live organisation clock with org currency + timezone for the home AppBar.
 ///
@@ -54,9 +55,7 @@ class _OrgLocalClockBadgeState extends State<OrgLocalClockBadge> {
         : tzLabel;
 
     if (!mounted) return;
-    if (clock == _clock &&
-        currency == _currency &&
-        shortTz == _timezoneLabel) {
+    if (clock == _clock && currency == _currency && shortTz == _timezoneLabel) {
       return;
     }
     setState(() {
@@ -75,7 +74,7 @@ class _OrgLocalClockBadgeState extends State<OrgLocalClockBadge> {
     final tooltip = [
       if (_currency.isNotEmpty) _currency,
       if (_timezoneLabel.isNotEmpty) _timezoneLabel,
-      'Organisation time',
+      context.l10n.commonOrganisationTime,
     ].join(' · ');
 
     return Tooltip(

@@ -19,7 +19,11 @@ class StoreLoginEvent extends StoreEvent {
   final String orgCode;
   final String email;
   final String password;
-  const StoreLoginEvent({required this.orgCode, required this.email, required this.password});
+  const StoreLoginEvent({
+    required this.orgCode,
+    required this.email,
+    required this.password,
+  });
 
   @override
   List<Object?> get props => [orgCode, email];

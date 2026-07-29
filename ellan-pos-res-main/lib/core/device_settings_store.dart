@@ -33,10 +33,7 @@ class DeviceSyncSettings {
     return 'Every $intervalSeconds seconds';
   }
 
-  DeviceSyncSettings copyWith({
-    bool? autoSyncEnabled,
-    int? intervalSeconds,
-  }) {
+  DeviceSyncSettings copyWith({bool? autoSyncEnabled, int? intervalSeconds}) {
     return DeviceSyncSettings(
       autoSyncEnabled: autoSyncEnabled ?? this.autoSyncEnabled,
       intervalSeconds: intervalSeconds ?? this.intervalSeconds,

@@ -5,6 +5,7 @@ class CartDiscountLine extends Equatable {
   final String id;
   final String title;
   final double percentage;
+
   /// When set, discount applies to that cart line only.
   final String? targetLineSignature;
   final String? targetItemName;
@@ -37,6 +38,11 @@ class CartDiscountLine extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, title, percentage, targetLineSignature, targetItemName];
+  List<Object?> get props => [
+    id,
+    title,
+    percentage,
+    targetLineSignature,
+    targetItemName,
+  ];
 }

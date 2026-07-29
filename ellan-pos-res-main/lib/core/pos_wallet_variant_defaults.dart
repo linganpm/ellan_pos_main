@@ -71,9 +71,9 @@ class PosWalletVariantDefaults {
   };
 
   static List<Map<String, dynamic>> get defaultBranchVariants => [
-        for (final row in catalogue)
-          if (row['default_on_branch'] == true) Map<String, dynamic>.from(row),
-      ];
+    for (final row in catalogue)
+      if (row['default_on_branch'] == true) Map<String, dynamic>.from(row),
+  ];
 
   /// Prefer gateway rows; fill any missing fixed ids from the local catalogue.
   static List<Map<String, dynamic>> mergeWithRemote(
@@ -87,14 +87,8 @@ class PosWalletVariantDefaults {
     for (final row in remote) {
       final id = (row['id'] as num?)?.toInt();
       if (id == null || !ids.contains(id)) continue;
-      byId[id] = {
-        ...byId[id]!,
-        ...Map<String, dynamic>.from(row),
-        'id': id,
-      };
+      byId[id] = {...byId[id]!, ...Map<String, dynamic>.from(row), 'id': id};
     }
-    return [
-      for (final row in catalogue) byId[row['id'] as int]!,
-    ];
+    return [for (final row in catalogue) byId[row['id'] as int]!];
   }
 }

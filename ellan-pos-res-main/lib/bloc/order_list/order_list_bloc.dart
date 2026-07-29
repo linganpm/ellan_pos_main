@@ -32,7 +32,7 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
     this.initialStatusFilter,
     this.periodFilter,
   }) : _controller = controller ?? getIt<UiStoreController>(),
-        super(OrderListInitial()) {
+       super(OrderListInitial()) {
     on<FetchInitialOrders>(_onFetchInitialOrders);
     on<FetchNextPage>(_onFetchNextPage);
     on<FilterByType>(_onFilterByType);
@@ -68,8 +68,9 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
       orderId: '${summary.orderId}',
       orderType: mapped.label,
       orderTypeKey: mapped.key,
-      customerName:
-          summary.customerName.isEmpty ? 'Walk-in' : summary.customerName,
+      customerName: summary.customerName.isEmpty
+          ? 'Walk-in'
+          : summary.customerName,
       phoneNumber: summary.mobile.isEmpty ? null : summary.mobile,
       email: summary.customerEmail.isEmpty ? null : summary.customerEmail,
       customerUniqueId: summary.customerUniqueId,
@@ -114,23 +115,30 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
     try {
       await _loadOrdersFromDb();
       _resolvePeriodWindow();
-      final typeFilter =
-          (initialTypeFilter.trim().isEmpty) ? 'All' : initialTypeFilter.trim();
+      final typeFilter = (initialTypeFilter.trim().isEmpty)
+          ? 'All'
+          : initialTypeFilter.trim();
       final statusFilter = (initialStatusFilter ?? '').trim().isEmpty
           ? null
           : initialStatusFilter!.trim();
-      final initialData =
-          _applyFiltersAndPagination(typeFilter, statusFilter, '', 0);
-      emit(OrderListLoaded(
-        orders: initialData,
-        availableOrderTypes: List.unmodifiable(_orderTypes),
-        selectedTypeFilter: typeFilter,
-        selectedStatusFilter: statusFilter,
-        periodFilter: (periodFilter ?? '').trim().isEmpty
-            ? null
-            : periodFilter!.trim(),
-        hasReachedMax: initialData.length < _pageSize,
-      ));
+      final initialData = _applyFiltersAndPagination(
+        typeFilter,
+        statusFilter,
+        '',
+        0,
+      );
+      emit(
+        OrderListLoaded(
+          orders: initialData,
+          availableOrderTypes: List.unmodifiable(_orderTypes),
+          selectedTypeFilter: typeFilter,
+          selectedStatusFilter: statusFilter,
+          periodFilter: (periodFilter ?? '').trim().isEmpty
+              ? null
+              : periodFilter!.trim(),
+          hasReachedMax: initialData.length < _pageSize,
+        ),
+      );
     } catch (e) {
       emit(const OrderListError('Failed to fetch orders.'));
     }
@@ -172,13 +180,18 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
           currentLength,
         );
 
-        emit(moreData.isEmpty
-            ? currentState.copyWith(hasReachedMax: true, isFetchingMore: false)
-            : currentState.copyWith(
-                orders: List.of(currentState.orders)..addAll(moreData),
-                hasReachedMax: moreData.length < _pageSize,
-                isFetchingMore: false,
-              ));
+        emit(
+          moreData.isEmpty
+              ? currentState.copyWith(
+                  hasReachedMax: true,
+                  isFetchingMore: false,
+                )
+              : currentState.copyWith(
+                  orders: List.of(currentState.orders)..addAll(moreData),
+                  hasReachedMax: moreData.length < _pageSize,
+                  isFetchingMore: false,
+                ),
+        );
       } catch (e) {
         emit(currentState.copyWith(isFetchingMore: false));
       }
@@ -198,12 +211,14 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
         0,
       );
 
-      emit(currentState.copyWith(
-        orders: filteredData,
-        selectedTypeFilter: event.type,
-        hasReachedMax: filteredData.length < _pageSize,
-        isFetchingMore: false,
-      ));
+      emit(
+        currentState.copyWith(
+          orders: filteredData,
+          selectedTypeFilter: event.type,
+          hasReachedMax: filteredData.length < _pageSize,
+          isFetchingMore: false,
+        ),
+      );
     }
   }
 
@@ -220,12 +235,14 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
         0,
       );
 
-      emit(currentState.copyWith(
-        orders: filteredData,
-        selectedStatusFilter: event.status,
-        hasReachedMax: filteredData.length < _pageSize,
-        isFetchingMore: false,
-      ));
+      emit(
+        currentState.copyWith(
+          orders: filteredData,
+          selectedStatusFilter: event.status,
+          hasReachedMax: filteredData.length < _pageSize,
+          isFetchingMore: false,
+        ),
+      );
     }
   }
 
@@ -244,15 +261,17 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
         0,
       );
 
-      emit(OrderListLoaded(
-        orders: filteredData,
-        availableOrderTypes: currentState.availableOrderTypes,
-        selectedTypeFilter: currentState.selectedTypeFilter,
-        selectedStatusFilter: null,
-        periodFilter: currentState.periodFilter,
-        searchQuery: currentState.searchQuery,
-        hasReachedMax: filteredData.length < _pageSize,
-      ));
+      emit(
+        OrderListLoaded(
+          orders: filteredData,
+          availableOrderTypes: currentState.availableOrderTypes,
+          selectedTypeFilter: currentState.selectedTypeFilter,
+          selectedStatusFilter: null,
+          periodFilter: currentState.periodFilter,
+          searchQuery: currentState.searchQuery,
+          hasReachedMax: filteredData.length < _pageSize,
+        ),
+      );
     }
   }
 
@@ -269,12 +288,14 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
         0,
       );
 
-      emit(currentState.copyWith(
-        orders: filteredData,
-        searchQuery: event.query,
-        hasReachedMax: filteredData.length < _pageSize,
-        isFetchingMore: false,
-      ));
+      emit(
+        currentState.copyWith(
+          orders: filteredData,
+          searchQuery: event.query,
+          hasReachedMax: filteredData.length < _pageSize,
+          isFetchingMore: false,
+        ),
+      );
     }
   }
 
@@ -295,15 +316,17 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
         0,
       );
 
-      emit(OrderListLoaded(
-        orders: refreshedData,
-        availableOrderTypes: List.unmodifiable(_orderTypes),
-        selectedTypeFilter: currentState.selectedTypeFilter,
-        selectedStatusFilter: currentState.selectedStatusFilter,
-        periodFilter: currentState.periodFilter,
-        searchQuery: currentState.searchQuery,
-        hasReachedMax: refreshedData.length < _pageSize,
-      ));
+      emit(
+        OrderListLoaded(
+          orders: refreshedData,
+          availableOrderTypes: List.unmodifiable(_orderTypes),
+          selectedTypeFilter: currentState.selectedTypeFilter,
+          selectedStatusFilter: currentState.selectedStatusFilter,
+          periodFilter: currentState.periodFilter,
+          searchQuery: currentState.searchQuery,
+          hasReachedMax: refreshedData.length < _pageSize,
+        ),
+      );
     } else {
       add(FetchInitialOrders());
     }
@@ -327,8 +350,7 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
       return;
     }
 
-    final orderIndex =
-        _allOrders.indexWhere((o) => o.orderId == event.orderId);
+    final orderIndex = _allOrders.indexWhere((o) => o.orderId == event.orderId);
     if (orderIndex != -1) {
       final order = _allOrders[orderIndex];
       _allOrders[orderIndex] = OrderListModel(

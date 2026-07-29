@@ -32,18 +32,18 @@ class AppRoutes {
   static const String orderPayments = 'orderPayments';
 
   static Map<String, WidgetBuilder> get routes => {
-        authEntry: (context) => const AuthEntryScreen(),
-        onboarding: (context) => const CompanySignupShell(),
-        joinExisting: (context) => const WelcomeScreen(),
-        login: (context) => const SignInScreen(),
-        // storeList / staffLock only via [generate] so route arguments apply.
-        home: (context) => const HomeScreen(),
-        sync: (context) => const SyncScreen(),
-        profile: (context) => const ProfileScreen(),
-        deviceSettings: (context) => const DeviceSettingsScreen(),
-        storeSetup: (context) => const StoreSetupHubScreen(),
-        company: (context) => const CompanyHubScreen(),
-      };
+    authEntry: (context) => const AuthEntryScreen(),
+    onboarding: (context) => const CompanySignupShell(),
+    joinExisting: (context) => const WelcomeScreen(),
+    login: (context) => const SignInScreen(),
+    // storeList / staffLock only via [generate] so route arguments apply.
+    home: (context) => const HomeScreen(),
+    sync: (context) => const SyncScreen(),
+    profile: (context) => const ProfileScreen(),
+    deviceSettings: (context) => const DeviceSettingsScreen(),
+    storeSetup: (context) => const StoreSetupHubScreen(),
+    company: (context) => const CompanyHubScreen(),
+  };
 
   static Route<dynamic>? generate(RouteSettings settings) {
     switch (settings.name) {
@@ -53,56 +53,58 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const CompanySignupShell());
       case joinExisting:
         return MaterialPageRoute(builder: (_) => const WelcomeScreen());
-      case login: {
-        final args = settings.arguments;
-        String? email;
-        String? phone;
-        String? companyIdentifier;
-        if (args is Map) {
-          email = args['email']?.toString();
-          phone = args['phone']?.toString();
-          companyIdentifier = args['companyIdentifier']?.toString();
+      case login:
+        {
+          final args = settings.arguments;
+          String? email;
+          String? phone;
+          String? companyIdentifier;
+          if (args is Map) {
+            email = args['email']?.toString();
+            phone = args['phone']?.toString();
+            companyIdentifier = args['companyIdentifier']?.toString();
+          }
+          return MaterialPageRoute(
+            builder: (_) => SignInScreen(
+              initialIdentifier: (email != null && email.trim().isNotEmpty)
+                  ? email.trim()
+                  : (phone != null && phone.trim().isNotEmpty
+                        ? phone.trim()
+                        : null),
+              companyIdentifierHint: companyIdentifier,
+            ),
+          );
         }
-        return MaterialPageRoute(
-          builder: (_) => SignInScreen(
-            initialIdentifier: (email != null && email.trim().isNotEmpty)
-                ? email.trim()
-                : (phone != null && phone.trim().isNotEmpty ? phone.trim() : null),
-            companyIdentifierHint: companyIdentifier,
-          ),
-        );
-      }
-      case staffLock: {
-        final args = settings.arguments;
-        String? storeId;
-        String? storeName;
-        if (args is String) {
-          storeId = args;
-        } else if (args is Map) {
-          storeId = args['storeId']?.toString();
-          storeName = args['storeName']?.toString();
+      case staffLock:
+        {
+          final args = settings.arguments;
+          String? storeId;
+          String? storeName;
+          if (args is String) {
+            storeId = args;
+          } else if (args is Map) {
+            storeId = args['storeId']?.toString();
+            storeName = args['storeName']?.toString();
+          }
+          return MaterialPageRoute(
+            builder: (_) =>
+                StaffLockScreen(storeId: storeId, storeNameHint: storeName),
+          );
         }
-        return MaterialPageRoute(
-          builder: (_) => StaffLockScreen(
-            storeId: storeId,
-            storeNameHint: storeName,
-          ),
-        );
-      }
-      case storeList: {
-        final args = settings.arguments;
-        var returnToStaffLock = false;
-        if (args is Map) {
-          returnToStaffLock = args['returnToStaffLock'] == true;
-        } else if (args is bool) {
-          returnToStaffLock = args;
+      case storeList:
+        {
+          final args = settings.arguments;
+          var returnToStaffLock = false;
+          if (args is Map) {
+            returnToStaffLock = args['returnToStaffLock'] == true;
+          } else if (args is bool) {
+            returnToStaffLock = args;
+          }
+          return MaterialPageRoute(
+            builder: (_) =>
+                StoreListScreen(returnToStaffLock: returnToStaffLock),
+          );
         }
-        return MaterialPageRoute(
-          builder: (_) => StoreListScreen(
-            returnToStaffLock: returnToStaffLock,
-          ),
-        );
-      }
       case home:
         return MaterialPageRoute(builder: (_) => const HomeScreen());
       case sync:
@@ -115,32 +117,32 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const StoreSetupHubScreen());
       case company:
         return MaterialPageRoute(builder: (_) => const CompanyHubScreen());
-      case orderDetails: {
-        final args = settings.arguments;
-        final orderId = args is int
-            ? args
-            : int.tryParse('${args ?? ''}') ?? 0;
-        return MaterialPageRoute(
-          builder: (_) => OrderDetailsScreen(orderId: orderId),
-        );
-      }
-      case orderPayments: {
-        final args = settings.arguments;
-        int orderId = 0;
-        String? orderLabel;
-        if (args is int) {
-          orderId = args;
-        } else if (args is Map) {
-          orderId = int.tryParse('${args['orderId'] ?? ''}') ?? 0;
-          orderLabel = args['orderLabel']?.toString();
+      case orderDetails:
+        {
+          final args = settings.arguments;
+          final orderId = args is int
+              ? args
+              : int.tryParse('${args ?? ''}') ?? 0;
+          return MaterialPageRoute(
+            builder: (_) => OrderDetailsScreen(orderId: orderId),
+          );
         }
-        return MaterialPageRoute(
-          builder: (_) => OrderPaymentsScreen(
-            orderId: orderId,
-            orderLabel: orderLabel,
-          ),
-        );
-      }
+      case orderPayments:
+        {
+          final args = settings.arguments;
+          int orderId = 0;
+          String? orderLabel;
+          if (args is int) {
+            orderId = args;
+          } else if (args is Map) {
+            orderId = int.tryParse('${args['orderId'] ?? ''}') ?? 0;
+            orderLabel = args['orderLabel']?.toString();
+          }
+          return MaterialPageRoute(
+            builder: (_) =>
+                OrderPaymentsScreen(orderId: orderId, orderLabel: orderLabel),
+          );
+        }
       default:
         return null;
     }

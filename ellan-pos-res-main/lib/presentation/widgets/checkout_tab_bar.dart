@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/utils/font_utility.dart';
+import '../../core/localization/l10n_context.dart';
 
 class CheckoutTabBar extends StatelessWidget {
   final bool isHistoryActive;
@@ -31,7 +32,9 @@ class CheckoutTabBar extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: !isHistoryActive ? const Color(0xFF4A00E0) : Colors.transparent,
+                  color: !isHistoryActive
+                      ? const Color(0xFF4A00E0)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: !isHistoryActive
                       ? [
@@ -39,15 +42,19 @@ class CheckoutTabBar extends StatelessWidget {
                             color: const Color(0xFF4A00E0).withOpacity(0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
-                          )
+                          ),
                         ]
                       : null,
                 ),
                 child: Center(
                   child: Text(
-                    newOrderCount > 0 ? 'New Order ($newOrderCount)' : 'New Order',
+                    newOrderCount > 0
+                        ? 'New Order ($newOrderCount)'
+                        : context.l10n.commonNewOrder,
                     style: FontUtility.subheading.copyWith(
-                      color: !isHistoryActive ? Colors.white : Colors.grey.shade600,
+                      color: !isHistoryActive
+                          ? Colors.white
+                          : Colors.grey.shade600,
                       fontSize: 14,
                     ),
                   ),
@@ -61,7 +68,9 @@ class CheckoutTabBar extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: isHistoryActive ? const Color(0xFF4A00E0) : Colors.transparent,
+                  color: isHistoryActive
+                      ? const Color(0xFF4A00E0)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: isHistoryActive
                       ? [
@@ -69,15 +78,17 @@ class CheckoutTabBar extends StatelessWidget {
                             color: const Color(0xFF4A00E0).withOpacity(0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
-                          )
+                          ),
                         ]
                       : null,
                 ),
                 child: Center(
                   child: Text(
-                    'Order History',
+                    context.l10n.commonOrderHistory,
                     style: FontUtility.subheading.copyWith(
-                      color: isHistoryActive ? Colors.white : Colors.grey.shade600,
+                      color: isHistoryActive
+                          ? Colors.white
+                          : Colors.grey.shade600,
                       fontSize: 14,
                     ),
                   ),

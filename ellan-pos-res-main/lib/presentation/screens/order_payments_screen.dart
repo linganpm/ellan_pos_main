@@ -9,6 +9,7 @@ import 'package:pos_tablet/core/org_timezone.dart';
 import 'package:pos_tablet/core/utils/customer_identity.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/widgets/billing/order_add_payment_dialog.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Lists every payment recorded against a single order.
@@ -103,9 +104,9 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
   }
 
   double get _paidTotal => _payments.fold<double>(
-        0,
-        (sum, payment) => sum + (payment.amount - payment.refundedAmount),
-      );
+    0,
+    (sum, payment) => sum + (payment.amount - payment.refundedAmount),
+  );
 
   double get _remaining {
     final remaining = _orderTotal - _paidTotal;
@@ -116,38 +117,44 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
     final refundable = payment.refundableAmount;
     if (refundable <= 0.0001) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This payment is already fully refunded.')),
+        SnackBar(content: Text(context.l10n.orderAlreadyFullyRefunded)),
       );
       return;
     }
-    final amountController =
-        TextEditingController(text: refundable.toStringAsFixed(2));
+    final amountController = TextEditingController(
+      text: refundable.toStringAsFixed(2),
+    );
     final reasonController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Refund payment'),
+        title: Text(context.l10n.orderPaymentsRefundTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Refundable ${PosCurrency.format(refundable)} of ${PosCurrency.format(payment.amount)}',
+              context.l10n.orderPaymentsRefundableOf(
+                PosCurrency.format(refundable),
+                PosCurrency.format(payment.amount),
+              ),
               style: FontUtility.body.copyWith(color: Colors.black54),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: amountController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Refund amount',
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: InputDecoration(
+                labelText: context.l10n.orderPaymentsRefundAmount,
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: reasonController,
-              decoration: const InputDecoration(
-                labelText: 'Reason (optional)',
+              decoration: InputDecoration(
+                labelText: context.l10n.orderPaymentsReasonOptional,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -156,12 +163,14 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.actionCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFF512F)),
-            child: const Text('Refund'),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF512F),
+            ),
+            child: Text(context.l10n.orderPaymentsRefundAction),
           ),
         ],
       ),
@@ -172,7 +181,9 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Enter an amount between 0.01 and ${refundable.toStringAsFixed(2)}.',
+            context.l10n.orderPaymentsRefundAmountRange(
+              refundable.toStringAsFixed(2),
+            ),
           ),
         ),
       );
@@ -189,13 +200,19 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Refunded ${PosCurrency.format(amount)}.')),
+        SnackBar(
+          content: Text(
+            context.l10n.orderRefundedAmount(PosCurrency.format(amount)),
+          ),
+        ),
       );
       await _load();
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Refund failed: $error')),
+        SnackBar(
+          content: Text(context.l10n.orderRefundFailed(error.toString())),
+        ),
       );
     }
   }
@@ -204,12 +221,12 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
     final remaining = _remaining;
     if (remaining <= 0.0001) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This order is already fully paid.')),
+        SnackBar(content: Text(context.l10n.orderAlreadyFullyPaid)),
       );
       return;
     }
 
-    final modes = defaultOrderPaymentModes();
+    final modes = defaultOrderPaymentModes(context);
     final result = await showDialog<OrderAddPaymentResult>(
       context: context,
       barrierDismissible: false,
@@ -217,8 +234,8 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
         remainingAmount: remaining,
         paymentMode: modes.first.mode,
         paymentLabel: modes.first.label,
-        title: 'Record payment',
-        confirmLabel: 'Add payment',
+        title: context.l10n.orderRecordPayment,
+        confirmLabel: context.l10n.orderPaymentsAddPayment,
         showModePicker: true,
         modeOptions: modes,
       ),
@@ -238,8 +255,10 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
         SnackBar(
           content: Text(
             outcome.balance <= 0.0001
-                ? 'Payment recorded. Order is fully paid.'
-                : 'Payment recorded. Balance ${PosCurrency.format(outcome.balance)}',
+                ? context.l10n.orderPaymentsRecordedFullyPaid
+                : context.l10n.orderPaymentsRecordedBalance(
+                    PosCurrency.format(outcome.balance),
+                  ),
           ),
           backgroundColor: Colors.green.shade700,
         ),
@@ -249,7 +268,7 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Payment failed: $error'),
+          content: Text(context.l10n.orderPaymentFailed(error.toString())),
           backgroundColor: Colors.red.shade700,
         ),
       );
@@ -262,7 +281,8 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
   Widget build(BuildContext context) {
     final titleOrder = widget.orderLabel ?? '#${widget.orderId}';
     final status = _order?.statusName ?? '';
-    final canAdd = !_loading &&
+    final canAdd =
+        !_loading &&
         _error == null &&
         _remaining > 0.0001 &&
         !StoreOrderStatus.isCancelled(status) &&
@@ -274,16 +294,17 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          'Payments · $titleOrder',
+          '${context.l10n.commonPayments} · $titleOrder',
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
         leading: IconButton(
+          tooltip: context.l10n.actionBack,
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: context.l10n.actionRefresh,
             onPressed: _loading || _recording ? null : _load,
             icon: const Icon(Icons.refresh_rounded, color: Colors.black87),
           ),
@@ -291,7 +312,10 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: Colors.grey.withValues(alpha: 0.2)),
+          child: Container(
+            height: 1,
+            color: Colors.grey.withValues(alpha: 0.2),
+          ),
         ),
       ),
       floatingActionButton: canAdd
@@ -299,7 +323,11 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
               onPressed: _recording ? null : _recordPayment,
               backgroundColor: _primary,
               icon: const Icon(Icons.add_rounded),
-              label: Text(_recording ? 'Saving…' : 'Add / Record payment'),
+              label: Text(
+                _recording
+                    ? context.l10n.commonSaving
+                    : context.l10n.orderAddRecordPayment,
+              ),
             )
           : null,
       body: SafeArea(child: _buildBody()),
@@ -317,8 +345,11 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline_rounded,
-                  color: Color(0xFFFF512F), size: 48),
+              const Icon(
+                Icons.error_outline_rounded,
+                color: Color(0xFFFF512F),
+                size: 48,
+              ),
               const SizedBox(height: 12),
               Text(
                 _error!,
@@ -329,7 +360,7 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
               OutlinedButton.icon(
                 onPressed: _load,
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Retry'),
+                label: Text(context.l10n.actionRetry),
               ),
             ],
           ),
@@ -364,19 +395,12 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
                 ),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${_payments.length} payment${_payments.length == 1 ? '' : 's'}',
-                        style: FontUtility.heading.copyWith(fontSize: 18),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Order total ${PosCurrency.format(_orderTotal)} · Remaining ${PosCurrency.format(remaining)}',
-                        style: FontUtility.body.copyWith(color: Colors.black54),
-                      ),
-                    ],
+                  child: Text(
+                    context.l10n.orderPaymentsOrderSummary(
+                      PosCurrency.format(_orderTotal),
+                      PosCurrency.format(remaining),
+                    ),
+                    style: FontUtility.body.copyWith(color: Colors.black54),
                   ),
                 ),
                 Text(
@@ -387,27 +411,13 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
             ),
           ),
         ),
-        if (remaining > 0.0001 &&
-            !StoreOrderStatus.isCancelled(_order?.statusName ?? '') &&
-            !StoreOrderStatus.isCompleted(_order?.statusName ?? ''))
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _recording ? null : _recordPayment,
-                icon: const Icon(Icons.add_card_rounded),
-                label: const Text('Add / Record payment'),
-              ),
-            ),
-          ),
         Expanded(
           child: _payments.isEmpty
               ? Center(
                   child: Text(
                     remaining > 0.0001
-                        ? 'No payments yet. Record a payment for this unpaid order.'
-                        : 'No payments recorded for this order.',
+                        ? context.l10n.orderPaymentsNoPaymentsUnpaid
+                        : context.l10n.orderPaymentsNoPaymentsRecorded,
                     style: FontUtility.body.copyWith(color: Colors.black54),
                     textAlign: TextAlign.center,
                   ),
@@ -423,8 +433,8 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
                       timeLabel: _formatTime(payment.createdOn),
                       modeLabel: _displayMode(payment.paymentMode),
                       modeColor: _modeColor(payment.paymentMode),
-                      customerLabel: _customerLabels[
-                          (payment.customerId ?? '').trim()],
+                      customerLabel:
+                          _customerLabels[(payment.customerId ?? '').trim()],
                       onRefund: payment.refundableAmount > 0.0001
                           ? () => _refundPayment(payment)
                           : null,
@@ -448,15 +458,15 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
   String _displayMode(String raw) {
     switch (raw.trim().toLowerCase()) {
       case StoreOrderPaymentMode.cash:
-        return 'Cash';
+        return context.l10n.commonCash;
       case StoreOrderPaymentMode.card:
-        return 'Card';
+        return context.l10n.commonCard;
       case StoreOrderPaymentMode.online:
-        return 'Online / UPI';
+        return context.l10n.orderPaymentsOnlineUpi;
       case StoreOrderPaymentMode.credit:
-        return 'Credit';
+        return context.l10n.commonCredit;
       default:
-        return raw.isEmpty ? 'Payment' : raw;
+        return raw.isEmpty ? context.l10n.commonPayments : raw;
     }
   }
 
@@ -540,8 +550,10 @@ class _PaymentTile extends StatelessWidget {
                 if (payment.refundedAmount > 0.0001) ...[
                   const SizedBox(height: 2),
                   Text(
-                    'Refunded ${PosCurrency.format(payment.refundedAmount)} · '
-                    'Left ${PosCurrency.format(payment.refundableAmount)}',
+                    context.l10n.orderPaymentsRefundedLeft(
+                      PosCurrency.format(payment.refundedAmount),
+                      PosCurrency.format(payment.refundableAmount),
+                    ),
                     style: FontUtility.body.copyWith(
                       fontSize: 12,
                       color: const Color(0xFFFF512F),
@@ -551,7 +563,7 @@ class _PaymentTile extends StatelessWidget {
                 if ((payment.referenceId ?? '').trim().isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
-                    'Ref ${payment.referenceId}',
+                    context.l10n.orderPaymentsRefLabel(payment.referenceId!),
                     style: FontUtility.body.copyWith(
                       fontSize: 12,
                       color: Colors.black45,
@@ -565,7 +577,9 @@ class _PaymentTile extends StatelessWidget {
                     .isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
-                    'Customer ${customerLabel ?? payment.customerId}',
+                    context.l10n.orderPaymentsCustomerLabel(
+                      customerLabel ?? payment.customerId ?? '',
+                    ),
                     style: FontUtility.body.copyWith(
                       fontSize: 12,
                       color: Colors.black45,
@@ -588,11 +602,11 @@ class _PaymentTile extends StatelessWidget {
                 const SizedBox(height: 6),
                 TextButton(
                   onPressed: onRefund,
-                  child: const Text('Refund'),
+                  child: Text(context.l10n.orderPaymentsRefundAction),
                 ),
               ] else if (payment.isFullyRefunded)
                 Text(
-                  'Refunded',
+                  context.l10n.statusRefunded,
                   style: FontUtility.body.copyWith(
                     fontSize: 12,
                     color: Colors.black45,

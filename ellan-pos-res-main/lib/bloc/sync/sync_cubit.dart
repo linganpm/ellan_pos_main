@@ -29,10 +29,7 @@ class SyncChecklistItem extends Equatable {
     this.detail,
   });
 
-  SyncChecklistItem copyWith({
-    SyncItemStatus? status,
-    String? detail,
-  }) {
+  SyncChecklistItem copyWith({SyncItemStatus? status, String? detail}) {
     return SyncChecklistItem(
       id: id,
       entity: entity,
@@ -45,8 +42,15 @@ class SyncChecklistItem extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, entity, direction, title, subtitle, status, detail];
+  List<Object?> get props => [
+    id,
+    entity,
+    direction,
+    title,
+    subtitle,
+    status,
+    detail,
+  ];
 }
 
 class SyncState extends Equatable {
@@ -56,6 +60,7 @@ class SyncState extends Equatable {
   final String? errorMessage;
   final String? storeName;
   final DateTime? lastSuccessfulSyncAt;
+
   /// null = not probed yet; false = gateway unreachable (queue locally).
   final bool? gatewayReachable;
 
@@ -89,8 +94,7 @@ class SyncState extends Equatable {
           entity: 'customers',
           direction: SyncDirection.upload,
           title: 'Customers Upload',
-          subtitle:
-              'Push retail / business customers created on this device',
+          subtitle: 'Push retail / business customers created on this device',
         ),
         SyncChecklistItem(
           id: 'orders:export',
@@ -182,14 +186,14 @@ class SyncState extends Equatable {
 
   @override
   List<Object?> get props => [
-        items,
-        isRunning,
-        completed,
-        errorMessage,
-        storeName,
-        lastSuccessfulSyncAt,
-        gatewayReachable,
-      ];
+    items,
+    isRunning,
+    completed,
+    errorMessage,
+    storeName,
+    lastSuccessfulSyncAt,
+    gatewayReachable,
+  ];
 }
 
 class SyncCubit extends Cubit<SyncState> {
@@ -198,8 +202,8 @@ class SyncCubit extends Cubit<SyncState> {
   final UiStoreController controller;
 
   SyncCubit({UiStoreController? controller})
-      : controller = controller ?? getIt<UiStoreController>(),
-        super(SyncState.initial()) {
+    : controller = controller ?? getIt<UiStoreController>(),
+      super(SyncState.initial()) {
     _hydrate();
   }
 
@@ -238,7 +242,9 @@ class SyncCubit extends Cubit<SyncState> {
     }
 
     final reset = state.items
-        .map((item) => item.copyWith(status: SyncItemStatus.pending, detail: ''))
+        .map(
+          (item) => item.copyWith(status: SyncItemStatus.pending, detail: ''),
+        )
         .toList();
     emit(
       state.copyWith(
@@ -251,9 +257,7 @@ class SyncCubit extends Cubit<SyncState> {
     );
 
     try {
-      final result = await controller.syncFromRemote(
-        onProgress: _onProgress,
-      );
+      final result = await controller.syncFromRemote(onProgress: _onProgress);
       final finalized = state.items.map((item) {
         if (item.status == SyncItemStatus.pending) {
           return item.copyWith(
@@ -264,8 +268,9 @@ class SyncCubit extends Cubit<SyncState> {
         return item;
       }).toList();
 
-      final hardFailure =
-          result.operations.any((op) => !op.success && !op.skipped);
+      final hardFailure = result.operations.any(
+        (op) => !op.success && !op.skipped,
+      );
       DateTime? syncedAt = state.lastSuccessfulSyncAt;
       if (!hardFailure) {
         syncedAt = DateTime.now();

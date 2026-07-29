@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import '../../data/models/store_model.dart';
 
 /// Base class for all store list states
-/// 
+///
 /// All states related to store list management should extend this class
 abstract class StoreListState extends Equatable {
   const StoreListState();
@@ -12,21 +12,21 @@ abstract class StoreListState extends Equatable {
 }
 
 /// Initial state of the store list screen
-/// 
+///
 /// This state is used when the screen is first created
 class StoreListInitial extends StoreListState {
   const StoreListInitial();
 }
 
 /// State indicating that stores are being loaded
-/// 
+///
 /// This state is emitted while fetching the list of stores from the repository
 class StoreListLoading extends StoreListState {
   const StoreListLoading();
 }
 
 /// State indicating that stores have been successfully loaded
-/// 
+///
 /// This state contains the list of available stores and current selection state
 class StoreListLoaded extends StoreListState {
   /// List of available stores
@@ -62,7 +62,7 @@ class StoreListLoaded extends StoreListState {
 }
 
 /// State indicating that a store has been selected
-/// 
+///
 /// This state is emitted when the user selects a store from the list
 class StoreSelectionChanged extends StoreListState {
   /// The currently selected store
@@ -81,7 +81,7 @@ class StoreSelectionChanged extends StoreListState {
 }
 
 /// State indicating that store verification is in progress
-/// 
+///
 /// This state is emitted when the user submits the selected store
 /// and verification is being performed
 class StoreVerificationLoading extends StoreListState {
@@ -98,7 +98,7 @@ class StoreVerificationLoading extends StoreListState {
 }
 
 /// State indicating that store verification was successful
-/// 
+///
 /// This state signals that the selected store has been verified
 /// and the user can proceed to the next screen
 class StoreVerificationSuccess extends StoreListState {
@@ -112,7 +112,7 @@ class StoreVerificationSuccess extends StoreListState {
 }
 
 /// State indicating that store verification failed
-/// 
+///
 /// This state contains the error message explaining why verification failed
 class StoreVerificationFailure extends StoreListState {
   /// Error message describing the verification failure
@@ -121,17 +121,14 @@ class StoreVerificationFailure extends StoreListState {
   /// The store that failed verification
   final StoreModel? store;
 
-  const StoreVerificationFailure({
-    required this.errorMessage,
-    this.store,
-  });
+  const StoreVerificationFailure({required this.errorMessage, this.store});
 
   @override
   List<Object?> get props => [errorMessage, store];
 }
 
 /// State indicating a general error occurred
-/// 
+///
 /// This state is used for errors during store loading or other operations
 class StoreListError extends StoreListState {
   /// Error message describing what went wrong
@@ -142,4 +139,3 @@ class StoreListError extends StoreListState {
   @override
   List<Object?> get props => [errorMessage];
 }
-

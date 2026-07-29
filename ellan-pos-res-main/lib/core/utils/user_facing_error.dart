@@ -59,7 +59,10 @@ String userFacingError(
   }
   // Strip noisy ClientException / StateError / Exception prefixes.
   final cleaned = firstLine
-      .replaceFirst(RegExp(r'^ClientException[^:]*:\s*', caseSensitive: false), '')
+      .replaceFirst(
+        RegExp(r'^ClientException[^:]*:\s*', caseSensitive: false),
+        '',
+      )
       .replaceFirst(RegExp(r'^Bad state:\s*', caseSensitive: false), '')
       .replaceFirst(RegExp(r'^Exception:\s*', caseSensitive: false), '')
       .trim();

@@ -9,6 +9,10 @@ abstract class StoreRepository {
   Future<StoreOrganisation?> resolveOrganisation(String orgCode);
   Future<StoreConfig> loadRemoteConfig(String orgCode);
   Future<void> bootWithConfig(StoreConfig config);
-  Future<bool> login({required String orgCode, required String email, required String password});
+  Future<bool> login({
+    required String orgCode,
+    required String email,
+    required String password,
+  });
   List<StoreAccessibleStore> accessibleStores();
 }

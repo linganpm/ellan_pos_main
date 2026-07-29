@@ -17,6 +17,7 @@ class CartState extends Equatable {
 
   /// Named discounts (order-level and/or per basket item). Additive.
   final List<CartDiscountLine> discounts;
+
   /// Catalogue offer amount estimated from core offer engine.
   final double offerAppliedAmount;
   final List<String> offerLabels;
@@ -70,7 +71,8 @@ class CartState extends Equatable {
   }
 
   double get orderDiscountBase {
-    final base = subTotal - itemDiscountValue + (subTotal > 0 ? deliveryCharge : 0);
+    final base =
+        subTotal - itemDiscountValue + (subTotal > 0 ? deliveryCharge : 0);
     return base < 0 ? 0.0 : double.parse(base.toStringAsFixed(2));
   }
 
@@ -110,7 +112,10 @@ class CartState extends Equatable {
   double get baseTotal => subTotal > 0 ? subTotal + deliveryCharge : 0.0;
 
   double get serviceTaxValue =>
-      (baseTotal - offerAppliedAmount - discountValue).clamp(0, double.infinity) *
+      (baseTotal - offerAppliedAmount - discountValue).clamp(
+        0,
+        double.infinity,
+      ) *
       (serviceTaxPercentage / 100);
 
   double get netTotal {
@@ -127,10 +132,7 @@ class CartState extends Equatable {
   }
 
   int get totalItems {
-    return cartItems.fold<int>(
-      0,
-      (sum, item) => sum + item.quantity.ceil(),
-    );
+    return cartItems.fold<int>(0, (sum, item) => sum + item.quantity.ceil());
   }
 
   CartState copyWith({
@@ -172,19 +174,19 @@ class CartState extends Equatable {
 
   @override
   List<Object?> get props => [
-        isLoading,
-        categories,
-        products,
-        selectedCategoryId,
-        cartItems,
-        deliveryCharge,
-        orderHistory,
-        isHistoryTabActive,
-        discounts,
-        offerAppliedAmount,
-        offerLabels,
-        serviceTaxPercentage,
-        tipsAmount,
-        selectedPaymentMethod,
-      ];
+    isLoading,
+    categories,
+    products,
+    selectedCategoryId,
+    cartItems,
+    deliveryCharge,
+    orderHistory,
+    isHistoryTabActive,
+    discounts,
+    offerAppliedAmount,
+    offerLabels,
+    serviceTaxPercentage,
+    tipsAmount,
+    selectedPaymentMethod,
+  ];
 }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/currency_format.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 class OrderAddPaymentResult {
   final double amount;
@@ -24,8 +25,8 @@ class OrderAddPaymentDialog extends StatefulWidget {
   final double remainingAmount;
   final String paymentMode;
   final String paymentLabel;
-  final String title;
-  final String confirmLabel;
+  final String? title;
+  final String? confirmLabel;
   final bool showModePicker;
   final List<({String mode, String label})> modeOptions;
 
@@ -34,8 +35,8 @@ class OrderAddPaymentDialog extends StatefulWidget {
     required this.remainingAmount,
     required this.paymentMode,
     required this.paymentLabel,
-    this.title = 'Add payment',
-    this.confirmLabel = 'Add payment',
+    this.title,
+    this.confirmLabel,
     this.showModePicker = false,
     this.modeOptions = const [],
   });
@@ -82,7 +83,7 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
     final amount = double.tryParse(_amountController.text.trim()) ?? 0;
     if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter an amount greater than zero.')),
+        SnackBar(content: Text(context.l10n.amountGreaterThanZero)),
       );
       return;
     }
@@ -90,7 +91,9 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Amount cannot exceed remaining (${PosCurrency.format(widget.remainingAmount)}).',
+            context.l10n.billingAmountExceedsRemaining(
+              PosCurrency.format(widget.remainingAmount),
+            ),
           ),
         ),
       );
@@ -133,7 +136,7 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Remaining',
+                  context.l10n.commonRemaining,
                   textAlign: TextAlign.center,
                   style: FontUtility.body.copyWith(
                     fontSize: 13,
@@ -152,7 +155,7 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  widget.title,
+                  widget.title ?? context.l10n.billingAddPaymentTitle,
                   textAlign: TextAlign.center,
                   style: FontUtility.subheading.copyWith(
                     fontSize: 15,
@@ -163,8 +166,8 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                 if (widget.showModePicker && widget.modeOptions.isNotEmpty) ...[
                   DropdownButtonFormField<String>(
                     initialValue: _paymentMode,
-                    decoration: const InputDecoration(
-                      labelText: 'Payment mode',
+                    decoration: InputDecoration(
+                      labelText: context.l10n.commonPaymentMode,
                       border: OutlineInputBorder(),
                     ),
                     items: [
@@ -189,7 +192,7 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                   const SizedBox(height: 16),
                 ] else
                   Text(
-                    'Pay via $_paymentLabel',
+                    _paymentLabel,
                     textAlign: TextAlign.center,
                     style: FontUtility.body.copyWith(
                       fontSize: 14,
@@ -198,7 +201,7 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                   ),
                 if (!widget.showModePicker) const SizedBox(height: 16),
                 Text(
-                  'Amount',
+                  context.l10n.commonAmount,
                   style: FontUtility.subheading.copyWith(
                     fontSize: 13,
                     color: Colors.grey.shade700,
@@ -207,8 +210,9 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: _amountController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                   ],
@@ -246,13 +250,15 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                         ActionChip(
                           label: Text(
                             PosCurrency.format(preset, decimals: 0),
-                            style: FontUtility.subheading.copyWith(fontSize: 14),
+                            style: FontUtility.subheading.copyWith(
+                              fontSize: 14,
+                            ),
                           ),
                           onPressed: () => _setAmount(preset),
                         ),
                     ActionChip(
                       label: Text(
-                        'Exact',
+                        context.l10n.commonExact,
                         style: FontUtility.subheading.copyWith(fontSize: 14),
                       ),
                       onPressed: () => _setAmount(widget.remainingAmount),
@@ -262,8 +268,8 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                 const SizedBox(height: 14),
                 TextField(
                   controller: _referenceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Reference (optional)',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.commonReferenceOptional,
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -280,7 +286,9 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                       ),
                     ),
                     child: Text(
-                      widget.confirmLabel.toUpperCase(),
+                      (widget.confirmLabel ??
+                              context.l10n.billingAddPaymentTitle)
+                          .toUpperCase(),
                       style: FontUtility.heading.copyWith(
                         color: Colors.white,
                         fontSize: 16,
@@ -295,7 +303,7 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                   child: TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: Text(
-                      'Cancel',
+                      context.l10n.actionCancel,
                       style: FontUtility.subheading.copyWith(
                         color: Colors.grey.shade600,
                         fontSize: 15,
@@ -313,9 +321,17 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
 }
 
 /// Default modes when wallets are not available (payments screen).
-List<({String mode, String label})> defaultOrderPaymentModes() => const [
-      (mode: StoreOrderPaymentMode.cash, label: 'Cash'),
-      (mode: StoreOrderPaymentMode.card, label: 'Card'),
-      (mode: StoreOrderPaymentMode.online, label: 'Online / UPI'),
-      (mode: StoreOrderPaymentMode.credit, label: 'Credit'),
-    ];
+List<({String mode, String label})> defaultOrderPaymentModes([
+  BuildContext? context,
+]) {
+  final l10n = context?.l10n;
+  return [
+    (mode: StoreOrderPaymentMode.cash, label: l10n?.commonCash ?? 'Cash'),
+    (mode: StoreOrderPaymentMode.card, label: l10n?.commonCard ?? 'Card'),
+    (
+      mode: StoreOrderPaymentMode.online,
+      label: l10n?.orderPaymentsOnlineUpi ?? 'Online / UPI',
+    ),
+    (mode: StoreOrderPaymentMode.credit, label: l10n?.commonCredit ?? 'Credit'),
+  ];
+}

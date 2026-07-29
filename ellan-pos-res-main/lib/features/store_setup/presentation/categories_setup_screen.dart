@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/features/store_setup/presentation/store_setup_ui.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 class CategoriesSetupScreen extends StatefulWidget {
   const CategoriesSetupScreen({super.key});
@@ -54,15 +55,15 @@ class _CategoriesSetupScreenState extends State<CategoriesSetupScreen> {
     final nameCtrl = TextEditingController();
     final ok = await StoreSetupUi.showFormDialog(
       context: context,
-      title: 'New master category',
+      title: context.l10n.storeSetupNewMasterCategory,
       accent: _accent,
-      confirmLabel: 'Create',
+      confirmLabel: context.l10n.storeSetupCreate,
       child: TextField(
         controller: nameCtrl,
         autofocus: true,
         decoration: StoreSetupUi.field(
           hint: 'e.g. Starters, Mains, Drinks',
-          label: 'Category name',
+          label: context.l10n.storeSetupCategoryName,
           icon: Icons.folder_rounded,
           accent: _accent,
         ),
@@ -70,19 +71,16 @@ class _CategoriesSetupScreenState extends State<CategoriesSetupScreen> {
     );
     if (ok != true || nameCtrl.text.trim().isEmpty) return;
     final store = context.read<UiStoreController>().store!;
-    final master =
-        await store.products.createMasterCategory(name: nameCtrl.text.trim());
+    final master = await store.products.createMasterCategory(
+      name: nameCtrl.text.trim(),
+    );
     await store.products.linkMasterCategory(
       scope: store.scope,
       masterLocalId: '${master['localId']}',
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Category added to master and this store (offline). Sync to export.',
-        ),
-      ),
+      SnackBar(content: Text(context.l10n.storeSetupCategoryAddedOffline)),
     );
     await _reload();
     try {
@@ -98,7 +96,11 @@ class _CategoriesSetupScreenState extends State<CategoriesSetupScreen> {
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Linked “${master['name']}” to this store')),
+      SnackBar(
+        content: Text(
+          context.l10n.storeSetupLinkedToStore('${master['name']}'),
+        ),
+      ),
     );
     await _reload();
   }
@@ -111,19 +113,19 @@ class _CategoriesSetupScreenState extends State<CategoriesSetupScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Remove category?'),
+        title: Text(context.l10n.storeSetupRemoveCategory),
         content: Text(
           'Remove "$name" and its packages from this store. Sync to export.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.actionCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.actionDelete),
           ),
         ],
       ),
@@ -136,9 +138,7 @@ class _CategoriesSetupScreenState extends State<CategoriesSetupScreen> {
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Category deleted offline. Sync to export.'),
-      ),
+      SnackBar(content: Text(context.l10n.storeSetupCategoryDeletedOffline)),
     );
     await _reload();
     try {
@@ -152,15 +152,15 @@ class _CategoriesSetupScreenState extends State<CategoriesSetupScreen> {
     final nameCtrl = TextEditingController(text: '${category.name ?? ''}');
     final ok = await StoreSetupUi.showFormDialog(
       context: context,
-      title: 'Rename category',
+      title: context.l10n.storeSetupRenameCategory,
       accent: _accent,
-      confirmLabel: 'Save',
+      confirmLabel: context.l10n.actionSave,
       child: TextField(
         controller: nameCtrl,
         autofocus: true,
         decoration: StoreSetupUi.field(
-          hint: 'Category name',
-          label: 'Name',
+          hint: context.l10n.storeSetupCategoryName,
+          label: context.l10n.commonName,
           icon: Icons.edit_rounded,
           accent: _accent,
         ),
@@ -175,7 +175,7 @@ class _CategoriesSetupScreenState extends State<CategoriesSetupScreen> {
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Renamed offline. Sync to export.')),
+      SnackBar(content: Text(context.l10n.storeSetupRenamedOffline)),
     );
     await _reload();
     try {
@@ -188,128 +188,118 @@ class _CategoriesSetupScreenState extends State<CategoriesSetupScreen> {
     return Scaffold(
       backgroundColor: StoreSetupUi.canvas,
       appBar: StoreSetupUi.appBar(
-        title: 'Categories',
+        title: context.l10n.commonCategories,
         accent: _accent,
         actions: [
-          IconButton(
+          StoreSetupUi.iconAction(
+            label: context.l10n.actionRefresh,
+            icon: Icons.refresh_rounded,
             onPressed: _reload,
-            icon: const Icon(Icons.refresh_rounded),
           ),
           const SizedBox(width: 8),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: StoreSetupUi.addButton(
+        label: context.l10n.storeSetupNewCategory,
         onPressed: _createMaster,
-        backgroundColor: _accent,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('New category'),
+        accent: _accent,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: _accent))
           : _error != null
-              ? Center(child: Text(_error!))
-              : LayoutBuilder(
-                  builder: (context, constraints) {
-                    final stacked = constraints.maxWidth < 900;
-                    final masterPanel = _panel(
-                      title: 'Master categories',
-                      child: _masters.isEmpty
-                          ? StoreSetupUi.emptyState(
-                              icon: Icons.folder_open_rounded,
-                              title: 'No master categories',
+          ? Center(child: Text(_error!))
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final stacked = constraints.maxWidth < 900;
+                final masterPanel = _panel(
+                  title: context.l10n.storeSetupMasterCategories,
+                  child: _masters.isEmpty
+                      ? StoreSetupUi.emptyState(
+                          icon: Icons.folder_open_rounded,
+                          title: context.l10n.storeSetupNoMasterCategories,
+                          accent: _accent,
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+                          itemCount: _masters.length,
+                          itemBuilder: (_, i) {
+                            final m = _masters[i];
+                            final pending = m['exported'] == 0;
+                            return StoreSetupUi.cardTile(
                               accent: _accent,
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
-                              itemCount: _masters.length,
-                              itemBuilder: (_, i) {
-                                final m = _masters[i];
-                                final pending = m['exported'] == 0;
-                                return StoreSetupUi.cardTile(
-                                  accent: _accent,
-                                  icon: Icons.folder_rounded,
-                                  title: '${m['name']}',
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (pending)
-                                        StoreSetupUi.statusChip(
-                                          'Pending',
-                                          pending: true,
-                                          accent: _accent,
-                                        ),
-                                      TextButton(
-                                        onPressed: () => _linkMaster(m),
-                                        child: Text(
-                                          'Add to store',
-                                          style: FontUtility.body.copyWith(
-                                            color: _accent,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                    );
-                    final storePanel = _panel(
-                      title: 'This store',
-                      child: _linked.isEmpty
-                          ? StoreSetupUi.emptyState(
-                              icon: Icons.storefront_outlined,
-                              title: 'Nothing linked yet',
-                              accent: _accent,
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.fromLTRB(12, 0, 12, 100),
-                              itemCount: _linked.length,
-                              itemBuilder: (_, i) {
-                                final c = _linked[i];
-                                final name = c.name ?? c.toString();
-                                return StoreSetupUi.cardTile(
-                                  accent: const Color(0xFFD97706),
-                                  icon: Icons.storefront_rounded,
-                                  title: '$name',
-                                  onTap: () => _renameLinked(c),
-                                  trailing: IconButton(
-                                    tooltip: 'Remove from store',
-                                    icon: Icon(
-                                      Icons.delete_outline_rounded,
-                                      color: Colors.red.shade400,
+                              icon: Icons.folder_rounded,
+                              title: '${m['name']}',
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (pending)
+                                    StoreSetupUi.statusChip(
+                                      context.l10n.commonPending,
+                                      pending: true,
+                                      accent: _accent,
                                     ),
-                                    onPressed: () => _deleteLinked(c),
+                                  StoreSetupUi.iconAction(
+                                    label: context.l10n.storeSetupAddToStore,
+                                    icon: Icons.add_rounded,
+                                    color: _accent,
+                                    onPressed: () => _linkMaster(m),
                                   ),
-                                );
-                              },
-                            ),
-                    );
-                    if (stacked) {
-                      return ListView(
-                        children: [
-                          SizedBox(height: 360, child: masterPanel),
-                          SizedBox(height: 420, child: storePanel),
-                        ],
-                      );
-                    }
-                    return Row(
-                      children: [
-                        Expanded(child: masterPanel),
-                        const SizedBox(width: 12),
-                        Expanded(child: storePanel),
-                      ],
-                    );
-                  },
-                ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                );
+                final storePanel = _panel(
+                  title: context.l10n.storeSetupThisStore,
+                  child: _linked.isEmpty
+                      ? StoreSetupUi.emptyState(
+                          icon: Icons.storefront_outlined,
+                          title: context.l10n.storeSetupNothingLinked,
+                          accent: _accent,
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 100),
+                          itemCount: _linked.length,
+                          itemBuilder: (_, i) {
+                            final c = _linked[i];
+                            final name = c.name ?? c.toString();
+                            return StoreSetupUi.cardTile(
+                              accent: const Color(0xFFD97706),
+                              icon: Icons.storefront_rounded,
+                              title: '$name',
+                              onTap: () => _renameLinked(c),
+                              trailing: StoreSetupUi.iconAction(
+                                label: context.l10n.storeSetupRemoveFromStore,
+                                icon: Icons.delete_outline_rounded,
+                                color: Colors.red.shade400,
+                                onPressed: () => _deleteLinked(c),
+                              ),
+                            );
+                          },
+                        ),
+                );
+                if (stacked) {
+                  return ListView(
+                    children: [
+                      SizedBox(height: 360, child: masterPanel),
+                      SizedBox(height: 420, child: storePanel),
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: masterPanel),
+                    const SizedBox(width: 12),
+                    Expanded(child: storePanel),
+                  ],
+                );
+              },
+            ),
     );
   }
 
-  Widget _panel({
-    required String title,
-    required Widget child,
-  }) {
+  Widget _panel({required String title, required Widget child}) {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(

@@ -70,7 +70,10 @@ class LoginLeaseStore {
   }
 
   /// Call after a successful online (remote) login.
-  Future<void> markOnlineLoginSucceeded({DateTime? when, int? leaseMinutes}) async {
+  Future<void> markOnlineLoginSucceeded({
+    DateTime? when,
+    int? leaseMinutes,
+  }) async {
     if (leaseMinutes != null) {
       await setLeaseMinutes(leaseMinutes);
     }

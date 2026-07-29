@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
+import '../../../core/localization/l10n_context.dart';
 
 /// Shared chrome for offline store-setup catalogue screens.
 class StoreSetupUi {
@@ -23,7 +24,9 @@ class StoreSetupUi {
       labelText: label,
       hintText: hint,
       floatingLabelBehavior: FloatingLabelBehavior.auto,
-      prefixIcon: icon == null ? null : Icon(icon, color: accent.withValues(alpha: 0.85)),
+      prefixIcon: icon == null
+          ? null
+          : Icon(icon, color: accent.withValues(alpha: 0.85)),
       filled: true,
       fillColor: const Color(0xFFF8FAFC),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -69,6 +72,46 @@ class StoreSetupUi {
     );
   }
 
+  static Widget iconAction({
+    required String label,
+    required IconData icon,
+    required VoidCallback? onPressed,
+    Color? color,
+  }) {
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        label: label,
+        button: true,
+        child: IconButton(
+          onPressed: onPressed,
+          icon: Icon(icon, color: color),
+        ),
+      ),
+    );
+  }
+
+  static Widget addButton({
+    required String label,
+    required VoidCallback onPressed,
+    required Color accent,
+    IconData icon = Icons.add_rounded,
+  }) {
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        label: label,
+        button: true,
+        child: FloatingActionButton(
+          onPressed: onPressed,
+          backgroundColor: accent,
+          foregroundColor: Colors.white,
+          child: Icon(icon),
+        ),
+      ),
+    );
+  }
+
   static Widget emptyState({
     required IconData icon,
     required String title,
@@ -110,7 +153,11 @@ class StoreSetupUi {
     );
   }
 
-  static Widget statusChip(String label, {required bool pending, Color? accent}) {
+  static Widget statusChip(
+    String label, {
+    required bool pending,
+    Color? accent,
+  }) {
     final color = pending
         ? const Color(0xFFEA580C)
         : (accent ?? const Color(0xFF059669));
@@ -209,9 +256,10 @@ class StoreSetupUi {
     required String title,
     required Color accent,
     required Widget child,
-    String confirmLabel = 'Save offline',
+    String? confirmLabel,
     double width = 460,
   }) {
+    final resolvedConfirm = confirmLabel ?? context.l10n.commonSaveOffline;
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -247,7 +295,10 @@ class StoreSetupUi {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: FontUtility.body.copyWith(color: muted)),
+            child: Text(
+              context.l10n.actionCancel,
+              style: FontUtility.body.copyWith(color: muted),
+            ),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -259,7 +310,7 @@ class StoreSetupUi {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(confirmLabel),
+            child: Text(resolvedConfirm),
           ),
         ],
       ),

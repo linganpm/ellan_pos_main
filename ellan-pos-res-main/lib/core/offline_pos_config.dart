@@ -46,18 +46,22 @@ Map<String, dynamic> buildOfflinePosConfig({
 /// and sign-in still goes through Org/Auth/Login via the gateway.
 Map<String, dynamic> sealOfflinePosConfig(Map<String, dynamic> config) {
   final sync = config['sync'];
-  final syncMap = sync is Map ? Map<String, dynamic>.from(sync) : <String, dynamic>{};
+  final syncMap = sync is Map
+      ? Map<String, dynamic>.from(sync)
+      : <String, dynamic>{};
   final bootstrap = config['bootstrap'];
-  final bootstrapMap =
-      bootstrap is Map ? bootstrap.cast<String, dynamic>() : <String, dynamic>{};
+  final bootstrapMap = bootstrap is Map
+      ? bootstrap.cast<String, dynamic>()
+      : <String, dynamic>{};
   final loginUrl = _normalizePosLoginUrl(
     '${bootstrapMap['login_url'] ?? ''}'.trim().isNotEmpty
         ? '${bootstrapMap['login_url']}'
         : _loginUrlFromBase(syncMap['base_url']),
   );
   // Prefer discovery login when the cached value is missing or doubled.
-  final gatewayLogin =
-      Uri.parse(kDiscoveryUrl).replace(path: '/api/pos/login').toString();
+  final gatewayLogin = Uri.parse(
+    kDiscoveryUrl,
+  ).replace(path: '/api/pos/login').toString();
   return sanitizeStoreConfigJson({
     ...config,
     'bootstrap': <String, dynamic>{
@@ -69,8 +73,7 @@ Map<String, dynamic> sealOfflinePosConfig(Map<String, dynamic> config) {
     'sync': {
       'base_url': syncMap['base_url'] ?? '',
       'auto_sync_enabled': false,
-      'periodic_duration_seconds':
-          syncMap['periodic_duration_seconds'] ?? 300,
+      'periodic_duration_seconds': syncMap['periodic_duration_seconds'] ?? 300,
       // Orders keep their export endpoint: local orders upload on every sync.
       'orders': _importAndExport(syncMap['orders']),
       // Products keep export so tablet Store Setup catalogue reaches the server.
@@ -107,16 +110,19 @@ String _normalizePosLoginUrl(String raw) {
 /// and repairs login/base URLs so sign-in does not hit a doubled `/api/pos` path.
 Map<String, dynamic> ensureCatalogImportUrls(Map<String, dynamic> config) {
   final sync = config['sync'];
-  final syncMap =
-      sync is Map ? Map<String, dynamic>.from(sync) : <String, dynamic>{};
+  final syncMap = sync is Map
+      ? Map<String, dynamic>.from(sync)
+      : <String, dynamic>{};
   final bootstrap = config['bootstrap'];
   final bootstrapMap = bootstrap is Map
       ? Map<String, dynamic>.from(bootstrap)
       : <String, dynamic>{};
 
   final gateway = Uri.parse(kDiscoveryUrl);
-  final origin =
-      gateway.replace(path: '').toString().replaceAll(RegExp(r'/+$'), '');
+  final origin = gateway
+      .replace(path: '')
+      .toString()
+      .replaceAll(RegExp(r'/+$'), '');
   final correctLogin = gateway.replace(path: '/api/pos/login').toString();
 
   const entities = [
@@ -139,13 +145,15 @@ Map<String, dynamic> ensureCatalogImportUrls(Map<String, dynamic> config) {
   for (final entity in entities) {
     final row = syncMap[entity];
     var map = row is Map ? row.cast<String, dynamic>() : <String, dynamic>{};
-    final hasImport = '${map['import_url'] ?? ''}'.trim().isNotEmpty ||
+    final hasImport =
+        '${map['import_url'] ?? ''}'.trim().isNotEmpty ||
         '${map['import_path'] ?? ''}'.trim().isNotEmpty;
     if (!hasImport) {
       map = {
         ...map,
-        'import_url':
-            gateway.replace(path: '/api/pos/$entity/import').toString(),
+        'import_url': gateway
+            .replace(path: '/api/pos/$entity/import')
+            .toString(),
       };
     } else {
       // Repair absolute import URLs that doubled the gateway prefix.
@@ -157,13 +165,15 @@ Map<String, dynamic> ensureCatalogImportUrls(Map<String, dynamic> config) {
     if (twoWayEntities.contains(entity)) {
       // Older cached configs dropped the export endpoint — restore it so
       // local rows upload during sync.
-      final hasExport = '${map['export_url'] ?? ''}'.trim().isNotEmpty ||
+      final hasExport =
+          '${map['export_url'] ?? ''}'.trim().isNotEmpty ||
           '${map['export_path'] ?? ''}'.trim().isNotEmpty;
       if (!hasExport) {
         map = {
           ...map,
-          'export_url':
-              gateway.replace(path: '/api/pos/$entity/export').toString(),
+          'export_url': gateway
+              .replace(path: '/api/pos/$entity/export')
+              .toString(),
         };
       }
       if ('${map['export_token'] ?? ''}'.trim().isEmpty) {
@@ -177,8 +187,10 @@ Map<String, dynamic> ensureCatalogImportUrls(Map<String, dynamic> config) {
   }
 
   // Origin only — never store .../api/pos here.
-  final baseUrl =
-      '${syncMap['base_url'] ?? ''}'.trim().replaceAll(RegExp(r'/+$'), '');
+  final baseUrl = '${syncMap['base_url'] ?? ''}'.trim().replaceAll(
+    RegExp(r'/+$'),
+    '',
+  );
   if (baseUrl.isEmpty || baseUrl.endsWith('/api/pos')) {
     syncMap['base_url'] = origin;
   }
@@ -280,10 +292,7 @@ Map<String, dynamic> sanitizeStoreConfigJson(Map<String, dynamic> config) {
       // Empty products/orders = remote-only catalogue; never fixture fallbacks.
       'orders': row['orders'] is String ? row['orders'] : '',
       'products': row['products'] is String ? row['products'] : '',
-      'customers': _nonEmpty(
-        row['customers'],
-        'local_customers.json',
-      ),
+      'customers': _nonEmpty(row['customers'], 'local_customers.json'),
     };
   }
 
@@ -304,7 +313,10 @@ Map<String, dynamic> _buildPosConfig({
       final row = raw.cast<String, dynamic>();
       stores.add({
         'org_id': _nonEmpty(row['org_id'] ?? row['orgId'], '0'),
-        'org_name': _nonEmpty(row['org_name'] ?? row['orgName'], 'Organisation'),
+        'org_name': _nonEmpty(
+          row['org_name'] ?? row['orgName'],
+          'Organisation',
+        ),
         'org_code': _nonEmpty(row['org_code'] ?? row['orgCode'], '000000'),
         'store_id': _nonEmpty(row['store_id'] ?? row['storeId'], '0'),
         'service_instance_id':
@@ -351,8 +363,9 @@ Map<String, dynamic> _buildPosConfig({
 
   final defaultStore = stores.isNotEmpty ? stores.first : null;
   final remoteSync = remoteConfig['sync'];
-  final remoteSyncMap =
-      remoteSync is Map ? remoteSync.cast<String, dynamic>() : <String, dynamic>{};
+  final remoteSyncMap = remoteSync is Map
+      ? remoteSync.cast<String, dynamic>()
+      : <String, dynamic>{};
   final remoteAssets = remoteConfig['asset_paths'];
   final remoteAssetsMap = remoteAssets is Map
       ? remoteAssets.cast<String, dynamic>()
@@ -360,10 +373,7 @@ Map<String, dynamic> _buildPosConfig({
   final remoteLogin = remoteConfig['default_login'];
   final remoteLoginMap = remoteLogin is Map
       ? remoteLogin.cast<String, dynamic>()
-      : <String, dynamic>{
-          'email': 'pos@example.com',
-          'password': 'unused',
-        };
+      : <String, dynamic>{'email': 'pos@example.com', 'password': 'unused'};
 
   Map<String, dynamic> entitySync(String key) {
     if (!keepCatalogImports) return <String, dynamic>{};
@@ -377,17 +387,17 @@ Map<String, dynamic> _buildPosConfig({
     return _importOnly(row);
   }
 
-    // Device registration + bootstrap already completed during setup.
-    // Keep login_url for first-launch online auth via Org/Auth/Login (org SI).
-    final remoteBootstrap = remoteConfig['bootstrap'];
-    final remoteBootstrapMap = remoteBootstrap is Map
-        ? remoteBootstrap.cast<String, dynamic>()
-        : <String, dynamic>{};
-    final loginUrl = keepCatalogImports
-        ? '${remoteBootstrapMap['login_url'] ?? ''}'.trim()
-        : '';
+  // Device registration + bootstrap already completed during setup.
+  // Keep login_url for first-launch online auth via Org/Auth/Login (org SI).
+  final remoteBootstrap = remoteConfig['bootstrap'];
+  final remoteBootstrapMap = remoteBootstrap is Map
+      ? remoteBootstrap.cast<String, dynamic>()
+      : <String, dynamic>{};
+  final loginUrl = keepCatalogImports
+      ? '${remoteBootstrapMap['login_url'] ?? ''}'.trim()
+      : '';
 
-    return {
+  return {
     'db_name_id': remoteConfig['db_name_id'] ?? 'store_pos_offline',
     'environment': remoteConfig['environment'] ?? 'development',
     'bootstrap': <String, dynamic>{
@@ -409,8 +419,7 @@ Map<String, dynamic> _buildPosConfig({
       'offers': entitySync('offers'),
     },
     'session_duration_hours': remoteConfig['session_duration_hours'] ?? 12,
-    'login_lease_minutes':
-        remoteConfig['login_lease_minutes'] ?? (7 * 24 * 60),
+    'login_lease_minutes': remoteConfig['login_lease_minutes'] ?? (7 * 24 * 60),
     'login_lease_days': remoteConfig['login_lease_days'] ?? 7,
     if (remoteConfig['pos_code'] != null) 'pos_code': remoteConfig['pos_code'],
     if (remoteConfig['fixed_email_mailers'] is List)
@@ -425,7 +434,8 @@ Map<String, dynamic> _buildPosConfig({
       'orders': '',
       'products': '',
       'customers': localCustomersPath,
-      if (remoteAssetsMap['offers'] != null) 'offers': remoteAssetsMap['offers'],
+      if (remoteAssetsMap['offers'] != null)
+        'offers': remoteAssetsMap['offers'],
     },
     'default_login': remoteLoginMap,
   };
@@ -438,8 +448,9 @@ Map<String, dynamic> _localeFieldsFrom(
   Map<String, dynamic>? defaultStore,
 ) {
   final organisation = bootstrapPayload['organisation'];
-  final orgMap =
-      organisation is Map ? organisation.cast<String, dynamic>() : const {};
+  final orgMap = organisation is Map
+      ? organisation.cast<String, dynamic>()
+      : const {};
 
   String pick(List<Object?> values) {
     for (final value in values) {
@@ -500,17 +511,18 @@ Map<String, dynamic> _localeFieldsFrom(
     if (currencyCode.isNotEmpty) 'currency_code': currencyCode,
     if (currencySymbol.isNotEmpty) 'currency_symbol': currencySymbol,
     if (currencyName.isNotEmpty) 'currency_name': currencyName,
-    if (orgMap.isNotEmpty) 'organisation': {
-      ...orgMap,
-      if (timezone.isNotEmpty) 'timezone': timezone,
-      if (timezone.isNotEmpty) 'time_zone': timezone,
-      if (countryCode.isNotEmpty) 'country_code': countryCode,
-      if (countryFlag.isNotEmpty) 'country_flag': countryFlag,
-      if (countryName.isNotEmpty) 'country_name': countryName,
-      if (currencyCode.isNotEmpty) 'currency_code': currencyCode,
-      if (currencySymbol.isNotEmpty) 'currency_symbol': currencySymbol,
-      if (currencyName.isNotEmpty) 'currency_name': currencyName,
-    },
+    if (orgMap.isNotEmpty)
+      'organisation': {
+        ...orgMap,
+        if (timezone.isNotEmpty) 'timezone': timezone,
+        if (timezone.isNotEmpty) 'time_zone': timezone,
+        if (countryCode.isNotEmpty) 'country_code': countryCode,
+        if (countryFlag.isNotEmpty) 'country_flag': countryFlag,
+        if (countryName.isNotEmpty) 'country_name': countryName,
+        if (currencyCode.isNotEmpty) 'currency_code': currencyCode,
+        if (currencySymbol.isNotEmpty) 'currency_symbol': currencySymbol,
+        if (currencyName.isNotEmpty) 'currency_name': currencyName,
+      },
   };
 }
 

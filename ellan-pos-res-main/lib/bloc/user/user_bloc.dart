@@ -79,11 +79,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       );
 
       if (setupStore.needsOnlineFirstLaunch) {
-        emit(
-          UserError(
-            "Organisation is set up. Please sign in to continue.",
-          ),
-        );
+        emit(UserError("Organisation is set up. Please sign in to continue."));
         return;
       }
 
@@ -97,9 +93,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       // Never silent-login the previous staff. Open the store shell (when
       // possible) then wait on the staff lock screen.
       final restored = await controller.restoreOrganisationLoginFromCache();
-      if (restored &&
-          selectedStoreId != null &&
-          selectedStoreId.isNotEmpty) {
+      if (restored && selectedStoreId != null && selectedStoreId.isNotEmpty) {
         try {
           await controller.openStore(selectedStoreId);
           await controller.logout();
@@ -114,15 +108,11 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       await prefs.remove('userPassword');
       await prefs.remove('userLoggedIn');
 
-      final storeName = controller.staffUnlockStoreName(
-            storeId: selectedStoreId,
-          ) ??
+      final storeName =
+          controller.staffUnlockStoreName(storeId: selectedStoreId) ??
           prefs.getString('selectedStoreName');
       emit(
-        UserNeedsStaffUnlock(
-          storeId: selectedStoreId,
-          storeName: storeName,
-        ),
+        UserNeedsStaffUnlock(storeId: selectedStoreId, storeName: storeName),
       );
     } catch (e, st) {
       // ignore: avoid_print

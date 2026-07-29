@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/discovery_constants.dart';
+import '../../core/localization/l10n_context.dart';
 import '../../core/routes.dart';
 import '../../core/utils/font_utility.dart';
 
@@ -12,6 +13,7 @@ class AuthEntryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       body: Row(
         children: [
@@ -37,37 +39,30 @@ class AuthEntryScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 28),
                     Text(
-                      'NexPOS',
+                      l10n.authEntryBrand,
                       style: FontUtility.heading.copyWith(
                         color: Colors.white,
                         fontSize: 44,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Sign in to an existing company, or set up a new company on this device.',
-                      style: FontUtility.body.copyWith(
-                        color: Colors.white70,
-                        fontSize: 18,
-                        height: 1.5,
+                    if (!kIsPosDiscoveryConfiguredByEnv) ...[
+                      const SizedBox(height: 28),
+                      Text(
+                        '${l10n.welcomeServerUrl}  ·  $kDefaultServerOrigin',
+                        style: FontUtility.body.copyWith(
+                          color: Colors.white60,
+                          fontSize: 13,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 28),
-                    Text(
-                      'Server  ·  $kDefaultServerOrigin',
-                      style: FontUtility.body.copyWith(
-                        color: Colors.white60,
-                        fontSize: 13,
+                      const SizedBox(height: 6),
+                      Text(
+                        '${l10n.welcomeOrgInstanceId}  ·  $kDefaultRootOrgInstanceId',
+                        style: FontUtility.body.copyWith(
+                          color: Colors.white60,
+                          fontSize: 13,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Root org  ·  $kDefaultRootOrgInstanceId',
-                      style: FontUtility.body.copyWith(
-                        color: Colors.white60,
-                        fontSize: 13,
-                      ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -86,18 +81,10 @@ class AuthEntryScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'Get started',
+                          l10n.authEntryTitle,
                           style: FontUtility.heading.copyWith(
                             fontSize: 32,
                             color: const Color(0xFF1A1A2E),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Choose how you want to continue on this tablet.',
-                          style: FontUtility.body.copyWith(
-                            color: Colors.black54,
-                            fontSize: 16,
                           ),
                         ),
                         const SizedBox(height: 36),
@@ -117,7 +104,7 @@ class AuthEntryScreen extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              'Sign in',
+                              l10n.actionSignIn,
                               style: FontUtility.button.copyWith(
                                 color: Colors.white,
                               ),
@@ -135,16 +122,13 @@ class AuthEntryScreen extends StatelessWidget {
                               );
                             },
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                color: _primary,
-                                width: 2,
-                              ),
+                              side: const BorderSide(color: _primary, width: 2),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                             child: Text(
-                              'Company setup',
+                              l10n.authEntryCompanySetup,
                               style: FontUtility.button.copyWith(
                                 color: _primary,
                               ),
@@ -160,7 +144,7 @@ class AuthEntryScreen extends StatelessWidget {
                             );
                           },
                           child: Text(
-                            'Join an existing organisation device',
+                            l10n.authEntryJoinExisting,
                             style: FontUtility.body.copyWith(
                               color: _primary,
                               fontWeight: FontWeight.w600,

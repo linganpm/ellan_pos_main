@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/order_types_repository.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/localization/l10n/app_localizations.dart';
 import '../../core/utils/font_utility.dart';
@@ -84,19 +85,15 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
       _selectedType = selected;
     });
     context.read<OrderCreationBloc>().add(
-          SelectOrderType(
-            selected.isDineIn ? OrderType.dineIn : OrderType.pickup,
-          ),
-        );
+      SelectOrderType(selected.isDineIn ? OrderType.dineIn : OrderType.pickup),
+    );
   }
 
   void _selectType(PosOrderType type) {
     setState(() => _selectedType = type);
     context.read<OrderCreationBloc>().add(
-          SelectOrderType(
-            type.isDineIn ? OrderType.dineIn : OrderType.pickup,
-          ),
-        );
+      SelectOrderType(type.isDineIn ? OrderType.dineIn : OrderType.pickup),
+    );
     SharedPreferences.getInstance().then((prefs) {
       prefs.setString(_kLastOrderTypeKey, type.key);
     });
@@ -228,13 +225,13 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
 
   void _selectCustomer(CustomerHit hit) {
     context.read<OrderCreationBloc>().add(
-          SelectPickupCustomer(
-            customerUniqueId: hit.uniqueId,
-            name: hit.name.isEmpty ? _kDefaultCustomerName : hit.name,
-            phone: hit.phone,
-            email: hit.email ?? '',
-          ),
-        );
+      SelectPickupCustomer(
+        customerUniqueId: hit.uniqueId,
+        name: hit.name.isEmpty ? _kDefaultCustomerName : hit.name,
+        phone: hit.phone,
+        email: hit.email ?? '',
+      ),
+    );
     _searchController.clear();
     setState(() {
       _searchHits = const [];
@@ -251,7 +248,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     final phone = _phoneController.text.trim();
     final email = _emailController.text.trim();
     if (!RegExp(r'^\d{10}$').hasMatch(phone)) {
-      setState(() => _formError = 'Enter a valid 10-digit phone');
+      setState(() => _formError = context.l10n.customerEnterValidPhone);
       return false;
     }
 
@@ -270,20 +267,18 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
       if (customer == null) {
         setState(() {
           _saving = false;
-          _formError = 'Could not save customer';
+          _formError = context.l10n.customerCouldNotSave;
         });
         return false;
       }
       context.read<OrderCreationBloc>().add(
-            SelectPickupCustomer(
-              customerUniqueId: customer.customerId,
-              name: customer.name.isEmpty
-                  ? _kDefaultCustomerName
-                  : customer.name,
-              phone: customer.phone,
-              email: customer.email,
-            ),
-          );
+        SelectPickupCustomer(
+          customerUniqueId: customer.customerId,
+          name: customer.name.isEmpty ? _kDefaultCustomerName : customer.name,
+          phone: customer.phone,
+          email: customer.email,
+        ),
+      );
       setState(() {
         _saving = false;
         _creatingCustomer = false;
@@ -319,9 +314,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     );
     navigator.pop();
     await navigator.push(
-      MaterialPageRoute(
-        builder: (_) => OrderCreateScreen(args: args),
-      ),
+      MaterialPageRoute(builder: (_) => OrderCreateScreen(args: args)),
     );
   }
 
@@ -350,9 +343,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     );
     navigator.pop();
     await navigator.push(
-      MaterialPageRoute(
-        builder: (_) => OrderCreateScreen(args: args),
-      ),
+      MaterialPageRoute(builder: (_) => OrderCreateScreen(args: args)),
     );
   }
 
@@ -387,7 +378,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
                   children: [
                     Expanded(
                       child: Text(
-                        'New Order',
+                        context.l10n.commonNewOrder,
                         style: FontUtility.heading.copyWith(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
@@ -435,8 +426,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
       builder: (context, constraints) {
         final count = _orderTypes.length.clamp(1, 4);
         final gap = 10.0;
-        final width =
-            (constraints.maxWidth - gap * (count - 1)) / count;
+        final width = (constraints.maxWidth - gap * (count - 1)) / count;
         return Wrap(
           spacing: gap,
           runSpacing: gap,
@@ -465,7 +455,10 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
         decoration: BoxDecoration(
           color: const Color(0xFFF7F8FB),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _kAccent.withValues(alpha: 0.28), width: 1.5),
+          border: Border.all(
+            color: _kAccent.withValues(alpha: 0.28),
+            width: 1.5,
+          ),
         ),
         child: Row(
           children: [
@@ -504,7 +497,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
               ),
             ),
             IconButton(
-              tooltip: 'Change',
+              tooltip: context.l10n.actionChange,
               onPressed: () {
                 context.read<OrderCreationBloc>().add(ClearPickupCustomer());
               },
@@ -535,7 +528,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
               fontSize: 16,
             ),
             decoration: _fieldDecoration(
-              hint: 'Search phone, email, or name',
+              hint: context.l10n.customerSearchHintFull,
               prefixIcon: const Icon(Icons.search_rounded),
               suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -554,11 +547,11 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
                       icon: const Icon(Icons.clear_rounded),
                       onPressed: () {
                         _searchController.clear();
-                        setState(() => _searchHits = const []);
+                        setState(() => _searchHits = []);
                       },
                     ),
                   IconButton(
-                    tooltip: 'New customer',
+                    tooltip: context.l10n.customersNew,
                     onPressed: _openCreateMode,
                     icon: const Icon(Icons.add_rounded, color: _kAccent),
                   ),
@@ -589,8 +582,9 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
                     Divider(height: 1, color: Colors.grey.shade200),
                 itemBuilder: (context, index) {
                   final hit = _searchHits[index];
-                  final displayName =
-                      hit.name.isEmpty ? _kDefaultCustomerName : hit.name;
+                  final displayName = hit.name.isEmpty
+                      ? _kDefaultCustomerName
+                      : hit.name;
                   return ListTile(
                     dense: true,
                     leading: CircleAvatar(
@@ -627,7 +621,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
             children: [
               Expanded(
                 child: Text(
-                  'New customer',
+                  context.l10n.customersNew,
                   style: FontUtility.subheading.copyWith(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -637,7 +631,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
               ),
               TextButton(
                 onPressed: _saving ? null : _closeCreateMode,
-                child: const Text('Back to search'),
+                child: Text(context.l10n.customersBackToSearch),
               ),
             ],
           ),
@@ -649,7 +643,9 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
               fontWeight: FontWeight.w700,
               fontSize: 16,
             ),
-            decoration: _fieldDecoration(hint: 'Name (optional)'),
+            decoration: _fieldDecoration(
+              hint: context.l10n.customerNameOptional,
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -659,7 +655,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
               fontWeight: FontWeight.w700,
               fontSize: 16,
             ),
-            decoration: _fieldDecoration(hint: 'Phone'),
+            decoration: _fieldDecoration(hint: context.l10n.commonPhone),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -669,7 +665,9 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
               fontWeight: FontWeight.w700,
               fontSize: 16,
             ),
-            decoration: _fieldDecoration(hint: 'Email (optional)'),
+            decoration: _fieldDecoration(
+              hint: context.l10n.customerEmailOptional,
+            ),
           ),
           if (_formError != null) ...[
             const SizedBox(height: 8),
@@ -722,7 +720,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
                   )
                 : Text(
                     _creatingCustomer
-                        ? 'Save & continue'
+                        ? context.l10n.customerSaveContinue
                         : AppLocalizations.of(context)!.pickupAddButton,
                     style: FontUtility.button.copyWith(
                       color: Colors.white,
@@ -766,8 +764,8 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
                   isSelected: state.selectedFloor == 'first',
                   onTap: () {
                     context.read<OrderCreationBloc>().add(
-                          const SelectDineInFloor('first'),
-                        );
+                      const SelectDineInFloor('first'),
+                    );
                   },
                 ),
               ),
@@ -778,8 +776,8 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
                   isSelected: state.selectedFloor == 'second',
                   onTap: () {
                     context.read<OrderCreationBloc>().add(
-                          const SelectDineInFloor('second'),
-                        );
+                      const SelectDineInFloor('second'),
+                    );
                   },
                 ),
               ),
@@ -855,7 +853,9 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? _kAccent.withValues(alpha: 0.1) : Colors.transparent,
+          color: isSelected
+              ? _kAccent.withValues(alpha: 0.1)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
@@ -906,11 +906,7 @@ class _OrderTypeCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 30,
-                color: selected ? Colors.white : _kAccent,
-              ),
+              Icon(icon, size: 30, color: selected ? Colors.white : _kAccent),
               const SizedBox(height: 8),
               Text(
                 label,

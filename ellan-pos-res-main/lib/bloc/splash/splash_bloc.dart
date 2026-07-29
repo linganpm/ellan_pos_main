@@ -14,8 +14,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     on<SplashStarted>(_onSplashStarted);
   }
 
-  static const String developmentAssetPath =
-      'config/store_config.dev.json';
+  static const String developmentAssetPath = 'config/store_config.dev.json';
   static const String testAssetPath = 'config/store_config.test.json';
   static const String productionAssetPath =
       'config/store_config.production.json';
@@ -38,9 +37,9 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     Emitter<SplashState> emit,
   ) async {
     emit(SplashLoading());
-    if(_config == null){
+    if (_config == null) {
       print("Config Initialized as fail");
-    }else{
+    } else {
       print("Config Initialized as success");
     }
 
@@ -53,6 +52,4 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     await Future.delayed(const Duration(seconds: 3));
     emit(SplashCompleted());
   }
-
-
 }

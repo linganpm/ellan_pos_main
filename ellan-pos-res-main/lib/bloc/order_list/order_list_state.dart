@@ -15,11 +15,14 @@ class OrderListLoading extends OrderListState {}
 
 class OrderListLoaded extends OrderListState {
   final List<OrderListModel> orders;
+
   /// Synced order types used for the type filter chips.
   final List<PosOrderType> availableOrderTypes;
+
   /// `'All'` or a [PosOrderType.key].
   final String selectedTypeFilter;
   final String? selectedStatusFilter;
+
   /// Dashboard period label when opened from a metric card (`Today`, etc.).
   final String? periodFilter;
   final String searchQuery;
@@ -61,15 +64,15 @@ class OrderListLoaded extends OrderListState {
 
   @override
   List<Object?> get props => [
-        orders,
-        availableOrderTypes,
-        selectedTypeFilter,
-        selectedStatusFilter,
-        periodFilter,
-        searchQuery,
-        hasReachedMax,
-        isFetchingMore,
-      ];
+    orders,
+    availableOrderTypes,
+    selectedTypeFilter,
+    selectedStatusFilter,
+    periodFilter,
+    searchQuery,
+    hasReachedMax,
+    isFetchingMore,
+  ];
 }
 
 class OrderListError extends OrderListState {

@@ -9,6 +9,7 @@ import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/pos_tax_label_defaults.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/features/store_setup/presentation/store_setup_ui.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 class ProductsSetupScreen extends StatefulWidget {
   const ProductsSetupScreen({super.key});
@@ -46,10 +47,10 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
     final storeSi = store.serviceInstanceId > 0
         ? '${store.serviceInstanceId}'
         : (RegExp(r'^\d+$').hasMatch(remote)
-            ? remote
-            : (RegExp(r'^\d+$').hasMatch(store.scope.storeId)
-                ? store.scope.storeId
-                : (remote.isNotEmpty ? remote : store.uniqueId)));
+              ? remote
+              : (RegExp(r'^\d+$').hasMatch(store.scope.storeId)
+                    ? store.scope.storeId
+                    : (remote.isNotEmpty ? remote : store.uniqueId)));
     return {
       'orgId': orgInstance,
       'storeId': storeSi,
@@ -106,7 +107,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
     final name = '${tax['name'] ?? ''}'.trim();
     final pct = tax['total_percentage'];
     if (name.isEmpty) {
-      return pct == null ? 'Tax' : 'Tax $pct%';
+      return pct == null ? context.l10n.commonTax : 'Tax $pct%';
     }
     if (pct is num && !name.contains('%')) {
       return '$name (${_formatPct(pct)}%)';
@@ -129,13 +130,9 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        StoreSetupUi.sectionLabel('Tax for this package', accent: _accent),
-        Text(
-          'Company tax bands from setup. Leave none if this package is tax-free / unset.',
-          style: FontUtility.body.copyWith(
-            fontSize: 12,
-            color: StoreSetupUi.muted,
-          ),
+        StoreSetupUi.sectionLabel(
+          context.l10n.storeSetupTaxForPackage,
+          accent: _accent,
         ),
         const SizedBox(height: 8),
         RadioListTile<String?>(
@@ -145,14 +142,14 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
           value: null,
           groupValue: selectedName,
           title: Text(
-            'No tax / unset',
+            context.l10n.storeSetupNoTaxUnset,
             style: FontUtility.body.copyWith(fontWeight: FontWeight.w700),
           ),
           onChanged: onChanged,
         ),
         if (_taxes.isEmpty)
           Text(
-            'No taxes yet — they are added automatically when the company is set up.',
+            context.l10n.storeSetupNoTaxesYet,
             style: FontUtility.body.copyWith(color: StoreSetupUi.muted),
           )
         else
@@ -211,12 +208,14 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
   Future<void> _create() async {
     if (_categories.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add and link a category first')),
+        SnackBar(content: Text(context.l10n.storeSetupAddLinkCategoryFirst)),
       );
       return;
     }
     final productCtrl = TextEditingController();
-    final packageCtrl = TextEditingController(text: 'Regular');
+    final packageCtrl = TextEditingController(
+      text: context.l10n.storeSetupRegular,
+    );
     final priceCtrl = TextEditingController();
     final unitCtrl = TextEditingController(text: 'pcs');
     final qtyCtrl = TextEditingController(text: '1');
@@ -225,7 +224,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
 
     final ok = await StoreSetupUi.showFormDialog(
       context: context,
-      title: 'New product / package',
+      title: context.l10n.storeSetupNewProduct,
       accent: _accent,
       child: StatefulBuilder(
         builder: (ctx, setLocal) => Column(
@@ -241,8 +240,8 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
               onChanged: (v) =>
                   setLocal(() => categoryLocalId = v ?? categoryLocalId),
               decoration: StoreSetupUi.field(
-                hint: 'Choose category',
-                label: 'Category',
+                hint: context.l10n.storeSetupChooseCategory,
+                label: context.l10n.storeSetupCategory,
                 icon: Icons.folder_rounded,
                 accent: _accent,
               ),
@@ -251,8 +250,8 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
             TextField(
               controller: productCtrl,
               decoration: StoreSetupUi.field(
-                hint: 'e.g. Chicken Biryani',
-                label: 'Product / service name *',
+                hint: context.l10n.storeSetupProductNameHint,
+                label: context.l10n.storeSetupProductName,
                 icon: Icons.restaurant_menu_rounded,
                 accent: _accent,
               ),
@@ -261,8 +260,8 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
             TextField(
               controller: packageCtrl,
               decoration: StoreSetupUi.field(
-                hint: 'e.g. Regular, Large, Family',
-                label: 'Package name *',
+                hint: context.l10n.storeSetupPackageNameHint,
+                label: context.l10n.storeSetupPackageName,
                 icon: Icons.inventory_2_rounded,
                 accent: _accent,
               ),
@@ -273,7 +272,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
               keyboardType: TextInputType.number,
               decoration: StoreSetupUi.field(
                 hint: '0.00',
-                label: 'Sell price *',
+                label: context.l10n.storeSetupSellPrice,
                 icon: Icons.payments_rounded,
                 accent: _accent,
               ),
@@ -285,8 +284,8 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                   child: TextField(
                     controller: unitCtrl,
                     decoration: StoreSetupUi.field(
-                      hint: 'pcs, kg…',
-                      label: 'Unit *',
+                      hint: context.l10n.storeSetupUnitHint,
+                      label: context.l10n.storeSetupUnit,
                       accent: _accent,
                     ),
                   ),
@@ -298,7 +297,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                     keyboardType: TextInputType.number,
                     decoration: StoreSetupUi.field(
                       hint: '1',
-                      label: 'Unit qty *',
+                      label: context.l10n.storeSetupUnitQty,
                       accent: _accent,
                     ),
                   ),
@@ -323,9 +322,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
         price <= 0) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Name, package, unit and price are required'),
-        ),
+        SnackBar(content: Text(context.l10n.errorNamePackageUnitPriceRequired)),
       );
       return;
     }
@@ -342,9 +339,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Saved offline. Sync to export to master + store.'),
-      ),
+      SnackBar(content: Text(context.l10n.storeSetupSavedOfflineMaster)),
     );
     await _reload();
     await _refreshSellCatalogue();
@@ -352,8 +347,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
 
   Future<void> _edit(StoreProductVariantRecord variant) async {
     final productCtrl = TextEditingController(text: variant.productName);
-    final packageCtrl =
-        TextEditingController(text: variant.productVariantName);
+    final packageCtrl = TextEditingController(text: variant.productVariantName);
     final priceCtrl = TextEditingController(text: '${variant.sellPrice}');
     final unitCtrl = TextEditingController(
       text: variant.sellUnitLabel ?? variant.sellUnitShort ?? 'pcs',
@@ -364,9 +358,8 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
     final existingTax = (variant.taxLabel ?? '').trim();
     String? selectedTaxName = existingTax.isEmpty ? null : existingTax;
     // If package has a free-text tax that isn't in the company list, keep it selectable.
-    final knownNames = {
-      for (final tax in _taxes) '${tax['name'] ?? ''}'.trim(),
-    }..removeWhere((n) => n.isEmpty);
+    final knownNames = {for (final tax in _taxes) '${tax['name'] ?? ''}'.trim()}
+      ..removeWhere((n) => n.isEmpty);
     if (selectedTaxName != null && !knownNames.contains(selectedTaxName)) {
       _taxes = [
         ..._taxes,
@@ -395,7 +388,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
 
     final ok = await StoreSetupUi.showFormDialog(
       context: context,
-      title: 'Edit package',
+      title: context.l10n.storeSetupEditPackage,
       accent: _accent,
       width: 480,
       child: StatefulBuilder(
@@ -406,8 +399,8 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
             TextField(
               controller: productCtrl,
               decoration: StoreSetupUi.field(
-                hint: 'Product / service name',
-                label: 'Product / service name *',
+                hint: context.l10n.storeSetupProductNamePlain,
+                label: context.l10n.storeSetupProductName,
                 icon: Icons.restaurant_menu_rounded,
                 accent: _accent,
               ),
@@ -416,8 +409,8 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
             TextField(
               controller: packageCtrl,
               decoration: StoreSetupUi.field(
-                hint: 'Package name',
-                label: 'Package name *',
+                hint: context.l10n.storeSetupPackageNamePlain,
+                label: context.l10n.storeSetupPackageName,
                 icon: Icons.inventory_2_rounded,
                 accent: _accent,
               ),
@@ -428,7 +421,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
               keyboardType: TextInputType.number,
               decoration: StoreSetupUi.field(
                 hint: '0.00',
-                label: 'Sell price *',
+                label: context.l10n.storeSetupSellPrice,
                 icon: Icons.payments_rounded,
                 accent: _accent,
               ),
@@ -441,7 +434,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                     controller: unitCtrl,
                     decoration: StoreSetupUi.field(
                       hint: 'pcs',
-                      label: 'Unit *',
+                      label: context.l10n.storeSetupUnit,
                       accent: _accent,
                     ),
                   ),
@@ -453,7 +446,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                     keyboardType: TextInputType.number,
                     decoration: StoreSetupUi.field(
                       hint: '1',
-                      label: 'Unit qty *',
+                      label: context.l10n.storeSetupUnitQty,
                       accent: _accent,
                     ),
                   ),
@@ -465,24 +458,20 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
               selectedName: selectedTaxName,
               onChanged: (value) => setLocal(() => selectedTaxName = value),
             ),
-            StoreSetupUi.sectionLabel('Offers for this package', accent: StoreSetupUi.offersAccent),
-            Text(
-              'Select offers that should apply to this package. Leave none for no package-specific offers.',
-              style: FontUtility.body.copyWith(
-                fontSize: 12,
-                color: StoreSetupUi.muted,
-              ),
+            StoreSetupUi.sectionLabel(
+              context.l10n.storeSetupOffersForPackage,
+              accent: StoreSetupUi.offersAccent,
             ),
             const SizedBox(height: 8),
             if (_offers.isEmpty)
               Text(
-                'No offers yet — create some in Offers setup.',
+                context.l10n.storeSetupNoOffersYet,
                 style: FontUtility.body.copyWith(color: StoreSetupUi.muted),
               )
             else
               ..._offers.map((offer) {
-                final offerId =
-                    '${offer['local_id'] ?? offer['localId'] ?? ''}'.trim();
+                final offerId = '${offer['local_id'] ?? offer['localId'] ?? ''}'
+                    .trim();
                 final name = '${offer['name'] ?? 'Offer'}';
                 final pct = offer['percentage_value'];
                 final checked = selectedOffers.contains(offerId);
@@ -493,7 +482,9 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                   value: checked,
                   title: Text(
                     name,
-                    style: FontUtility.body.copyWith(fontWeight: FontWeight.w700),
+                    style: FontUtility.body.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   subtitle: Text(
                     pct == null ? 'Offer' : '$pct% off',
@@ -528,9 +519,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
         price <= 0) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Name, package, unit and price are required'),
-        ),
+        SnackBar(content: Text(context.l10n.errorNamePackageUnitPriceRequired)),
       );
       return;
     }
@@ -551,7 +540,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Updated offline. Sync to export.')),
+      SnackBar(content: Text(context.l10n.storeSetupUpdatedOffline)),
     );
     await _reload();
     await _refreshSellCatalogue();
@@ -562,19 +551,19 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Delete package?'),
+        title: Text(context.l10n.storeSetupDeletePackage),
         content: Text(
           'Remove "${variant.productName} · ${variant.productVariantName}" from this store. Sync to push the delete.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.actionCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(context.l10n.actionDelete),
           ),
         ],
       ),
@@ -587,7 +576,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Deleted offline. Sync to export tombstone.')),
+      SnackBar(content: Text(context.l10n.storeSetupDeletedTombstone)),
     );
     await _reload();
     await _refreshSellCatalogue();
@@ -596,7 +585,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
   Future<void> _linkMaster() async {
     if (_masters.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
             'No master products yet. Sync after another store exports.',
           ),
@@ -606,7 +595,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
     }
     if (_categories.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Link a category first')),
+        SnackBar(content: Text(context.l10n.storeSetupLinkCategoryFirst)),
       );
       return;
     }
@@ -616,7 +605,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
       context: context,
       title: 'Add master product',
       accent: _accent,
-      confirmLabel: 'Add',
+      confirmLabel: context.l10n.actionAdd,
       child: StatefulBuilder(
         builder: (ctx, setLocal) => Column(
           mainAxisSize: MainAxisSize.min,
@@ -665,9 +654,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Master linked with default package. Edit price, then Sync.'),
-      ),
+      SnackBar(content: Text(context.l10n.storeSetupMasterLinked)),
     );
     await _reload();
     await _refreshSellCatalogue();
@@ -678,70 +665,70 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
     return Scaffold(
       backgroundColor: StoreSetupUi.canvas,
       appBar: StoreSetupUi.appBar(
-        title: 'Products & packages',
+        title: context.l10n.storeSetupProductsPackages,
         accent: _accent,
         actions: [
-          IconButton(
-            tooltip: 'Add master to store',
+          StoreSetupUi.iconAction(
+            label: context.l10n.storeSetupAddToStore,
+            icon: Icons.link_rounded,
             onPressed: _linkMaster,
-            icon: Icon(Icons.link_rounded, color: _accent),
+            color: _accent,
           ),
-          IconButton(
+          StoreSetupUi.iconAction(
+            label: context.l10n.actionRefresh,
+            icon: Icons.refresh_rounded,
             onPressed: _reload,
-            icon: const Icon(Icons.refresh_rounded),
           ),
           const SizedBox(width: 8),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: StoreSetupUi.addButton(
+        label: context.l10n.storeSetupAddSellableItem,
         onPressed: _create,
-        backgroundColor: _accent,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add sellable item'),
+        accent: _accent,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: _accent))
           : _variants.isEmpty
-              ? StoreSetupUi.emptyState(
-                  icon: Icons.inventory_2_outlined,
-                  title: 'No packages yet',
+          ? StoreSetupUi.emptyState(
+              icon: Icons.inventory_2_outlined,
+              title: context.l10n.storeSetupNoPackagesYet,
+              accent: _accent,
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              itemCount: _variants.length,
+              itemBuilder: (_, i) {
+                final v = _variants[i];
+                final pending = !v.exported;
+                return StoreSetupUi.cardTile(
                   accent: _accent,
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                  itemCount: _variants.length,
-                  itemBuilder: (_, i) {
-                    final v = _variants[i];
-                    final pending = !v.exported;
-                    return StoreSetupUi.cardTile(
-                      accent: _accent,
-                      icon: Icons.inventory_2_rounded,
-                      title: '${v.productName} · ${v.productVariantName}',
-                      subtitle:
-                          'Price ${v.sellPrice} · ${v.sellUnitLabel ?? v.sellUnitShort ?? 'unit'} × ${v.sellUnitBaseQty ?? 1}',
-                      onTap: () => _edit(v),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          StoreSetupUi.statusChip(
-                            pending ? 'Pending' : 'Synced',
-                            pending: pending,
-                            accent: _accent,
-                          ),
-                          IconButton(
-                            tooltip: 'Delete',
-                            icon: Icon(
-                              Icons.delete_outline_rounded,
-                              color: Colors.red.shade400,
-                            ),
-                            onPressed: () => _delete(v),
-                          ),
-                        ],
+                  icon: Icons.inventory_2_rounded,
+                  title: '${v.productName} · ${v.productVariantName}',
+                  subtitle:
+                      'Price ${v.sellPrice} · ${v.sellUnitLabel ?? v.sellUnitShort ?? 'unit'} × ${v.sellUnitBaseQty ?? 1}',
+                  onTap: () => _edit(v),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      StoreSetupUi.statusChip(
+                        pending
+                            ? context.l10n.commonPending
+                            : context.l10n.commonSynced,
+                        pending: pending,
+                        accent: _accent,
                       ),
-                    );
-                  },
-                ),
+                      StoreSetupUi.iconAction(
+                        label: context.l10n.actionDelete,
+                        icon: Icons.delete_outline_rounded,
+                        color: Colors.red.shade400,
+                        onPressed: () => _delete(v),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
     );
   }
 }

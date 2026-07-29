@@ -8,6 +8,7 @@ import 'package:pos_tablet/core/routes.dart';
 import 'package:pos_tablet/core/utils/customer_identity.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/widgets/staff_logout_confirm_dialog.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Read-only profile / account screen for the signed-in POS operator.
@@ -81,10 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context,
       AppRoutes.staffLock,
       (route) => false,
-      arguments: {
-        'storeId': storeId,
-        'storeName': storeName,
-      },
+      arguments: {'storeId': storeId, 'storeName': storeName},
     );
   }
 
@@ -95,19 +93,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text('My Profile', style: FontUtility.heading.copyWith(fontSize: 22)),
+        title: Text(
+          context.l10n.profileMyProfile,
+          style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: Colors.grey.withValues(alpha: 0.2)),
+          child: Container(
+            height: 1,
+            color: Colors.grey.withValues(alpha: 0.2),
+          ),
         ),
       ),
-      body: SafeArea(
-        child: _buildBody(context),
-      ),
+      body: SafeArea(child: _buildBody(context)),
     );
   }
 
@@ -122,7 +124,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline_rounded, color: Color(0xFFFF512F), size: 48),
+              const Icon(
+                Icons.error_outline_rounded,
+                color: Color(0xFFFF512F),
+                size: 48,
+              ),
               const SizedBox(height: 12),
               Text(
                 _error!,
@@ -133,7 +139,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               OutlinedButton.icon(
                 onPressed: _load,
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Retry'),
+                label: Text(context.l10n.actionRetry),
               ),
             ],
           ),
@@ -173,51 +179,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 20),
         _sectionCard(
-          title: 'Account',
+          title: context.l10n.profileAccount,
           icon: Icons.person_rounded,
           rows: [
-            _DetailRow('Name', displayName),
-            _DetailRow('Email', email),
             if ((_customer?.phone ?? '').trim().isNotEmpty)
-              _DetailRow('Phone', _customer!.phone.trim()),
-            if (userId.isNotEmpty) _DetailRow('Reg no.', userId),
-            if (orgRole.isNotEmpty) _DetailRow('Organisation role', orgRole),
-            if (storeRole.isNotEmpty) _DetailRow('Store role', storeRole),
+              _DetailRow(context.l10n.commonPhone, _customer!.phone.trim()),
+            if (userId.isNotEmpty) _DetailRow(context.l10n.commonRegNo, userId),
             if ((_session?.loginAt ?? '').trim().isNotEmpty)
-              _DetailRow('Signed in', _formatDateTime(_session!.loginAt)),
+              _DetailRow(
+                context.l10n.profileSignedIn,
+                _formatDateTime(_session!.loginAt),
+              ),
           ],
         ),
         if (organisation != null) ...[
           const SizedBox(height: 16),
           _sectionCard(
-            title: 'Organisation',
+            title: context.l10n.commonOrganisation,
             icon: Icons.business_rounded,
             rows: [
-              _DetailRow('Name', organisation.orgName),
-              _DetailRow('Code', organisation.orgCode),
+              _DetailRow(context.l10n.commonName, organisation.orgName),
+              _DetailRow(context.l10n.profileCode, organisation.orgCode),
               if (organisation.posCode.trim().isNotEmpty)
-                _DetailRow('POS code', organisation.posCode),
+                _DetailRow(
+                  context.l10n.commonPosCodeLabel,
+                  organisation.posCode,
+                ),
             ],
           ),
         ],
         if (store != null) ...[
           const SizedBox(height: 16),
           _sectionCard(
-            title: 'Current store',
+            title: context.l10n.profileCurrentStore,
             icon: Icons.storefront_rounded,
             rows: [
-              _DetailRow('Store', store.storeName),
+              _DetailRow(context.l10n.commonStore, store.storeName),
               if (store.uniqueId.trim().isNotEmpty)
-                _DetailRow('Store ID', store.uniqueId.trim()),
-              _DetailRow('Service instance', store.serviceInstanceId.toString()),
+                _DetailRow(context.l10n.profileStoreId, store.uniqueId.trim()),
+              _DetailRow(
+                context.l10n.profileServiceInstance,
+                store.serviceInstanceId.toString(),
+              ),
               if (store.serviceVariantType.trim().isNotEmpty)
-                _DetailRow('Type', store.serviceVariantType.trim()),
+                _DetailRow(
+                  context.l10n.profileType,
+                  store.serviceVariantType.trim(),
+                ),
               if (store.contactEmail.trim().isNotEmpty)
-                _DetailRow('Contact email', store.contactEmail.trim()),
+                _DetailRow(
+                  context.l10n.profileContactEmail,
+                  store.contactEmail.trim(),
+                ),
               if (store.phone.trim().isNotEmpty)
-                _DetailRow('Phone', store.phone.trim()),
+                _DetailRow(context.l10n.commonPhone, store.phone.trim()),
               if (store.status.trim().isNotEmpty)
-                _DetailRow('Status', store.status.trim()),
+                _DetailRow(context.l10n.commonStatus, store.status.trim()),
             ],
           ),
         ],
@@ -232,7 +249,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: () =>
                 Navigator.pushNamed(context, AppRoutes.deviceSettings),
             icon: const Icon(Icons.settings_rounded),
-            label: const Text('Device settings'),
+            label: Text(context.l10n.deviceSettingsTitle),
             style: OutlinedButton.styleFrom(
               foregroundColor: _primary,
               side: const BorderSide(color: _primary),
@@ -249,7 +266,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: ElevatedButton.icon(
             onPressed: _confirmLogout,
             icon: const Icon(Icons.logout_rounded),
-            label: const Text('Logout'),
+            label: Text(context.l10n.actionLogout),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFF512F),
               foregroundColor: Colors.white,
@@ -273,7 +290,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final handle = email.split('@').first.trim();
       if (handle.isNotEmpty) return handle;
     }
-    return 'POS Operator';
+    return context.l10n.profilePosOperator;
   }
 
   Widget _profileHeader({
@@ -475,18 +492,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   color: _primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.store_mall_directory_rounded,
-                    color: _primary, size: 20),
+                child: const Icon(
+                  Icons.store_mall_directory_rounded,
+                  color: _primary,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
-              Text('My stores (${stores.length})',
-                  style: FontUtility.heading.copyWith(fontSize: 17)),
+              Text(
+                context.l10n.storeListTitleCount(stores.length),
+                style: FontUtility.heading.copyWith(fontSize: 17),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           ...stores.map((entry) {
-            final isCurrent = currentStoreId != null &&
-                entry.store.storeId == currentStoreId;
+            final isCurrent =
+                currentStoreId != null && entry.store.storeId == currentStoreId;
             final role = entry.access.role.trim();
             return Padding(
               padding: const EdgeInsets.only(top: 12),
@@ -497,8 +519,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     backgroundColor: _primary.withValues(alpha: 0.1),
                     child: Text(
                       _initials(entry.store.storeName),
-                      style: FontUtility.button
-                          .copyWith(color: _primary, fontSize: 12),
+                      style: FontUtility.button.copyWith(
+                        color: _primary,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -508,7 +532,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Text(
                           entry.store.storeName.isEmpty
-                              ? 'Store'
+                              ? context.l10n.commonStore
                               : entry.store.storeName,
                           style: FontUtility.subheading.copyWith(fontSize: 15),
                           maxLines: 1,
@@ -527,16 +551,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   if (isCurrent)
                     Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: _primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        'Current',
-                        style: FontUtility.button
-                            .copyWith(color: _primary, fontSize: 11),
+                        context.l10n.profileCurrent,
+                        style: FontUtility.button.copyWith(
+                          color: _primary,
+                          fontSize: 11,
+                        ),
                       ),
                     ),
                 ],

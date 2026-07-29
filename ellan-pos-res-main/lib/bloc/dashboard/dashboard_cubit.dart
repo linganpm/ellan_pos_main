@@ -47,28 +47,17 @@ class DashboardCubit extends Cubit<DashboardState> {
   final UiStoreController controller;
 
   DashboardCubit({UiStoreController? controller})
-      : controller = controller ?? getIt<UiStoreController>(),
-        super(DashboardState.initial()) {
+    : controller = controller ?? getIt<UiStoreController>(),
+      super(DashboardState.initial()) {
     load(filter: 'Today');
   }
 
   Future<void> load({String? filter}) async {
     final nextFilter = filter ?? state.filter;
-    emit(
-      state.copyWith(
-        filter: nextFilter,
-        isLoading: true,
-        clearError: true,
-      ),
-    );
+    emit(state.copyWith(filter: nextFilter, isLoading: true, clearError: true));
     try {
       final snapshot = await controller.loadDashboardSnapshot(nextFilter);
-      emit(
-        state.copyWith(
-          isLoading: false,
-          snapshot: snapshot,
-        ),
-      );
+      emit(state.copyWith(isLoading: false, snapshot: snapshot));
     } catch (error) {
       emit(
         state.copyWith(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_tablet/core/currency_format.dart';
 import 'package:pos_tablet/core/sell_unit.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 import '../../core/utils/font_utility.dart';
 import '../../core/controllers/checkout_models.dart';
 import '../../bloc/cart/cart_bloc.dart';
@@ -17,10 +18,11 @@ class InvoiceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final paidTotal = checkoutResult?.totalPaid;
-    final paymentLabel = checkoutResult?.paymentMode ?? 'Unknown';
+    final paymentLabel =
+        checkoutResult?.paymentMode ?? context.l10n.commonUnknown;
     final orderLabel = checkoutResult == null
         ? 'Invoice #INV-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}'
-        : 'Order #${checkoutResult!.orderId}';
+        : context.l10n.orderNumber(checkoutResult!.orderId);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -29,19 +31,23 @@ class InvoiceScreen extends StatelessWidget {
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Text(
-          'Invoice / Receipt',
+          context.l10n.invoiceTitle,
           style: FontUtility.heading.copyWith(fontSize: 20),
         ),
         centerTitle: false,
         actions: [
           IconButton(
+            tooltip: context.l10n.actionClose,
             icon: const Icon(Icons.close_rounded, color: Colors.black87),
             onPressed: () => _finishOrder(context),
           ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
-          child: Container(color: Colors.grey.withValues(alpha: 0.2), height: 1.0),
+          child: Container(
+            color: Colors.grey.withValues(alpha: 0.2),
+            height: 1.0,
+          ),
         ),
       ),
       body: BlocBuilder<CartBloc, CartState>(
@@ -87,19 +93,13 @@ class InvoiceScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Method: $paymentLabel'
+                              '${context.l10n.invoiceMethod(paymentLabel)}'
                               '${checkoutResult != null ? ' · ${checkoutResult!.statusName}' : ''}',
                               style: FontUtility.body.copyWith(
                                 color: Colors.grey.shade600,
                               ),
                             ),
                             const SizedBox(height: 20),
-                            Text(
-                              'Order Summary',
-                              style:
-                                  FontUtility.heading.copyWith(fontSize: 18),
-                            ),
-                            const SizedBox(height: 12),
                             const Divider(thickness: 1.5),
                             ...state.cartItems.map((item) {
                               final qtyLabel = item.sellUnit == null
@@ -109,8 +109,9 @@ class InvoiceScreen extends StatelessWidget {
                                       item.sellUnit,
                                     );
                               return Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -118,8 +119,9 @@ class InvoiceScreen extends StatelessWidget {
                                       width: 64,
                                       child: Text(
                                         qtyLabel,
-                                        style: FontUtility.subheading
-                                            .copyWith(fontSize: 14),
+                                        style: FontUtility.subheading.copyWith(
+                                          fontSize: 14,
+                                        ),
                                       ),
                                     ),
                                     Expanded(
@@ -129,8 +131,9 @@ class InvoiceScreen extends StatelessWidget {
                                         children: [
                                           Text(
                                             item.product.name,
-                                            style: FontUtility.body
-                                                .copyWith(fontSize: 15),
+                                            style: FontUtility.body.copyWith(
+                                              fontSize: 15,
+                                            ),
                                           ),
                                           if (item.sellUnit != null)
                                             Text(
@@ -157,8 +160,9 @@ class InvoiceScreen extends StatelessWidget {
                                     ),
                                     Text(
                                       PosCurrency.format(item.totalPrice),
-                                      style: FontUtility.subheading
-                                          .copyWith(fontSize: 15),
+                                      style: FontUtility.subheading.copyWith(
+                                        fontSize: 15,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -167,13 +171,13 @@ class InvoiceScreen extends StatelessWidget {
                             const Divider(thickness: 1.5),
                             const SizedBox(height: 12),
                             _buildSummaryRow(
-                              'Sub Total',
+                              context.l10n.commonSubtotal,
                               PosCurrency.format(state.subTotal),
                             ),
                             if (state.deliveryCharge > 0.0001) ...[
                               const SizedBox(height: 8),
                               _buildSummaryRow(
-                                'Delivery Charge',
+                                context.l10n.commonDeliveryCharge,
                                 PosCurrency.format(state.deliveryCharge),
                               ),
                             ],
@@ -181,8 +185,10 @@ class InvoiceScreen extends StatelessWidget {
                               const SizedBox(height: 8),
                               _buildSummaryRow(
                                 state.offerLabels.isEmpty
-                                    ? 'Offer applied'
-                                    : 'Offer · ${state.offerLabels.take(2).join(', ')}',
+                                    ? context.l10n.commonOfferApplied
+                                    : context.l10n.commonOfferLabel(
+                                        state.offerLabels.take(2).join(', '),
+                                      ),
                                 '-${PosCurrency.format(state.offerAppliedAmount)}',
                                 color: Colors.green.shade700,
                               ),
@@ -200,7 +206,9 @@ class InvoiceScreen extends StatelessWidget {
                             if (state.serviceTaxPercentage > 0) ...[
                               const SizedBox(height: 8),
                               _buildSummaryRow(
-                                'Service Tax (${state.serviceTaxPercentage}%)',
+                                context.l10n.commonServiceTaxPct(
+                                  state.serviceTaxPercentage.toString(),
+                                ),
                                 '+${PosCurrency.format(state.serviceTaxValue)}',
                                 color: Colors.orange.shade700,
                               ),
@@ -208,14 +216,14 @@ class InvoiceScreen extends StatelessWidget {
                             if (state.tipsAmount > 0) ...[
                               const SizedBox(height: 8),
                               _buildSummaryRow(
-                                'Tips',
+                                context.l10n.commonTips,
                                 '+${PosCurrency.format(state.tipsAmount)}',
                                 color: Colors.blue.shade700,
                               ),
                             ],
                             const SizedBox(height: 8),
                             _buildSummaryRow(
-                              'Net Total',
+                              context.l10n.commonNetTotal,
                               PosCurrency.format(state.netTotal),
                               bold: true,
                             ),
@@ -223,8 +231,9 @@ class InvoiceScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF4A00E0)
-                                    .withValues(alpha: 0.05),
+                                color: const Color(
+                                  0xFF4A00E0,
+                                ).withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -232,9 +241,10 @@ class InvoiceScreen extends StatelessWidget {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'Amount Paid',
-                                    style: FontUtility.heading
-                                        .copyWith(fontSize: 18),
+                                    context.l10n.invoiceAmountPaid,
+                                    style: FontUtility.heading.copyWith(
+                                      fontSize: 18,
+                                    ),
                                   ),
                                   Text(
                                     PosCurrency.format(displayTotal),
@@ -251,7 +261,7 @@ class InvoiceScreen extends StatelessWidget {
                               children: [
                                 Expanded(
                                   child: _FatActionButton(
-                                    label: 'Orders',
+                                    label: context.l10n.commonOrders,
                                     icon: Icons.list_alt_rounded,
                                     outlined: true,
                                     onPressed: () => _goToOrders(context),
@@ -260,7 +270,7 @@ class InvoiceScreen extends StatelessWidget {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: _FatActionButton(
-                                    label: 'New Order',
+                                    label: context.l10n.homeCreateOrder,
                                     icon: Icons.add_rounded,
                                     outlined: true,
                                     onPressed: () => _newOrder(context),
@@ -270,14 +280,15 @@ class InvoiceScreen extends StatelessWidget {
                                 Expanded(
                                   flex: 2,
                                   child: _FatActionButton(
-                                    label: 'Print',
+                                    label: context.l10n.actionPrint,
                                     icon: Icons.print_rounded,
                                     onPressed: () {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
                                           content: Text(
-                                            'Printing to Thermal Printer...',
+                                            context.l10n.invoicePrinting,
                                           ),
                                         ),
                                       );
@@ -403,10 +414,7 @@ class _FatActionButton extends StatelessWidget {
       icon: Icon(icon, color: Colors.white, size: 22),
       label: Text(
         label,
-        style: FontUtility.heading.copyWith(
-          color: Colors.white,
-          fontSize: 16,
-        ),
+        style: FontUtility.heading.copyWith(color: Colors.white, fontSize: 16),
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF4A00E0),

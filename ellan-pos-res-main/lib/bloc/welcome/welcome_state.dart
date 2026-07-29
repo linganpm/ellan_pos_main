@@ -42,11 +42,11 @@ class WelcomeState extends Equatable {
 
   @override
   List<Object?> get props => [
-        serverUrl,
-        organizationName,
-        savedServers,
-        isLoading,
-        errorMessage,
-        isSuccess,
-      ];
+    serverUrl,
+    organizationName,
+    savedServers,
+    isLoading,
+    errorMessage,
+    isSuccess,
+  ];
 }

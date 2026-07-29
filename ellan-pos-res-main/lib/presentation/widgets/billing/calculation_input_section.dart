@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../core/currency_format.dart';
 import '../../../core/utils/font_utility.dart';
+import '../../../core/localization/l10n_context.dart';
 
 class CalculationInputSection extends StatefulWidget {
   final String title;
   final String placeholder;
   final Function(double) onApply;
   final VoidCallback onCancel;
+
   /// When true, value is a free amount (tips). When false, percentage 1–100.
   final bool isAmount;
   final String? suffixText;
@@ -22,7 +24,8 @@ class CalculationInputSection extends StatefulWidget {
   });
 
   @override
-  State<CalculationInputSection> createState() => _CalculationInputSectionState();
+  State<CalculationInputSection> createState() =>
+      _CalculationInputSectionState();
 }
 
 class _CalculationInputSectionState extends State<CalculationInputSection> {
@@ -55,8 +58,8 @@ class _CalculationInputSectionState extends State<CalculationInputSection> {
 
   @override
   Widget build(BuildContext context) {
-    final suffix = widget.suffixText ??
-        (widget.isAmount ? PosCurrency.symbol() : '%');
+    final suffix =
+        widget.suffixText ?? (widget.isAmount ? PosCurrency.symbol() : '%');
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -75,6 +78,7 @@ class _CalculationInputSectionState extends State<CalculationInputSection> {
                 style: FontUtility.heading.copyWith(fontSize: 18),
               ),
               IconButton(
+                tooltip: context.l10n.actionClose,
                 onPressed: widget.onCancel,
                 icon: const Icon(Icons.close_rounded, color: Colors.grey),
               ),
@@ -94,7 +98,10 @@ class _CalculationInputSectionState extends State<CalculationInputSection> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF4A00E0), width: 2),
+                borderSide: const BorderSide(
+                  color: Color(0xFF4A00E0),
+                  width: 2,
+                ),
               ),
               filled: true,
               fillColor: Colors.grey.shade50,
@@ -116,7 +123,7 @@ class _CalculationInputSectionState extends State<CalculationInputSection> {
                 ),
               ),
               child: Text(
-                'APPLY',
+                context.l10n.billingApply,
                 style: FontUtility.heading.copyWith(
                   color: _isValid ? Colors.white : Colors.grey.shade500,
                   fontSize: 16,

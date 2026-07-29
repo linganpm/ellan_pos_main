@@ -7,6 +7,7 @@ import 'package:pos_tablet/core/utils/customer_identity.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/widgets/credit/credit_collect_payment_dialog.dart';
 import 'package:pos_tablet/presentation/widgets/credit/credit_schedule_repayment_dialog.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CreditAccountDetailScreen extends StatefulWidget {
@@ -27,19 +28,20 @@ class CreditAccountDetailScreen extends StatefulWidget {
 class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
   bool _loading = true;
   String? _error;
-  List<StoreCreditRecord> _credits = const [];
-  List<StoreCreditRepaymentRecord> _repayments = const [];
-  List<StoreCustomerLedgerEntry> _ledger = const [];
-  List<StoreCreditInstallmentRecord> _installments = const [];
-  List<StoreScheduledCreditRepayment> _scheduled = const [];
+  List<StoreCreditRecord> _credits = [];
+  List<StoreCreditRepaymentRecord> _repayments = [];
+  List<StoreCustomerLedgerEntry> _ledger = [];
+  List<StoreCreditInstallmentRecord> _installments = [];
+  List<StoreScheduledCreditRepayment> _scheduled = [];
   double? _creditLimitMax;
   bool _creditLimitIsCustomer = false;
   bool _creditLimitHardBlock = false;
   int _creditNetDays = 14;
   String _identityLabel = '';
 
-  String get _displayName =>
-      widget.customerName.trim().isEmpty ? 'Customer' : widget.customerName.trim();
+  String get _displayName => widget.customerName.trim().isEmpty
+      ? context.l10n.commonCustomer
+      : widget.customerName.trim();
 
   double get _creditSoFar =>
       _credits.fold<double>(0, (sum, row) => sum + row.amount);
@@ -69,8 +71,9 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
     });
     try {
       final controller = getIt<UiStoreController>();
-      final directoryCustomer =
-          await controller.loadCustomerById(widget.customerId);
+      final directoryCustomer = await controller.loadCustomerById(
+        widget.customerId,
+      );
       final account = await controller.loadCreditAccount(widget.customerId);
       final credits = await controller.loadCreditRecords(
         customerId: widget.customerId,
@@ -110,8 +113,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
         _creditLimitMax = (customerLimit != null && customerLimit > 0)
             ? customerLimit
             : storeLimit;
-        _creditLimitIsCustomer =
-            customerLimit != null && customerLimit > 0;
+        _creditLimitIsCustomer = customerLimit != null && customerLimit > 0;
         _creditLimitHardBlock = setupStore.creditLimitHardBlock;
         _creditNetDays = setupStore.creditNetDays;
         _identityLabel = identity;
@@ -126,11 +128,14 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
     }
   }
 
-  Future<void> _collect({int? preferCreditId, double? outstandingOverride}) async {
+  Future<void> _collect({
+    int? preferCreditId,
+    double? outstandingOverride,
+  }) async {
     final outstanding = outstandingOverride ?? _outstanding;
     if (outstanding <= 0.0001) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nothing outstanding for this customer.')),
+        SnackBar(content: Text(context.l10n.creditsNothingOutstanding)),
       );
       return;
     }
@@ -157,7 +162,10 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Collected \$${result.amount.toStringAsFixed(2)} via ${result.paymentMode}',
+            context.l10n.creditsCollectedVia(
+              '\$${result.amount.toStringAsFixed(2)}',
+              result.paymentMode,
+            ),
           ),
           backgroundColor: Colors.green.shade700,
         ),
@@ -167,7 +175,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Collect failed: $error'),
+          content: Text(context.l10n.errorCollectFailed(error.toString())),
           backgroundColor: Colors.red.shade700,
         ),
       );
@@ -195,7 +203,10 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Scheduled \$${result.amount.toStringAsFixed(2)} for ${result.dueDateIso}',
+            context.l10n.creditsScheduledFor(
+              '\$${result.amount.toStringAsFixed(2)}',
+              result.dueDateIso,
+            ),
           ),
           backgroundColor: Colors.green.shade700,
         ),
@@ -205,7 +216,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Schedule failed: $error'),
+          content: Text(context.l10n.errorScheduleFailed(error.toString())),
           backgroundColor: Colors.red.shade700,
         ),
       );
@@ -217,18 +228,21 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Cancel scheduled repayment'),
+          title: Text(context.l10n.creditsCancelScheduleTitle),
           content: Text(
-            'Cancel \$${schedule.amount.toStringAsFixed(2)} due ${schedule.dueDate}?',
+            context.l10n.creditsCancelScheduleBody(
+              '\$${schedule.amount.toStringAsFixed(2)}',
+              schedule.dueDate,
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Keep'),
+              child: Text(context.l10n.actionKeep),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Cancel schedule'),
+              child: Text(context.l10n.creditsCancelScheduleAction),
             ),
           ],
         );
@@ -236,15 +250,16 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
     );
     if (confirmed != true || !mounted) return;
     try {
-      await getIt<UiStoreController>()
-          .cancelScheduledCreditRepayment(schedule.id);
+      await getIt<UiStoreController>().cancelScheduledCreditRepayment(
+        schedule.id,
+      );
       if (!mounted) return;
       await _load();
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Cancel failed: $error'),
+          content: Text(context.l10n.creditsCancelFailed(error.toString())),
           backgroundColor: Colors.red.shade700,
         ),
       );
@@ -272,7 +287,9 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Collected scheduled \$${result.amount.toStringAsFixed(2)}',
+            context.l10n.creditsCollectedScheduled(
+              '\$${result.amount.toStringAsFixed(2)}',
+            ),
           ),
           backgroundColor: Colors.green.shade700,
         ),
@@ -282,7 +299,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Collect failed: $error'),
+          content: Text(context.l10n.errorCollectFailed(error.toString())),
           backgroundColor: Colors.red.shade700,
         ),
       );
@@ -294,19 +311,21 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Void repayment'),
+          title: Text(context.l10n.creditsVoidRepaymentTitle),
           content: Text(
-            'Void \$${repayment.totalAmount.toStringAsFixed(2)} '
-            'paid on ${_shortDate(repayment.paidOn)}?',
+            context.l10n.creditsVoidRepaymentBody(
+              '\$${repayment.totalAmount.toStringAsFixed(2)}',
+              _shortDate(repayment.paidOn),
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.actionCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Void'),
+              child: Text(context.l10n.commonVoid),
             ),
           ],
         );
@@ -317,18 +336,18 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
     try {
       await getIt<UiStoreController>().voidCreditRepayment(
         repaymentId: repayment.id,
-        reason: 'Voided on POS tablet',
+        reason: context.l10n.creditsVoidedOnPos,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Repayment voided.')),
+        SnackBar(content: Text(context.l10n.creditsRepaymentVoided)),
       );
       await _load();
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Void failed: $error'),
+          content: Text(context.l10n.errorVoidFailed(error.toString())),
           backgroundColor: Colors.red.shade700,
         ),
       );
@@ -339,7 +358,8 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
     final value = (raw ?? '').trim();
     if (value.isEmpty) return '-';
     final parsed = DateTime.tryParse(value);
-    if (parsed == null) return value.length >= 10 ? value.substring(0, 10) : value;
+    if (parsed == null)
+      return value.length >= 10 ? value.substring(0, 10) : value;
     return '${parsed.year.toString().padLeft(4, '0')}-'
         '${parsed.month.toString().padLeft(2, '0')}-'
         '${parsed.day.toString().padLeft(2, '0')}';
@@ -353,7 +373,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          'Credit account',
+          context.l10n.creditsCreditAccount,
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
         leading: IconButton(
@@ -362,191 +382,194 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
         ),
         actions: [
           IconButton(
+            tooltip: context.l10n.actionRefresh,
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh_rounded, color: Color(0xFF4A00E0)),
           ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: Colors.grey.withValues(alpha: 0.2)),
+          child: Container(
+            height: 1,
+            color: Colors.grey.withValues(alpha: 0.2),
+          ),
         ),
       ),
       body: SafeArea(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _error!,
-                          style: FontUtility.body.copyWith(color: Colors.red),
-                        ),
-                        TextButton(onPressed: _load, child: const Text('Retry')),
-                      ],
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _error!,
+                      style: FontUtility.body.copyWith(color: Colors.red),
                     ),
-                  )
-                : RefreshIndicator(
-                    onRefresh: _load,
-                    child: ListView(
-                      padding: const EdgeInsets.all(24),
+                    TextButton(
+                      onPressed: _load,
+                      child: Text(context.l10n.actionRetry),
+                    ),
+                  ],
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: _load,
+                child: ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    Text(
+                      _displayName,
+                      style: FontUtility.heading.copyWith(fontSize: 26),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _identityLabel.isNotEmpty
+                          ? _identityLabel
+                          : widget.customerId,
+                      style: FontUtility.body.copyWith(
+                        fontSize: 13,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
                       children: [
-                        Text(
-                          _displayName,
-                          style: FontUtility.heading.copyWith(fontSize: 26),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _identityLabel.isNotEmpty
-                              ? _identityLabel
-                              : widget.customerId,
-                          style: FontUtility.body
-                              .copyWith(fontSize: 13, color: Colors.black54),
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _metricCard(
-                                'Outstanding',
-                                '\$${_outstanding.toStringAsFixed(2)}',
-                                const Color(0xFFFF512F),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _metricCard(
-                                'Credit so far',
-                                '\$${_creditSoFar.toStringAsFixed(2)}',
-                                const Color(0xFF4A00E0),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _metricCard(
-                                'Repaid',
-                                '\$${_repaid.toStringAsFixed(2)}',
-                                Colors.green.shade700,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _creditLimitCard(),
-                        const SizedBox(height: 16),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              FilledButton.icon(
-                                onPressed:
-                                    _outstanding > 0.0001 ? _collect : null,
-                                icon: const Icon(Icons.payments_outlined),
-                                label: const Text('Collect payment'),
-                              ),
-                              OutlinedButton.icon(
-                                onPressed: _scheduleRepayment,
-                                icon: const Icon(Icons.event_available_rounded),
-                                label: const Text('Schedule repayment'),
-                              ),
-                            ],
+                        Expanded(
+                          child: _metricCard(
+                            context.l10n.commonOutstanding,
+                            '\$${_outstanding.toStringAsFixed(2)}',
+                            const Color(0xFFFF512F),
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        _sectionCard(
-                          title: 'Upcoming repayments',
-                          child: _scheduled.isEmpty
-                              ? _emptyInline(
-                                  'No upcoming repayments scheduled.',
-                                )
-                              : Column(
-                                  children: [
-                                    for (final schedule in _scheduled)
-                                      _scheduledRow(schedule),
-                                  ],
-                                ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _metricCard(
+                            context.l10n.creditsCreditSoFar,
+                            '\$${_creditSoFar.toStringAsFixed(2)}',
+                            const Color(0xFF4A00E0),
+                          ),
                         ),
-                        const SizedBox(height: 16),
-                        _sectionCard(
-                          title: 'Ledger',
-                          child: _ledger.isEmpty
-                              ? _emptyInline('No ledger activity yet.')
-                              : Column(
-                                  children: [
-                                    for (final entry in _ledger)
-                                      _ledgerRow(entry),
-                                  ],
-                                ),
-                        ),
-                        const SizedBox(height: 16),
-                        _sectionCard(
-                          title: 'Credit sales',
-                          child: _credits.isEmpty
-                              ? _emptyInline('No credit sales for this customer.')
-                              : Column(
-                                  children: [
-                                    for (final credit in _credits)
-                                      _creditSaleRow(credit),
-                                  ],
-                                ),
-                        ),
-                        const SizedBox(height: 16),
-                        _sectionCard(
-                          title: 'Payment schedules',
-                          child: _installments.isEmpty
-                              ? _emptyInline(
-                                  'No installment schedules on this account.',
-                                )
-                              : Column(
-                                  children: [
-                                    for (final credit in _credits.where(
-                                      (c) => _installments.any(
-                                        (i) => i.creditId == c.id,
-                                      ),
-                                    )) ...[
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          top: 4,
-                                          bottom: 8,
-                                        ),
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Text(
-                                            'Credit #${credit.id}'
-                                            '${credit.dueDate == null || credit.dueDate!.isEmpty ? '' : ' · final due ${credit.dueDate}'}',
-                                            style: FontUtility.body.copyWith(
-                                              color: Colors.black54,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      for (final inst in _installments.where(
-                                        (i) => i.creditId == credit.id,
-                                      ))
-                                        _installmentRow(inst),
-                                    ],
-                                  ],
-                                ),
-                        ),
-                        const SizedBox(height: 16),
-                        _sectionCard(
-                          title: 'Repayments',
-                          child: _repayments.isEmpty
-                              ? _emptyInline('No repayments recorded yet.')
-                              : Column(
-                                  children: [
-                                    for (final repayment in _repayments)
-                                      _repaymentRow(repayment),
-                                  ],
-                                ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _metricCard(
+                            context.l10n.creditsRepaid,
+                            '\$${_repaid.toStringAsFixed(2)}',
+                            Colors.green.shade700,
+                          ),
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    _creditLimitCard(),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          FilledButton.icon(
+                            onPressed: _outstanding > 0.0001 ? _collect : null,
+                            icon: const Icon(Icons.payments_outlined),
+                            label: Text(context.l10n.creditsCollectPayment),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: _scheduleRepayment,
+                            icon: const Icon(Icons.event_available_rounded),
+                            label: Text(context.l10n.creditsScheduleRepayment),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _sectionCard(
+                      title: context.l10n.creditsUpcoming,
+                      child: _scheduled.isEmpty
+                          ? _emptyInline(context.l10n.creditsNoUpcoming)
+                          : Column(
+                              children: [
+                                for (final schedule in _scheduled)
+                                  _scheduledRow(schedule),
+                              ],
+                            ),
+                    ),
+                    const SizedBox(height: 16),
+                    _sectionCard(
+                      title: context.l10n.commonLedger,
+                      child: _ledger.isEmpty
+                          ? _emptyInline(context.l10n.creditsNoLedger)
+                          : Column(
+                              children: [
+                                for (final entry in _ledger) _ledgerRow(entry),
+                              ],
+                            ),
+                    ),
+                    const SizedBox(height: 16),
+                    _sectionCard(
+                      title: context.l10n.creditsCreditSales,
+                      child: _credits.isEmpty
+                          ? _emptyInline(context.l10n.creditsNoCreditSales)
+                          : Column(
+                              children: [
+                                for (final credit in _credits)
+                                  _creditSaleRow(credit),
+                              ],
+                            ),
+                    ),
+                    const SizedBox(height: 16),
+                    _sectionCard(
+                      title: context.l10n.creditsPaymentSchedules,
+                      child: _installments.isEmpty
+                          ? _emptyInline(context.l10n.creditsNoSchedules)
+                          : Column(
+                              children: [
+                                for (final credit in _credits.where(
+                                  (c) => _installments.any(
+                                    (i) => i.creditId == c.id,
+                                  ),
+                                )) ...[
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      top: 4,
+                                      bottom: 8,
+                                    ),
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        '${context.l10n.creditsCreditNumber(credit.id.toString())}'
+                                        '${credit.dueDate == null || credit.dueDate!.isEmpty ? '' : ' · ${context.l10n.commonDueValue(credit.dueDate!)}'}',
+                                        style: FontUtility.body.copyWith(
+                                          color: Colors.black54,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  for (final inst in _installments.where(
+                                    (i) => i.creditId == credit.id,
+                                  ))
+                                    _installmentRow(inst),
+                                ],
+                              ],
+                            ),
+                    ),
+                    const SizedBox(height: 16),
+                    _sectionCard(
+                      title: context.l10n.dashboardRepayments,
+                      child: _repayments.isEmpty
+                          ? _emptyInline(context.l10n.creditsNoRepaymentsYet)
+                          : Column(
+                              children: [
+                                for (final repayment in _repayments)
+                                  _repaymentRow(repayment),
+                              ],
+                            ),
+                    ),
+                  ],
+                ),
+              ),
       ),
     );
   }
@@ -555,8 +578,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
     final limit = _creditLimitMax;
     final hasLimit = limit != null && limit > 0;
     final used = _outstanding;
-    final remaining =
-        hasLimit ? (limit - used).clamp(0.0, limit) : 0.0;
+    final remaining = hasLimit ? (limit - used).clamp(0.0, limit) : 0.0;
     final ratio = hasLimit ? _creditUsedRatio : 0.0;
     return Container(
       width: double.infinity,
@@ -574,23 +596,25 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
               Expanded(
                 child: Text(
                   _creditLimitIsCustomer
-                      ? 'Customer credit limit'
-                      : 'Store credit settings',
+                      ? context.l10n.creditsCustomerLimit
+                      : context.l10n.creditsStoreSettings,
                   style: FontUtility.subheading.copyWith(fontSize: 15),
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: (_creditLimitHardBlock
-                          ? const Color(0xFFB71C1C)
-                          : const Color(0xFF4A00E0))
-                      .withValues(alpha: 0.1),
+                  color:
+                      (_creditLimitHardBlock
+                              ? const Color(0xFFB71C1C)
+                              : const Color(0xFF4A00E0))
+                          .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  _creditLimitHardBlock ? 'Hard block' : 'Warn only',
+                  _creditLimitHardBlock
+                      ? context.l10n.creditsHardBlock
+                      : context.l10n.creditsWarnOnly,
                   style: FontUtility.body.copyWith(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -602,18 +626,8 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          if (!hasLimit)
-            Text(
-              'No credit limit for this customer. Set credit_limit_amount on '
-              'Store/CustomerCredit/Account/<id>/ (or store defaults on '
-              'Store/CustomerCredit/Settings/), then sync credits.',
-              style: FontUtility.body.copyWith(
-                fontSize: 13,
-                color: Colors.black54,
-              ),
-            )
-          else
+          if (hasLimit) ...[
+            const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -633,8 +647,8 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                           color: ratio >= 0.9
                               ? const Color(0xFFB71C1C)
                               : ratio >= 0.7
-                                  ? const Color(0xFFFF8A00)
-                                  : const Color(0xFF4A00E0),
+                              ? const Color(0xFFFF8A00)
+                              : const Color(0xFF4A00E0),
                         ),
                       ),
                       Text(
@@ -650,18 +664,22 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Credit limit',
-                        style:
-                            FontUtility.body.copyWith(color: Colors.black54),
+                        context.l10n.creditsCreditLimit,
+                        style: FontUtility.body.copyWith(color: Colors.black54),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Max \$${limit.toStringAsFixed(2)}',
+                        context.l10n.creditsMaxAmount(
+                          '\$${limit.toStringAsFixed(2)}',
+                        ),
                         style: FontUtility.heading.copyWith(fontSize: 18),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Used \$${used.toStringAsFixed(2)} · Available \$${remaining.toStringAsFixed(2)}',
+                        context.l10n.creditsUsedAvailable(
+                          '\$${used.toStringAsFixed(2)}',
+                          '\$${remaining.toStringAsFixed(2)}',
+                        ),
                         style: FontUtility.body.copyWith(
                           fontSize: 12,
                           color: Colors.black54,
@@ -677,8 +695,8 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                           color: ratio >= 0.9
                               ? const Color(0xFFB71C1C)
                               : ratio >= 0.7
-                                  ? const Color(0xFFFF8A00)
-                                  : const Color(0xFF4A00E0),
+                              ? const Color(0xFFFF8A00)
+                              : const Color(0xFF4A00E0),
                         ),
                       ),
                     ],
@@ -686,21 +704,27 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                 ),
               ],
             ),
+          ],
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 6,
             children: [
               _settingChip(
-                'Limit',
+                context.l10n.creditsLimit,
                 hasLimit
                     ? '\$${limit.toStringAsFixed(2)}'
-                    : 'Not set',
+                    : context.l10n.creditsNotSet,
               ),
-              _settingChip('Net terms', '$_creditNetDays days'),
               _settingChip(
-                'Over-limit',
-                _creditLimitHardBlock ? 'Blocked' : 'Allowed (warn)',
+                context.l10n.creditsNetTerms,
+                context.l10n.creditsNetTermsDays(_creditNetDays),
+              ),
+              _settingChip(
+                context.l10n.creditsOverLimit,
+                _creditLimitHardBlock
+                    ? context.l10n.creditsBlocked
+                    : context.l10n.creditsAllowedWarn,
               ),
             ],
           ),
@@ -807,8 +831,8 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Due ${schedule.dueDate}'
-                  '${schedule.isOverdue ? ' · overdue' : ''}',
+                  '${context.l10n.commonDueValue(schedule.dueDate)}'
+                  '${schedule.isOverdue ? ' · ${context.l10n.commonOverdue.toLowerCase()}' : ''}',
                   style: FontUtility.body.copyWith(
                     fontSize: 12,
                     color: schedule.isOverdue
@@ -821,12 +845,12 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
           ),
           TextButton(
             onPressed: () => _cancelSchedule(schedule),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.actionCancel),
           ),
           const SizedBox(width: 4),
           FilledButton.tonal(
             onPressed: () => _collectScheduled(schedule),
-            child: const Text('Collect'),
+            child: Text(context.l10n.creditsCollect),
           ),
         ],
       ),
@@ -836,10 +860,15 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
   Widget _ledgerRow(StoreCustomerLedgerEntry entry) {
     final isCredit = entry.entryType == StoreCustomerLedgerEntryType.credit;
     final title = isCredit
-        ? 'Credit sale${entry.orderId == null ? '' : ' · Order #${entry.orderId}'}'
-        : 'Repayment · ${(entry.paymentMode ?? '-').toUpperCase()}';
-    final amountColor =
-        isCredit ? const Color(0xFFFF512F) : Colors.green.shade700;
+        ? (entry.orderId == null
+              ? context.l10n.creditsCreditSalePlain
+              : context.l10n.creditsCreditSaleOrder('${entry.orderId}'))
+        : context.l10n.creditsRepaymentMode(
+            (entry.paymentMode ?? '-').toUpperCase(),
+          );
+    final amountColor = isCredit
+        ? const Color(0xFFFF512F)
+        : Colors.green.shade700;
     final amountPrefix = isCredit ? '+' : '-';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -849,21 +878,29 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: FontUtility.subheading.copyWith(fontSize: 14)),
+                Text(
+                  title,
+                  style: FontUtility.subheading.copyWith(fontSize: 14),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   '${_shortDate(entry.timestamp)}'
                   '${entry.referenceId == null || entry.referenceId!.isEmpty ? '' : ' · ${entry.referenceId}'}'
-                  '${entry.deleted ? ' · voided' : ''}',
-                  style: FontUtility.body
-                      .copyWith(fontSize: 12, color: Colors.black54),
+                  '${entry.deleted ? ' · ${context.l10n.creditsLedgerVoided}' : ''}',
+                  style: FontUtility.body.copyWith(
+                    fontSize: 12,
+                    color: Colors.black54,
+                  ),
                 ),
               ],
             ),
           ),
           Text(
             '$amountPrefix\$${entry.amount.toStringAsFixed(2)}',
-            style: FontUtility.heading.copyWith(fontSize: 15, color: amountColor),
+            style: FontUtility.heading.copyWith(
+              fontSize: 15,
+              color: amountColor,
+            ),
           ),
         ],
       ),
@@ -880,16 +917,21 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Credit #${credit.id} · Order #${credit.orderId}',
+                  context.l10n.creditsCreditOrderLine(
+                    credit.id.toString(),
+                    credit.orderId.toString(),
+                  ),
                   style: FontUtility.subheading.copyWith(fontSize: 14),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${_shortDate(credit.createdOn)}'
-                  '${credit.dueDate == null || credit.dueDate!.isEmpty ? '' : ' · due ${credit.dueDate}'}'
-                  ' · ${credit.settled ? 'Settled' : 'Open'}',
-                  style: FontUtility.body
-                      .copyWith(fontSize: 12, color: Colors.black54),
+                  '${credit.dueDate == null || credit.dueDate!.isEmpty ? '' : ' · ${context.l10n.commonDueValue(credit.dueDate!)}'}'
+                  ' · ${credit.settled ? context.l10n.commonSettled : context.l10n.commonOpen}',
+                  style: FontUtility.body.copyWith(
+                    fontSize: 12,
+                    color: Colors.black54,
+                  ),
                 ),
               ],
             ),
@@ -907,9 +949,13 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                 ),
               ),
               Text(
-                'of \$${credit.amount.toStringAsFixed(2)}',
-                style: FontUtility.body
-                    .copyWith(fontSize: 12, color: Colors.black45),
+                context.l10n.commonOfAmount(
+                  '\$${credit.amount.toStringAsFixed(2)}',
+                ),
+                style: FontUtility.body.copyWith(
+                  fontSize: 12,
+                  color: Colors.black45,
+                ),
               ),
               if (!credit.settled) ...[
                 const SizedBox(height: 6),
@@ -918,7 +964,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                     preferCreditId: credit.id,
                     outstandingOverride: credit.outstandingAmount,
                   ),
-                  child: const Text('Collect'),
+                  child: Text(context.l10n.creditsCollect),
                 ),
               ],
             ],
@@ -940,7 +986,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
           Expanded(
             child: Text(
               '${inst.dueDate ?? '-'}'
-              '${inst.overdue ? ' · overdue' : ''}'
+              '${inst.overdue ? context.l10n.commonOverdueSuffix : ''}'
               ' · ${inst.status}',
               style: FontUtility.body.copyWith(
                 fontSize: 13,
@@ -978,9 +1024,11 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                 Text(
                   '${_shortDate(repayment.paidOn)}'
                   '${repayment.referenceId == null || repayment.referenceId!.isEmpty ? '' : ' · ${repayment.referenceId}'}'
-                  '${voided ? ' · voided' : ''}',
-                  style: FontUtility.body
-                      .copyWith(fontSize: 12, color: Colors.black54),
+                  '${voided ? ' · ${context.l10n.creditsLedgerVoided}' : ''}',
+                  style: FontUtility.body.copyWith(
+                    fontSize: 12,
+                    color: Colors.black54,
+                  ),
                 ),
               ],
             ),
@@ -989,7 +1037,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
             TextButton(
               onPressed: () => _voidRepayment(repayment),
               child: Text(
-                'Void',
+                context.l10n.commonVoid,
                 style: TextStyle(color: Colors.red.shade700),
               ),
             ),

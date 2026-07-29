@@ -11,13 +11,17 @@ class PosCatalogCategory {
 /// A sellable product variant (package) from the store's synced catalogue.
 class PosCatalogProduct {
   final String id;
+
   /// On-device SQLite local id (`pv_…`); order lines often store this even after
   /// catalogue [id] switches to exported `unique_id`.
   final String localId;
+
   /// Display name (package / variant preferred).
   final String name;
+
   /// Parent product name from catalogue.
   final String productName;
+
   /// Package / variant name from catalogue.
   final String packageName;
   final double price;
@@ -26,8 +30,10 @@ class PosCatalogProduct {
   final String? barcode;
   final int categoryId;
   final String categoryName;
+
   /// Remote product-variant id when known (for offer targeting).
   final int? variantId;
+
   /// Measurable sell unit short label (kg, L, m) when package pricing uses unit+qty.
   final String? sellUnitShort;
   final String? sellUnitLabel;
@@ -54,7 +60,9 @@ class PosCatalogProduct {
   });
 
   bool get hasSellUnit =>
-      sellUnitCode != null && sellUnitShort != null && sellUnitShort!.isNotEmpty;
+      sellUnitCode != null &&
+      sellUnitShort != null &&
+      sellUnitShort!.isNotEmpty;
 
   String get sellUnitDetail {
     if (!hasSellUnit) return '';
@@ -85,6 +93,7 @@ class CheckoutLineItem {
   final double? lineTotal;
   final String? itemName;
   final List<CartAddonSelection> addons;
+
   /// Package size for measurable sell units (e.g. 6 for 110/6kg).
   final double? sellUnitBaseQty;
   final String? sellUnitShort;

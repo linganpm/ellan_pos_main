@@ -56,10 +56,7 @@ class OverviewCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  value,
-                  style: FontUtility.heading.copyWith(fontSize: 28),
-                ),
+                Text(value, style: FontUtility.heading.copyWith(fontSize: 28)),
               ],
             ),
           ),

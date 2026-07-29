@@ -1,62 +1,897 @@
 {
   "@@locale": "ta",
-  "appName": "நெக்ஸ்பாஸ் டேப்லெட் (NexPOS)",
-  "welcomeUnlockBusiness": "உங்கள் வணிக\nதிறனைத் திறக்கவும்",
-  "welcomeDescription": "நெக்ஸ்பாஸ் நவீன பணிப்பாய்வுகளுக்காக வடிவமைக்கப்பட்ட ஒரு சிறப்பான டேப்லெட் அனுபவத்தை வழங்குகிறது.",
-  "welcomeGetStarted": "தொடங்குவோம்",
-  "welcomeAuthPrompt": "கட்டணப் பரிமாற்றங்களை எளிதாகத் தொடங்க உங்கள் கணக்கில் உள்நுழைக அல்லது புதிதாக ஒன்றை உருவாக்கவும்.",
-   "welcomeEnterOrg": "உங்கள் நிறுவனத்தின் பெயரை உள்ளிடவும்",
-   "welcomeOrgHint": "எ.கா. ஆக்மே நிறுவனம்",
-   "welcomeEnterOrgCode": "உங்கள் நிறுவனக் குறியீட்டை உள்ளிடவும்",
-   "welcomeOrgCodeHint": "எ.கா., 100001",
-   "welcomeSubmit": "சமர்ப்பி",
-  "signInWelcome": "வரவேற்பு",
-  "signInEmailPhone": "மின்னஞ்சல் / மொபைல் எண்",
-  "signInEmailPhoneHint": "மின்னஞ்சல் அல்லது மொபைலை உள்ளிடவும்",
-  "signInPassword": "கடவுச்சொல்",
-  "signInPasswordHint": "கடவுச்சொல்லை உள்ளிடவும்",
-  "signInShowPassword": "கடவுச்சொல்லைக் காட்டு",
-  "signInForgotPasswordPrompt": "கடவுச்சொல் மறந்துவிட்டதா?",
-  "signInButton": "உள்நுழைக",
-  "forgotPasswordTitle": "கடவுச்சொல் மறந்துவிட்டதா?",
-  "forgotPasswordInstruction": "உங்கள் பதிவு செய்யப்பட்ட மின்னஞ்சல் முகவரி அல்லது தொலைபேசி எண்ணை உள்ளிடவும்.",
-  "forgotPasswordSuccess": "உங்கள் பதிவு செய்யப்பட்ட முகவரிக்கு கடவுச்சொல் மீட்டமைப்பு இணைப்பு அனுப்பப்பட்டுள்ளது!",
-  "forgotPasswordSendLink": "மீட்டமைப்பு இணைப்பை அனுப்பு",
-  "forgotPasswordBackToSignIn": "உள்நுழைவுக்குத் திரும்பு",
-  "homeWelcomeBack": "மீண்டும் வரவேற்கிறோம்",
-  "homeActivityPrompt": "இன்று நீங்கள் என்ன செய்ய விரும்புகிறீர்கள்?",
-  "homePosDashboard": "பாஸ் (POS) டாஷ்போர்டு",
-  "homeDashboardDesc": "பகுப்பாய்வு மற்றும் சுருக்கத்தைக் காண்க",
-  "homeOrdersList": "ஆர்டர்கள்",
-  "homeOrdersListDesc": "அனைத்து ஆர்டர்களையும் நிர்வகிக்கவும்",
-  "homeCreateOrder": "புதிய ஆர்டர்",
-  "dashboardTitle": "பாஸ் (POS) டாஷ்போர்டு",
-  "dashboardFilterYesterday": "நேற்று",
+  "actionAdd": "சேர்",
+  "actionBack": "பின்செல்",
+  "actionCancel": "ரத்துசெய்",
+  "actionChange": "மாற்று",
+  "actionClose": "மூடு",
+  "actionConfirm": "உறுதிப்படுத்து",
+  "actionContinue": "தொடரவும்",
+  "actionDelete": "நீக்கு",
+  "actionEdit": "திருத்து",
+  "actionKeep": "வைத்திரு",
+  "actionLogout": "வெளியேறு",
+  "actionPrint": "அச்சிடு",
+  "actionRefresh": "புதுப்பி",
+  "actionRemove": "அகற்று",
+  "actionRetry": "மீண்டும் முயற்சி",
+  "actionSave": "சேமி",
+  "actionSaveChanges": "மாற்றங்களைச் சேமி",
+  "actionSearch": "தேடு",
+  "actionSignIn": "உள்நுழைக",
+  "actionSignUp": "பதிவு செய்",
+  "actionSubmit": "சமர்ப்பி",
+  "actionSync": "ஒத்திசை",
+  "actionUpdate": "புதுப்பி",
+  "actionViewAll": "அனைத்தையும் காண்க",
+  "amountGreaterThanZero": "பூஜ்ஜியத்திற்கு மேல் தொகையை உள்ளிடவும்.",
+  "appName": "EllanPos",
+  "authBackToGetStarted": "தொடக்கத்திற்குத் திரும்பு",
+  "authEntryBrand": "EllanPos",
+  "authEntryChooseContinue": "இந்த டேப்லெட்டில் எவ்வாறு தொடர விரும்புகிறீர்கள் என்பதைத் தேர்வுசெய்க.",
+  "authEntryCompanySetup": "நிறுவன அமைப்பு",
+  "authEntryCreateCompany": "புதிய நிறுவனம் உருவாக்கு",
+  "authEntryHero": "ஏற்கனவே உள்ள நிறுவனத்தில் உள்நுழைக அல்லது இந்த சாதனத்தில் புதிய நிறுவனத்தை அமைக்கவும்.",
+  "authEntryJoinExisting": "ஏற்கனவே உள்ள நிறுவன சாதனத்தில் சேரவும்",
+  "authEntryRootOrgLabel": "முதன்மை நிறுவனம்  ·  {orgId}",
+  "@authEntryRootOrgLabel": {
+    "placeholders": {
+      "orgId": {
+        "type": "String"
+      }
+    }
+  },
+  "authEntryServerLabel": "சர்வர்  ·  {server}",
+  "@authEntryServerLabel": {
+    "placeholders": {
+      "server": {
+        "type": "String"
+      }
+    }
+  },
+  "authEntrySignInExisting": "ஏற்கனவே நிறுவனம் உள்ளதா? உள்நுழைக",
+  "authEntryTitle": "தொடங்குங்கள்",
+  "billingAddDiscount": "தள்ளுபடி சேர்",
+  "billingAddDiscountCaps": "தள்ளுபடி சேர்",
+  "billingAddOnePaymentFirst": "முதலில் குறைந்தது ஒரு பணம் சேர்க்கவும்.",
+  "billingAddPayment": "கட்டணம் சேர்",
+  "billingAddPaymentTitle": "பணம் சேர்",
+  "billingAddTips": "டிப்ஸ் சேர்",
+  "billingAmountExceedsRemaining": "தொகை மீதமுள்ளதை ({amount}) மீறக்கூடாது.",
+  "@billingAmountExceedsRemaining": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "billingAppliedDiscounts": "பயன்படுத்தப்பட்ட தள்ளுபடிகள்",
+  "billingApply": "பயன்படுத்து",
+  "billingApplyServiceTax": "சேவை வரியைப் பயன்படுத்து",
+  "billingApplyTo": "பயன்படுத்து",
+  "billingAttachCustomer": "இந்த பில்லுடன் வாடிக்கையாளரை இணைக்கவும் (கடனுக்கு அவசியம்).",
+  "billingCheckoutComplete": "செக்அவுட் முடிந்தது",
+  "billingComplete": "முடி",
+  "billingCompletingCheckout": "செக்அவுட் முடிக்கிறது…",
+  "billingCoverFullOrCredit": "முழுத் தொகையையும் செலுத்தவும் அல்லது நிலுவையை வாடிக்கையாளர் கடனில் வைக்கவும்.",
+  "billingCreditCancelled": "கடன் ரத்து. செக்அவுட் முடிக்கப்படவில்லை.",
+  "billingCreditLimitContinue": "{message}\n\nஎப்படியும் தொடரவா?",
+  "@billingCreditLimitContinue": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "billingCreditLimitExceeded": "கடன் வரம்பு {limit} மீறப்படும் (நிலுவை {outstanding} + இந்த விற்பனை {amountDue}).",
+  "@billingCreditLimitExceeded": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      },
+      "outstanding": {
+        "type": "String"
+      },
+      "amountDue": {
+        "type": "String"
+      }
+    }
+  },
+  "billingCreditLimitWarningTitle": "கடன் வரம்பு எச்சரிக்கை",
+  "billingCreditNeedsCustomer": "கடன் பணத்திற்கு வாடிக்கையாளர் தேவை. வாடிக்கையாளரைத் தேர்ந்தெடுத்து மீண்டும் முயற்சிக்கவும்.",
+  "billingCreditPlaceFailed": "மீத நிலுவையை கடனில் வைக்க முடியவில்லை. செக்அவுட் ரத்து செய்யப்பட்டது.",
+  "billingCustomerForCredit": "கடனுக்கான வாடிக்கையாளர்",
+  "billingCustomerOptionalCredit": "விரும்பினால் — கடனில் செலுத்தும்போது அவசியம்",
+  "billingDiscountAdded": "\"{title}\" சேர்க்கப்பட்டது",
+  "billingDiscountsCount": "தள்ளுபடிகள் ({count})",
+  "@billingDiscountsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "billingDraftSaved": "வரைவு ஆர்டர் #{orderId} சேமிக்கப்பட்டது.",
+  "@billingDraftSaved": {
+    "placeholders": {
+      "orderId": {
+        "type": "int"
+      }
+    }
+  },
+  "billingEntireOrder": "முழு ஆர்டர்",
+  "billingInvalidDiscountPct": "1 முதல் 100 வரை தள்ளுபடி சதவீதத்தை உள்ளிடவும்",
+  "billingNoItems": "பில் செய்ய பொருட்கள் இல்லை.",
+  "billingNoPaymentMethods": "பணம் செலுத்தும் முறைகள் அமைக்கப்படவில்லை.",
+  "billingOrderCreditBalance": "ஆர்டர் #{orderId} — நிலுவை வாடிக்கையாளர் கடனில் சேர்க்கப்பட்டது",
+  "billingOrderFullyCovered": "ஆர்டர் ஏற்கனவே முழுமையாக மூடப்பட்டுள்ளது.",
+  "billingOrderPaidVia": "ஆர்டர் #{orderId} {mode} மூலம் செலுத்தப்பட்டது",
+  "billingOrderPlacedBalance": "ஆர்டர் #{orderId} நிலுவை {amount} உடன் வைக்கப்பட்டது",
+  "billingPaid": "செலுத்தப்பட்டது  {amount}",
+  "billingPaymentSale": "{paymentLabel} விற்பனை",
+  "@billingPaymentSale": {
+    "placeholders": {
+      "paymentLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "billingPercentageHint": "1-100",
+  "billingPlaceFullCredit": "முழுத் தொகையையும் கடனில் வை",
+  "billingPlaceFullOnCredit": "முழுத் தொகையையும் கடனில் வை",
+  "billingPlaceWithBalance": "நிலுவையுடன் வை",
+  "billingRemainingAddPayment": "நிலுவை {amount}. மற்றொரு பணம் சேர்க்கவும் அல்லது நிலுவையுடன் வைக்கவும்.",
+  "billingRemainingOnCredit": "கடனில் மீதம்: {amount}",
+  "@billingRemainingOnCredit": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "billingRemoveAllDiscounts": "அனைத்து தள்ளுபடிகளையும் நீக்கு",
+  "billingRemoveExistingTax": "உள்ள வரியை நீக்கு",
+  "billingRemoveTips": "டிப்ஸை நீக்கு",
+  "billingSaveAsDraft": "வரைவாகச் சேமி",
+  "billingSelectCustomerCredit": "அவர்களின் கடன் கணக்கில் {amount} வைக்க வாடிக்கையாளரைத் தேர்ந்தெடுக்கவும் அல்லது சேர்க்கவும்.",
+  "@billingSelectCustomerCredit": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "billingServiceTaxApplied": "சேவை வரி பயன்படுத்தப்பட்டது",
+  "billingServiceTaxLabel": "சேவை வரி",
+  "billingTaxPct": "வரி {percent}%",
+  "billingTaxPlaceholder": "வரி சதவீதத்தை உள்ளிடவும் (1-100)",
+  "billingTipsAmount": "டிப்ஸ் {amount}",
+  "billingTipsApplied": "டிப்ஸ் பயன்படுத்தப்பட்டது",
+  "billingTipsPlaceholder": "டிப்ஸ் தொகையை உள்ளிடவும்",
+  "billingTitle": "பில்லிங் & பணம்",
+  "billingToPay": "செலுத்த வேண்டியது  {amount}",
+  "catalogAllPackages": "அனைத்து பேக்கேஜ்கள்",
+  "catalogAppliesTo": "பொருந்தும்",
+  "catalogBarcode": "பார்கோடு",
+  "catalogBillOffer": "பில் சலுகை",
+  "catalogEmpty": "பட்டியலில் பொருட்கள் இல்லை",
+  "catalogMrpPrice": "MRP {amount}",
+  "@catalogMrpPrice": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogNoActiveOffers": "இந்த கடைக்கு செயலில் உள்ள சலுகைகள் ஒத்திசைக்கப்படவில்லை",
+  "catalogNoAddonGroups": "இந்தத் தொகுப்புடன் துணைப்பொருள் குழுக்கள் இணைக்கப்படவில்லை",
+  "catalogNoCatalogueDevice": "இந்த சாதனத்தில் இன்னும் பட்டியல் இல்லை. ஒத்திசைவைத் திறந்து பொருட்கள், துணைகள் மற்றும் சலுகைகளை இழுக்கவும்.",
+  "catalogNoItemsInGroup": "இந்த குழுவில் உருப்படிகள் இல்லை",
+  "catalogNoOffersTargetPackage": "இந்த பேக்கேஜை இலக்காகக் கொண்ட சலுகைகள் இல்லை",
+  "catalogNoPackagesView": "இந்த காட்சியில் பேக்கேஜ்கள் இல்லை",
+  "catalogOffersCount": "சலுகைகள் ({count})",
+  "catalogPackagesCount": "பேக்கேஜ்கள் ({count})",
+  "catalogProductPrefix": "பொருள் · {name}",
+  "@catalogProductPrefix": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogRefreshLocal": "உள்ளூர் DB இலிருந்து புதுப்பி",
+  "catalogRefreshTooltip": "உள்ளூர் DB இலிருந்து புதுப்பி",
+  "catalogSearchExtended": "பொருள், பேக்கேஜ், பார்கோடு… தேடு",
+  "catalogSearchHint": "பொருட்களைத் தேடு",
+  "catalogSell": "விற்பனை",
+  "catalogTitle": "பட்டியல்",
+  "catalogUnit": "அலகு",
+  "commonActions": "செயல்கள்",
+  "commonActive": "செயலில்",
+  "commonAddons": "கூடுதல் பொருட்கள்",
+  "commonAddress": "முகவரி",
+  "commonAmount": "தொகை",
+  "commonAmountToPay": "செலுத்த வேண்டிய தொகை",
+  "commonBackToSelling": "விற்பனைக்குத் திரும்பு",
+  "commonBal": "மீதி {amount}",
+  "@commonBal": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "commonBalanceDue": "நிலுவை தொகை",
+  "commonBusiness": "வணிகம்",
+  "commonCard": "அட்டை",
+  "commonCash": "ரொக்கம்",
+  "commonCatalogs": "பட்டியல்கள்",
+  "commonCategories": "பிரிவுகள்",
+  "commonChangePaymentMethod": "கட்டண முறையை மாற்று",
+  "commonChannel": "சேனல்",
+  "commonClear": "அழி",
+  "commonClearCustomer": "வாடிக்கையாளரை அழி",
+  "commonCode": "குறியீடு",
+  "commonCollect": "வசூல்",
+  "commonCompany": "நிறுவனம்",
+  "commonConfirmPayment": "கட்டணத்தை உறுதிப்படுத்து",
+  "commonConfirmPaymentCaps": "கட்டணத்தை உறுதிப்படுத்து",
+  "commonContactEmail": "தொடர்பு மின்னஞ்சல்",
+  "commonCredit": "கடன்",
+  "commonCreditHistory": "கடன் வரலாறு",
+  "commonCreditOrders": "கடன் ஆர்டர்கள்",
+  "commonCredits": "கடன்கள்",
+  "commonCurrent": "தற்போதைய",
+  "commonCustomer": "வாடிக்கையாளர்",
+  "commonCustomers": "வாடிக்கையாளர்கள்",
+  "commonDate": "தேதி",
+  "commonDelivery": "டெலிவரி",
+  "commonDeliveryCharge": "டெலிவரி கட்டணம்",
+  "commonDetails": "விவரங்கள்",
+  "commonDevice": "சாதனம்",
+  "commonDeviceId": "சாதன அடையாளம்",
+  "commonDiscount": "தள்ளுபடி",
+  "commonDiscountPct": "{title} ({percent}%)",
+  "@commonDiscountPct": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "commonDismiss": "நிராகரி",
+  "commonDone": "முடிந்தது",
+  "commonDueDate": "செலுத்த வேண்டிய தேதி",
+  "commonDueDateOptional": "செலுத்த வேண்டிய தேதி (விரும்பினால்)",
+  "commonDueValue": "செலுத்த வேண்டியது {date}",
+  "@commonDueValue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "commonEmail": "மின்னஞ்சல்",
+  "commonEmpty": "—",
+  "commonEnterQuantityGtZero": "பூஜ்ஜியத்தை விட அதிக அளவை உள்ளிடவும்.",
+  "commonExact": "சரியானது",
+  "commonExporting": "பட்டியல் ஏற்றுமதி…",
+  "commonFailed": "தோல்வி",
+  "commonFrequency": "அதிர்வெண்",
+  "commonGuest": "விருந்தினர்",
+  "commonHardware": "வன்பொருள்",
+  "commonHideDetails": "விவரங்களை மறை",
+  "commonIdentifier": "அடையாளம்",
+  "commonInactive": "செயலற்றது",
+  "commonInfo": "தகவல்",
+  "commonItem": "பொருள்",
+  "commonItems": "பொருட்கள்",
+  "commonKot": "KOT {qty}",
+  "@commonKot": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "commonLedger": "பதிவேடு",
+  "commonLimit": "வரம்பு",
+  "commonLineTotal": "வரி மொத்தம்: {amount}",
+  "commonLoading": "ஏற்றுகிறது…",
+  "commonMiscItem": "இதர பொருள்",
+  "commonMonthly": "மாதாந்திரம்",
+  "commonName": "பெயர்",
+  "commonNetDays": "நிகர {days}",
+  "@commonNetDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "commonNetTotal": "நிகர மொத்தம்",
+  "commonNever": "எப்போதும் இல்லை",
+  "commonNewOrder": "புதிய ஆர்டர்",
+  "commonNext": "அடுத்து",
+  "commonNo": "இல்லை",
+  "commonNoData": "தரவு இல்லை",
+  "commonNoPaymentsYet": "இன்னும் கட்டணங்கள் இல்லை",
+  "commonNoSalesPeriod": "இந்தக் காலத்தில் விற்பனை இல்லை",
+  "commonNone": "இல்லை",
+  "commonNotSet": "அமைக்கப்படவில்லை",
+  "commonNotes": "குறிப்புகள்",
+  "commonOfAmount": "{amount} இல்",
+  "@commonOfAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "commonOfferApplied": "சலுகை பயன்படுத்தப்பட்டது",
+  "commonOfferLabel": "சலுகை · {labels}",
+  "@commonOfferLabel": {
+    "placeholders": {
+      "labels": {
+        "type": "String"
+      }
+    }
+  },
+  "commonOffers": "சலுகைகள்",
+  "commonOk": "சரி",
+  "commonOnline": "ஆன்லைன்",
+  "commonOpen": "திறந்தது",
+  "commonOpenCreditAccount": "கடன் கணக்கைத் திற",
+  "commonOptional": "விருப்பமானது",
+  "commonOrderCount": "ஆர்டர் எண்ணிக்கை",
+  "commonOrderHistory": "ஆர்டர் வரலாறு",
+  "commonOrderLabel": "ஆர்டர்",
+  "commonOrderTotal": "ஆர்டர் மொத்தம்",
+  "commonOrders": "ஆர்டர்கள்",
+  "commonOrganisation": "நிறுவனம்",
+  "commonOrganisationRole": "நிறுவனப் பங்கு",
+  "commonOrganisationTime": "நிறுவன நேரம்",
+  "commonOutstanding": "நிலுவை",
+  "commonOverdue": "காலாவதி",
+  "commonOverdueSuffix": " · தாமதம்",
+  "commonOwner": "உரிமையாளர்",
+  "commonPassword": "கடவுச்சொல்",
+  "commonPay": "செலுத்து",
+  "commonPayVia": "{method} மூலம் செலுத்து",
+  "@commonPayVia": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "commonPaymentMode": "கட்டண முறை",
+  "commonPaymentNumber": "கட்டணம் #{id}",
+  "@commonPaymentNumber": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "commonPaymentTypes": "கட்டண வகைகள்",
+  "commonPayments": "கட்டணங்கள்",
+  "commonPending": "நிலுவையில்",
+  "commonPercentage": "சதவீதம்",
+  "commonPhone": "தொலைபேசி",
+  "commonPlan": "திட்டம்",
+  "commonPosCode": "POS {code}",
+  "@commonPosCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "commonPosCodeLabel": "POS குறியீடு",
+  "commonPreparing": "தயாராகிறது",
+  "commonPrevious": "முந்தைய",
+  "commonPrice": "விலை",
+  "commonProducts": "பொருட்கள்",
+  "commonQty": "அளவு",
+  "commonQuantity": "அளவு",
+  "commonReferenceOptional": "குறிப்பு (விரும்பினால்)",
+  "commonRefunds": "பணத்திரும்பல்",
+  "commonRegNo": "பதிவு எண்",
+  "commonRegValue": "பதிவு {reg}",
+  "@commonRegValue": {
+    "placeholders": {
+      "reg": {
+        "type": "String"
+      }
+    }
+  },
+  "commonRemaining": "மீதம்",
+  "commonReports": "அறிக்கைகள்",
+  "commonRequired": "அவசியம்",
+  "commonRetail": "சில்லறை",
+  "commonSaveOffline": "ஆஃப்லைனில் சேமி",
+  "commonSaving": "சேமிக்கிறது…",
+  "commonSchedule": "அட்டவணை",
+  "commonSelect": "தேர்வு",
+  "commonSelectCustomer": "வாடிக்கையாளரைத் தேர்ந்தெடு",
+  "commonServeNumber": "சேவை #{number}",
+  "@commonServeNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "commonServiceInstance": "சேவை நிகழ்வு",
+  "commonServiceInstanceShort": "SI {id}",
+  "@commonServiceInstanceShort": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "commonServiceTax": "சேவை வரி",
+  "commonServiceTaxPct": "சேவை வரி ({percent}%)",
+  "@commonServiceTaxPct": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "commonSettleFullBalance": "முழு நிலுவையைத் தீர்த்து வை",
+  "commonSettled": "முடிக்கப்பட்டது",
+  "commonSkipped": "தவிர்க்கப்பட்டது",
+  "commonStaff": "பணியாளர்",
+  "commonStatus": "நிலை",
+  "commonStore": "கிளை",
+  "commonStoreId": "கடை ID",
+  "commonStoreRole": "கடைப் பங்கு",
+  "commonSubtotal": "உபமொத்தம்",
+  "commonSuccess": "வெற்றி",
+  "commonSummary": "சுருக்கம்",
+  "commonSynced": "ஒத்திசைக்கப்பட்டது",
+  "commonTable": "மேசை",
+  "commonTax": "வரி",
+  "commonTips": "டிப்ஸ்",
+  "commonTitleLabel": "தலைப்பு",
+  "commonTotal": "மொத்தம்",
+  "commonTotalAmount": "மொத்தத் தொகை",
+  "commonType": "வகை",
+  "commonUnknown": "தெரியாதது",
+  "commonUnnamedCustomer": "பெயரில்லா வாடிக்கையாளர்",
+  "commonUpi": "UPI",
+  "commonUseCustomer": "வாடிக்கையாளரைப் பயன்படுத்து",
+  "commonView": "காண்க",
+  "commonViewAllCount": "அனைத்தையும் காண ({count})",
+  "@commonViewAllCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonVoid": "ரத்து",
+  "commonVoucher": "வவுச்சர்",
+  "commonWalkIn": "நேரடி வாடிக்கையாளர்",
+  "commonWeekly": "வாராந்திரம்",
+  "commonYes": "ஆம்",
+  "companyAddSubscriber": "சந்தாதாரரைச் சேர்",
+  "companyAddToBranch": "கிளையில் சேர்",
+  "companyAddress": "முகவரி",
+  "companyAllPaymentMethodsAdded": "அனைத்து கட்டண முறைகளும் ஏற்கனவே இந்தக் கிளையில் உள்ளன.",
+  "companyBranch": "கிளை",
+  "companyBranchLogo": "கிளை லோகோ",
+  "companyBranchStoreName": "கிளை / கடை பெயர்",
+  "companyChannel": "சேனல்",
+  "companyChannelPush": "Push",
+  "companyChannelSlack": "Slack",
+  "companyChannelSms": "SMS",
+  "companyChannelWhatsApp": "WhatsApp",
+  "companyChooseLogo": "நிறுவன லோகோவைத் தேர்ந்தெடு",
+  "companyContact": "தொடர்பு",
+  "companyCouldNotAddSubscriber": "சந்தாதாரரைச் சேர்க்க முடியவில்லை.",
+  "companyCouldNotLoadReports": "அறிக்கைகளை ஏற்ற முடியவில்லை.",
+  "companyHubTitle": "நிறுவனம்",
+  "companyIdentifier": "அடையாளம்",
+  "companyInvoiceBookings": "விலைப்பட்டி / முன்பதிவுகள்",
+  "companyLabelLocked": "{label} · பூட்டப்பட்டது",
+  "@companyLabelLocked": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "companyLegal": "சட்டம்",
+  "companyLogo": "லோகோ",
+  "companyLogoFilePath": "லோகோ கோப்பு பாதை",
+  "companyLogoSavedOnDevice": "இந்த சாதனத்தில் சேமிக்கப்பட்டது · சேமிக்கும்போது ஒத்திசைக்கும்",
+  "companyMailerFixedHint": "அறிக்கை மற்றும் விலைப்பட்டி/முன்பதிவு மெயிலர்கள் Ellan POS மூலம் நிர்ணயிக்கப்பட்டவை. டேப்லெட்டில் சான்றுகளை மாற்றவோ சேர்க்கவோ முடியாது.",
+  "companyMethod": "முறை",
+  "companyNoPaymentMethodsBranch": "இந்த கிளையில் இன்னும் கட்டண முறைகள் இல்லை. கிளையில் சேர் ஐப் பயன்படுத்தவும்.",
+  "companyNoPaymentVariants": "சர்வரிலிருந்து கட்டண முறை மாறுபாடுகள் கிடைக்கவில்லை.",
+  "companyNoSubscribers": "இன்னும் சந்தாதாரர்கள் இல்லை.",
+  "companyNoSubscribersYet": "இன்னும் சந்தாதாரர்கள் இல்லை.",
+  "companyOpenStore": "கிளையைத் திற",
+  "companyOwner": "உரிமையாளர்",
+  "companyOwnerSubscriberLocked": "உரிமையாளர் சந்தாதாரரை நீக்க முடியாது.",
+  "companyPaymentMethod": "கட்டண முறை",
+  "companyPaymentMethodAdded": "{label} இந்தக் கிளையில் சேர்க்கப்பட்டது.",
+  "@companyPaymentMethodAdded": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "companyPeriodAnnually": "ஆண்டுதோறும்",
+  "companyPeriodDaily": "தினசரி",
+  "companyPeriodicity": "அதிர்வெண்",
+  "companyRegistrationNumber": "பதிவு எண்",
+  "companyReportsHint": "விற்பனை அறிக்கை சந்தாதாரர்கள் மற்றும் அட்டவணை",
+  "companyReportsTitle": "அறிக்கைகள்",
+  "companySalesReports": "விற்பனை அறிக்கைகள்",
+  "companySalesReportsHint": "தினசரி விற்பனை சுருக்கங்கள் சistema அறிக்கை மெயிலர் மூலம் இயக்கப்பட்ட ஒவ்வொரு சந்தாதாரருக்கும் மின்னஞ்சல் அனுப்பப்படும்.",
+  "companySalesReportsTitle": "விற்பனை அறிக்கைகள்",
+  "companySaveChanges": "மாற்றங்களைச் சேமி",
+  "companySavedOnDevice": "இந்தச் சாதனத்தில் சேமிக்கப்பட்டது · Save உடன் ஒத்திசைக்கும்",
+  "companySettingsNameRegAddress": "பெயர், பதிவு, முகவரி, வரி, தொலைபேசி, மின்னஞ்சல், அடையாளம்",
+  "companySettingsSaved": "நிறுவன அமைப்புகள் சேமிக்கப்பட்டன.",
+  "companySettingsTitle": "நிறுவன அமைப்புகள்",
+  "companyStaffsListHint": "ஊழியர்களைப் பட்டியலிட்டு இந்தக் கிளைக்கு புதிய கணக்குகளைச் சேர்க்கவும்",
+  "companyStaffsTitle": "பணியாளர்கள்",
+  "companyStoreSetupHint": "பட்டியல், சலுகைகள், துணைப்பொருட்கள்",
+  "companySubscribers": "சந்தாதாரர்கள்",
+  "companySystemEmailLocked": "கணினி மின்னஞ்சல் (பூட்டப்பட்டது)",
+  "companySystemMailerLocked": "கணினி மெயிலர் (பூட்டப்பட்டது)",
+  "companyTapMethodToAdd": "சேர்க்க ஒரு முறையைத் தட்டவும்",
+  "companyTaxRegistrationNumber": "வரி பதிவு எண்",
+  "companyUploadLogo": "லோகோவைப் பதிவேற்று",
+  "companyUseFile": "கோப்பைப் பயன்படுத்து",
+  "companyWallet": "பணப்பை",
+  "creditsAccountCount": "{count} கணக்கு(கள்)",
+  "creditsAllowedWarn": "அனுமதி (எச்சரிக்கை)",
+  "creditsBlocked": "தடுக்கப்பட்டது",
+  "creditsCancelFailed": "ரத்து தோல்வி: {error}",
+  "@creditsCancelFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsCancelScheduleAction": "அட்டவணையை ரத்துசெய்",
+  "creditsCancelScheduleBody": "{dueDate} அன்று செலுத்த வேண்டிய {amount} ஐ ரத்துசெய்யவா?",
+  "@creditsCancelScheduleBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "dueDate": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsCancelScheduleTitle": "திட்டமிட்ட திருப்பிச் செலுத்தலை ரத்துசெய்",
+  "creditsCollect": "வசூல்",
+  "creditsCollectPayment": "கட்டணம் வசூலி",
+  "creditsCollectedScheduled": "அட்டவணையிடப்பட்ட {amount} வசூலிக்கப்பட்டது",
+  "@creditsCollectedScheduled": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsCollectedVia": "{mode} மூலம் {amount} வசூலிக்கப்பட்டது",
+  "@creditsCollectedVia": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsCreditAccount": "கடன் கணக்கு",
+  "creditsCreditLimit": "கடன் வரம்பு",
+  "creditsCreditLimitLabel": "கடன் வரம்பு",
+  "creditsCreditNumber": "கடன் #{id}",
+  "@creditsCreditNumber": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsCreditOrderLine": "கடன் #{creditId} · ஆர்டர் #{orderId}",
+  "@creditsCreditOrderLine": {
+    "placeholders": {
+      "creditId": {
+        "type": "String"
+      },
+      "orderId": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsCreditSaleOrder": "கடன் விற்பனை · ஆர்டர் #{orderId}",
+  "@creditsCreditSaleOrder": {
+    "placeholders": {
+      "orderId": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsCreditSalePlain": "கடன் விற்பனை",
+  "creditsCreditSales": "கடன் விற்பனைகள்",
+  "creditsCreditSoFar": "இதுவரை கடன்",
+  "creditsCustomerCreditLimit": "வாடிக்கையாளர் கடன் வரம்பு",
+  "creditsCustomerLimit": "வாடிக்கையாளர் கடன் வரம்பு",
+  "creditsCustomerScopedTitle": "கடன் · {name}",
+  "@creditsCustomerScopedTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsHardBlock": "கடுமையான தடை",
+  "creditsInstallments": "தவணைகள்",
+  "creditsLedgerVoided": "ரத்து செய்யப்பட்டது",
+  "creditsLimit": "வரம்பு",
+  "creditsMaxAmount": "அதிகபட்சம் {amount}",
+  "@creditsMaxAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsNetTerms": "நிகழ் விதிமுறைகள்",
+  "creditsNetTermsDays": "{days} நாட்கள்",
+  "@creditsNetTermsDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "creditsNoAccountsMatch": "தற்போதைய வடிகட்டிகளுக்கு பொருந்தும் கணக்குகள் இல்லை.",
+  "creditsNoAccountsOnDevice": "இந்த சாதனத்தில் இன்னும் கடன் கணக்குகள் இல்லை.",
+  "creditsNoAccountsYet": "இந்தச் சாதனத்தில் இன்னும் கடன் கணக்குகள் இல்லை.",
+  "creditsNoCreditLimitHint": "இந்த வாடிக்கையாளருக்கு கடன் வரம்பு இல்லை. Store/CustomerCredit/Account/<id>/ இல் credit_limit_amount (அல்லது Store/CustomerCredit/Settings/ இல் கடை இயல்புகள்) அமைத்து, பின்னர் கடன்களை ஒத்திசைக்கவும்.",
+  "creditsNoCreditPayments": "இன்னும் கடன் கட்டணங்கள் பதிவு செய்யப்படவில்லை.",
+  "creditsNoCreditSales": "இந்த வாடிக்கையாளருக்கு கடன் விற்பனை இல்லை.",
+  "creditsNoLedger": "இன்னும் பதிவேட்டு செயல்பாடு இல்லை.",
+  "creditsNoOpenScheduled": "திறந்த திட்டமிட்ட கட்டணங்கள் இல்லை.",
+  "creditsNoRepaymentsYet": "இன்னும் திருப்பிச் செலுத்தல்கள் பதிவு செய்யப்படவில்லை.",
+  "creditsNoScheduledToday": "இன்று செலுத்த வேண்டிய திட்டமிட்ட கட்டணங்கள் இல்லை.",
+  "creditsNoSchedules": "இந்தக் கணக்கில் தவணை அட்டவணைகள் இல்லை.",
+  "creditsNoUpcoming": "வரவிருக்கும் திருப்பிச் செலுத்தல்கள் இல்லை.",
+  "creditsNotSet": "அமைக்கப்படவில்லை",
+  "creditsNothingOutstanding": "இந்த வாடிக்கையாளருக்கு நிலுவை இல்லை.",
+  "creditsOneShot": "ஒருமுறை",
+  "creditsOpenAccount": "கடன் கணக்கைத் திற",
+  "creditsOutstanding": "நிலுவை",
+  "creditsOutstandingAmount": "நிலுவை {amount}",
+  "@creditsOutstandingAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsOutstandingOnly": "நிலுவை மட்டும்",
+  "creditsOverLimit": "வரம்பு மீறியது",
+  "creditsOverLimitLabel": "வரம்பு மீறல்",
+  "creditsPaymentSchedules": "கட்டண அட்டவணைகள்",
+  "creditsRepaid": "திருப்பிச் செலுத்தப்பட்டது",
+  "creditsRepaymentMode": "திருப்பிச் செலுத்தல் · {mode}",
+  "@creditsRepaymentMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsRepaymentVoided": "திருப்பிச் செலுத்தல் ரத்துசெய்யப்பட்டது.",
+  "creditsScheduleBody": "இந்த வாடிக்கையாளரின் வரவிருக்கும் கட்டண வாக்குறுதியைப் பதிவுசெய்க.",
+  "creditsSchedulePayments": "பணம் செலுத்தல்களை திட்டமிடு",
+  "creditsScheduleRepayment": "திருப்பிச் செலுத்தலைத் திட்டமிடு",
+  "creditsScheduledFor": "{dueDate} க்கு {amount} அட்டவணையிடப்பட்டது",
+  "@creditsScheduledFor": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "dueDate": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsSearchHint": "வாடிக்கையாளர் பெயர் அல்லது அடையாளத்தைத் தேடு",
+  "creditsSort": "வரிசைப்படுத்து",
+  "creditsSortHighest": "அதிகம்",
+  "creditsSortLongPending": "நீண்ட நிலுவை",
+  "creditsStoreCreditSettings": "கடை கடன் அமைப்புகள்",
+  "creditsStoreSettings": "கிளை கடன் அமைப்புகள்",
+  "creditsTitle": "கடன்கள்",
+  "creditsTodayScheduled": "இன்றைய திட்டமிட்ட கட்டணங்கள்",
+  "creditsUpcoming": "வரவிருக்கும் திருப்பிச் செலுத்தல்கள்",
+  "creditsUsedAvailable": "பயன்படுத்தப்பட்டது {used} · கிடைக்கும் {available}",
+  "@creditsUsedAvailable": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "available": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsView": "காண்",
+  "creditsVoidRepaymentBody": "{date} அன்று செலுத்தப்பட்ட {amount} ஐ ரத்துசெய்யவா?",
+  "@creditsVoidRepaymentBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsVoidRepaymentTitle": "திருப்பிச் செலுத்தலை ரத்துசெய்",
+  "creditsVoidedOnPos": "POS டேப்லெட்டில் ரத்துசெய்யப்பட்டது",
+  "creditsWarnOnly": "எச்சரிக்கை மட்டும்",
+  "customerBalanceDue": "நிலுவைத் தொகை",
+  "customerCouldNotSave": "வாடிக்கையாளரைச் சேமிக்க முடியவில்லை",
+  "customerCreditHistory": "கடன் வரலாறு",
+  "customerEmailOptional": "மின்னஞ்சல் (விரும்பினால்)",
+  "customerEnterValidPhone": "சரியான 10 இலக்க தொலைபேசியை உள்ளிடவும்",
+  "customerNameOptional": "பெயர் (விரும்பினால்)",
+  "customerNoCreditPaymentsYet": "இன்னும் கடன் கட்டணங்கள் பதிவுசெய்யப்படவில்லை.",
+  "customerNoCreditSalesYet": "இந்த வாடிக்கையாளருக்கு இன்னும் கடன் விற்பனை இல்லை.",
+  "customerNoOrdersYet": "இந்த வாடிக்கையாளருக்கு இன்னும் ஆர்டர்கள் இல்லை.",
+  "customerOrderHistory": "ஆர்டர் வரலாறு",
+  "customerProfileTitle": "வாடிக்கையாளர் சுயவிவரம்",
+  "customerSaveContinue": "சேமித்துத் தொடருங்கள்",
+  "customerSearchHintFull": "தொலைபேசி, மின்னஞ்சல் அல்லது பெயரால் தேடுங்கள்",
+  "customerSelectOrAdd": "தொடர வாடிக்கையாளரைத் தேர்ந்தெடுக்கவும் அல்லது சேர்க்கவும்",
+  "customerSelectSearchHint": "வாடிக்கையாளர்களைத் தேடு",
+  "customersBackToSearch": "தேடலுக்குத் திரும்பு",
+  "customersEmpty": "இந்தக் கிளைக்கு இன்னும் சில்லறை அல்லது வணிக வாடிக்கையாளர்கள் இல்லை. Retail Customers / Business Customers இல் சேர்த்து ஒத்திசையுங்கள்.",
+  "customersNew": "புதிய வாடிக்கையாளர்",
+  "customersSearchHint": "பெயர், தொலைபேசி அல்லது மின்னஞ்சலால் தேடுங்கள்",
+  "customersTitle": "வாடிக்கையாளர்கள்",
+  "dashboardCreditAmount": "கடன் தொகை",
+  "dashboardCreditOrders": "கடன் ஆர்டர்கள்",
+  "dashboardCreditOutstanding": "நிலுவை கடன்",
+  "dashboardCredits": "கடன்கள்",
+  "dashboardFilterMonth": "இந்த மாதம்",
   "dashboardFilterToday": "இன்று",
   "dashboardFilterWeek": "இந்த வாரம்",
-  "dashboardFilterMonth": "இந்த மாதம்",
   "dashboardFilterYear": "இந்த ஆண்டு",
-  "dashboardMetricDineIn": "உள்ளே சாப்பிடுபவர்கள்",
-  "dashboardMetricDelivered": "டெலிவரி செய்யப்பட்டவை",
-  "dashboardMetricPickup": "நேரடிப் பெறுதல்",
+  "dashboardFilterYesterday": "நேற்று",
   "dashboardMetricCancelled": "ரத்து செய்யப்பட்டது",
+  "dashboardMetricDelivered": "டெலிவரி செய்யப்பட்டவை",
+  "dashboardMetricDineIn": "உள்ளே சாப்பிடுபவர்கள்",
   "dashboardMetricOrders": "ஆர்டர்கள்",
+  "dashboardMetricPickup": "நேரடிப் பெறுதல்",
   "dashboardMetricTotalSales": "மொத்த விற்பனை",
+  "dashboardNoCategorySales": "இன்னும் பிரிவு விற்பனை இல்லை",
+  "dashboardNoOpenCredits": "திறந்த கடன்கள் இல்லை",
+  "dashboardNoPaymentsYet": "இன்னும் கட்டணங்கள் இல்லை",
+  "dashboardNoProductSales": "இன்னும் பொருள் விற்பனை இல்லை",
+  "dashboardNoSalesYet": "இந்த காலத்தில் விற்பனை இல்லை",
+  "dashboardNoStaffSales": "இந்தக் காலத்தில் ஊழியர் விற்பனை இல்லை.",
+  "dashboardOpenCredits": "திறந்த கடன்கள்",
+  "dashboardOrderCount": "ஆர்டர் எண்ணிக்கை",
+  "dashboardOrderTotal": "ஆர்டர் மொத்தம்",
+  "dashboardPaymentMix": "கட்டணக் கலவை",
+  "dashboardPaymentTypes": "கட்டண வகைகள்",
+  "dashboardRefunds": "பணத்திரும்பல்",
+  "dashboardRepayments": "திருப்பிச் செலுத்தல்கள்",
+  "dashboardSalesByStaff": "பணியாளர் விற்பனை",
+  "dashboardSalesTrend": "விற்பனை போக்கு",
+  "dashboardSoldCount": "{count} விற்கப்பட்டது",
+  "@dashboardSoldCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboardStaffSalesHint": "ஆர்டர்கள் · தொகை · செக்அவுட் ஊழியர் கடன்",
+  "dashboardTitle": "பாஸ் (POS) டாஷ்போர்டு",
   "dashboardTopCategories": "சிறந்த பிரிவுகள்",
   "dashboardTopProducts": "சிறந்த பொருட்கள்",
-  "unsupportedDeviceTitle": "சாதனம் ஆதரிக்கப்படவில்லை",
-  "unsupportedDeviceDesc": "நெக்ஸ்பாஸ் குறிப்பாக டேப்லெட்டுகள் மற்றும் பெரிய திரைகளுக்காக வடிவமைக்கப்பட்டுள்ளது.\n\nதயவுசெய்து ஐபாட் அல்லது ஆண்ட்ராய்டு டேப்லெட்டிலிருந்து போர்ட்ரெய்ட் அல்லாமல் லேண்ட்ஸ்கேப்பில் பயன்படுத்தவும்.",
-  "errorRequiredField": "இந்த புலம் அவசியம்",
-  "errorInvalidEmail": "தவறான மின்னஞ்சல் முகவரி",
-  "orderTypeSelection": "ஆர்டர் வகையைத் தேர்ந்தெடுக்கவும்",
-  "orderTypePickup": "நேரடிப் பெறுதல்",
-  "orderTypeDineIn": "உள்ளே சாப்பிடுபவர்கள்",
-  "pickupName": "பெயர்",
-  "pickupNameHint": "உங்கள் பெயரை உள்ளிடவும்",
-  "pickupPhone": "தொலைபேசி எண்",
-  "pickupPhoneHint": "10 இலக்க எண்ணை உள்ளிடவும்",
-  "pickupAddButton": "சேர்",
-  "pickupCancelButton": "ரத்துசெய்",
+  "deviceAutoSync": "தானியங்கி ஒத்திசைவு",
+  "deviceAutoSyncEnabled": "தானியங்கி ஒத்திசைவு இயக்கப்பட்டது — {interval}",
+  "@deviceAutoSyncEnabled": {
+    "placeholders": {
+      "interval": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceAutoSyncOff": "தானியங்கி ஒத்திசைவு அணைக்கப்பட்டது",
+  "deviceAutoSyncRunning": "பின்னணியில் இயங்குகிறது",
+  "deviceAutoSyncStarting": "பின்னணியில் இயங்குகிறது (தொடங்குகிறது…)",
+  "deviceCashDenominations": "பண நாணய மதிப்புகள்",
+  "deviceCashDenomsHint": "Billing & Payment இல் காட்டப்படும் கமாவால் பிரிக்கப்பட்ட தொகை சில்லுகள்.",
+  "deviceCashDenomsSaved": "பண நாணய மதிப்புகள் சேமிக்கப்பட்டன.",
+  "deviceCompanySettingsStaff": "நிறுவனம் (அமைப்புகள் & ஊழியர்கள்)",
+  "deviceDangerZone": "ஆபத்து மண்டலம்",
+  "deviceEnableAutoSync": "தானியங்கி ஒத்திசையை இயக்கு",
+  "deviceInterval15Min": "ஒவ்வொரு 15 நிமிடமும்",
+  "deviceInterval1Hour": "ஒவ்வொரு 1 மணி நேரமும்",
+  "deviceInterval1Min": "ஒவ்வொரு 1 நிமிடமும்",
+  "deviceInterval30Min": "ஒவ்வொரு 30 நிமிடமும்",
+  "deviceInterval5Min": "ஒவ்வொரு 5 நிமிடமும்",
+  "deviceIntervalEveryMinutes": "ஒவ்வொரு {minutes} நிமிடமும்",
+  "@deviceIntervalEveryMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceIntervalEverySeconds": "ஒவ்வொரு {seconds} வினாடியும்",
+  "@deviceIntervalEverySeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceKeepSavedServerUrls": "சேமித்த சேவையக URLகளை வைத்திரு",
+  "deviceKeepSavedServers": "சேமிக்கப்பட்ட சர்வர் URL களை வைத்திரு",
+  "deviceLastOnlineLogin": "கடைசி ஆன்லைன் உள்நுழைவு",
+  "deviceLastSuccessfulSync": "கடைசி வெற்றிகரமான ஒத்திசைவு",
+  "deviceLeaseDaysCount": "{count} நாட்கள்",
+  "@deviceLeaseDaysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceLeaseOneDay": "1 நாள்",
+  "deviceLoginLease": "உள்நுழைவு காலம்",
+  "deviceLoginLeaseDays": "உள்நுழைவு கால நாட்கள்",
+  "deviceOnlineSignInRequired": "ஆன்லைன் உள்நுழைவு அவசியம்",
+  "deviceOpenSyncNow": "இப்போது ஒத்திசையைத் திற",
+  "deviceResetAction": "மீட்டமை",
+  "deviceResetAllLocal": "அனைத்து உள்ளூர் தரவையும் மீட்டமை",
+  "deviceResetConfirmBody": "இது உள்ளூர் ஆர்டர்கள், பட்டியல், வாடிக்கையாளர்கள், ஒத்திசை வரலாறு, சாதன அனுமதி கொடிகள் மற்றும் இந்த டேப்லெட்டில் உள்நுழைவை நிரந்தரமாக நீக்கும். சேவையகத்தில் எதையும் நீக்காது.",
+  "deviceResetConfirmTitle": "அனைத்து உள்ளூர் தரவையும் மீட்டமைக்கவா?",
+  "deviceResetFailed": "மீட்டமைப்பு தோல்வி: {error}",
+  "@deviceResetFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceResetLocalBody": "சுத்தமான முதல் தொடக்கத்திலிருந்து சோதிக்க இந்த டேப்லெட்டின் ஆஃப்லைன் தரவுத்தளம், சாதன அமைப்பு, உள்நுழைவு மற்றும் ஒத்திசைவு வரலாறை அழிக்கவும்.",
+  "deviceResetting": "மீட்டமைக்கிறது…",
+  "deviceSaveDenominations": "நாணய மதிப்புகளைச் சேமி",
+  "deviceSettingsTitle": "சாதன அமைப்புகள்",
+  "deviceSyncHistory": "ஒத்திசைவு வரலாறு (கடைசி 20)",
+  "deviceSyncInterval": "ஒத்திசைவு இடைவெளி",
+  "deviceSyncOnTapOnly": "Sync ஐத் தட்டும்போது மட்டும் ஒத்திசை",
+  "deviceTypeResetConfirm": "உறுதிப்படுத்த RESET என தட்டச்சு செய்யவும்",
+  "deviceTypeResetToConfirm": "உறுதிப்படுத்த RESET என தட்டச்சு செய்யவும்",
+  "deviceValidUntil": "செல்லுபடியாகும் வரை",
   "dineInFloorFirst": "முதல் தளம்",
   "dineInFloorSecond": "இரண்டாவது தளம்",
   "dineInTable": "மேஜை {number}",
@@ -68,24 +903,960 @@
       }
     }
   },
-  "errorNameMinLength": "குறைந்தபட்சம் 3 எழுத்துகள்",
+  "errorAccessDenied": "அணுகல் மறுக்கப்பட்டது. நிர்வாகியிடம் இந்தச் சாதனத்தையும் கணக்கையும் சரிபார்க்கச் சொல்லுங்கள்.",
+  "errorAmountExceedsOutstanding": "தொகை நிலுவையை ({amount}) மீறக்கூடாது.",
+  "@errorAmountExceedsOutstanding": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "errorBootstrapFailed": "தொடக்க அமைப்பு தோல்வி",
+  "errorCancelFailed": "ரத்து தோல்வி: {error}",
+  "errorCannotReachServer": "சர்வரை அணுக முடியவில்லை. இணைப்பையும் சர்வரையும் சரிபார்க்கவும்.",
+  "errorCatalogueExportFailed": "பட்டியல் ஏற்றுமதி தோல்வி: {message}",
+  "@errorCatalogueExportFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCheckoutFailed": "செக்அவுட் தோல்வி: {error}",
+  "@errorCheckoutFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCollectFailed": "வசூல் தோல்வி: {error}",
+  "@errorCollectFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorConfigLookupFailed": "அமைப்பு தேடல் தோல்வி",
+  "errorCouldNotAddPaymentMethod": "கட்டண முறையைச் சேர்க்க முடியவில்லை.",
+  "errorCouldNotAddSubscriber": "சந்தாதாரரைச் சேர்க்க முடியவில்லை.",
+  "errorCouldNotCancel": "ரத்து செய்ய முடியவில்லை: {error}",
+  "@errorCouldNotCancel": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCouldNotDeleteDraft": "வரைவை நீக்க முடியவில்லை: {error}",
+  "@errorCouldNotDeleteDraft": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCouldNotLoadCompanySettings": "நிறுவன அமைப்புகளை ஏற்ற முடியவில்லை.",
+  "errorCouldNotLoadReports": "அறிக்கைகளை ஏற்ற முடியவில்லை.",
+  "errorCouldNotLoadStaff": "ஊழியர்களை ஏற்ற முடியவில்லை.",
+  "errorCouldNotOpenDraft": "வரைவைத் திறக்க முடியவில்லை: {error}",
+  "errorCouldNotPickLogo": "லோகோவைத் தேர்ந்தெடுக்க முடியவில்லை. பயன்பாட்டை முழுமையாக மறுதொடக்கம் செய்து மீண்டும் முயலவும்.",
+  "errorCouldNotSaveCompanySettings": "நிறுவன அமைப்புகளைச் சேமிக்க முடியவில்லை.",
+  "errorCouldNotSaveDenoms": "நாணய மதிப்புகளைச் சேமிக்க முடியவில்லை: {error}",
+  "@errorCouldNotSaveDenoms": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCouldNotSaveDraft": "வரைவைச் சேமிக்க முடியவில்லை: {error}",
+  "@errorCouldNotSaveDraft": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCouldNotSync": "ஒத்திசைக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
+  "errorCouldNotUseCustomer": "அந்த வாடிக்கையாளரைப் பயன்படுத்த முடியவில்லை. மீண்டும் முயலவும்.",
+  "errorCreditRequiresCustomer": "கடனுக்கு சேமிக்கப்பட்ட வாடிக்கையாளர் தேவை. மீண்டும் முயலவும்.",
+  "errorDbNeedsUpdate": "உள்ளூர் தரவுத்தளத்திற்கு புதுப்பிப்பு தேவை. பயன்பாட்டை முழுமையாக மறுதொடக்கம் செய்து மீண்டும் ஒத்திசையுங்கள்.",
+  "errorDbOutdated": "உள்ளூர் தரவுத்தளம் காலாவதி ({detail}). பயன்பாட்டை முழுமையாக மறுதொடக்கம் செய்து மீண்டும் ஒத்திசையுங்கள்.",
+  "@errorDbOutdated": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFileNotFound": "கோப்பு காணப்படவில்லை.",
+  "errorGeneric": "ஏதோ தவறு நடந்தது. மீண்டும் முயற்சிக்கவும்.",
+  "errorHttpFallback": "{fallback} (HTTP {statusCode})",
+  "@errorHttpFallback": {
+    "placeholders": {
+      "fallback": {
+        "type": "String"
+      },
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "errorInvalidCredentials": "தவறான அறிமுகச் சான்றுகள்",
+  "errorInvalidEmail": "தவறான மின்னஞ்சல் முகவரி",
   "errorInvalidPhone": "சரியாக 10 இலக்கங்கள் இருக்க வேண்டும்",
-  "orderListFilterAll": "அனைத்தும்",
-  "orderListFilterDineIn": "உள்ளே சாப்பிடுபவர்கள்",
-  "orderListFilterPickup": "நேரடிப் பெறுதல்",
-  "orderListFilterDelivery": "டெலிவரி",
-  "orderListSearchHint": "ஆர்டர் ஐடி, பெயர், தொலைபேசி, மின்னஞ்சல் மூலம் தேடுங்கள்...",
-  "orderListColumnSlNo": "வ.எண்",
+  "errorNameMinLength": "குறைந்தபட்சம் 3 எழுத்துகள்",
+  "errorNamePackageUnitPriceRequired": "பெயர், தொகுப்பு, அலகு மற்றும் விலை அவசியம்",
+  "errorNetwork": "சேவையகத்தை அணுக முடியவில்லை",
+  "errorNoCachedPosConfig": "\"{orgCode}\" க்கான சேமிக்கப்பட்ட POS அமைப்பு இல்லை. முதலில் சாதன அமைப்பை முடிக்கவும்.",
+  "@errorNoCachedPosConfig": {
+    "placeholders": {
+      "orgCode": {
+        "type": "String"
+      }
+    }
+  },
+  "errorOrderNotFound": "ஆர்டர் #{orderId} காணப்படவில்லை.",
+  "@errorOrderNotFound": {
+    "placeholders": {
+      "orderId": {
+        "type": "int"
+      }
+    }
+  },
+  "errorOrganisationNotFound": "நிறுவனம் காணப்படவில்லை",
+  "errorParentOrgNotFound": "பெற்றோர் நிறுவனம் காணப்படவில்லை.",
+  "errorPaymentFailed": "பணம் செலுத்தல் தோல்வி: {error}",
+  "errorRefundFailed": "திருப்பிச் செலுத்தல் தோல்வி: {error}",
+  "errorRequiredField": "இந்த புலம் அவசியம்",
+  "errorScheduleFailed": "அட்டவணை தோல்வி: {error}",
+  "@errorScheduleFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSecureConnectionFailed": "பாதுகாப்பான இணைப்பு தோல்வி. சர்வர் முகவரியைச் சரிபார்த்து மீண்டும் முயலவும்.",
+  "errorSelectCustomerForCredit": "நிலுவையைக் கடனில் வைக்க வாடிக்கையாளரைத் தேர்ந்தெடுக்கவும்.",
+  "errorSignInFailed": "உள்நுழைவு தோல்வி. மின்னஞ்சல் மற்றும் கடவுச்சொல்லைச் சரிபார்த்து மீண்டும் முயலவும்.",
+  "errorSignInOnlineFirst": "நிறுவன அமைப்புகளைப் புதுப்பிக்க முதலில் ஆன்லைனில் உள்நுழையவும்.",
+  "errorSignupFailed": "பதிவு தோல்வி.",
+  "errorSyncFailed": "ஒத்திசைவு தோல்வி: {error}",
+  "@errorSyncFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorUnableLoadSignupOptions": "பதிவு விருப்பங்களை ஏற்ற முடியவில்லை",
+  "errorVoidFailed": "ரத்து தோல்வி: {error}",
+  "@errorVoidFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWithMessage": "{message}: {error}",
+  "@errorWithMessage": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWithStatus": "{fallback} ({statusCode})",
+  "@errorWithStatus": {
+    "placeholders": {
+      "fallback": {
+        "type": "String"
+      },
+      "statusCode": {
+        "type": "String"
+      }
+    }
+  },
+  "forgotPasswordBackToSignIn": "உள்நுழைவுக்குத் திரும்பு",
+  "forgotPasswordInstruction": "உங்கள் பதிவு செய்யப்பட்ட மின்னஞ்சல் முகவரி அல்லது தொலைபேசி எண்ணை உள்ளிடவும்.",
+  "forgotPasswordSendLink": "மீட்டமைப்பு இணைப்பை அனுப்பு",
+  "forgotPasswordSuccess": "உங்கள் பதிவு செய்யப்பட்ட முகவரிக்கு கடவுச்சொல் மீட்டமைப்பு இணைப்பு அனுப்பப்பட்டுள்ளது!",
+  "forgotPasswordTitle": "கடவுச்சொல் மறந்துவிட்டதா?",
+  "homeActivityPrompt": "இன்று நீங்கள் என்ன செய்ய விரும்புகிறீர்கள்?",
+  "homeCatalogs": "பட்டியல்கள்",
+  "homeCompany": "நிறுவனம்",
+  "homeCreateOrder": "புதிய ஆர்டர்",
+  "homeCredits": "கடன்கள்",
+  "homeCustomers": "வாடிக்கையாளர்கள்",
+  "homeDashboardDesc": "பகுப்பாய்வு மற்றும் சுருக்கத்தைக் காண்க",
+  "homeDeviceSettings": "சாதன அமைப்புகள்",
+  "homeDraftOrders": "வரைவுகள்",
+  "homeLogoutTooltip": "வெளியேறு",
+  "homeMenu": "மெனு",
+  "homeNewOrderCount": "புதிய ஆர்டர் ({count})",
+  "@homeNewOrderCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeNoItems": "பொருட்கள் இல்லை",
+  "homeNoSavedDrafts": "இன்னும் சேமித்த வரைவுகள் இல்லை.",
+  "homeOpenStoreFirst": "முதலில் ஒரு கிளையைத் திறக்கவும்",
+  "homeOrdersList": "ஆர்டர்கள்",
+  "homeOrdersListDesc": "அனைத்து ஆர்டர்களையும் நிர்வகிக்கவும்",
+  "homePosDashboard": "பாஸ் (POS) டாஷ்போர்டு",
+  "homeRefunds": "பணத்திரும்பல்",
+  "homeSavedDrafts": "சேமிக்கப்பட்ட வரைவுகள்",
+  "homeStoreAdminRequiredCompany": "நிறுவனத்திற்கு கடை நிர்வாகி அணுகல் தேவை.",
+  "homeStoreAdminRequiredSetup": "கடை அமைப்புக்கு கடை நிர்வாகி அணுகல் தேவை.",
+  "homeStoreSetup": "கடை அமைப்பு",
+  "homeSyncFailedRetry": "ஒத்திசைவு தோல்வி — மீண்டும் முயற்சிக்க தட்டவும்",
+  "homeSyncTooltip": "ஒத்திசை",
+  "homeViewAllCount": "அனைத்தையும் காண்க ({count})",
+  "@homeViewAllCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeWelcomeBack": "மீண்டும் வரவேற்கிறோம்",
+  "invoiceAmountPaid": "செலுத்திய தொகை",
+  "invoiceMethod": "முறை: {method}",
+  "invoiceOrderSummary": "ஆர்டர் சுருக்கம்",
+  "invoicePrinting": "தermal அல்லது வெப்ப அச்சுப்பொறிக்கு அச்சிடுகிறது…",
+  "invoiceTitle": "விலைப்பட்டியல் / ரசீது",
+  "languageEnglish": "ஆங்கிலம்",
+  "languageLabel": "மொழி",
+  "languageTamil": "தமிழ்",
+  "orderAddRecordPayment": "கட்டணம் சேர் / பதிவு செய்",
+  "orderAddonsLabel": "துணைப்பொருட்கள்: {labels}",
+  "@orderAddonsLabel": {
+    "placeholders": {
+      "labels": {
+        "type": "String"
+      }
+    }
+  },
+  "orderAllItemsSentKitchen": "அனைத்து பொருட்களும் ஏற்கனவே சமையலறைக்கு அனுப்பப்பட்டன.",
+  "orderAlreadyFullyPaid": "இந்த ஆர்டர் ஏற்கனவே முழுமையாகச் செலுத்தப்பட்டது.",
+  "orderAlreadyFullyRefunded": "இந்தக் கட்டணம் ஏற்கனவே முழுமையாகத் திருப்பப்பட்டது.",
+  "orderAppliedOffers": "பயன்படுத்தப்பட்ட சலுகைகள்",
+  "orderCancelConfirm": "இந்த ஆர்டரை ரத்துசெய்யப்பட்டதாகக் குறிக்கவா?",
+  "orderCancelTitle": "ஆர்டரை ரத்துசெய்",
+  "orderCancelled": "ஆர்டர் ரத்துசெய்யப்பட்டது.",
+  "orderCancelledTitle": "ஆர்டர் ரத்துசெய்யப்பட்டது",
+  "orderChartPoint": "{label}\n{amount}\n{count} ஆர்டர்கள்",
+  "@orderChartPoint": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "orderClearFilter": "வடிகட்டியை அழி",
+  "orderCompleted": "முடிக்கப்பட்டது",
+  "orderCouldNotOpenDraft": "வரைவைத் திறக்க முடியவில்லை: {error}",
+  "@orderCouldNotOpenDraft": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "orderCreateAddItemsBeforeDraft": "வரைவைச் சேமிக்க முன் பொருட்களைச் சேர்க்கவும்.",
+  "orderCreateAddMiscItem": "இதர பொருளைச் சேர்",
+  "orderCreateAllItemsSentKitchen": "அனைத்து பொருட்களும் ஏற்கனவே சமையலறைக்கு அனுப்பப்பட்டுள்ளன.",
+  "orderCreateCartEmpty": "உங்கள் கார்ட் காலியாக உள்ளது",
+  "orderCreateDeleteDraftBody": "இது கார்ட்டை அழித்து சேமித்த வரைவை நீக்கும்.",
+  "orderCreateDraftDeleted": "வரைவு நீக்கப்பட்டது.",
+  "orderCreateDraftSaved": "வரைவு சேமிக்கப்பட்டது.",
+  "orderCreateEnterValidPrice": "சரியான விலையை உள்ளிடவும்",
+  "orderCreateFloorTable": "தளம்: {floor} | மேசை: {table}",
+  "orderCreateHistoryRefreshed": "வரலாறு புதுப்பிக்கப்பட்டது",
+  "orderCreateHowMany": "எத்தனை {unit}?",
+  "orderCreateKotFailed": "KOT தோல்வி: {error}",
+  "orderCreateKotSent": "KOT #{batch} அனுப்பப்பட்டது · ஆர்டர் #{orderId} சேமிக்கப்பட்டது",
+  "orderCreateMisc": "இதர",
+  "orderCreateNewOrderTitle": "புதிய {orderType} ஆர்டர்",
+  "orderCreateNoOrderHistory": "இன்னும் ஆர்டர் வரலாறு இல்லை",
+  "orderCreatePastOrders": "கடந்த ஆர்டர்கள்",
+  "orderCreateProductName": "பொருள் பெயர்",
+  "orderCreateQuantityUnit": "அளவு ({unit})",
+  "orderCreateSaveDraftTooltip": "வரைவைச் சேமி",
+  "orderCreateTitle": "புதிய ஆர்டர்",
+  "orderCreationSaveContinue": "சேமித்துத் தொடருங்கள்",
+  "orderDeleteDraft": "வரைவை நீக்கு",
+  "orderDeleteDraftConfirm": "இந்த வரைவு ஆர்டரை நிரந்தரமாக நீக்கவா? இதை மாற்ற முடியாது.",
+  "orderDeleteDraftQuestion": "வரைவை நீக்கவா?",
+  "orderDeliveredStatus": "ஆர்டர் டெலிவரி செய்யப்பட்டது",
+  "orderDetailsDueSuffix": " · நிலுவை {amount}",
+  "orderDetailsNoPaymentsRecorded": "இன்னும் பணம் பதிவு செய்யப்படவில்லை.",
+  "orderDetailsRefundablePayments": "{count} பணம்செலுத்தலில் இன்னும் திருப்பிச் செலுத்தக்கூடிய இருப்பு உள்ளது. இந்த ஆர்டரை ரத்துசெய்ய இப்போது திரும்பப்பெறவும், அல்லது தனித்தனியாக திரும்பப்பெற Payments-ஐத் திறக்கவும்.",
+  "@orderDetailsRefundablePayments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "orderDetailsTitle": "ஆர்டர் விவரங்கள்",
+  "orderDetailsTotalPaid": "மொத்தம் செலுத்தப்பட்டது {amount}",
+  "orderDetailsViewPayments": "பணம் செலுத்தல்களைக் காண்க",
+  "orderDraftDeleted": "வரைவு நீக்கப்பட்டது.",
+  "orderDraftSaved": "வரைவு சேமிக்கப்பட்டது.",
+  "orderGoToPayments": "கட்டணங்களுக்குச் செல்",
+  "orderHistoryId": "{id} · ஆர்டர் #{orderId}",
+  "@orderHistoryId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "orderId": {
+        "type": "int"
+      }
+    }
+  },
+  "orderKotFailed": "KOT தோல்வி: {error}",
+  "@orderKotFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "orderListCancelHint": "ஆர்டரை ரத்து செய்ய, ஆர்டர் விவரங்களைத் திறந்து ரத்து செய் பயன்படுத்தவும் (பணம் செலுத்தப்பட்டிருந்தால் முதலில் திருப்பிச் செலுத்த வேண்டும்).",
+  "orderListClearFilter": "வடிகட்டியை அழி",
+  "orderListColumnActions": "செயல்கள்",
+  "orderListColumnItems": "பொருட்கள்",
+  "orderListColumnName": "பெயர்",
   "orderListColumnOrderId": "ஆர்டர் ஐடி",
   "orderListColumnOrderType": "வகை",
-  "orderListColumnName": "பெயர்",
-  "orderListColumnTime": "நேரம்",
-  "orderListColumnStatus": "நிலை",
   "orderListColumnPayment": "கட்டணம்",
-  "orderListColumnItems": "பொருட்கள்",
+  "orderListColumnSlNo": "வ.எண்",
+  "orderListColumnStatus": "நிலை",
+  "orderListColumnTime": "நேரம்",
   "orderListColumnTotal": "மொத்தம்",
-  "orderListColumnActions": "செயல்கள்",
-  "orderListPayNow": "இப்போது செலுத்து",
+  "orderListFilterAll": "அனைத்தும்",
   "orderListFilterButton": "வடிகட்டி",
-  "orderListRefreshButton": "புதுப்பி"
+  "orderListFilterDelivery": "டெலிவரி",
+  "orderListFilterDineIn": "உள்ளே சாப்பிடுபவர்கள்",
+  "orderListFilterPickup": "நேரடிப் பெறுதல்",
+  "orderListNoOrdersFound": "ஆர்டர்கள் எதுவும் இல்லை",
+  "orderListPayNow": "இப்போது செலுத்து",
+  "orderListPosCode": "POS {code}",
+  "@orderListPosCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "orderListPrintInvoiceBody": "ஆர்டர் #{orderId} க்கான விலைப்பட்டியலை அச்சிடவா?",
+  "orderListPrintInvoiceTitle": "விலைப்பட்டியல் அச்சிடு",
+  "orderListRefreshButton": "புதுப்பி",
+  "orderListSearchHint": "ஆர்டர் ஐடி, பெயர், தொலைபேசி, மின்னஞ்சல் மூலம் தேடுங்கள்...",
+  "orderListSelectNewStatus": "ஆர்டர் #{orderId} க்கான புதிய நிலையைத் தேர்ந்தெடுக்கவும்:",
+  "orderListServeNumber": "சேவை #{number}",
+  "@orderListServeNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "orderListUnableOpenOrder": "ஆர்டர் #{orderId} ஐ திறக்க முடியவில்லை",
+  "orderListUpdateStatusTitle": "நிலையை புதுப்பி",
+  "orderMisc": "இதர",
+  "orderNoItems": "இந்த ஆர்டரில் பொருட்கள் இல்லை.",
+  "orderNotSyncedRemote": "இன்னும் ரிமோட்டிற்கு ஒத்திசைக்கப்படவில்லை",
+  "orderNumber": "ஆர்டர் #{orderId}",
+  "@orderNumber": {
+    "placeholders": {
+      "orderId": {
+        "type": "int"
+      }
+    }
+  },
+  "orderOfferLabel": "சலுகை: {label}",
+  "@orderOfferLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "orderPaymentFailed": "கட்டணம் தோல்வி: {error}",
+  "@orderPaymentFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "orderPaymentsAddPayment": "பணம் சேர்",
+  "orderPaymentsCustomerLabel": "வாடிக்கையாளர் {label}",
+  "orderPaymentsFullyPaid": "இந்த ஆர்டர் ஏற்கனவே முழுமையாக செலுத்தப்பட்டது.",
+  "orderPaymentsFullyRefunded": "இந்த பணம் ஏற்கனவே முழுமையாக திருப்பிச் செலுத்தப்பட்டது.",
+  "orderPaymentsNoPaymentsRecorded": "இந்த ஆர்டருக்கு பணம் பதிவு செய்யப்படவில்லை.",
+  "orderPaymentsNoPaymentsUnpaid": "இன்னும் பணம் இல்லை. இந்த செலுத்தப்படாத ஆர்டருக்கு பணம் பதிவு செய்யவும்.",
+  "orderPaymentsOnlineUpi": "ஆன்லைன் / UPI",
+  "orderPaymentsOrderSummary": "ஆர்டர் மொத்தம் {total} · நிலுவை {remaining}",
+  "orderPaymentsReasonOptional": "காரணம் (விருப்பம்)",
+  "orderPaymentsRecordTitle": "பணம் பதிவு செய்",
+  "orderPaymentsRecordedBalance": "பணம் பதிவு செய்யப்பட்டது. நிலுவை {balance}",
+  "orderPaymentsRecordedFullyPaid": "பணம் பதிவு செய்யப்பட்டது. ஆர்டர் முழுமையாக செலுத்தப்பட்டது.",
+  "orderPaymentsRefLabel": "குறிப்பு {reference}",
+  "orderPaymentsRefundAction": "திருப்பிச் செலுத்து",
+  "orderPaymentsRefundAmount": "திருப்பிச் செலுத்தும் தொகை",
+  "orderPaymentsRefundAmountRange": "0.01 முதல் {max} வரை தொகையை உள்ளிடவும்.",
+  "orderPaymentsRefundTitle": "பணம் திருப்பிச் செலுத்து",
+  "orderPaymentsRefundableOf": "திருப்பிச் செலுத்தக்கூடிய {refundable} / {total}",
+  "orderPaymentsRefundedAmount": "{amount} திருப்பிச் செலுத்தப்பட்டது.",
+  "orderPaymentsRefundedCancelled": "கட்டணங்கள் திருப்பப்பட்டு ஆர்டர் ரத்துசெய்யப்பட்டது.",
+  "orderPaymentsRefundedLeft": "திருப்பிச் செலுத்தப்பட்டது {refunded} · மீதம் {left}",
+  "orderPaymentsTitle": "ஆர்டர் கட்டணங்கள்",
+  "orderPrintInvoice": "விலைப்பட்டியலை அச்சிடு",
+  "orderPrintInvoiceConfirm": "ஆர்டர் #{orderId} க்கான விலைப்பட்டியலை அச்சிடவா?",
+  "@orderPrintInvoiceConfirm": {
+    "placeholders": {
+      "orderId": {
+        "type": "int"
+      }
+    }
+  },
+  "orderReadyToServe": "சேவைக்குத் தயார்",
+  "orderRecordPayment": "கட்டணத்தைப் பதிவுசெய்",
+  "orderRefund": "பணத்திருப்பம்",
+  "orderRefundAllAndCancel": "அனைத்தையும் திருப்பி ரத்துசெய்",
+  "orderRefundBeforeCancelBody": "{count} கட்டண(ங்கள்) இன்னும் திருப்பக்கூடிய நிலுவை உள்ளன. ஆர்டரை ரத்துசெய்ய இப்போது திருப்பவும், அல்லது தனித்தனியாக திருப்ப Payments ஐத் திறக்கவும்.",
+  "@orderRefundBeforeCancelBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "orderRefundBeforeCancelTitle": "ரத்துக்கு முன் பணத்தைத் திருப்பு",
+  "orderRefundFailed": "பணத்திருப்பம் தோல்வி: {error}",
+  "@orderRefundFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "orderRefundNotNow": "இப்போது வேண்டாம்",
+  "orderRefundPayment": "கட்டணத்தைத் திருப்பு",
+  "orderRefundedAmount": "{amount} திருப்பப்பட்டது.",
+  "@orderRefundedAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "orderSaveDraft": "வரைவைச் சேமி",
+  "orderSummary": "சுருக்கம்",
+  "orderSyncedRemote": "ரிமோட் பேக்கெண்டிற்கு ஒத்திசைக்கப்பட்டது",
+  "orderTypeDineIn": "உள்ளே சாப்பிடுபவர்கள்",
+  "orderTypePickup": "நேரடிப் பெறுதல்",
+  "orderTypeSelection": "ஆர்டர் வகையைத் தேர்ந்தெடுக்கவும்",
+  "orderTypeTable": "{type} · {table}",
+  "@orderTypeTable": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "table": {
+        "type": "String"
+      }
+    }
+  },
+  "orderUnableToOpen": "ஆர்டர் #{orderId} ஐத் திறக்க முடியவில்லை",
+  "@orderUnableToOpen": {
+    "placeholders": {
+      "orderId": {
+        "type": "int"
+      }
+    }
+  },
+  "orderUpdateStatus": "நிலையைப் புதுப்பி",
+  "pickupAddButton": "சேர்",
+  "pickupCancelButton": "ரத்துசெய்",
+  "pickupName": "பெயர்",
+  "pickupNameHint": "உங்கள் பெயரை உள்ளிடவும்",
+  "pickupPhone": "தொலைபேசி எண்",
+  "pickupPhoneHint": "10 இலக்க எண்ணை உள்ளிடவும்",
+  "profileAccount": "கணக்கு",
+  "profileCode": "குறியீடு",
+  "profileContactEmail": "தொடர்பு மின்னஞ்சல்",
+  "profileCurrent": "தற்போதைய",
+  "profileCurrentStore": "தற்போதைய கிளை",
+  "profileMyProfile": "என் சுயவிவரம்",
+  "profileOrganisationRole": "நிறுவனப் பங்கு",
+  "profilePosOperator": "POS இயக்குனர்",
+  "profileRole": "பங்கு",
+  "profileServiceInstance": "சேவை நிகழ்வு",
+  "profileSignedIn": "உள்நுழைந்தது",
+  "profileSignedInAs": "உள்நுழைந்துள்ளவர்",
+  "profileStoreId": "கிளை அடையாளம்",
+  "profileStoreLabel": "கிளை",
+  "profileStoreRole": "கடைப் பங்கு",
+  "profileTitle": "சுயவிவரம்",
+  "profileType": "வகை",
+  "refundsCount": "{count} பணத்திருப்பங்கள்",
+  "@refundsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "refundsEmpty": "இன்னும் பணத்திருப்பங்கள் பதிவுசெய்யப்படவில்லை.",
+  "refundsPeriodTitle": "பணத்திருப்பங்கள் · {period}",
+  "@refundsPeriodTitle": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "refundsTitle": "பணத்திரும்பல்",
+  "scheduledPaymentsTitle": "திட்டமிட்ட கட்டணங்கள்",
+  "signInButton": "உள்நுழைக",
+  "signInEmailPhone": "மின்னஞ்சல் / மொபைல் எண்",
+  "signInEmailPhoneHint": "மின்னஞ்சல் அல்லது மொபைலை உள்ளிடவும்",
+  "signInForgotPasswordPrompt": "கடவுச்சொல் மறந்துவிட்டதா?",
+  "signInIdentifierHint": "மின்னஞ்சல் / தொலைபேசி / பணியாளர் ஐடி",
+  "signInNewCompany": "புதிய நிறுவனமா?",
+  "signInPassword": "கடவுச்சொல்",
+  "signInPasswordHint": "கடவுச்சொல்லை உள்ளிடவும்",
+  "signInRenewDevice": "இந்த சாதனத்தைப் புதுப்பிக்க உள்நுழைக",
+  "signInShowPassword": "கடவுச்சொல்லைக் காட்டு",
+  "signInWelcome": "வரவேற்பு",
+  "signupAlreadyHaveCompany": "ஏற்கனவே நிறுவனம் உள்ளதா? உள்நுழைக",
+  "signupBackToBranch": "கிளை விவரங்களுக்குத் திரும்பு",
+  "signupBackToSignIn": "உள்நுழைவுக்குத் திரும்பு",
+  "signupBodyBranch": "கிளை மற்றும் நகரத்தை பெயரிடுங்கள். பதிவு எண் விருப்பமானது.",
+  "signupBodyBusinessType": "வணிக வகையைத் தேர்வுசெய்க. உங்கள் கிளையின் கீழ் உணவகக் கடை உருவாக்கப்படும்.",
+  "signupBodyCompanyDetails": "நிறுவனம் மற்றும் அதை நிர்வகிக்கும் உரிமையாளர் பற்றி கூறுங்கள்.",
+  "signupBodyCreateCompany": "இந்த டேப்லெட்டுக்காக புதிய நிறுவனத்தை உருவாக்கவும்.",
+  "signupBodyCreateCompanyManual": "சேவையகம் மற்றும் தாய் நிறுவனத்தை உள்ளிட்டு இந்த டேப்லெட்டுக்காக புதிய நிறுவனத்தை உருவாக்கவும்.",
+  "signupBodyReady": "உங்கள் நிறுவனம் தயாராக உள்ளது. நிறுவன அடையாளம் மற்றும் கடவுச்சொல்லுடன் உள்நுழைக.",
+  "signupBodySettingUp": "உங்கள் நிறுவனம், கிளை மற்றும் கடை உருவாக்கப்படுகிறது — சிறிது நேரம் மட்டும்.",
+  "signupBranchName": "கிளைப் பெயர்",
+  "signupBusinessBakery": "பேக்கரி",
+  "signupBusinessCafe": "காஃபி",
+  "signupBusinessOther": "மற்றவை",
+  "signupBusinessRestaurant": "உணவகம்",
+  "signupCity": "நகரம்",
+  "signupCompanyIdentifier": "நிறுவன அடையாளம்",
+  "signupCompanyName": "நிறுவனப் பெயர்",
+  "signupConfirmPassword": "கடவுச்சொல்லை உறுதிப்படுத்து",
+  "signupCouldNotPrepare": "நிறுவனப் பதிவைத் தயாரிக்க முடியவில்லை.",
+  "signupCountry": "நாடு",
+  "signupCreateCompany": "நிறுவனம் உருவாக்கு",
+  "signupJoinExistingDevice": "ஏற்கனவே உள்ள நிறுவன சாதனத்தில் சேரவும்",
+  "signupLoginNow": "இப்போது உள்நுழைக",
+  "signupNoCountriesMatch": "“{query}” உடன் பொருந்தும் நாடுகள் இல்லை",
+  "@signupNoCountriesMatch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "signupOwnerName": "உரிமையாளர் பெயர்",
+  "signupParentOrgHelp": "தொடர்வதற்கு முன் இந்த நிறுவனம் உள்ளதா எனச் சரிபார்ப்போம்.",
+  "signupParentOrgHint": "தாய் நிறுவன அடையாளம்",
+  "signupPasswordHelp": "தரைப் பணியாளர்களுக்கு எளிமையாக வைத்திருங்கள் — எழுத்துகள், எண்கள் அல்லது இரண்டும்.",
+  "signupPasswordHint": "கடவுச்சொல் (குறைந்தது 6 எழுத்துகள்/எண்கள்)",
+  "signupPasswordsDoNotMatch": "கடவுச்சொற்கள் பொருந்தவில்லை",
+  "signupPhoneHint": "தொலைபேசி எண்",
+  "signupPhoneHintWithDial": "தொலைபேசி எண் (எ.கா. {dialCode} 9876543210)",
+  "@signupPhoneHintWithDial": {
+    "placeholders": {
+      "dialCode": {
+        "type": "String"
+      }
+    }
+  },
+  "signupChooseLanguage": "உங்களுக்கு விருப்பமான மொழியைத் தேர்ந்தெடுக்கவும்",
+  "signupChooseLanguageHelp": "பதிவு திரைகள் இந்த மொழியில் காண்பிக்கப்படும். மொழி மெனுவைப் பயன்படுத்தி எப்போது வேண்டுமானாலும் மாற்றலாம்.",
+  "signupPreparing": "நிறுவனப் பதிவு தயாராகிறது.",
+  "signupProgressCreatingCompany": "நிறுவனத்தை உருவாக்குகிறது",
+  "signupProgressCreatingUser": "பயனரை உருவாக்குகிறது",
+  "signupProgressSettingAccount": "கணக்கை அமைக்கிறது",
+  "signupProgressSettingBranch": "கிளையை அமைக்கிறது",
+  "signupProgressSettingProfile": "சுயவிவரத்தை அமைக்கிறது",
+  "signupProgressSuccess": "வாழ்த்துக்கள் — வெற்றி",
+  "signupRegistrationOptional": "பதிவு எண் (விரும்பினால்)",
+  "signupSearchCountry": "நாடு, குறியீடு அல்லது டயல் தேடு",
+  "signupSelectCountry": "நாட்டைத் தேர்வுசெய்க",
+  "signupServerUrlHint": "சேவையக URL (எ.கா. http://192.168.1.10:8000)",
+  "signupTitleBranch": "உங்கள் முதல் கிளை",
+  "signupTitleBusinessType": "நீங்கள் என்ன நடத்துகிறீர்கள்?",
+  "signupTitleCompanyDetails": "நிறுவன விவரங்கள்",
+  "signupTitleCreateCompany": "உங்கள் நிறுவனத்தை உருவாக்குங்கள்",
+  "signupTitleReady": "நீங்கள் தயாராக உள்ளீர்கள்",
+  "signupTitleSettingUp": "அமைப்பு நடைபெறுகிறது",
+  "signupTryAgain": "மீண்டும் முயற்சி",
+  "signupUseIdentifierHelp": "உள்நுழைய இந்த அடையாளத்தை மின்னஞ்சல்/தொலைபேசி மற்றும் கடவுச்சொல்லுடன் பயன்படுத்தவும்.",
+  "splashCheckAgain": "மீண்டும் சரிபார்",
+  "splashDeviceNotApproved": "சாதனம் அங்கீகரிக்கப்படவில்லை",
+  "splashInitError": "தொடக்கப் பிழை",
+  "splashNoConfig": "சேமிக்கப்பட்ட அமைப்பு இல்லை",
+  "splashNoOrgCode": "சேமிக்கப்பட்ட நிறுவனக் குறியீடு இல்லை",
+  "splashPleaseSignIn": "தொடர உள்நுழையவும்",
+  "splashTagline": "ஒவ்வொரு பரிவர்த்தனையிலும் துல்லியம்",
+  "staffLockAllStaff": "அனைத்து ஊழியர்களும்",
+  "staffLockBranchNotLoaded": "கிளை ஏற்றப்படவில்லை",
+  "staffLockMore": "மேலும்",
+  "staffLockOnlineSignIn": "ஆன்லைன் சாதன உள்நுழைவு",
+  "staffLockStaffId": "ஊழியர் அடையாளம்",
+  "staffLockStaffStore": "ஊழியர் · {storeName}",
+  "@staffLockStaffStore": {
+    "placeholders": {
+      "storeName": {
+        "type": "String"
+      }
+    }
+  },
+  "staffLockSwitchStore": "கிளையை மாற்று",
+  "staffLockTitle": "பணியாளர் திறப்பு",
+  "staffLockUnlock": "திற",
+  "staffLogoutConfirmBody": "இது பதிவேட்டைப் பூட்டும். மற்றொரு பணியாளர் தங்கள் பின் அல்லது கடவுச்சொல்லால் திறக்கலாம்.",
+  "staffLogoutConfirmBodyFull": "அடுத்த ஊழியருக்காக டேப்லெட்டைத் திறக்கிறது. உங்கள் அமர்வு முடிகிறது; ஏற்கனவே சேமிக்கப்பட்ட ஆர்டர்கள் இந்தச் சாதனத்தில் இருக்கும்.",
+  "staffLogoutConfirmTitle": "பணியாளரை வெளியேற்றவா?",
+  "statusApproved": "அங்கீகரிக்கப்பட்டது",
+  "statusCollected": "வசூலிக்கப்பட்டது",
+  "statusCooking": "சமைக்கிறது",
+  "statusDelivered": "டெலிவரி செய்யப்பட்டது",
+  "statusFailed": "தோல்வி",
+  "statusInitiated": "தொடங்கப்பட்டது",
+  "statusOpen": "திறந்தது",
+  "statusOrderAccepted": "ஆர்டர் ஏற்கப்பட்டது",
+  "statusOrderCancelled": "ஆர்டர் ரத்து",
+  "statusOrderCompleted": "ஆர்டர் முடிந்தது",
+  "statusOrderPending": "ஆர்டர் நிலுவை",
+  "statusOrderPreparing": "ஆர்டர் தயாராகிறது",
+  "statusOrderReady": "ஆர்டர் தயார்",
+  "statusPaid": "செலுத்தப்பட்டது",
+  "statusPartial": "பகுதி",
+  "statusPickedUp": "எடுக்கப்பட்டது",
+  "statusPlaced": "வைக்கப்பட்டது",
+  "statusReadyToServe": "சேவைக்குத் தயார்",
+  "statusRefunded": "திரும்பப் பெறப்பட்டது",
+  "statusRejected": "நிராகரிக்கப்பட்டது",
+  "statusReturned": "திரும்பியது",
+  "statusServed": "சேவை செய்யப்பட்டது",
+  "statusSettled": "தீர்க்கப்பட்டது",
+  "statusUnpaid": "செலுத்தப்படவில்லை",
+  "storeAdminAccessRequired": "கடை நிர்வாகி அணுகல் தேவை.",
+  "storeListBackToUnlock": "ஊழியர் திறப்பிற்குத் திரும்பு",
+  "storeListChooseBranchUnlock": "கிளையைத் தேர்ந்தெடுத்து ஊழியர் அடையாளத்தால் திறக்கவும்",
+  "storeListChooseStore": "தொடர உங்கள் கிளையைத் தேர்ந்தெடுக்கவும்",
+  "storeListEmpty": "கிளைகள் இல்லை",
+  "storeListLoading": "கிளைகள் ஏற்றப்படுகின்றன...",
+  "storeListOpenBranch": "கிளையைத் திற",
+  "storeListSearchHint": "கிளை பெயர் அல்லது அடையாளத்தால் தேடுங்கள்...",
+  "storeListSelectStore": "கிளையைத் தேர்ந்தெடு",
+  "storeListStoreId": "கிளை அடையாளம்: {storeId}",
+  "@storeListStoreId": {
+    "placeholders": {
+      "storeId": {
+        "type": "String"
+      }
+    }
+  },
+  "storeListTitle": "என் கடைகள்",
+  "storeListTitleCount": "என் கடைகள் ({count})",
+  "@storeListTitleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storeSelectedSuccess": "{storeName} வெற்றிகரமாகத் தேர்ந்தெடுக்கப்பட்டது!",
+  "@storeSelectedSuccess": {
+    "placeholders": {
+      "storeName": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupAccess": "அணுகல்",
+  "storeSetupAddCashier": "காசாளரைச் சேர்",
+  "storeSetupAddCashierHint": "பெயர், மின்னஞ்சல், தொலைபேசி மற்றும் கடவுச்சொல்லுடன் காசியரைச் சேர்க்கவும்.",
+  "storeSetupAddGroup": "குழுவைச் சேர்",
+  "storeSetupAddLinkCategoryFirst": "முதலில் ஒரு பிரிவைச் சேர்த்து இணைக்கவும்",
+  "storeSetupAddOffer": "சலுகையைச் சேர்",
+  "storeSetupAddSellableItem": "விற்பனை பொருளைச் சேர்",
+  "storeSetupAddToStore": "கிளையில் சேர்",
+  "storeSetupAddonDeletedOffline": "துணைப்பொருள் ஆஃப்லைனில் நீக்கப்பட்டது. ஏற்றுமதிக்கு ஒத்திசையுங்கள்.",
+  "storeSetupAddonGroup": "துணைப்பொருள் குழு",
+  "storeSetupAddons": "துணைப்பொருட்கள்",
+  "storeSetupCashier": "காசியர்",
+  "storeSetupCashierCreated": "காசியர் உருவாக்கப்பட்டார். வெளியேறிய பிறகு இந்தக் கிளையைத் திறக்கலாம்.",
+  "storeSetupCatalogueExportFailed": "பட்டியல் ஏற்றுமதி தோல்வி: {message}",
+  "@storeSetupCatalogueExportFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupCategories": "பிரிவுகள்",
+  "storeSetupCategory": "பிரிவு",
+  "storeSetupCategoryAddedOffline": "பிரிவு முதன்மை மற்றும் இந்தக் கிளையில் சேர்க்கப்பட்டது (ஆஃப்லைன்). ஏற்றுமதிக்கு ஒத்திசையுங்கள்.",
+  "storeSetupCategoryDeletedOffline": "பிரிவு ஆஃப்லைனில் நீக்கப்பட்டது. ஏற்றுமதிக்கு ஒத்திசையுங்கள்.",
+  "storeSetupCategoryName": "பிரிவு பெயர்",
+  "storeSetupChooseCategory": "பிரிவைத் தேர்ந்தெடு",
+  "storeSetupChoosePackage": "தொகுப்பைத் தேர்ந்தெடு",
+  "storeSetupCreate": "உருவாக்கு",
+  "storeSetupCreateCashier": "காசியரை உருவாக்கு",
+  "storeSetupDeleteAddonGroup": "துணைப்பொருள் குழுவை நீக்கவா?",
+  "storeSetupDeleteOffer": "சலுகையை நீக்கவா?",
+  "storeSetupDeletePackage": "தொகுப்பை நீக்கவா?",
+  "storeSetupDeletedOffline": "ஆஃப்லைனில் நீக்கப்பட்டது. ஏற்றுமதிக்கு ஒத்திசைக்கவும்.",
+  "storeSetupDeletedTombstone": "ஆஃப்லைனில் நீக்கப்பட்டது. tombstone ஏற்றுமதிக்கு ஒத்திசையுங்கள்.",
+  "storeSetupEditAddonGroup": "துணைப்பொருள் குழுவைத் திருத்து",
+  "storeSetupEditOffer": "சலுகையைத் திருத்து",
+  "storeSetupEditPackage": "தொகுப்பைத் திருத்து",
+  "storeSetupExportNotConfigured": "பட்டியல் ஏற்றுமதி அமைக்கப்படவில்லை — உள்ளூர் திருத்தங்கள் இந்த டேப்லெட்டில் தங்கின.",
+  "storeSetupFirstItemName": "முதல் பொருள் பெயர் *",
+  "storeSetupGroupName": "குழு பெயர் *",
+  "storeSetupItemPrice": "பொருள் விலை *",
+  "storeSetupLinkCategoryFirst": "முதலில் ஒரு பிரிவை இணைக்கவும்",
+  "storeSetupLinkPackagesHint": "முழு-பில் சலுகைக்கு காலியாக விடவும். எங்கு பொருந்தும் என்பதை வரையறுக்க தொகுப்புகளைத் தேர்ந்தெடுக்கவும்.",
+  "storeSetupLinkPackagesOptional": "தொகுப்புகளுடன் இணை (விரும்பினால்)",
+  "storeSetupLinkToPackage": "தொகுப்புடன் இணை",
+  "storeSetupLinkToPackageHint": "இந்தத் துணைப்பொருள் குழுவை எந்தத் தொகுப்பு வழங்க வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும்.",
+  "storeSetupLinkedMaster": "\"{name}\" இந்த கடையுடன் இணைக்கப்பட்டது",
+  "@storeSetupLinkedMaster": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupLinkedToStore": "“{name}” இந்தக் கிளையுடன் இணைக்கப்பட்டது",
+  "@storeSetupLinkedToStore": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupMasterCategories": "முதன்மை பிரிவுகள்",
+  "storeSetupMasterLinked": "முதன்மை இயல்புநிலை தொகுப்புடன் இணைக்கப்பட்டது. விலையைத் திருத்தி ஒத்திசையுங்கள்.",
+  "storeSetupMinBill": "குறைந்தபட்ச பில்",
+  "storeSetupNameRequired": "பெயர் *",
+  "storeSetupNewCategory": "புதிய பிரிவு",
+  "storeSetupNewMasterCategory": "புதிய முதன்மை பிரிவு",
+  "storeSetupNewOffer": "புதிய சலுகை",
+  "storeSetupNewProduct": "புதிய பொருள் / தொகுப்பு",
+  "storeSetupNoAddonsYet": "இன்னும் துணைப்பொருட்கள் இல்லை",
+  "storeSetupNoCashiersYet": "இன்னும் காசியர்கள் இல்லை",
+  "storeSetupNoMasterCategories": "முதன்மை பிரிவுகள் இல்லை",
+  "storeSetupNoOffersEmpty": "இன்னும் சலுகைகள் இல்லை",
+  "storeSetupNoOffersYet": "இன்னும் சலுகைகள் இல்லை — Offers அமைப்பில் உருவாக்குங்கள்.",
+  "storeSetupNoPackagesCreateProducts": "இன்னும் தொகுப்புகள் இல்லை — முதலில் பொருட்களை உருவாக்குங்கள்.",
+  "storeSetupNoPackagesYet": "இன்னும் தொகுப்புகள் இல்லை",
+  "storeSetupNoPackagesYetShort": "இன்னும் தொகுப்புகள் இல்லை.",
+  "storeSetupNoTaxUnset": "வரி இல்லை / அமைக்கப்படவில்லை",
+  "storeSetupNoTaxesYet": "இன்னும் வரிகள் இல்லை — நிறுவனம் அமைக்கப்படும்போது தானாகச் சேர்க்கப்படும்.",
+  "storeSetupNothingLinked": "இன்னும் எதுவும் இணைக்கப்படவில்லை",
+  "storeSetupOfferDeletedOffline": "சலுகை ஆஃப்லைனில் நீக்கப்பட்டது. ஏற்றுமதிக்கு ஒத்திசையுங்கள்.",
+  "storeSetupOfferPctOff": "{pct}% தள்ளுபடி",
+  "@storeSetupOfferPctOff": {
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupOfferSavedOffline": "சலுகை ஆஃப்லைனில் சேமிக்கப்பட்டது",
+  "storeSetupOfferUpdatedOffline": "சலுகை ஆஃப்லைனில் புதுப்பிக்கப்பட்டது",
+  "storeSetupOffers": "சலுகைகள்",
+  "storeSetupOffersForPackage": "இந்தத் தொகுப்பிற்கான சலுகைகள்",
+  "storeSetupOffersForPackageHint": "இந்தத் தொகுப்பிற்குப் பொருந்தும் சலுகைகளைத் தேர்ந்தெடுக்கவும். தொகுப்பு-குறிப்பிட்ட சலுகைகள் இல்லையெனில் எதையும் விடாதீர்கள்.",
+  "storeSetupOptionalMinBill": "விருப்ப குறைந்தபட்ச பில்",
+  "storeSetupPackage": "தொகுப்பு",
+  "storeSetupPackageName": "தொகுப்பு பெயர் *",
+  "storeSetupPackageNameHint": "எ.கா. வழக்கமான, பெரிய, குடும்பம்",
+  "storeSetupPackageNamePlain": "தொகுப்பு பெயர்",
+  "storeSetupPercentOff": "சதவீதத் தள்ளுபடி",
+  "storeSetupProductName": "பொருள் / சேவை பெயர் *",
+  "storeSetupProductNameHint": "எ.கா. சிக்கன் பிரியாணி",
+  "storeSetupProductNamePlain": "பொருள் / சேவை பெயர்",
+  "storeSetupProducts": "பொருட்கள்",
+  "storeSetupProductsPackages": "பொருட்கள் & தொகுப்புகள்",
+  "storeSetupRegular": "வழக்கமான",
+  "storeSetupRemoveCategory": "பிரிவை நீக்கவா?",
+  "storeSetupRemoveEntitySync": "\"{name}\" ஐ அகற்று. ஏற்றுமதிக்கு ஒத்திசைக்கவும்.",
+  "@storeSetupRemoveEntitySync": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupRemoveFromStore": "கிளையிலிருந்து நீக்கு",
+  "storeSetupRenameCategory": "பிரிவை மறுபெயரிடு",
+  "storeSetupRenamedOffline": "ஆஃப்லைனில் மறுபெயரிடப்பட்டது. ஏற்றுமதிக்கு ஒத்திசையுங்கள்.",
+  "storeSetupSavedOffline": "ஆஃப்லைனில் சேமிக்கப்பட்டது. ஏற்றுமதிக்கு ஒத்திசைக்கவும்.",
+  "storeSetupSavedOfflineMaster": "ஆஃப்லைனில் சேமிக்கப்பட்டது. master + store க்கு ஏற்றுமதி செய்ய ஒத்திசையுங்கள்.",
+  "storeSetupSellPrice": "விற்பனை விலை *",
+  "storeSetupStoreAdmin": "கிளை நிர்வாகி",
+  "storeSetupSyncExport": "ஒத்திசை / ஏற்றுமதி",
+  "storeSetupSyncFailed": "ஒத்திசைவு தோல்வி: {error}",
+  "@storeSetupSyncFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupSyncFinishedExported": "ஒத்திசைவு முடிந்தது — {count} பட்டியல் வரிசை(கள்) ஏற்றுமதி செய்யப்பட்டன.",
+  "@storeSetupSyncFinishedExported": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storeSetupSyncFinishedNone": "ஒத்திசைவு முடிந்தது — ஏற்றுமதி செய்ய நிலுவையில் உள்ள பட்டியல் மாற்றங்கள் இல்லை.",
+  "storeSetupTaxForPackage": "இந்தத் தொகுப்பிற்கான வரி",
+  "storeSetupTaxForPackageHint": "அமைப்பிலிருந்து நிறுவன வரிப் பட்டைகள். இந்தத் தொகுப்பு வரி-இல்லாததாக இருந்தால் எதையும் விடாதீர்கள்.",
+  "storeSetupTaxNamePct": "{name} ({pct}%)",
+  "@storeSetupTaxNamePct": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "pct": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupTaxPct": "வரி {pct}%",
+  "@storeSetupTaxPct": {
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupTaxTotalPct": "{pct}% மொத்தம்",
+  "@storeSetupTaxTotalPct": {
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupThisStore": "இந்தக் கிளை",
+  "storeSetupTitle": "கடை அமைப்பு",
+  "storeSetupUnit": "அலகு *",
+  "storeSetupUnitHint": "pcs, kg…",
+  "storeSetupUnitQty": "அலகு அளவு *",
+  "storeSetupUpdatedOffline": "ஆஃப்லைனில் புதுப்பிக்கப்பட்டது. ஏற்றுமதிக்கு ஒத்திசைக்கவும்.",
+  "syncAgain": "மீண்டும் ஒத்திசை",
+  "syncComplete": "ஒத்திசைவு முடிந்தது",
+  "syncDataSync": "தரவு ஒத்திசைவு",
+  "syncDescription": "இந்த சாதனத்திலிருந்து POS வாடிக்கையாளர்கள், ஆர்டர்கள் மற்றும் கடன்களை முதலில் பதிவேற்றி, பின்னர் பட்டியல் புதுப்பிப்புகளைப் பதிவிறக்கும். ஆஃப்லைன் விற்பனை அடுத்த வெற்றிகரமான ஒத்திசைவு வரை உள்ளூரில் இருக்கும்.",
+  "syncDownloadFromRemote": "ரிமோட்டிலிருந்து பதிவிறக்கு",
+  "syncHistory": "வரலாறு",
+  "syncHistory45": "ஒத்திசைவு வரலாறு (கடைசி 45 நாட்கள்)",
+  "syncHistoryStats": "{processed} செயலாக்கப்பட்டது · {success} சரி · {failed} தோல்வி",
+  "@syncHistoryStats": {
+    "placeholders": {
+      "processed": {
+        "type": "int"
+      },
+      "success": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "syncInProgress": "ஒத்திசைவு நடைபெறுகிறது…",
+  "syncLastSync": "கடைசி ஒத்திசை: {timestamp}",
+  "@syncLastSync": {
+    "placeholders": {
+      "timestamp": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNamedStoreWithRemote": "“{storeName}” ஐ ரிமோட்டுடன் ஒத்திசை",
+  "@syncNamedStoreWithRemote": {
+    "placeholders": {
+      "storeName": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNeverSynced": "ஒருபோதும் ஒத்திசைக்கப்படவில்லை",
+  "syncNoAttemptsYet": "இந்தச் சாதனத்தில் இன்னும் ஒத்திசைவு முயற்சிகள் பதிவுசெய்யப்படவில்லை.",
+  "syncNoHistory": "இந்த சாதனத்தில் இன்னும் ஒத்திசை முயற்சிகள் இல்லை. வரலாற்றை நிரப்ப ஒத்திசை செய்யவும்.",
+  "syncOfflineWhenOnline": "ஆஃப்லைன் — ஆன்லைனில் ஒத்திசையுங்கள்",
+  "syncRunning": "இயங்குகிறது",
+  "syncServerUnreachable": "சர்வர் அணுக முடியவில்லை. ஆஃப்லைனில் விற்பனையைத் தொடருங்கள் — நிலுவைப் பதிவேற்றங்கள் ஒத்திசைக்கும் வரை இந்தச் சாதனத்தில் வரிசையில் இருக்கும்",
+  "syncStart": "ஒத்திசையைத் தொடங்கு",
+  "syncStoreWithRemote": "கிளைத் தரவை ரிமோட்டுடன் ஒத்திசை",
+  "syncSyncing": "ஒத்திசைக்கிறது…",
+  "syncTitle": "ஒத்திசை",
+  "syncUploadToRemote": "ரிமோட்டுக்குப் பதிவேற்று",
+  "unsupportedDeviceDesc": "EllanPos குறிப்பாக டேப்லெட்டுகள் மற்றும் பெரிய திரைகளுக்காக வடிவமைக்கப்பட்டுள்ளது.\n\nதயவுசெய்து ஐபாட் அல்லது ஆண்ட்ராய்டு டேப்லெட்டிலிருந்து போர்ட்ரெய்ட் அல்லாமல் லேண்ட்ஸ்கேப்பில் பயன்படுத்தவும்.",
+  "unsupportedDeviceTitle": "சாதனம் ஆதரிக்கப்படவில்லை",
+  "welcomeAlreadySetupSignIn": "ஏற்கனவே அமைக்கப்பட்டதா? உள்நுழைக",
+  "welcomeAuthPrompt": "கட்டணப் பரிமாற்றங்களை எளிதாகத் தொடங்க உங்கள் கணக்கில் உள்நுழைக அல்லது புதிதாக ஒன்றை உருவாக்கவும்.",
+  "welcomeChooseSavedServer": "சேமித்த சேவையகத்தைத் தேர்வுசெய்க",
+  "welcomeCreateCompanyInstead": "அதற்குப் பதிலாக புதிய நிறுவனம் உருவாக்கு",
+  "welcomeDeleteFromList": "பட்டியலிலிருந்து நீக்கு",
+  "welcomeDeleteSavedServer": "சேமித்த சேவையகத்தை நீக்கு",
+  "welcomeDescription": "EllanPos நவீன பணிப்பாய்வுகளுக்காக வடிவமைக்கப்பட்ட ஒரு சிறப்பான டேப்லெட் அனுபவத்தை வழங்குகிறது.",
+  "welcomeEnterOrg": "உங்கள் நிறுவனத்தின் பெயரை உள்ளிடவும்",
+  "welcomeEnterOrgCode": "உங்கள் நிறுவனக் குறியீட்டை உள்ளிடவும்",
+  "welcomeGetStarted": "தொடங்குவோம்",
+  "welcomeOrgCodeHint": "எ.கா., 100001",
+  "welcomeOrgHint": "எ.கா. ஆக்மே நிறுவனம்",
+  "welcomeOrgInstanceId": "நிறுவன அடையாளம்",
+  "welcomeRegisterDevice": "சாதனத்தைப் பதிவு செய்",
+  "welcomeRegisterHint": "தொடர இந்த டேப்லெட்டைப் பதிவு செய்யவும்.",
+  "welcomeRegisterHintManual": "இந்த சாதனத்தைப் பதிவு செய்வதற்கு முன் சேவையக URL மற்றும் நிறுவன அடையாளத்தை உள்ளிடவும்.",
+  "welcomeRemoveServerConfirm": "இந்த சாதனத்திலிருந்து \"{label}\" ஐ அகற்றவா?",
+  "@welcomeRemoveServerConfirm": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "welcomeSavedServers": "சேமித்த சேவையகங்கள்",
+  "welcomeServerUrl": "சேவையக URL",
+  "welcomeServerUrlHint": "எ.கா. http://192.168.1.10:8000",
+  "welcomeSubmit": "சமர்ப்பி",
+  "welcomeUnlockBusiness": "உங்கள் வணிக\nதிறனைத் திறக்கவும்"
 }

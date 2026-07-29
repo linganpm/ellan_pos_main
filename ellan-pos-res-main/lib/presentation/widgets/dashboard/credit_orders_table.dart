@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/l10n_context.dart';
 import '../../../core/utils/font_utility.dart';
 
 class CreditOrder {
@@ -16,10 +17,7 @@ class CreditOrder {
 class CreditOrdersTable extends StatelessWidget {
   final List<CreditOrder> orders;
 
-  const CreditOrdersTable({
-    super.key,
-    required this.orders,
-  });
+  const CreditOrdersTable({super.key, required this.orders});
 
   @override
   Widget build(BuildContext context) {
@@ -40,15 +38,16 @@ class CreditOrdersTable extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Credit Orders',
+            context.l10n.dashboardCreditOrders,
             style: FontUtility.heading.copyWith(fontSize: 20),
           ),
           const SizedBox(height: 16),
           Expanded(
             child: ListView.separated(
-               padding: EdgeInsets.zero,
+              padding: EdgeInsets.zero,
               itemCount: orders.length,
-              separatorBuilder: (context, index) => const Divider(color: Colors.black12),
+              separatorBuilder: (context, index) =>
+                  const Divider(color: Colors.black12),
               itemBuilder: (context, index) {
                 final order = orders[index];
                 final isHighCredit = order.amount > 100;
@@ -57,7 +56,9 @@ class CreditOrdersTable extends StatelessWidget {
                   child: Row(
                     children: [
                       CircleAvatar(
-                        backgroundColor: const Color(0xFF4A00E0).withOpacity(0.1),
+                        backgroundColor: const Color(
+                          0xFF4A00E0,
+                        ).withOpacity(0.1),
                         child: Text(
                           order.customerName.substring(0, 1).toUpperCase(),
                           style: const TextStyle(
@@ -73,11 +74,16 @@ class CreditOrdersTable extends StatelessWidget {
                           children: [
                             Text(
                               order.customerName,
-                              style: FontUtility.body.copyWith(fontWeight: FontWeight.w600),
+                              style: FontUtility.body.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             Text(
                               order.date,
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 13,
+                              ),
                             ),
                           ],
                         ),
@@ -86,7 +92,9 @@ class CreditOrdersTable extends StatelessWidget {
                         '\$${order.amount.toStringAsFixed(2)}',
                         style: FontUtility.body.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: isHighCredit ? Colors.red.shade700 : Colors.black87,
+                          color: isHighCredit
+                              ? Colors.red.shade700
+                              : Colors.black87,
                         ),
                       ),
                     ],

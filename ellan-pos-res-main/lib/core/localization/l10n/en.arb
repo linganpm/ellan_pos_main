@@ -1,62 +1,994 @@
 {
   "@@locale": "en",
-  "appName": "NexPOS Tablet",
-  "welcomeUnlockBusiness": "Unlock Your\nBusiness Potential",
-  "welcomeDescription": "NexPOS provides an intuitive tablet experience designed perfectly for modern workflows.",
-  "welcomeGetStarted": "Let's Get Started",
-  "welcomeAuthPrompt": "Log in to your account or create a new one to start processing payments effortlessly.",
-   "welcomeEnterOrg": "Enter your organization name",
-   "welcomeOrgHint": "e.g. Acme Corp",
-   "welcomeEnterOrgCode": "Enter your organization code",
-   "welcomeOrgCodeHint": "e.g., 100001",
-   "welcomeSubmit": "Submit",
-  "signInWelcome": "Welcome",
-  "signInEmailPhone": "Email / Mobile Number",
-  "signInEmailPhoneHint": "Enter email or mobile",
-  "signInPassword": "Password",
-  "signInPasswordHint": "Enter password",
-  "signInShowPassword": "Show Password",
-  "signInForgotPasswordPrompt": "Forgot Password?",
-  "signInButton": "Sign In",
-  "forgotPasswordTitle": "Forgot Password?",
-  "forgotPasswordInstruction": "Please enter your registered Email address or Phone Number.",
-  "forgotPasswordSuccess": "Password reset link sent to your registered address!",
-  "forgotPasswordSendLink": "Send Reset Link",
-  "forgotPasswordBackToSignIn": "Back to Sign In",
-  "homeWelcomeBack": "Welcome Back",
-  "homeActivityPrompt": "What would you like to do today?",
-  "homePosDashboard": "POS Dashboard",
-  "homeDashboardDesc": "View analytics and summary",
-  "homeOrdersList": "Orders",
-  "homeOrdersListDesc": "View and manage all orders",
-  "homeCreateOrder": "New Order",
-  "dashboardTitle": "POS Dashboard",
-  "dashboardFilterYesterday": "Yesterday",
+  "actionAdd": "Add",
+  "actionBack": "Back",
+  "actionCancel": "Cancel",
+  "actionChange": "Change",
+  "actionClose": "Close",
+  "actionConfirm": "Confirm",
+  "actionContinue": "Continue",
+  "actionDelete": "Delete",
+  "actionEdit": "Edit",
+  "actionKeep": "Keep",
+  "actionLogout": "Logout",
+  "actionPrint": "Print",
+  "actionRefresh": "Refresh",
+  "actionRemove": "Remove",
+  "actionRetry": "Retry",
+  "actionSave": "Save",
+  "actionSaveChanges": "Save changes",
+  "actionSearch": "Search",
+  "actionSignIn": "Sign in",
+  "actionSignUp": "Sign up",
+  "actionSubmit": "Submit",
+  "actionSync": "Sync",
+  "actionUpdate": "Update",
+  "actionViewAll": "View all",
+  "amountGreaterThanZero": "Enter an amount greater than zero.",
+  "appName": "EllanPos",
+  "authBackToGetStarted": "Back to Get started",
+  "authEntryBrand": "EllanPos",
+  "authEntryChooseContinue": "Choose how you want to continue on this tablet.",
+  "authEntryCompanySetup": "Company setup",
+  "authEntryCreateCompany": "Create a new company",
+  "authEntryHero": "Sign in to an existing company, or set up a new company on this device.",
+  "authEntryJoinExisting": "Join an existing organisation device",
+  "authEntryRootOrgLabel": "Root org  ·  {orgId}",
+  "@authEntryRootOrgLabel": {
+    "placeholders": {
+      "orgId": {
+        "type": "String"
+      }
+    }
+  },
+  "authEntryServerLabel": "Server  ·  {server}",
+  "@authEntryServerLabel": {
+    "placeholders": {
+      "server": {
+        "type": "String"
+      }
+    }
+  },
+  "authEntrySignInExisting": "Already have a company? Sign in",
+  "authEntryTitle": "Get started",
+  "billingAddDiscount": "Add discount",
+  "billingAddDiscountCaps": "ADD DISCOUNT",
+  "billingAddOnePaymentFirst": "Add at least one payment first.",
+  "billingAddPayment": "ADD PAYMENT",
+  "billingAddPaymentTitle": "Add payment",
+  "billingAddTips": "Add tips",
+  "billingAmountExceedsRemaining": "Amount cannot exceed remaining ({amount}).",
+  "@billingAmountExceedsRemaining": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "billingAppliedDiscounts": "Applied discounts",
+  "billingApply": "APPLY",
+  "billingApplyServiceTax": "Apply service tax",
+  "billingApplyTo": "Apply to",
+  "billingAttachCustomer": "Attach a customer to this bill (required for credit).",
+  "billingCheckoutComplete": "Checkout complete",
+  "billingComplete": "COMPLETE",
+  "billingCompletingCheckout": "Completing checkout…",
+  "billingCoverFullOrCredit": "Cover the full amount or put the balance on credit with a customer.",
+  "billingCreditCancelled": "Credit cancelled. Checkout was not completed.",
+  "billingCreditLimitContinue": "{message}\n\nContinue anyway?",
+  "@billingCreditLimitContinue": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "billingCreditLimitExceeded": "Credit limit {limit} would be exceeded (outstanding {outstanding} + this sale {amountDue}).",
+  "@billingCreditLimitExceeded": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      },
+      "outstanding": {
+        "type": "String"
+      },
+      "amountDue": {
+        "type": "String"
+      }
+    }
+  },
+  "billingCreditLimitWarningTitle": "Credit limit warning",
+  "billingCreditNeedsCustomer": "Credit payment needs a customer. Select a customer and try again.",
+  "billingCreditPlaceFailed": "Could not place remaining balance on credit. Checkout cancelled.",
+  "billingCustomerForCredit": "Customer for credit",
+  "billingCustomerOptionalCredit": "Optional — required when paying on credit",
+  "billingDiscountAdded": "Added \"{title}\"",
+  "@billingDiscountAdded": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "billingDiscountsCount": "Discounts ({count})",
+  "@billingDiscountsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "billingDraftSaved": "Draft order #{orderId} saved.",
+  "@billingDraftSaved": {
+    "placeholders": {
+      "orderId": {
+        "type": "int"
+      }
+    }
+  },
+  "billingEntireOrder": "Entire order",
+  "billingInvalidDiscountPct": "Enter a discount percentage between 1 and 100",
+  "billingNoItems": "No items to bill.",
+  "billingNoPaymentMethods": "No payment methods configured.",
+  "billingOrderCreditBalance": "Order #{orderId} — balance added to customer credit",
+  "@billingOrderCreditBalance": {
+    "placeholders": {
+      "orderId": {
+        "type": "int"
+      }
+    }
+  },
+  "billingOrderFullyCovered": "Order is already fully covered.",
+  "billingOrderPaidVia": "Order #{orderId} paid via {mode}",
+  "@billingOrderPaidVia": {
+    "placeholders": {
+      "orderId": {
+        "type": "int"
+      },
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "billingOrderPlacedBalance": "Order #{orderId} placed with balance {amount}",
+  "@billingOrderPlacedBalance": {
+    "placeholders": {
+      "orderId": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "billingPaid": "Paid  {amount}",
+  "@billingPaid": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "billingPaymentSale": "{paymentLabel} sale",
+  "@billingPaymentSale": {
+    "placeholders": {
+      "paymentLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "billingPercentageHint": "1-100",
+  "billingPlaceFullCredit": "Place full amount on credit",
+  "billingPlaceFullOnCredit": "Place full amount on credit",
+  "billingPlaceWithBalance": "PLACE WITH BALANCE",
+  "billingRemainingAddPayment": "Remaining {amount}. Add another payment or place with balance due.",
+  "@billingRemainingAddPayment": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "billingRemainingOnCredit": "Remaining on credit: {amount}",
+  "@billingRemainingOnCredit": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "billingRemoveAllDiscounts": "Remove all discounts",
+  "billingRemoveExistingTax": "Remove existing tax",
+  "billingRemoveTips": "Remove tips",
+  "billingSaveAsDraft": "Save as draft",
+  "billingSelectCustomerCredit": "Select or add the customer to put {amount} on their credit account.",
+  "@billingSelectCustomerCredit": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "billingServiceTaxApplied": "Service tax applied",
+  "billingServiceTaxLabel": "Service tax",
+  "billingTaxPct": "Tax {percent}%",
+  "@billingTaxPct": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "billingTaxPlaceholder": "Enter tax percentage (1-100)",
+  "billingTipsAmount": "Tips {amount}",
+  "@billingTipsAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "billingTipsApplied": "Tips applied",
+  "billingTipsPlaceholder": "Enter tip amount",
+  "billingTitle": "Billing & Payment",
+  "billingToPay": "To pay  {amount}",
+  "@billingToPay": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogAllPackages": "All packages",
+  "catalogAppliesTo": "Applies to",
+  "catalogBarcode": "Barcode",
+  "catalogBillOffer": "Bill offer",
+  "catalogEmpty": "No products in catalog",
+  "catalogMrpPrice": "MRP {amount}",
+  "@catalogMrpPrice": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogNoActiveOffers": "No active offers synced for this store",
+  "catalogNoAddonGroups": "No add-on groups linked to this package",
+  "catalogNoCatalogueDevice": "No catalogue on this device yet. Open Sync and pull products, add-ons, and offers.",
+  "catalogNoItemsInGroup": "No items in this group",
+  "catalogNoOffersTargetPackage": "No offers target this package",
+  "catalogNoPackagesView": "No packages in this view",
+  "catalogOffersCount": "Offers ({count})",
+  "@catalogOffersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "catalogPackagesCount": "Packages ({count})",
+  "@catalogPackagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "catalogProductPrefix": "Product · {name}",
+  "@catalogProductPrefix": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "catalogRefreshLocal": "Refresh from local DB",
+  "catalogRefreshTooltip": "Refresh from local DB",
+  "catalogSearchExtended": "Search product, package, barcode…",
+  "catalogSearchHint": "Search products",
+  "catalogSell": "Sell",
+  "catalogTitle": "Catalog",
+  "catalogUnit": "Unit",
+  "commonActions": "Actions",
+  "commonActive": "Active",
+  "commonAddons": "Add-ons",
+  "commonAddress": "Address",
+  "commonAmount": "Amount",
+  "commonAmountToPay": "Amount to Pay",
+  "commonBackToSelling": "Back to selling",
+  "commonBal": "Bal {amount}",
+  "@commonBal": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "commonBalanceDue": "Balance due",
+  "commonBusiness": "Business",
+  "commonCard": "Card",
+  "commonCash": "Cash",
+  "commonCatalogs": "Catalogs",
+  "commonCategories": "Categories",
+  "commonChangePaymentMethod": "Change Payment Method",
+  "commonChannel": "Channel",
+  "commonClear": "Clear",
+  "commonClearCustomer": "Clear customer",
+  "commonCode": "Code",
+  "commonCollect": "Collect",
+  "commonCompany": "Company",
+  "commonConfirmPayment": "Confirm Payment",
+  "commonConfirmPaymentCaps": "CONFIRM PAYMENT",
+  "commonContactEmail": "Contact email",
+  "commonCredit": "Credit",
+  "commonCreditHistory": "Credit history",
+  "commonCreditOrders": "Credit Orders",
+  "commonCredits": "Credits",
+  "commonCurrent": "Current",
+  "commonCustomer": "Customer",
+  "commonCustomers": "Customers",
+  "commonDate": "Date",
+  "commonDelivery": "Delivery",
+  "commonDeliveryCharge": "Delivery Charge",
+  "commonDetails": "Details",
+  "commonDevice": "Device",
+  "commonDeviceId": "Device ID",
+  "commonDiscount": "Discount",
+  "commonDiscountPct": "{title} ({percent}%)",
+  "@commonDiscountPct": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "commonDismiss": "Dismiss",
+  "commonDone": "Done",
+  "commonDueDate": "Due date",
+  "commonDueDateOptional": "Due date (optional)",
+  "commonDueValue": "Due {date}",
+  "@commonDueValue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "commonEmail": "Email",
+  "commonEmpty": "—",
+  "commonEnterQuantityGtZero": "Enter a quantity greater than zero.",
+  "commonExact": "Exact",
+  "commonExporting": "Exporting catalogue…",
+  "commonFailed": "Failed",
+  "commonFrequency": "Frequency",
+  "commonGuest": "Guest",
+  "commonHardware": "Hardware",
+  "commonHideDetails": "Hide details",
+  "commonIdentifier": "Identifier",
+  "commonInactive": "Inactive",
+  "commonInfo": "Info",
+  "commonItem": "Item",
+  "commonItems": "Items",
+  "commonKot": "KOT {qty}",
+  "@commonKot": {
+    "placeholders": {
+      "qty": {
+        "type": "String"
+      }
+    }
+  },
+  "commonLedger": "Ledger",
+  "commonLimit": "Limit",
+  "commonLineTotal": "Line total: {amount}",
+  "@commonLineTotal": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "commonLoading": "Loading…",
+  "commonMiscItem": "Misc item",
+  "commonMonthly": "Monthly",
+  "commonName": "Name",
+  "commonNetDays": "Net {days}",
+  "@commonNetDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "commonNetTotal": "Net Total",
+  "commonNever": "Never",
+  "commonNewOrder": "New Order",
+  "commonNext": "Next",
+  "commonNo": "No",
+  "commonNoData": "No data",
+  "commonNoPaymentsYet": "No payments yet",
+  "commonNoSalesPeriod": "No sales in this period",
+  "commonNone": "None",
+  "commonNotSet": "Not set",
+  "commonNotes": "Notes",
+  "commonOfAmount": "of {amount}",
+  "@commonOfAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "commonOfferApplied": "Offer applied",
+  "commonOfferLabel": "Offer · {labels}",
+  "@commonOfferLabel": {
+    "placeholders": {
+      "labels": {
+        "type": "String"
+      }
+    }
+  },
+  "commonOffers": "Offers",
+  "commonOk": "OK",
+  "commonOnline": "Online",
+  "commonOpen": "Open",
+  "commonOpenCreditAccount": "Open credit account",
+  "commonOptional": "Optional",
+  "commonOrderCount": "Order count",
+  "commonOrderHistory": "Order History",
+  "commonOrderLabel": "Order",
+  "commonOrderTotal": "Order total",
+  "commonOrders": "Orders",
+  "commonOrganisation": "Organisation",
+  "commonOrganisationRole": "Organisation role",
+  "commonOrganisationTime": "Organisation time",
+  "commonOutstanding": "Outstanding",
+  "commonOverdue": "Overdue",
+  "commonOverdueSuffix": " · overdue",
+  "commonOwner": "owner",
+  "commonPassword": "Password",
+  "commonPay": "Pay",
+  "commonPayVia": "Pay via {method}",
+  "@commonPayVia": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "commonPaymentMode": "Payment mode",
+  "commonPaymentNumber": "Payment #{id}",
+  "@commonPaymentNumber": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "commonPaymentTypes": "Payment Types",
+  "commonPayments": "Payments",
+  "commonPending": "Pending",
+  "commonPercentage": "Percentage",
+  "commonPhone": "Phone",
+  "commonPlan": "Plan",
+  "commonPosCode": "POS {code}",
+  "@commonPosCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "commonPosCodeLabel": "POS code",
+  "commonPreparing": "Preparing",
+  "commonPrevious": "Previous",
+  "commonPrice": "Price",
+  "commonProducts": "Products",
+  "commonQty": "Qty",
+  "commonQuantity": "Quantity",
+  "commonReferenceOptional": "Reference (optional)",
+  "commonRefunds": "Refunds",
+  "commonRegNo": "Reg no.",
+  "commonRegValue": "Reg {reg}",
+  "@commonRegValue": {
+    "placeholders": {
+      "reg": {
+        "type": "String"
+      }
+    }
+  },
+  "commonRemaining": "Remaining",
+  "commonReports": "Reports",
+  "commonRequired": "Required",
+  "commonRetail": "Retail",
+  "commonSaveOffline": "Save offline",
+  "commonSaving": "Saving…",
+  "commonSchedule": "Schedule",
+  "commonSelect": "Select",
+  "commonSelectCustomer": "Select customer",
+  "commonServeNumber": "Serve #{number}",
+  "@commonServeNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "commonServiceInstance": "Service instance",
+  "commonServiceInstanceShort": "SI {id}",
+  "@commonServiceInstanceShort": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "commonServiceTax": "Service tax",
+  "commonServiceTaxPct": "Service Tax ({percent}%)",
+  "@commonServiceTaxPct": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "commonSettleFullBalance": "Settle full balance",
+  "commonSettled": "Settled",
+  "commonSkipped": "Skipped",
+  "commonStaff": "Staff",
+  "commonStatus": "Status",
+  "commonStore": "Store",
+  "commonStoreId": "Store ID",
+  "commonStoreRole": "Store role",
+  "commonSubtotal": "Subtotal",
+  "commonSuccess": "Success",
+  "commonSummary": "Summary",
+  "commonSynced": "Synced",
+  "commonTable": "Table",
+  "commonTax": "Tax",
+  "commonTips": "Tips",
+  "commonTitleLabel": "Title",
+  "commonTotal": "Total",
+  "commonTotalAmount": "Total Amount",
+  "commonType": "Type",
+  "commonUnknown": "Unknown",
+  "commonUnnamedCustomer": "Unnamed customer",
+  "commonUpi": "UPI",
+  "commonUseCustomer": "Use customer",
+  "commonView": "View",
+  "commonViewAllCount": "View all ({count})",
+  "@commonViewAllCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonVoid": "Void",
+  "commonVoucher": "Voucher",
+  "commonWalkIn": "Walk-in",
+  "commonWeekly": "Weekly",
+  "commonYes": "Yes",
+  "companyAddSubscriber": "Add subscriber",
+  "companyAddToBranch": "Add to branch",
+  "companyAddress": "Address",
+  "companyAllPaymentMethodsAdded": "All payment methods are already on this branch.",
+  "companyBranch": "Branch",
+  "companyBranchLogo": "Branch logo",
+  "companyBranchStoreName": "Branch / store name",
+  "companyChannel": "Channel",
+  "companyChannelPush": "Push",
+  "companyChannelSlack": "Slack",
+  "companyChannelSms": "SMS",
+  "companyChannelWhatsApp": "WhatsApp",
+  "companyChooseLogo": "Choose company logo",
+  "companyContact": "Contact",
+  "companyCouldNotAddSubscriber": "Could not add subscriber.",
+  "companyCouldNotLoadReports": "Could not load reports.",
+  "companyHubTitle": "Company",
+  "companyIdentifier": "Identifier",
+  "companyInvoiceBookings": "Invoice / bookings",
+  "companyLabelLocked": "{label} · locked",
+  "@companyLabelLocked": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "companyLegal": "Legal",
+  "companyLogo": "Logo",
+  "companyLogoFilePath": "Logo file path",
+  "companyLogoSavedOnDevice": "Saved on this device · syncs with Save",
+  "companyMailerFixedHint": "Report and invoice/bookings mailers are fixed by Ellan POS. Credentials cannot be changed or added on the tablet.",
+  "companyMethod": "Method",
+  "companyNoPaymentMethodsBranch": "No payment methods on this branch yet. Use Add to branch.",
+  "companyNoPaymentVariants": "No payment method variants are available from the server.",
+  "companyNoSubscribers": "No subscribers yet.",
+  "companyNoSubscribersYet": "No subscribers yet.",
+  "companyOpenStore": "Open store",
+  "companyOwner": "Owner",
+  "companyOwnerSubscriberLocked": "Owner subscriber cannot be removed.",
+  "companyPaymentMethod": "Payment method",
+  "companyPaymentMethodAdded": "{label} added to this branch.",
+  "@companyPaymentMethodAdded": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "companyPeriodAnnually": "Annually",
+  "companyPeriodDaily": "Daily",
+  "companyPeriodicity": "Periodicity",
+  "companyRegistrationNumber": "Registration number",
+  "companyReportsHint": "Sales report subscribers and schedule",
+  "companyReportsTitle": "Reports",
+  "companySalesReports": "Sales reports",
+  "companySalesReportsHint": "Daily sales summaries are emailed to every enabled subscriber using the system report mailer.",
+  "companySalesReportsTitle": "Sales reports",
+  "companySaveChanges": "Save changes",
+  "companySavedOnDevice": "Saved on this device · syncs with Save",
+  "companySettingsNameRegAddress": "Name, registration, address, tax, phone, email, identifier",
+  "companySettingsSaved": "Company settings saved.",
+  "companySettingsTitle": "Company settings",
+  "companyStaffsListHint": "List staff and add new accounts for this store",
+  "companyStaffsTitle": "Staff",
+  "companyStoreSetupHint": "Catalogue, offers, add-ons",
+  "companySubscribers": "Subscribers",
+  "companySystemEmailLocked": "System email (locked)",
+  "companySystemMailerLocked": "System mailer (locked)",
+  "companyTapMethodToAdd": "Tap a method to add",
+  "companyTaxRegistrationNumber": "Tax registration number",
+  "companyUploadLogo": "Upload logo",
+  "companyUseFile": "Use file",
+  "companyWallet": "Wallet",
+  "creditsAccountCount": "{count} account(s)",
+  "@creditsAccountCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "creditsAllowedWarn": "Allowed (warn)",
+  "creditsBlocked": "Blocked",
+  "creditsCancelFailed": "Cancel failed: {error}",
+  "@creditsCancelFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsCancelScheduleAction": "Cancel schedule",
+  "creditsCancelScheduleBody": "Cancel {amount} due {dueDate}?",
+  "@creditsCancelScheduleBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "dueDate": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsCancelScheduleTitle": "Cancel scheduled repayment",
+  "creditsCollect": "Collect",
+  "creditsCollectPayment": "Collect payment",
+  "creditsCollectedScheduled": "Collected scheduled {amount}",
+  "@creditsCollectedScheduled": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsCollectedVia": "Collected {amount} via {mode}",
+  "@creditsCollectedVia": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsCreditAccount": "Credit account",
+  "creditsCreditLimit": "Credit limit",
+  "creditsCreditLimitLabel": "Credit limit",
+  "creditsCreditNumber": "Credit #{id}",
+  "@creditsCreditNumber": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsCreditOrderLine": "Credit #{creditId} · Order #{orderId}",
+  "@creditsCreditOrderLine": {
+    "placeholders": {
+      "creditId": {
+        "type": "String"
+      },
+      "orderId": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsCreditSaleOrder": "Credit sale · Order #{orderId}",
+  "@creditsCreditSaleOrder": {
+    "placeholders": {
+      "orderId": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsCreditSalePlain": "Credit sale",
+  "creditsCreditSales": "Credit sales",
+  "creditsCreditSoFar": "Credit so far",
+  "creditsCustomerCreditLimit": "Customer credit limit",
+  "creditsCustomerLimit": "Customer credit limit",
+  "creditsCustomerScopedTitle": "Credit · {name}",
+  "@creditsCustomerScopedTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsHardBlock": "Hard block",
+  "creditsInstallments": "Installments",
+  "creditsLedgerVoided": "voided",
+  "creditsLimit": "Limit",
+  "creditsMaxAmount": "Max {amount}",
+  "@creditsMaxAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsNetTerms": "Net terms",
+  "creditsNetTermsDays": "{days} days",
+  "@creditsNetTermsDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "creditsNoAccountsMatch": "No accounts match the current filters.",
+  "creditsNoAccountsOnDevice": "No credit accounts on this device yet.",
+  "creditsNoAccountsYet": "No credit accounts on this device yet.",
+  "creditsNoCreditLimitHint": "No credit limit for this customer. Set credit_limit_amount on Store/CustomerCredit/Account/<id>/ (or store defaults on Store/CustomerCredit/Settings/), then sync credits.",
+  "creditsNoCreditPayments": "No credit payments recorded yet.",
+  "creditsNoCreditSales": "No credit sales for this customer.",
+  "creditsNoLedger": "No ledger activity yet.",
+  "creditsNoOpenScheduled": "No open scheduled payments.",
+  "creditsNoRepaymentsYet": "No repayments recorded yet.",
+  "creditsNoScheduledToday": "No scheduled payments due today.",
+  "creditsNoSchedules": "No installment schedules on this account.",
+  "creditsNoUpcoming": "No upcoming repayments scheduled.",
+  "creditsNotSet": "Not set",
+  "creditsNothingOutstanding": "Nothing outstanding for this customer.",
+  "creditsOneShot": "One-shot",
+  "creditsOpenAccount": "Open credit account",
+  "creditsOutstanding": "Outstanding",
+  "creditsOutstandingAmount": "Outstanding {amount}",
+  "@creditsOutstandingAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsOutstandingOnly": "Outstanding only",
+  "creditsOverLimit": "Over-limit",
+  "creditsOverLimitLabel": "Over-limit",
+  "creditsPaymentSchedules": "Payment schedules",
+  "creditsRepaid": "Repaid",
+  "creditsRepaymentMode": "Repayment · {mode}",
+  "@creditsRepaymentMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsRepaymentVoided": "Repayment voided.",
+  "creditsScheduleBody": "Record an upcoming payment promise from this customer.",
+  "creditsSchedulePayments": "Schedule payments",
+  "creditsScheduleRepayment": "Schedule repayment",
+  "creditsScheduledFor": "Scheduled {amount} for {dueDate}",
+  "@creditsScheduledFor": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "dueDate": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsSearchHint": "Search customer name or id",
+  "creditsSort": "Sort",
+  "creditsSortHighest": "Highest",
+  "creditsSortLongPending": "Long pending",
+  "creditsStoreCreditSettings": "Store credit settings",
+  "creditsStoreSettings": "Store credit settings",
+  "creditsTitle": "Credits",
+  "creditsTodayScheduled": "Today's scheduled payments",
+  "creditsUpcoming": "Upcoming repayments",
+  "creditsUsedAvailable": "Used {used} · Available {available}",
+  "@creditsUsedAvailable": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "available": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsView": "View",
+  "creditsVoidRepaymentBody": "Void {amount} paid on {date}?",
+  "@creditsVoidRepaymentBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsVoidRepaymentTitle": "Void repayment",
+  "creditsVoidedOnPos": "Voided on POS tablet",
+  "creditsWarnOnly": "Warn only",
+  "customerBalanceDue": "Balance due",
+  "customerCouldNotSave": "Could not save customer",
+  "customerCreditHistory": "Credit history",
+  "customerEmailOptional": "Email (optional)",
+  "customerEnterValidPhone": "Enter a valid 10-digit phone",
+  "customerNameOptional": "Name (optional)",
+  "customerNoCreditPaymentsYet": "No credit payments recorded yet.",
+  "customerNoCreditSalesYet": "No credit sales for this customer yet.",
+  "customerNoOrdersYet": "No orders for this customer yet.",
+  "customerOrderHistory": "Order history",
+  "customerProfileTitle": "Customer profile",
+  "customerSaveContinue": "Save & continue",
+  "customerSearchHintFull": "Search phone, email, or name",
+  "customerSelectOrAdd": "Select or add a customer to continue",
+  "customerSelectSearchHint": "Search customers",
+  "customersBackToSearch": "Back to search",
+  "customersEmpty": "No retail or business customers for this store yet. Add them under Retail Customers / Business Customers, then sync.",
+  "customersNew": "New customer",
+  "customersSearchHint": "Search by name, phone, or email",
+  "customersTitle": "Customers",
+  "dashboardCreditAmount": "Credit amount",
+  "dashboardCreditOrders": "Credit Orders",
+  "dashboardCreditOutstanding": "Credit outstanding",
+  "dashboardCredits": "Credits",
+  "dashboardFilterMonth": "This Month",
   "dashboardFilterToday": "Today",
   "dashboardFilterWeek": "This Week",
-  "dashboardFilterMonth": "This Month",
   "dashboardFilterYear": "This Year",
-  "dashboardMetricDineIn": "Dine-In",
-  "dashboardMetricDelivered": "Delivered",
-  "dashboardMetricPickup": "Pickup",
+  "dashboardFilterYesterday": "Yesterday",
   "dashboardMetricCancelled": "Cancelled",
+  "dashboardMetricDelivered": "Delivered",
+  "dashboardMetricDineIn": "Dine-In",
   "dashboardMetricOrders": "Orders",
+  "dashboardMetricPickup": "Pickup",
   "dashboardMetricTotalSales": "Total Sales",
+  "dashboardNoCategorySales": "No category sales yet",
+  "dashboardNoOpenCredits": "No open credits",
+  "dashboardNoPaymentsYet": "No payments yet",
+  "dashboardNoProductSales": "No product sales yet",
+  "dashboardNoSalesYet": "No sales in this period",
+  "dashboardNoStaffSales": "No staff sales in this period.",
+  "dashboardOpenCredits": "Open credits",
+  "dashboardOrderCount": "Order count",
+  "dashboardOrderTotal": "Order total",
+  "dashboardPaymentMix": "Payment mix",
+  "dashboardPaymentTypes": "Payment Types",
+  "dashboardRefunds": "Refunds",
+  "dashboardRepayments": "Repayments",
+  "dashboardSalesByStaff": "Sales by staff",
+  "dashboardSalesTrend": "Sales trend",
+  "dashboardSoldCount": "{count} sold",
+  "@dashboardSoldCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboardStaffSalesHint": "Orders · amount · credit by checkout staff",
+  "dashboardTitle": "POS Dashboard",
   "dashboardTopCategories": "Top Categories",
   "dashboardTopProducts": "Top Products",
-  "unsupportedDeviceTitle": "Device Not Supported",
-  "unsupportedDeviceDesc": "NexPOS is designed specifically for tablets and large screens.\n\nPlease access the app from an iPad or Android Tablet in landscape orientation.",
-  "errorRequiredField": "This field is required",
-  "errorInvalidEmail": "Invalid email address",
-  "orderTypeSelection": "Select Order Type",
-  "orderTypePickup": "Pickup",
-  "orderTypeDineIn": "Dine-In",
-  "pickupName": "Name",
-  "pickupNameHint": "Enter your name",
-  "pickupPhone": "Phone Number",
-  "pickupPhoneHint": "Enter 10-digit number",
-  "pickupAddButton": "Add",
-  "pickupCancelButton": "Cancel",
+  "deviceAutoSync": "Auto sync",
+  "deviceAutoSyncEnabled": "Auto sync enabled — {interval}",
+  "@deviceAutoSyncEnabled": {
+    "placeholders": {
+      "interval": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceAutoSyncOff": "Auto sync turned off",
+  "deviceAutoSyncRunning": "Running in the background",
+  "deviceAutoSyncStarting": "Running in the background (starting…)",
+  "deviceCashDenominations": "Cash denominations",
+  "deviceCashDenomsHint": "Comma-separated tender chips shown on Billing & Payment.",
+  "deviceCashDenomsSaved": "Cash denominations saved.",
+  "deviceCompanySettingsStaff": "Company (settings & staff)",
+  "deviceDangerZone": "Danger zone",
+  "deviceEnableAutoSync": "Enable auto sync",
+  "deviceInterval15Min": "Every 15 minutes",
+  "deviceInterval1Hour": "Every 1 hour",
+  "deviceInterval1Min": "Every 1 minute",
+  "deviceInterval30Min": "Every 30 minutes",
+  "deviceInterval5Min": "Every 5 minutes",
+  "deviceIntervalEveryMinutes": "Every {minutes} minutes",
+  "@deviceIntervalEveryMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceIntervalEverySeconds": "Every {seconds} seconds",
+  "@deviceIntervalEverySeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceKeepSavedServerUrls": "Keep saved server URLs",
+  "deviceKeepSavedServers": "Keep saved server URLs",
+  "deviceLastOnlineLogin": "Last online login",
+  "deviceLastSuccessfulSync": "Last successful sync",
+  "deviceLeaseDaysCount": "{count} days",
+  "@deviceLeaseDaysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceLeaseOneDay": "1 day",
+  "deviceLoginLease": "Login lease",
+  "deviceLoginLeaseDays": "Login lease days",
+  "deviceOnlineSignInRequired": "Online sign-in required",
+  "deviceOpenSyncNow": "Open sync now",
+  "deviceResetAction": "Reset",
+  "deviceResetAllLocal": "Reset all local data",
+  "deviceResetConfirmBody": "This permanently deletes local orders, catalogue, customers, sync history, device approval flags, and login on this tablet. It does not delete anything on the server.",
+  "deviceResetConfirmTitle": "Reset all local data?",
+  "deviceResetFailed": "Reset failed: {error}",
+  "@deviceResetFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceResetLocalBody": "Wipe this tablet’s offline database, device setup, login, and sync history so you can test from a clean first launch.",
+  "deviceResetting": "Resetting…",
+  "deviceSaveDenominations": "Save denominations",
+  "deviceSettingsTitle": "Device settings",
+  "deviceSyncHistory": "Sync history (last 20)",
+  "deviceSyncInterval": "Sync interval",
+  "deviceSyncOnTapOnly": "Only sync when you tap Sync",
+  "deviceTypeResetConfirm": "Type RESET to confirm",
+  "deviceTypeResetToConfirm": "Type RESET to confirm",
+  "deviceValidUntil": "Valid until",
   "dineInFloorFirst": "First Floor",
   "dineInFloorSecond": "Second Floor",
   "dineInTable": "Table {number}",
@@ -68,24 +1000,1143 @@
       }
     }
   },
-  "errorNameMinLength": "Minimum 3 characters",
+  "errorAccessDenied": "Access denied. Ask an administrator to check this device and account.",
+  "errorAmountExceedsOutstanding": "Amount cannot exceed outstanding ({amount}).",
+  "@errorAmountExceedsOutstanding": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "errorBootstrapFailed": "Bootstrap failed",
+  "errorCancelFailed": "Cancel failed: {error}",
+  "@errorCancelFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCannotReachServer": "Cannot reach server. Check your connection and Server.",
+  "errorCatalogueExportFailed": "Catalogue export failed: {message}",
+  "@errorCatalogueExportFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCheckoutFailed": "Checkout failed: {error}",
+  "@errorCheckoutFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCollectFailed": "Collect failed: {error}",
+  "@errorCollectFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorConfigLookupFailed": "Config lookup failed",
+  "errorCouldNotAddPaymentMethod": "Could not add payment method.",
+  "errorCouldNotAddSubscriber": "Could not add subscriber.",
+  "errorCouldNotCancel": "Could not cancel: {error}",
+  "@errorCouldNotCancel": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCouldNotDeleteDraft": "Could not delete draft: {error}",
+  "@errorCouldNotDeleteDraft": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCouldNotLoadCompanySettings": "Could not load company settings.",
+  "errorCouldNotLoadReports": "Could not load reports.",
+  "errorCouldNotLoadStaff": "Could not load staff.",
+  "errorCouldNotOpenDraft": "Could not open draft: {error}",
+  "@errorCouldNotOpenDraft": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCouldNotPickLogo": "Could not pick logo. Fully restart the app (stop + run), then try again.",
+  "errorCouldNotSaveCompanySettings": "Could not save company settings.",
+  "errorCouldNotSaveDenoms": "Could not save denominations: {error}",
+  "@errorCouldNotSaveDenoms": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCouldNotSaveDraft": "Could not save draft: {error}",
+  "@errorCouldNotSaveDraft": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorCouldNotSync": "Could not sync. Try again.",
+  "errorCouldNotUseCustomer": "Could not use that customer. Try again.",
+  "errorCreditRequiresCustomer": "Credit requires a saved customer. Try again.",
+  "errorDbNeedsUpdate": "Local database needs an update. Fully restart the app, then try Sync again.",
+  "errorDbOutdated": "Local database is outdated ({detail}). Fully restart the app, then Sync again.",
+  "@errorDbOutdated": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "errorFileNotFound": "File not found.",
+  "errorGeneric": "Something went wrong. Please try again.",
+  "errorHttpFallback": "{fallback} (HTTP {statusCode})",
+  "@errorHttpFallback": {
+    "placeholders": {
+      "fallback": {
+        "type": "String"
+      },
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "errorInvalidCredentials": "Invalid credentials",
+  "errorInvalidEmail": "Invalid email address",
   "errorInvalidPhone": "Must be exactly 10 digits",
-  "orderListFilterAll": "All",
-  "orderListFilterDineIn": "Dine In",
-  "orderListFilterPickup": "Pickup",
-  "orderListFilterDelivery": "Delivery",
-  "orderListSearchHint": "Search by order ID, name, phone, email...",
-  "orderListColumnSlNo": "Sl No",
+  "errorNameMinLength": "Minimum 3 characters",
+  "errorNamePackageUnitPriceRequired": "Name, package, unit and price are required",
+  "errorNetwork": "Cannot reach server",
+  "errorNoCachedPosConfig": "No cached POS config for \"{orgCode}\". Complete device setup first.",
+  "@errorNoCachedPosConfig": {
+    "placeholders": {
+      "orgCode": {
+        "type": "String"
+      }
+    }
+  },
+  "errorOrderNotFound": "Order #{orderId} was not found.",
+  "@errorOrderNotFound": {
+    "placeholders": {
+      "orderId": {
+        "type": "int"
+      }
+    }
+  },
+  "errorOrganisationNotFound": "Organisation not found",
+  "errorParentOrgNotFound": "Parent organisation was not found.",
+  "errorPaymentFailed": "Payment failed: {error}",
+  "@errorPaymentFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorRefundFailed": "Refund failed: {error}",
+  "@errorRefundFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorRequiredField": "This field is required",
+  "errorScheduleFailed": "Schedule failed: {error}",
+  "@errorScheduleFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorSecureConnectionFailed": "Secure connection failed. Check the server address and try again.",
+  "errorSelectCustomerForCredit": "Select a customer to put the balance on credit.",
+  "errorSignInFailed": "Sign-in failed. Check your email and password, then try again.",
+  "errorSignInOnlineFirst": "Sign in online first to update company settings.",
+  "errorSignupFailed": "Signup failed.",
+  "errorSyncFailed": "Sync failed: {error}",
+  "@errorSyncFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorUnableLoadSignupOptions": "Unable to load signup options",
+  "errorVoidFailed": "Void failed: {error}",
+  "@errorVoidFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWithMessage": "{message}: {error}",
+  "@errorWithMessage": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorWithStatus": "{fallback} ({statusCode})",
+  "@errorWithStatus": {
+    "placeholders": {
+      "fallback": {
+        "type": "String"
+      },
+      "statusCode": {
+        "type": "String"
+      }
+    }
+  },
+  "forgotPasswordBackToSignIn": "Back to Sign In",
+  "forgotPasswordInstruction": "Please enter your registered Email address or Phone Number.",
+  "forgotPasswordSendLink": "Send Reset Link",
+  "forgotPasswordSuccess": "Password reset link sent to your registered address!",
+  "forgotPasswordTitle": "Forgot Password?",
+  "homeActivityPrompt": "What would you like to do today?",
+  "homeCatalogs": "Catalogs",
+  "homeCompany": "Company",
+  "homeCreateOrder": "New Order",
+  "homeCredits": "Credits",
+  "homeCustomers": "Customers",
+  "homeDashboardDesc": "View analytics and summary",
+  "homeDeviceSettings": "Device settings",
+  "homeDraftOrders": "Drafts",
+  "homeLogoutTooltip": "Logout",
+  "homeMenu": "Menu",
+  "homeNewOrderCount": "New Order ({count})",
+  "@homeNewOrderCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeNoItems": "No items",
+  "homeNoSavedDrafts": "No saved drafts yet.",
+  "homeOpenStoreFirst": "Open a store first",
+  "homeOrdersList": "Orders",
+  "homeOrdersListDesc": "View and manage all orders",
+  "homePosDashboard": "POS Dashboard",
+  "homeRefunds": "Refunds",
+  "homeSavedDrafts": "Saved drafts",
+  "homeStoreAdminRequiredCompany": "Store Admin access required for Company.",
+  "homeStoreAdminRequiredSetup": "Store Admin access required for Store setup.",
+  "homeStoreSetup": "Store setup",
+  "homeSyncFailedRetry": "Sync failed — tap to retry",
+  "homeSyncTooltip": "Sync",
+  "homeViewAllCount": "View all ({count})",
+  "@homeViewAllCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeWelcomeBack": "Welcome Back",
+  "invoiceAmountPaid": "Amount paid",
+  "invoiceMethod": "Method: {method}",
+  "@invoiceMethod": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "invoiceOrderSummary": "Order summary",
+  "invoicePrinting": "Printing to thermal printer…",
+  "invoiceTitle": "Invoice / Receipt",
+  "languageEnglish": "English",
+  "languageLabel": "Language",
+  "languageTamil": "Tamil",
+  "orderAddRecordPayment": "Add / Record payment",
+  "orderAddonsLabel": "Add-ons: {labels}",
+  "@orderAddonsLabel": {
+    "placeholders": {
+      "labels": {
+        "type": "String"
+      }
+    }
+  },
+  "orderAllItemsSentKitchen": "All items already sent to kitchen.",
+  "orderAlreadyFullyPaid": "This order is already fully paid.",
+  "orderAlreadyFullyRefunded": "This payment is already fully refunded.",
+  "orderAppliedOffers": "Applied offers",
+  "orderCancelConfirm": "Mark this order as Cancelled?",
+  "orderCancelTitle": "Cancel order",
+  "orderCancelled": "Order cancelled.",
+  "orderCancelledTitle": "Order cancelled",
+  "orderChartPoint": "{label}\n{amount}\n{count} orders",
+  "@orderChartPoint": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "orderClearFilter": "Clear Filter",
+  "orderCompleted": "Completed",
+  "orderCouldNotOpenDraft": "Could not open draft: {error}",
+  "@orderCouldNotOpenDraft": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "orderCreateAddItemsBeforeDraft": "Add items before saving a draft.",
+  "orderCreateAddMiscItem": "Add misc item",
+  "orderCreateAllItemsSentKitchen": "All items already sent to kitchen.",
+  "orderCreateCartEmpty": "Your cart is empty",
+  "orderCreateDeleteDraftBody": "This clears the cart and removes the saved draft.",
+  "orderCreateDraftDeleted": "Draft deleted.",
+  "orderCreateDraftSaved": "Draft saved.",
+  "orderCreateEnterValidPrice": "Enter a valid price",
+  "orderCreateFloorTable": "Floor: {floor} | Table: {table}",
+  "@orderCreateFloorTable": {
+    "placeholders": {
+      "floor": {
+        "type": "String"
+      },
+      "table": {
+        "type": "String"
+      }
+    }
+  },
+  "orderCreateHistoryRefreshed": "History refreshed",
+  "orderCreateHowMany": "How many {unit}?",
+  "@orderCreateHowMany": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "orderCreateKotFailed": "KOT failed: {error}",
+  "@orderCreateKotFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "orderCreateKotSent": "KOT #{batch} sent · Order #{orderId} saved",
+  "@orderCreateKotSent": {
+    "placeholders": {
+      "batch": {
+        "type": "int"
+      },
+      "orderId": {
+        "type": "int"
+      }
+    }
+  },
+  "orderCreateMisc": "Misc",
+  "orderCreateNewOrderTitle": "New {orderType} order",
+  "@orderCreateNewOrderTitle": {
+    "placeholders": {
+      "orderType": {
+        "type": "String"
+      }
+    }
+  },
+  "orderCreateNoOrderHistory": "No order history yet",
+  "orderCreatePastOrders": "Past orders",
+  "orderCreateProductName": "Product name",
+  "orderCreateQuantityUnit": "Quantity ({unit})",
+  "@orderCreateQuantityUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "orderCreateSaveDraftTooltip": "Save draft",
+  "orderCreateTitle": "New order",
+  "orderCreationSaveContinue": "Save & continue",
+  "orderDeleteDraft": "Delete draft",
+  "orderDeleteDraftConfirm": "Permanently delete this draft order? This cannot be undone.",
+  "orderDeleteDraftQuestion": "Delete draft?",
+  "orderDeliveredStatus": "Order Delivered",
+  "orderDetailsDueSuffix": " · Due {amount}",
+  "@orderDetailsDueSuffix": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "orderDetailsNoPaymentsRecorded": "No payments recorded yet.",
+  "orderDetailsRefundablePayments": "{count} payment(s) still have a refundable balance. Refund them now to cancel this order, or open Payments to refund individually.",
+  "@orderDetailsRefundablePayments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "orderDetailsTitle": "Order details",
+  "orderDetailsTotalPaid": "Total paid {amount}",
+  "@orderDetailsTotalPaid": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "orderDetailsViewPayments": "View payments",
+  "orderDraftDeleted": "Draft deleted.",
+  "orderDraftSaved": "Draft saved.",
+  "orderGoToPayments": "Go to payments",
+  "orderHistoryId": "{id} · Order #{orderId}",
+  "@orderHistoryId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      },
+      "orderId": {
+        "type": "int"
+      }
+    }
+  },
+  "orderKotFailed": "KOT failed: {error}",
+  "@orderKotFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "orderListCancelHint": "To cancel an order, open Order details and use Cancel (refunds are required first when payments exist).",
+  "orderListClearFilter": "Clear filter",
+  "orderListColumnActions": "Actions",
+  "orderListColumnItems": "Items",
+  "orderListColumnName": "Name",
   "orderListColumnOrderId": "Order ID",
   "orderListColumnOrderType": "Type",
-  "orderListColumnName": "Name",
-  "orderListColumnTime": "Time",
-  "orderListColumnStatus": "Status",
   "orderListColumnPayment": "Payment",
-  "orderListColumnItems": "Items",
+  "orderListColumnSlNo": "Sl No",
+  "orderListColumnStatus": "Status",
+  "orderListColumnTime": "Time",
   "orderListColumnTotal": "Total",
-  "orderListColumnActions": "Actions",
-  "orderListPayNow": "Pay Now",
+  "orderListFilterAll": "All",
   "orderListFilterButton": "Filter",
-  "orderListRefreshButton": "Refresh"
+  "orderListFilterDelivery": "Delivery",
+  "orderListFilterDineIn": "Dine In",
+  "orderListFilterPickup": "Pickup",
+  "orderListNoOrdersFound": "No orders found",
+  "orderListPayNow": "Pay Now",
+  "orderListPosCode": "POS {code}",
+  "@orderListPosCode": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "orderListPrintInvoiceBody": "Print invoice for Order #{orderId}?",
+  "@orderListPrintInvoiceBody": {
+    "placeholders": {
+      "orderId": {
+        "type": "String"
+      }
+    }
+  },
+  "orderListPrintInvoiceTitle": "Print invoice",
+  "orderListRefreshButton": "Refresh",
+  "orderListSearchHint": "Search by order ID, name, phone, email...",
+  "orderListSelectNewStatus": "Select new status for Order #{orderId}:",
+  "@orderListSelectNewStatus": {
+    "placeholders": {
+      "orderId": {
+        "type": "String"
+      }
+    }
+  },
+  "orderListServeNumber": "Serve #{number}",
+  "@orderListServeNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "orderListUnableOpenOrder": "Unable to open order #{orderId}",
+  "@orderListUnableOpenOrder": {
+    "placeholders": {
+      "orderId": {
+        "type": "String"
+      }
+    }
+  },
+  "orderListUpdateStatusTitle": "Update status",
+  "orderMisc": "Misc",
+  "orderNoItems": "No items on this order.",
+  "orderNotSyncedRemote": "Not yet synced to remote",
+  "orderNumber": "Order #{orderId}",
+  "@orderNumber": {
+    "placeholders": {
+      "orderId": {
+        "type": "int"
+      }
+    }
+  },
+  "orderOfferLabel": "Offer: {label}",
+  "@orderOfferLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "orderPaymentFailed": "Payment failed: {error}",
+  "@orderPaymentFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "orderPaymentsAddPayment": "Add payment",
+  "orderPaymentsCustomerLabel": "Customer {label}",
+  "@orderPaymentsCustomerLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "orderPaymentsFullyPaid": "This order is already fully paid.",
+  "orderPaymentsFullyRefunded": "This payment is already fully refunded.",
+  "orderPaymentsNoPaymentsRecorded": "No payments recorded for this order.",
+  "orderPaymentsNoPaymentsUnpaid": "No payments yet. Record a payment for this unpaid order.",
+  "orderPaymentsOnlineUpi": "Online / UPI",
+  "orderPaymentsOrderSummary": "Order total {total} · Remaining {remaining}",
+  "@orderPaymentsOrderSummary": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "String"
+      }
+    }
+  },
+  "orderPaymentsReasonOptional": "Reason (optional)",
+  "orderPaymentsRecordTitle": "Record payment",
+  "orderPaymentsRecordedBalance": "Payment recorded. Balance {balance}",
+  "@orderPaymentsRecordedBalance": {
+    "placeholders": {
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
+  "orderPaymentsRecordedFullyPaid": "Payment recorded. Order is fully paid.",
+  "orderPaymentsRefLabel": "Ref {reference}",
+  "@orderPaymentsRefLabel": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "orderPaymentsRefundAction": "Refund",
+  "orderPaymentsRefundAmount": "Refund amount",
+  "orderPaymentsRefundAmountRange": "Enter an amount between 0.01 and {max}.",
+  "@orderPaymentsRefundAmountRange": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "orderPaymentsRefundTitle": "Refund payment",
+  "orderPaymentsRefundableOf": "Refundable {refundable} of {total}",
+  "@orderPaymentsRefundableOf": {
+    "placeholders": {
+      "refundable": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "orderPaymentsRefundedAmount": "Refunded {amount}.",
+  "@orderPaymentsRefundedAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "orderPaymentsRefundedCancelled": "Payments refunded and order cancelled.",
+  "orderPaymentsRefundedLeft": "Refunded {refunded} · Left {left}",
+  "@orderPaymentsRefundedLeft": {
+    "placeholders": {
+      "refunded": {
+        "type": "String"
+      },
+      "left": {
+        "type": "String"
+      }
+    }
+  },
+  "orderPaymentsTitle": "Order payments",
+  "orderPrintInvoice": "Print Invoice",
+  "orderPrintInvoiceConfirm": "Print invoice for Order #{orderId}?",
+  "@orderPrintInvoiceConfirm": {
+    "placeholders": {
+      "orderId": {
+        "type": "int"
+      }
+    }
+  },
+  "orderReadyToServe": "Ready To Serve",
+  "orderRecordPayment": "Record payment",
+  "orderRefund": "Refund",
+  "orderRefundAllAndCancel": "Refund all & cancel",
+  "orderRefundBeforeCancelBody": "{count} payment(s) still have a refundable balance. Refund them now to cancel this order, or open Payments to refund individually.",
+  "@orderRefundBeforeCancelBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "orderRefundBeforeCancelTitle": "Refund before cancel",
+  "orderRefundFailed": "Refund failed: {error}",
+  "@orderRefundFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "orderRefundNotNow": "Not now",
+  "orderRefundPayment": "Refund payment",
+  "orderRefundedAmount": "Refunded {amount}.",
+  "@orderRefundedAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "orderSaveDraft": "Save draft",
+  "orderSummary": "Summary",
+  "orderSyncedRemote": "Synced to remote backend",
+  "orderTypeDineIn": "Dine-In",
+  "orderTypePickup": "Pickup",
+  "orderTypeSelection": "Select Order Type",
+  "orderTypeTable": "{type} · {table}",
+  "@orderTypeTable": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "table": {
+        "type": "String"
+      }
+    }
+  },
+  "orderUnableToOpen": "Unable to open order #{orderId}",
+  "@orderUnableToOpen": {
+    "placeholders": {
+      "orderId": {
+        "type": "int"
+      }
+    }
+  },
+  "orderUpdateStatus": "Update Status",
+  "pickupAddButton": "Add",
+  "pickupCancelButton": "Cancel",
+  "pickupName": "Name",
+  "pickupNameHint": "Enter your name",
+  "pickupPhone": "Phone Number",
+  "pickupPhoneHint": "Enter 10-digit number",
+  "profileAccount": "Account",
+  "profileCode": "Code",
+  "profileContactEmail": "Contact email",
+  "profileCurrent": "Current",
+  "profileCurrentStore": "Current store",
+  "profileMyProfile": "My Profile",
+  "profileOrganisationRole": "Organisation role",
+  "profilePosOperator": "POS Operator",
+  "profileRole": "Role",
+  "profileServiceInstance": "Service instance",
+  "profileSignedIn": "Signed in",
+  "profileSignedInAs": "Signed in as",
+  "profileStoreId": "Store ID",
+  "profileStoreLabel": "Store",
+  "profileStoreRole": "Store role",
+  "profileTitle": "Profile",
+  "profileType": "Type",
+  "refundsCount": "{count} refunds",
+  "@refundsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "refundsEmpty": "No refunds recorded yet.",
+  "refundsPeriodTitle": "Refunds · {period}",
+  "@refundsPeriodTitle": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "refundsTitle": "Refunds",
+  "scheduledPaymentsTitle": "Scheduled payments",
+  "signInButton": "Sign In",
+  "signInEmailPhone": "Email / Mobile Number",
+  "signInEmailPhoneHint": "Enter email or mobile",
+  "signInForgotPasswordPrompt": "Forgot Password?",
+  "signInIdentifierHint": "Email / phone / staff ID",
+  "signInNewCompany": "New company?",
+  "signInPassword": "Password",
+  "signInPasswordHint": "Enter password",
+  "signInRenewDevice": "Sign in to renew this device",
+  "signInShowPassword": "Show Password",
+  "signInWelcome": "Welcome",
+  "signupAlreadyHaveCompany": "Already have a company? Sign in",
+  "signupBackToBranch": "Back to branch details",
+  "signupBackToSignIn": "Back to sign in",
+  "signupBodyBranch": "Name the branch and city. Registration number is optional.",
+  "signupBodyBusinessType": "Pick the business type. We will create a restaurant store under your branch.",
+  "signupBodyCompanyDetails": "Tell us about the company and the owner who will administer it.",
+  "signupBodyCreateCompany": "Create a new company for this tablet.",
+  "signupBodyCreateCompanyManual": "Enter your server and parent organisation, then create a new company for this tablet.",
+  "signupBodyReady": "Your company is ready. Sign in with your company identifier and password.",
+  "signupBodySettingUp": "Creating your organisation, branch, and store — this only takes a moment.",
+  "signupBranchName": "Branch name",
+  "signupBusinessBakery": "Bakery",
+  "signupBusinessCafe": "Cafe",
+  "signupBusinessOther": "Others",
+  "signupBusinessRestaurant": "Restaurant",
+  "signupCity": "City",
+  "signupCompanyIdentifier": "Company identifier",
+  "signupCompanyName": "Company name",
+  "signupConfirmPassword": "Confirm password",
+  "signupCouldNotPrepare": "Could not prepare company signup.",
+  "signupCountry": "Country",
+  "signupCreateCompany": "Create company",
+  "signupJoinExistingDevice": "Join an existing organisation device",
+  "signupLoginNow": "Login now",
+  "signupNoCountriesMatch": "No countries match “{query}”",
+  "@signupNoCountriesMatch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "signupOwnerName": "Owner name",
+  "signupParentOrgHelp": "We’ll check this organisation exists before continuing.",
+  "signupParentOrgHint": "Parent organisation identifier or instance id",
+  "signupPasswordHelp": "Keep it simple for floor staff — letters, numbers, or both.",
+  "signupPasswordHint": "Password (min 6 letters/digits)",
+  "signupPasswordsDoNotMatch": "Passwords do not match",
+  "signupPhoneHint": "Phone number",
+  "signupPhoneHintWithDial": "Phone number (e.g. {dialCode} 9876543210)",
+  "@signupPhoneHintWithDial": {
+    "placeholders": {
+      "dialCode": {
+        "type": "String"
+      }
+    }
+  },
+  "signupChooseLanguage": "Choose your preferred language",
+  "signupChooseLanguageHelp": "Your signup screens will use this language. You can change it anytime using the language menu.",
+  "signupPreparing": "Preparing company signup.",
+  "signupProgressCreatingCompany": "Creating company",
+  "signupProgressCreatingUser": "Creating user",
+  "signupProgressSettingAccount": "Setting up account",
+  "signupProgressSettingBranch": "Setting up branch",
+  "signupProgressSettingProfile": "Setting profile",
+  "signupProgressSuccess": "Congratulations — success",
+  "signupRegistrationOptional": "Registration number (optional)",
+  "signupSearchCountry": "Search country, code, or dial",
+  "signupSelectCountry": "Select country",
+  "signupServerUrlHint": "Server URL (e.g. http://192.168.1.10:8000)",
+  "signupTitleBranch": "Your first branch",
+  "signupTitleBusinessType": "What do you run?",
+  "signupTitleCompanyDetails": "Company details",
+  "signupTitleCreateCompany": "Create your company",
+  "signupTitleReady": "You are ready",
+  "signupTitleSettingUp": "Setting things up",
+  "signupTryAgain": "Try again",
+  "signupUseIdentifierHelp": "Use this identifier with your email/phone and password to sign in.",
+  "splashCheckAgain": "Check again",
+  "splashDeviceNotApproved": "Device not approved",
+  "splashInitError": "Initialization Error",
+  "splashNoConfig": "No stored configuration found",
+  "splashNoOrgCode": "No stored organisation code found",
+  "splashPleaseSignIn": "Please sign in to continue",
+  "splashTagline": "Precision in every transaction",
+  "staffLockAllStaff": "All staff",
+  "staffLockBranchNotLoaded": "Branch not loaded",
+  "staffLockMore": "More",
+  "staffLockOnlineSignIn": "Online device sign-in",
+  "staffLockStaffId": "Staff ID",
+  "staffLockStaffStore": "Staff · {storeName}",
+  "@staffLockStaffStore": {
+    "placeholders": {
+      "storeName": {
+        "type": "String"
+      }
+    }
+  },
+  "staffLockSwitchStore": "Switch store",
+  "staffLockTitle": "Staff unlock",
+  "staffLockUnlock": "Unlock",
+  "staffLogoutConfirmBody": "This locks the register. Another staff member can unlock with their PIN or password.",
+  "staffLogoutConfirmBodyFull": "This unlocks the tablet for the next staff member. Your session ends; orders already saved stay on this device.",
+  "staffLogoutConfirmTitle": "Log out staff?",
+  "statusApproved": "Approved",
+  "statusCollected": "Collected",
+  "statusCooking": "Cooking",
+  "statusDelivered": "Delivered",
+  "statusFailed": "Failed",
+  "statusInitiated": "Initiated",
+  "statusOpen": "Open",
+  "statusOrderAccepted": "Order Accepted",
+  "statusOrderCancelled": "Order Cancelled",
+  "statusOrderCompleted": "Order Completed",
+  "statusOrderPending": "Order Pending",
+  "statusOrderPreparing": "Order Preparing",
+  "statusOrderReady": "Order Ready",
+  "statusPaid": "Paid",
+  "statusPartial": "Partial",
+  "statusPickedUp": "Picked up",
+  "statusPlaced": "Placed",
+  "statusReadyToServe": "Ready to serve",
+  "statusRefunded": "Refunded",
+  "statusRejected": "Rejected",
+  "statusReturned": "Returned",
+  "statusServed": "Served",
+  "statusSettled": "Settled",
+  "statusUnpaid": "Unpaid",
+  "storeAdminAccessRequired": "Store Admin access required.",
+  "storeListBackToUnlock": "Back to staff unlock",
+  "storeListChooseBranchUnlock": "Choose a branch, then unlock with staff ID",
+  "storeListChooseStore": "Choose your store to continue",
+  "storeListEmpty": "No stores found",
+  "storeListLoading": "Loading stores...",
+  "storeListOpenBranch": "Open branch",
+  "storeListSearchHint": "Search by store name or ID...",
+  "storeListSelectStore": "Select Store",
+  "storeListStoreId": "Store ID: {storeId}",
+  "@storeListStoreId": {
+    "placeholders": {
+      "storeId": {
+        "type": "String"
+      }
+    }
+  },
+  "storeListTitle": "My stores",
+  "storeListTitleCount": "My stores ({count})",
+  "@storeListTitleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storeSelectedSuccess": "{storeName} selected successfully!",
+  "@storeSelectedSuccess": {
+    "placeholders": {
+      "storeName": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupAccess": "Access",
+  "storeSetupAddCashier": "Add cashier",
+  "storeSetupAddCashierHint": "Add a cashier with name, email, phone and password.",
+  "storeSetupAddGroup": "Add group",
+  "storeSetupAddLinkCategoryFirst": "Add and link a category first",
+  "storeSetupAddOffer": "Add offer",
+  "storeSetupAddSellableItem": "Add sellable item",
+  "storeSetupAddToStore": "Add to store",
+  "storeSetupAddonDeletedOffline": "Add-on deleted offline. Sync to export.",
+  "storeSetupAddonGroup": "Add-on group",
+  "storeSetupAddons": "Add-ons",
+  "storeSetupCashier": "Cashier",
+  "storeSetupCashierCreated": "Cashier created. They can unlock this store after logout.",
+  "storeSetupCatalogueExportFailed": "Catalogue export failed: {message}",
+  "@storeSetupCatalogueExportFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupCategories": "Categories",
+  "storeSetupCategory": "Category",
+  "storeSetupCategoryAddedOffline": "Category added to master and this store (offline). Sync to export.",
+  "storeSetupCategoryDeletedOffline": "Category deleted offline. Sync to export.",
+  "storeSetupCategoryName": "Category name",
+  "storeSetupChooseCategory": "Choose category",
+  "storeSetupChoosePackage": "Choose a package",
+  "storeSetupCreate": "Create",
+  "storeSetupCreateCashier": "Create cashier",
+  "storeSetupDeleteAddonGroup": "Delete add-on group?",
+  "storeSetupDeleteOffer": "Delete offer?",
+  "storeSetupDeletePackage": "Delete package?",
+  "storeSetupDeletedOffline": "Deleted offline. Sync to export.",
+  "storeSetupDeletedTombstone": "Deleted offline. Sync to export tombstone.",
+  "storeSetupEditAddonGroup": "Edit add-on group",
+  "storeSetupEditOffer": "Edit offer",
+  "storeSetupEditPackage": "Edit package",
+  "storeSetupExportNotConfigured": "Catalogue export not configured — local edits stayed on this tablet.",
+  "storeSetupFirstItemName": "First item name *",
+  "storeSetupGroupName": "Group name *",
+  "storeSetupItemPrice": "Item price *",
+  "storeSetupLinkCategoryFirst": "Link a category first",
+  "storeSetupLinkPackagesHint": "Leave empty for a whole-bill offer. Select packages to limit where it applies.",
+  "storeSetupLinkPackagesOptional": "Link to packages (optional)",
+  "storeSetupLinkToPackage": "Link to package",
+  "storeSetupLinkToPackageHint": "Choose which package should offer this add-on group.",
+  "storeSetupLinkedMaster": "Linked \"{name}\" to this store",
+  "@storeSetupLinkedMaster": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupLinkedToStore": "Linked “{name}” to this store",
+  "@storeSetupLinkedToStore": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupMasterCategories": "Master categories",
+  "storeSetupMasterLinked": "Master linked with default package. Edit price, then Sync.",
+  "storeSetupMinBill": "Min bill",
+  "storeSetupNameRequired": "Name *",
+  "storeSetupNewCategory": "New category",
+  "storeSetupNewMasterCategory": "New master category",
+  "storeSetupNewOffer": "New offer",
+  "storeSetupNewProduct": "New product / package",
+  "storeSetupNoAddonsYet": "No add-ons yet",
+  "storeSetupNoCashiersYet": "No cashiers yet",
+  "storeSetupNoMasterCategories": "No master categories",
+  "storeSetupNoOffersEmpty": "No offers yet",
+  "storeSetupNoOffersYet": "No offers yet — create some in Offers setup.",
+  "storeSetupNoPackagesCreateProducts": "No packages yet — create products first.",
+  "storeSetupNoPackagesYet": "No packages yet",
+  "storeSetupNoPackagesYetShort": "No packages yet.",
+  "storeSetupNoTaxUnset": "No tax / unset",
+  "storeSetupNoTaxesYet": "No taxes yet — they are added automatically when the company is set up.",
+  "storeSetupNothingLinked": "Nothing linked yet",
+  "storeSetupOfferDeletedOffline": "Offer deleted offline. Sync to export.",
+  "storeSetupOfferPctOff": "{pct}% off",
+  "@storeSetupOfferPctOff": {
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupOfferSavedOffline": "Offer saved offline",
+  "storeSetupOfferUpdatedOffline": "Offer updated offline",
+  "storeSetupOffers": "Offers",
+  "storeSetupOffersForPackage": "Offers for this package",
+  "storeSetupOffersForPackageHint": "Select offers that should apply to this package. Leave none for no package-specific offers.",
+  "storeSetupOptionalMinBill": "Optional minimum bill",
+  "storeSetupPackage": "Package",
+  "storeSetupPackageName": "Package name *",
+  "storeSetupPackageNameHint": "e.g. Regular, Large, Family",
+  "storeSetupPackageNamePlain": "Package name",
+  "storeSetupPercentOff": "Percent off",
+  "storeSetupProductName": "Product / service name *",
+  "storeSetupProductNameHint": "e.g. Chicken Biryani",
+  "storeSetupProductNamePlain": "Product / service name",
+  "storeSetupProducts": "Products",
+  "storeSetupProductsPackages": "Products & packages",
+  "storeSetupRegular": "Regular",
+  "storeSetupRemoveCategory": "Remove category?",
+  "storeSetupRemoveEntitySync": "Remove \"{name}\". Sync to export.",
+  "@storeSetupRemoveEntitySync": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupRemoveFromStore": "Remove from store",
+  "storeSetupRenameCategory": "Rename category",
+  "storeSetupRenamedOffline": "Renamed offline. Sync to export.",
+  "storeSetupSavedOffline": "Saved offline. Sync to export.",
+  "storeSetupSavedOfflineMaster": "Saved offline. Sync to export to master + store.",
+  "storeSetupSellPrice": "Sell price *",
+  "storeSetupStoreAdmin": "Store admin",
+  "storeSetupSyncExport": "Sync / export",
+  "storeSetupSyncFailed": "Sync failed: {error}",
+  "@storeSetupSyncFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupSyncFinishedExported": "Sync finished — exported {count} catalogue row(s).",
+  "@storeSetupSyncFinishedExported": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "storeSetupSyncFinishedNone": "Sync finished — no pending catalogue changes to export.",
+  "storeSetupTaxForPackage": "Tax for this package",
+  "storeSetupTaxForPackageHint": "Company tax bands from setup. Leave none if this package is tax-free / unset.",
+  "storeSetupTaxNamePct": "{name} ({pct}%)",
+  "@storeSetupTaxNamePct": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "pct": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupTaxPct": "Tax {pct}%",
+  "@storeSetupTaxPct": {
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupTaxTotalPct": "{pct}% total",
+  "@storeSetupTaxTotalPct": {
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSetupThisStore": "This store",
+  "storeSetupTitle": "Store setup",
+  "storeSetupUnit": "Unit *",
+  "storeSetupUnitHint": "pcs, kg…",
+  "storeSetupUnitQty": "Unit qty *",
+  "storeSetupUpdatedOffline": "Updated offline. Sync to export.",
+  "syncAgain": "Sync again",
+  "syncComplete": "Sync complete",
+  "syncDataSync": "Data Sync",
+  "syncDescription": "Uploads POS customers, orders and credits from this device first, then downloads catalogue updates. Offline sales stay local until the next successful sync.",
+  "syncDownloadFromRemote": "Download from remote",
+  "syncHistory": "History",
+  "syncHistory45": "Sync history (last 45 days)",
+  "syncHistoryStats": "{processed} processed · {success} ok · {failed} failed",
+  "@syncHistoryStats": {
+    "placeholders": {
+      "processed": {
+        "type": "int"
+      },
+      "success": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "syncInProgress": "Sync in progress…",
+  "syncLastSync": "Last sync: {timestamp}",
+  "@syncLastSync": {
+    "placeholders": {
+      "timestamp": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNamedStoreWithRemote": "Sync \"{storeName}\" with remote",
+  "@syncNamedStoreWithRemote": {
+    "placeholders": {
+      "storeName": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNeverSynced": "Never synced",
+  "syncNoAttemptsYet": "No sync attempts recorded on this device yet.",
+  "syncNoHistory": "No sync attempts recorded on this device yet. Run a sync to populate history.",
+  "syncOfflineWhenOnline": "Offline — sync when online",
+  "syncRunning": "Running",
+  "syncServerUnreachable": "Server unreachable. Keep selling offline — pending uploads stay queued on this device until you sync again online.",
+  "syncStart": "Start sync",
+  "syncStoreWithRemote": "Sync store data with remote",
+  "syncSyncing": "Syncing…",
+  "syncTitle": "Sync",
+  "syncUploadToRemote": "Upload to remote",
+  "unsupportedDeviceDesc": "EllanPos is designed specifically for tablets and large screens.\n\nPlease access the app from an iPad or Android Tablet in landscape orientation.",
+  "unsupportedDeviceTitle": "Device Not Supported",
+  "welcomeAlreadySetupSignIn": "Already set up? Sign in",
+  "welcomeAuthPrompt": "Log in to your account or create a new one to start processing payments effortlessly.",
+  "welcomeChooseSavedServer": "Choose a saved server",
+  "welcomeCreateCompanyInstead": "Create a new company instead",
+  "welcomeDeleteFromList": "Delete from list",
+  "welcomeDeleteSavedServer": "Delete saved server",
+  "welcomeDescription": "EllanPos provides an intuitive tablet experience designed perfectly for modern workflows.",
+  "welcomeEnterOrg": "Enter your organization name",
+  "welcomeEnterOrgCode": "Enter your organization code",
+  "welcomeGetStarted": "Let's Get Started",
+  "welcomeOrgCodeHint": "e.g., 100001",
+  "welcomeOrgHint": "e.g. Acme Corp",
+  "welcomeOrgInstanceId": "Organisation instance id",
+  "welcomeRegisterDevice": "Register device",
+  "welcomeRegisterHint": "Register this tablet to continue.",
+  "welcomeRegisterHintManual": "Enter the backend server URL and organisation instance id before registering this device.",
+  "welcomeRemoveServerConfirm": "Remove \"{label}\" from this device?",
+  "@welcomeRemoveServerConfirm": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "welcomeSavedServers": "Saved servers",
+  "welcomeServerUrl": "Server URL",
+  "welcomeServerUrlHint": "e.g. http://192.168.1.10:8000",
+  "welcomeSubmit": "Submit",
+  "welcomeUnlockBusiness": "Unlock Your\nBusiness Potential"
 }

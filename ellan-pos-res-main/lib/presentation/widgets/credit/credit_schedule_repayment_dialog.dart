@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 class CreditScheduleRepaymentResult {
   final double amount;
@@ -75,7 +76,7 @@ class _CreditScheduleRepaymentDialogState
     final amount = double.tryParse(_amountController.text.trim()) ?? 0;
     if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter an amount greater than zero.')),
+        SnackBar(content: Text(context.l10n.amountGreaterThanZero)),
       );
       return;
     }
@@ -97,9 +98,11 @@ class _CreditScheduleRepaymentDialogState
 
   @override
   Widget build(BuildContext context) {
-    final name = widget.customerName.isEmpty ? 'Customer' : widget.customerName;
+    final name = widget.customerName.isEmpty
+        ? context.l10n.commonCustomer
+        : widget.customerName;
     return AlertDialog(
-      title: const Text('Schedule repayment'),
+      title: Text(context.l10n.creditsScheduleRepayment),
       content: SizedBox(
         width: 420,
         child: Column(
@@ -107,22 +110,18 @@ class _CreditScheduleRepaymentDialogState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(name, style: FontUtility.subheading),
-            const SizedBox(height: 4),
-            Text(
-              'Record an upcoming payment promise from this customer.',
-              style: FontUtility.body.copyWith(color: Colors.black54),
-            ),
             const SizedBox(height: 16),
             TextField(
               controller: _amountController,
               autofocus: true,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
               ],
-              decoration: const InputDecoration(
-                labelText: 'Amount',
+              decoration: InputDecoration(
+                labelText: context.l10n.commonAmount,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -131,8 +130,8 @@ class _CreditScheduleRepaymentDialogState
               onTap: _pickDate,
               borderRadius: BorderRadius.circular(8),
               child: InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Due date',
+                decoration: InputDecoration(
+                  labelText: context.l10n.commonDueDate,
                   border: OutlineInputBorder(),
                   suffixIcon: Icon(Icons.calendar_today_rounded),
                 ),
@@ -145,11 +144,11 @@ class _CreditScheduleRepaymentDialogState
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.l10n.actionCancel),
         ),
         FilledButton(
           onPressed: _submit,
-          child: const Text('Schedule'),
+          child: Text(context.l10n.commonSchedule),
         ),
       ],
     );

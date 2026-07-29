@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_tablet/core/currency_format.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 import '../../../core/utils/font_utility.dart';
 import '../../../data/models/order_list_model.dart';
 import 'order_status_badge.dart';
@@ -41,16 +42,16 @@ class _OrderListRowState extends State<OrderListRow> {
   }
 
   TextStyle get _greyStyle => FontUtility.body.copyWith(
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-        color: _grey,
-      );
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    color: _grey,
+  );
 
   TextStyle get _boldBlack => FontUtility.body.copyWith(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: _black,
-      );
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
+    color: _black,
+  );
 
   IconData _orderTypeIcon() {
     final raw = widget.order.orderType.trim().toLowerCase();
@@ -100,12 +101,10 @@ class _OrderListRowState extends State<OrderListRow> {
               color: _isHovered
                   ? Colors.grey.withValues(alpha: 0.05)
                   : (widget.index % 2 == 0
-                      ? Colors.white
-                      : Colors.grey.withValues(alpha: 0.02)),
+                        ? Colors.white
+                        : Colors.grey.withValues(alpha: 0.02)),
               border: Border(
-                bottom: BorderSide(
-                  color: Colors.grey.withValues(alpha: 0.1),
-                ),
+                bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
               ),
             ),
             child: Row(
@@ -113,10 +112,7 @@ class _OrderListRowState extends State<OrderListRow> {
                 // Sl No
                 Expanded(
                   flex: 1,
-                  child: Text(
-                    '${widget.index + 1}',
-                    style: _greyStyle,
-                  ),
+                  child: Text('${widget.index + 1}', style: _greyStyle),
                 ),
                 // Order ID
                 Expanded(
@@ -139,8 +135,8 @@ class _OrderListRowState extends State<OrderListRow> {
                           const SizedBox(width: 4),
                           Tooltip(
                             message: widget.order.syncedToRemote
-                                ? 'Synced to remote backend'
-                                : 'Not yet synced to remote',
+                                ? context.l10n.orderSyncedRemote
+                                : context.l10n.orderNotSyncedRemote,
                             child: Icon(
                               widget.order.syncedToRemote
                                   ? Icons.cloud_done_rounded
@@ -156,12 +152,16 @@ class _OrderListRowState extends State<OrderListRow> {
                       if (widget.order.posCode != null &&
                           widget.order.posCode!.isNotEmpty)
                         Text(
-                          'POS ${widget.order.posCode}',
+                          context.l10n.orderListPosCode(
+                            widget.order.posCode ?? '',
+                          ),
                           style: _greyStyle.copyWith(fontSize: 10),
                         ),
                       if (widget.order.serveNumber != null)
                         Text(
-                          'Serve #${widget.order.serveNumber}',
+                          context.l10n.orderListServeNumber(
+                            '${widget.order.serveNumber}',
+                          ),
                           style: _greyStyle.copyWith(
                             fontSize: 11,
                             color: const Color(0xFF6B5CE7),
@@ -177,11 +177,7 @@ class _OrderListRowState extends State<OrderListRow> {
                     alignment: Alignment.centerLeft,
                     child: Tooltip(
                       message: _orderTypeTooltip,
-                      child: Icon(
-                        _orderTypeIcon(),
-                        size: 20,
-                        color: _grey,
-                      ),
+                      child: Icon(_orderTypeIcon(), size: 20, color: _grey),
                     ),
                   ),
                 ),
@@ -263,7 +259,9 @@ class _OrderListRowState extends State<OrderListRow> {
                       ),
                       if (widget.order.balanceDue > 0.0001)
                         Text(
-                          'Bal ${PosCurrency.format(widget.order.balanceDue)}',
+                          context.l10n.commonBal(
+                            PosCurrency.format(widget.order.balanceDue),
+                          ),
                           style: FontUtility.body.copyWith(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
@@ -289,20 +287,14 @@ class _OrderListRowState extends State<OrderListRow> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _buildActionButton(
-                            icon: Icons.info_outline_rounded,
-                            tooltip: 'Info',
-                            onTap: widget.onInfoTap,
-                            color: Colors.blue.shade600,
-                          ),
-                          _buildActionButton(
                             icon: Icons.print_rounded,
-                            tooltip: 'Print',
+                            tooltip: context.l10n.actionPrint,
                             onTap: widget.onPrintTap,
                             color: Colors.grey.shade600,
                           ),
                           _buildActionButton(
                             icon: Icons.edit_rounded,
-                            tooltip: 'Update',
+                            tooltip: context.l10n.actionUpdate,
                             onTap: widget.onUpdateTap,
                             color: Colors.orange.shade700,
                           ),

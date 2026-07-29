@@ -15,10 +15,7 @@ class PosServerEntry {
   final String serverUrl;
   final String orgInstanceId;
 
-  const PosServerEntry({
-    required this.serverUrl,
-    required this.orgInstanceId,
-  });
+  const PosServerEntry({required this.serverUrl, required this.orgInstanceId});
 
   String get displayLabel {
     final origin = discoveryOrigin(serverUrl);
@@ -28,9 +25,9 @@ class PosServerEntry {
   }
 
   Map<String, dynamic> toJson() => {
-        'serverUrl': serverUrl,
-        'orgInstanceId': orgInstanceId,
-      };
+    'serverUrl': serverUrl,
+    'orgInstanceId': orgInstanceId,
+  };
 
   factory PosServerEntry.fromJson(Map<String, dynamic> json) {
     return PosServerEntry(
@@ -67,6 +64,7 @@ class DeviceSetupStore {
   static const serverEntriesKey = 'posServerEntries';
   static const activeServerUrlKey = 'posActiveServerUrl';
   static const activeOrgInstanceIdKey = 'posActiveOrgInstanceId';
+
   /// Shared with [DeviceSettingsStore.lastSyncAtKey].
   static const lastSuccessfulSyncAtKey = 'posLastSuccessfulSyncAt';
 
@@ -185,7 +183,9 @@ class DeviceSetupStore {
     if (config == null) return null;
 
     final withLocale = _backfillLocaleFields(config);
-    final sanitized = ensureCatalogImportUrls(sanitizeStoreConfigJson(withLocale));
+    final sanitized = ensureCatalogImportUrls(
+      sanitizeStoreConfigJson(withLocale),
+    );
     // Persist repaired metadata so cold starts stop failing on blank logo/etc.
     if (jsonEncode(sanitized) != jsonEncode(config)) {
       // Fire-and-forget is fine for cold start; sign-in awaits [persistCachedConfig].
@@ -200,8 +200,9 @@ class DeviceSetupStore {
     final next = Map<String, dynamic>.from(config);
     final bootstrap = loadCachedBootstrapJson() ?? const <String, dynamic>{};
     final organisation = bootstrap['organisation'];
-    final orgMap =
-        organisation is Map ? organisation.cast<String, dynamic>() : const {};
+    final orgMap = organisation is Map
+        ? organisation.cast<String, dynamic>()
+        : const {};
 
     String pick(List<Object?> values) {
       for (final value in values) {
@@ -299,8 +300,8 @@ class DeviceSetupStore {
         if (sid.isNotEmpty && bootStores is List) {
           for (final boot in bootStores) {
             if (boot is! Map) continue;
-            final bootId =
-                '${boot['store_id'] ?? boot['storeId'] ?? ''}'.trim();
+            final bootId = '${boot['store_id'] ?? boot['storeId'] ?? ''}'
+                .trim();
             if (bootId != sid) continue;
             for (final key in [
               'timezone',
@@ -449,8 +450,10 @@ class DeviceSetupStore {
         .trim()
         .toLowerCase();
     final phone = '${row['phone'] ?? ''}'.replaceAll(RegExp(r'[^0-9]'), '');
-    final matchesIdentifier = (cachedEmail.isNotEmpty && cachedEmail == key) ||
-        (reg.isNotEmpty && (reg == key || (digits.isNotEmpty && reg == digits))) ||
+    final matchesIdentifier =
+        (cachedEmail.isNotEmpty && cachedEmail == key) ||
+        (reg.isNotEmpty &&
+            (reg == key || (digits.isNotEmpty && reg == digits))) ||
         (digits.isNotEmpty &&
             phone.isNotEmpty &&
             (phone == digits ||
@@ -492,7 +495,8 @@ class DeviceSetupStore {
       final map = Map<String, dynamic>.from(row);
       final rowId = '${map['customerId'] ?? ''}'.trim();
       final rowEmail = '${map['email'] ?? ''}'.trim().toLowerCase();
-      final match = (customerId.isNotEmpty && rowId == customerId) ||
+      final match =
+          (customerId.isNotEmpty && rowId == customerId) ||
           (emailKey.isNotEmpty && rowEmail == emailKey);
       if (match) {
         map['password'] = password;
@@ -616,12 +620,12 @@ class DeviceSetupStore {
     void take(Map row) {
       final nested = row['currency'];
       if (nested is Map) {
-        final nestedCode =
-            '${nested['currency_code'] ?? nested['code'] ?? ''}'.trim();
+        final nestedCode = '${nested['currency_code'] ?? nested['code'] ?? ''}'
+            .trim();
         final nestedSymbol =
             '${nested['currency_symbol'] ?? nested['symbol'] ?? ''}'.trim();
-        final nestedName =
-            '${nested['currency_name'] ?? nested['name'] ?? ''}'.trim();
+        final nestedName = '${nested['currency_name'] ?? nested['name'] ?? ''}'
+            .trim();
         if (code.isEmpty && nestedCode.isNotEmpty) code = nestedCode;
         if (symbol.isEmpty && nestedSymbol.isNotEmpty) symbol = nestedSymbol;
         if (name.isEmpty && nestedName.isNotEmpty) name = nestedName;
@@ -685,7 +689,9 @@ class DeviceSetupStore {
   }
 
   /// Country flag emoji / code for [storeId] (org fallback).
-  ({String flag, String code, String name}) countryMetaForStore(String? storeId) {
+  ({String flag, String code, String name}) countryMetaForStore(
+    String? storeId,
+  ) {
     String flag = '';
     String code = '';
     String name = '';
@@ -826,7 +832,9 @@ class DeviceSetupStore {
       orgInstanceId: entry.orgInstanceId.trim(),
     );
     if (normalized.serverUrl.isEmpty || normalized.orgInstanceId.isEmpty) {
-      throw ArgumentError('Server URL and organisation instance id are required.');
+      throw ArgumentError(
+        'Server URL and organisation instance id are required.',
+      );
     }
 
     final next = <PosServerEntry>[normalized];

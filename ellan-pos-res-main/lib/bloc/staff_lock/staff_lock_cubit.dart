@@ -40,14 +40,14 @@ class StaffLockState extends Equatable {
     this.showAllStaff = false,
   });
 
-  bool get isValid =>
-      identifier.trim().isNotEmpty && password.isNotEmpty;
+  bool get isValid => identifier.trim().isNotEmpty && password.isNotEmpty;
 
   /// Up to 4 recent badges; falls back to first staff when no recents yet.
   List<PosStaffOption> get badgeStaff {
     final recentIds = recentStaff.map((s) => s.customerId).toSet();
-    final recentKeys =
-        recentStaff.map((s) => s.identifier.toLowerCase()).toSet();
+    final recentKeys = recentStaff
+        .map((s) => s.identifier.toLowerCase())
+        .toSet();
     final badges = <PosStaffOption>[...recentStaff.take(4)];
     if (badges.length < 4) {
       for (final option in staffOptions) {
@@ -106,22 +106,22 @@ class StaffLockState extends Equatable {
 
   @override
   List<Object?> get props => [
-        identifier,
-        password,
-        obscurePassword,
-        isLoading,
-        loadingStaff,
-        errorMessage,
-        unlocked,
-        needsStorePicker,
-        needsOnlineRenew,
-        storeId,
-        storeName,
-        staffOptions,
-        recentStaff,
-        selectedCustomerId,
-        showAllStaff,
-      ];
+    identifier,
+    password,
+    obscurePassword,
+    isLoading,
+    loadingStaff,
+    errorMessage,
+    unlocked,
+    needsStorePicker,
+    needsOnlineRenew,
+    storeId,
+    storeName,
+    staffOptions,
+    recentStaff,
+    selectedCustomerId,
+    showAllStaff,
+  ];
 }
 
 class StaffLockCubit extends Cubit<StaffLockState> {
@@ -134,17 +134,18 @@ class StaffLockCubit extends Cubit<StaffLockState> {
     this.preferredStoreId,
     this.storeNameHint,
   }) : super(
-          StaffLockState(
-            identifier: prefs.getString('lastStaffIdentifier') ??
-                prefs.getString('userEmail') ??
-                '',
-            storeId: preferredStoreId ?? prefs.getString('selectedStoreId'),
-            storeName: (storeNameHint ?? '').trim().isNotEmpty
-                ? storeNameHint!.trim()
-                : prefs.getString('selectedStoreName'),
-            loadingStaff: true,
-          ),
-        ) {
+         StaffLockState(
+           identifier:
+               prefs.getString('lastStaffIdentifier') ??
+               prefs.getString('userEmail') ??
+               '',
+           storeId: preferredStoreId ?? prefs.getString('selectedStoreId'),
+           storeName: (storeNameHint ?? '').trim().isNotEmpty
+               ? storeNameHint!.trim()
+               : prefs.getString('selectedStoreName'),
+           loadingStaff: true,
+         ),
+       ) {
     loadStaffOptions();
   }
 
@@ -152,7 +153,8 @@ class StaffLockCubit extends Cubit<StaffLockState> {
     emit(state.copyWith(loadingStaff: true, clearError: true));
     final controller = getIt<UiStoreController>();
     final storeId = preferredStoreId ?? state.storeId;
-    final resolvedName = controller.staffUnlockStoreName(storeId: storeId) ??
+    final resolvedName =
+        controller.staffUnlockStoreName(storeId: storeId) ??
         ((storeNameHint ?? '').trim().isNotEmpty
             ? storeNameHint!.trim()
             : null) ??
@@ -166,13 +168,11 @@ class StaffLockCubit extends Cubit<StaffLockState> {
       final recent = await controller.loadRecentStaffOptions();
       // Keep recent entries that still exist in this store's staff list only.
       final byId = {for (final s in staff) s.customerId: s};
-      final byIdent = {
-        for (final s in staff) s.identifier.toLowerCase(): s,
-      };
+      final byIdent = {for (final s in staff) s.identifier.toLowerCase(): s};
       final resolvedRecent = <PosStaffOption>[];
       for (final row in recent) {
-        final match = byId[row.customerId] ??
-            byIdent[row.identifier.toLowerCase()];
+        final match =
+            byId[row.customerId] ?? byIdent[row.identifier.toLowerCase()];
         if (match == null) continue;
         if (resolvedRecent.any(
           (s) =>
@@ -268,11 +268,7 @@ class StaffLockCubit extends Cubit<StaffLockState> {
   Future<void> unlock() async {
     if (state.isLoading) return;
     if (!state.isValid) {
-      emit(
-        state.copyWith(
-          errorMessage: 'Enter staff ID and password',
-        ),
-      );
+      emit(state.copyWith(errorMessage: 'Enter staff ID and password'));
       return;
     }
 

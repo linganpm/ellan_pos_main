@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
+import '../../core/localization/l10n_context.dart';
 
 enum PosToastKind { success, failed }
 
@@ -142,12 +143,19 @@ class _PosToastCardState extends State<_PosToastCard>
 
   @override
   Widget build(BuildContext context) {
-    final accent = _isSuccess ? const Color(0xFF1B7F4E) : const Color(0xFFB42318);
+    final accent = _isSuccess
+        ? const Color(0xFF1B7F4E)
+        : const Color(0xFFB42318);
     final bg = _isSuccess ? const Color(0xFFECFDF3) : const Color(0xFFFEF3F2);
-    final border = _isSuccess ? const Color(0xFFABEFC6) : const Color(0xFFFECDCA);
-    final title = _isSuccess ? 'Success' : 'Failed';
-    final leadingIcon =
-        _isSuccess ? Icons.check_circle_rounded : Icons.cancel_rounded;
+    final border = _isSuccess
+        ? const Color(0xFFABEFC6)
+        : const Color(0xFFFECDCA);
+    final title = _isSuccess
+        ? context.l10n.commonSuccess
+        : context.l10n.commonFailed;
+    final leadingIcon = _isSuccess
+        ? Icons.check_circle_rounded
+        : Icons.cancel_rounded;
 
     return Positioned(
       right: 20,
@@ -196,7 +204,9 @@ class _PosToastCardState extends State<_PosToastCard>
                             if (_hasDetail) ...[
                               const SizedBox(width: 2),
                               IconButton(
-                                tooltip: _expanded ? 'Hide details' : 'Details',
+                                tooltip: _expanded
+                                    ? context.l10n.commonHideDetails
+                                    : context.l10n.commonDetails,
                                 visualDensity: VisualDensity.compact,
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(
@@ -213,7 +223,7 @@ class _PosToastCardState extends State<_PosToastCard>
                             ] else
                               const SizedBox(width: 8),
                             IconButton(
-                              tooltip: 'Dismiss',
+                              tooltip: context.l10n.commonDismiss,
                               visualDensity: VisualDensity.compact,
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(

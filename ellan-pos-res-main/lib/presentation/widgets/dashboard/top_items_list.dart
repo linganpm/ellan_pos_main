@@ -13,11 +13,7 @@ class TopItemsList extends StatelessWidget {
   final String title;
   final List<TopItem> items;
 
-  const TopItemsList({
-    super.key,
-    required this.title,
-    required this.items,
-  });
+  const TopItemsList({super.key, required this.title, required this.items});
 
   @override
   Widget build(BuildContext context) {
@@ -37,15 +33,13 @@ class TopItemsList extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: FontUtility.heading.copyWith(fontSize: 20),
-          ),
+          Text(title, style: FontUtility.heading.copyWith(fontSize: 20)),
           const SizedBox(height: 16),
           Expanded(
             child: ListView.separated(
               itemCount: items.length,
-              separatorBuilder: (context, index) => const Divider(height: 24, color: Colors.black12),
+              separatorBuilder: (context, index) =>
+                  const Divider(height: 24, color: Colors.black12),
               itemBuilder: (context, index) {
                 final item = items[index];
                 return Row(
@@ -57,20 +51,28 @@ class TopItemsList extends StatelessWidget {
                         color: Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.fastfood_rounded, color: Colors.grey),
+                      child: const Icon(
+                        Icons.fastfood_rounded,
+                        color: Colors.grey,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Text(
                         item.name,
-                        style: FontUtility.body.copyWith(fontWeight: FontWeight.w600),
+                        style: FontUtility.body.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 16),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF4A00E0).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),

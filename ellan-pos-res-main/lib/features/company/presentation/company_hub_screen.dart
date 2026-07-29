@@ -6,6 +6,7 @@ import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/features/company/presentation/company_reports_screen.dart';
 import 'package:pos_tablet/features/company/presentation/company_settings_screen.dart';
 import 'package:pos_tablet/features/company/presentation/company_staffs_screen.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 /// Company hub: Settings + Staffs for the open store.
 class CompanyHubScreen extends StatelessWidget {
@@ -19,7 +20,7 @@ class CompanyHubScreen extends StatelessWidget {
     final ok = await store.auth.hasStoreRole('admin');
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Store Admin access required.')),
+        SnackBar(content: Text(context.l10n.storeAdminAccessRequired)),
       );
     }
     return ok;
@@ -34,32 +35,38 @@ class CompanyHubScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0.5,
-        title: Text('Company', style: FontUtility.heading.copyWith(fontSize: 22)),
+        title: Text(
+          context.l10n.commonCompany,
+          style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
           Text(
-            store?.storeName ?? 'Open store',
+            store?.storeName ?? context.l10n.companyOpenStore,
             style: FontUtility.heading.copyWith(fontSize: 20),
           ),
           const SizedBox(height: 4),
           Text(
-            'SI ${store?.storeRemoteId ?? store?.serviceInstanceId ?? '—'}',
+            context.l10n.commonServiceInstanceShort(
+              '${store?.storeRemoteId ?? store?.serviceInstanceId ?? context.l10n.commonEmpty}',
+            ),
             style: FontUtility.body.copyWith(color: Colors.black54),
           ),
           const SizedBox(height: 24),
           _tile(
             context,
             icon: Icons.settings_rounded,
-            title: 'Settings',
-            subtitle: 'Name, registration, address, tax, phone, email, identifier',
+            title: context.l10n.companySettingsTitle,
             onTap: () async {
               if (!await _ensureAdmin(context)) return;
               if (!context.mounted) return;
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const CompanySettingsScreen()),
+                MaterialPageRoute(
+                  builder: (_) => const CompanySettingsScreen(),
+                ),
               );
             },
           ),
@@ -67,8 +74,7 @@ class CompanyHubScreen extends StatelessWidget {
           _tile(
             context,
             icon: Icons.badge_rounded,
-            title: 'Staffs',
-            subtitle: 'List staff and add new accounts for this store',
+            title: context.l10n.companyStaffsTitle,
             onTap: () async {
               if (!await _ensureAdmin(context)) return;
               if (!context.mounted) return;
@@ -82,8 +88,7 @@ class CompanyHubScreen extends StatelessWidget {
           _tile(
             context,
             icon: Icons.insights_rounded,
-            title: 'Reports',
-            subtitle: 'Sales report subscribers and schedule',
+            title: context.l10n.commonReports,
             onTap: () async {
               if (!await _ensureAdmin(context)) return;
               if (!context.mounted) return;
@@ -97,8 +102,7 @@ class CompanyHubScreen extends StatelessWidget {
           _tile(
             context,
             icon: Icons.storefront_rounded,
-            title: 'Store setup',
-            subtitle: 'Catalogue, offers, add-ons',
+            title: context.l10n.storeSetupTitle,
             onTap: () async {
               if (!await _ensureAdmin(context)) return;
               if (!context.mounted) return;
@@ -114,7 +118,6 @@ class CompanyHubScreen extends StatelessWidget {
     BuildContext context, {
     required IconData icon,
     required String title,
-    required String subtitle,
     required VoidCallback onTap,
   }) {
     return Material(
@@ -138,25 +141,12 @@ class CompanyHubScreen extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: FontUtility.body.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 17,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: FontUtility.body.copyWith(
-                        color: Colors.black54,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  title,
+                  style: FontUtility.body.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 17,
+                  ),
                 ),
               ),
               const Icon(Icons.chevron_right_rounded, color: Colors.black38),

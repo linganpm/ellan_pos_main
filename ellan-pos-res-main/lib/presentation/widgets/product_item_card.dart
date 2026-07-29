@@ -20,7 +20,7 @@ class ProductItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final priceLabel = product.hasSellUnit
         ? '${PosCurrency.format(product.price)} / '
-            '${_fmtQty(product.sellUnitBaseQty ?? 1)} ${product.sellUnitShort}'
+              '${_fmtQty(product.sellUnitBaseQty ?? 1)} ${product.sellUnitShort}'
         : PosCurrency.format(product.price);
 
     final pad = compact ? 6.0 : 8.0;
@@ -76,7 +76,9 @@ class ProductItemCard extends StatelessWidget {
                     SizedBox(height: compact ? 4 : 6),
                     Text(
                       product.name,
-                      style: FontUtility.subheading.copyWith(fontSize: nameSize),
+                      style: FontUtility.subheading.copyWith(
+                        fontSize: nameSize,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -93,7 +95,8 @@ class ProductItemCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (product.offerTag != null && product.offerTag!.trim().isNotEmpty)
+              if (product.offerTag != null &&
+                  product.offerTag!.trim().isNotEmpty)
                 Positioned(
                   top: compact ? 3 : 4,
                   left: compact ? 3 : 4,

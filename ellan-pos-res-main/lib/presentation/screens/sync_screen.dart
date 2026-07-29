@@ -6,16 +6,14 @@ import 'package:pos_tablet/bloc/sync/sync_cubit.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
+import '../../core/localization/l10n_context.dart';
 
 class SyncScreen extends StatelessWidget {
   const SyncScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => SyncCubit(),
-      child: const _SyncView(),
-    );
+    return BlocProvider(create: (_) => SyncCubit(), child: const _SyncView());
   }
 }
 
@@ -41,8 +39,9 @@ class _SyncViewState extends State<_SyncView> {
   Future<void> _loadHistory() async {
     setState(() => _historyLoading = true);
     try {
-      final history =
-          await getIt<UiStoreController>().loadSyncHistory(limit: 500);
+      final history = await getIt<UiStoreController>().loadSyncHistory(
+        limit: 500,
+      );
       if (!mounted) return;
       setState(() {
         _history = history;
@@ -63,14 +62,16 @@ class _SyncViewState extends State<_SyncView> {
       builder: (dialogContext) {
         return AlertDialog(
           title: Text(
-            'Sync history (last 45 days)',
+            context.l10n.syncHistory45,
             style: FontUtility.heading.copyWith(fontSize: 20),
           ),
           content: SizedBox(
             width: 520,
-            child: _history.isEmpty
+            child: _historyLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _history.isEmpty
                 ? Text(
-                    'No sync attempts recorded on this device yet.',
+                    context.l10n.syncNoAttemptsYet,
                     style: FontUtility.body.copyWith(color: Colors.black54),
                   )
                 : SingleChildScrollView(
@@ -89,7 +90,7 @@ class _SyncViewState extends State<_SyncView> {
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
               child: Text(
-                'Close',
+                context.l10n.actionClose,
                 style: FontUtility.button.copyWith(color: Colors.black54),
               ),
             ),
@@ -111,27 +112,24 @@ class _SyncViewState extends State<_SyncView> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Data Sync',
+          context.l10n.syncDataSync,
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
         centerTitle: false,
         actions: [
-          TextButton.icon(
+          IconButton(
+            tooltip: context.l10n.syncHistory,
             onPressed: _showHistoryDialog,
             icon: const Icon(Icons.history_rounded, color: _primary),
-            label: Text(
-              'History',
-              style: FontUtility.button.copyWith(
-                color: _primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
           ),
           const SizedBox(width: 8),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: Colors.grey.withValues(alpha: 0.2), height: 1),
+          child: Container(
+            color: Colors.grey.withValues(alpha: 0.2),
+            height: 1,
+          ),
         ),
       ),
       body: SafeArea(
@@ -152,18 +150,15 @@ class _SyncViewState extends State<_SyncView> {
                       Expanded(
                         child: Text(
                           state.storeName == null || state.storeName!.isEmpty
-                              ? 'Sync store data with remote'
-                              : 'Sync “${state.storeName}” with remote',
+                              ? context.l10n.syncStoreWithRemote
+                              : context.l10n.syncNamedStoreWithRemote(
+                                  state.storeName!,
+                                ),
                           style: FontUtility.subheading.copyWith(fontSize: 18),
                         ),
                       ),
                       _LastSyncBadge(lastSyncAt: state.lastSuccessfulSyncAt),
                     ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Uploads POS customers, orders and credits from this device first, then downloads catalogue updates. Offline sales stay local until the next successful sync.',
-                    style: FontUtility.body.copyWith(color: Colors.black54),
                   ),
                   if (state.isOffline) ...[
                     const SizedBox(height: 16),
@@ -185,7 +180,7 @@ class _SyncViewState extends State<_SyncView> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'Server unreachable. Keep selling offline — pending uploads stay queued on this device until you sync again online.',
+                              context.l10n.syncServerUnreachable,
                               style: FontUtility.body.copyWith(
                                 color: Colors.orange.shade900,
                                 fontSize: 13,
@@ -193,11 +188,10 @@ class _SyncViewState extends State<_SyncView> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () => context
-                                .read<SyncCubit>()
-                                .refreshReachability(),
+                            onPressed: () =>
+                                context.read<SyncCubit>().refreshReachability(),
                             child: Text(
-                              'Retry',
+                              context.l10n.actionRetry,
                               style: FontUtility.button.copyWith(
                                 color: Colors.orange.shade900,
                                 fontSize: 13,
@@ -214,7 +208,7 @@ class _SyncViewState extends State<_SyncView> {
                       children: [
                         _SectionHeader(
                           icon: Icons.cloud_download_rounded,
-                          label: 'Download from remote',
+                          label: context.l10n.syncDownloadFromRemote,
                         ),
                         const SizedBox(height: 10),
                         for (final item in state.downloadItems) ...[
@@ -224,63 +218,13 @@ class _SyncViewState extends State<_SyncView> {
                         const SizedBox(height: 8),
                         _SectionHeader(
                           icon: Icons.cloud_upload_rounded,
-                          label: 'Upload to remote',
+                          label: context.l10n.syncUploadToRemote,
                         ),
                         const SizedBox(height: 10),
                         for (final item in state.uploadItems) ...[
                           _SyncChecklistTile(item: item),
                           const SizedBox(height: 12),
                         ],
-                        const SizedBox(height: 20),
-                        _SectionHeader(
-                          icon: Icons.history_rounded,
-                          label: 'Sync history (last 45 days)',
-                        ),
-                        const SizedBox(height: 10),
-                        if (_historyLoading)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: _primary,
-                                strokeWidth: 2.5,
-                              ),
-                            ),
-                          )
-                        else if (_history.isEmpty)
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: Colors.grey.withValues(alpha: 0.15),
-                              ),
-                            ),
-                            child: Text(
-                              'No sync attempts recorded on this device yet. Run a sync to populate history.',
-                              style: FontUtility.body
-                                  .copyWith(color: Colors.black54),
-                            ),
-                          )
-                        else
-                          for (final entry in _history) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 18,
-                                vertical: 14,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: Colors.grey.withValues(alpha: 0.15),
-                                ),
-                              ),
-                              child: _SyncHistoryTile(entry: entry),
-                            ),
-                            const SizedBox(height: 10),
-                          ],
                       ],
                     ),
                   ),
@@ -330,18 +274,18 @@ class _SyncViewState extends State<_SyncView> {
                               state.isOffline
                                   ? Icons.cloud_off_rounded
                                   : state.completed
-                                      ? Icons.sync_rounded
-                                      : Icons.cloud_sync_rounded,
+                                  ? Icons.sync_rounded
+                                  : Icons.cloud_sync_rounded,
                               color: Colors.white,
                             ),
                       label: Text(
                         state.isRunning
-                            ? 'Syncing…'
+                            ? context.l10n.syncSyncing
                             : state.isOffline
-                                ? 'Offline — sync when online'
-                                : state.completed
-                                    ? 'Sync Again'
-                                    : 'Start Sync',
+                            ? context.l10n.syncOfflineWhenOnline
+                            : state.completed
+                            ? context.l10n.syncAgain
+                            : context.l10n.syncStart,
                         style: FontUtility.button.copyWith(
                           color: Colors.white,
                           fontSize: 16,
@@ -370,21 +314,27 @@ class _SyncHistoryTile extends StatelessWidget {
     final color = entry.skipped
         ? Colors.orange.shade700
         : (ok ? Colors.green.shade700 : Colors.red.shade700);
-    final when = DateTime.tryParse(entry.completedAt) ??
+    final when =
+        DateTime.tryParse(entry.completedAt) ??
         DateTime.tryParse(entry.startedAt);
     final stamp = when == null
-        ? '—'
+        ? context.l10n.commonEmpty
         : DateFormat('MMM dd, hh:mm a').format(when.toLocal());
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          entry.direction == 'import'
-              ? Icons.cloud_download_rounded
-              : Icons.cloud_upload_rounded,
-          size: 20,
-          color: const Color(0xFF4A00E0),
+        Tooltip(
+          message: entry.direction == 'import'
+              ? context.l10n.syncDownloadFromRemote
+              : context.l10n.syncUploadToRemote,
+          child: Icon(
+            entry.direction == 'import'
+                ? Icons.cloud_download_rounded
+                : Icons.cloud_upload_rounded,
+            size: 20,
+            color: const Color(0xFF4A00E0),
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -392,7 +342,7 @@ class _SyncHistoryTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${entry.direction} · ${entry.entity}',
+                entry.entity,
                 style: FontUtility.subheading.copyWith(fontSize: 15),
               ),
               const SizedBox(height: 4),
@@ -412,7 +362,11 @@ class _SyncHistoryTile extends StatelessWidget {
               ],
               const SizedBox(height: 4),
               Text(
-                '${entry.processedCount} processed · ${entry.successCount} ok · ${entry.failureCount} failed',
+                context.l10n.syncHistoryStats(
+                  entry.processedCount,
+                  entry.successCount,
+                  entry.failureCount,
+                ),
                 style: FontUtility.body.copyWith(
                   fontSize: 12,
                   color: Colors.black45,
@@ -422,7 +376,9 @@ class _SyncHistoryTile extends StatelessWidget {
           ),
         ),
         Text(
-          entry.skipped ? 'Skipped' : (ok ? 'Success' : 'Failed'),
+          entry.skipped
+              ? context.l10n.commonSkipped
+              : (ok ? context.l10n.commonSuccess : context.l10n.commonFailed),
           style: FontUtility.body.copyWith(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -466,12 +422,16 @@ class _LastSyncBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formatted = lastSyncAt == null
-        ? 'Never synced'
-        : 'Last sync: ${DateFormat('MMM dd, yyyy hh:mm a').format(lastSyncAt!.toLocal())}';
+        ? context.l10n.syncNeverSynced
+        : context.l10n.syncLastSync(
+            DateFormat('MMM dd, yyyy hh:mm a').format(lastSyncAt!.toLocal()),
+          );
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: lastSyncAt == null ? Colors.orange.shade50 : Colors.green.shade50,
+        color: lastSyncAt == null
+            ? Colors.orange.shade50
+            : Colors.green.shade50,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: lastSyncAt == null
@@ -537,10 +497,7 @@ class _SyncChecklistTile extends StatelessWidget {
           Container(
             width: 36,
             height: 36,
-            decoration: BoxDecoration(
-              color: bg,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
             child: item.status == SyncItemStatus.running
                 ? Padding(
                     padding: const EdgeInsets.all(8),
@@ -583,7 +540,7 @@ class _SyncChecklistTile extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            _statusLabel(item.status),
+            _statusLabel(context, item.status),
             style: FontUtility.body.copyWith(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -616,11 +573,7 @@ class _SyncChecklistTile extends StatelessWidget {
           Colors.green.shade50,
         );
       case SyncItemStatus.failed:
-        return (
-          Icons.error_rounded,
-          Colors.red.shade700,
-          Colors.red.shade50,
-        );
+        return (Icons.error_rounded, Colors.red.shade700, Colors.red.shade50);
       case SyncItemStatus.skipped:
         return (
           Icons.remove_circle_outline,
@@ -630,18 +583,18 @@ class _SyncChecklistTile extends StatelessWidget {
     }
   }
 
-  String _statusLabel(SyncItemStatus status) {
+  String _statusLabel(BuildContext context, SyncItemStatus status) {
     switch (status) {
       case SyncItemStatus.pending:
-        return 'Pending';
+        return context.l10n.commonPending;
       case SyncItemStatus.running:
-        return 'Running';
+        return context.l10n.syncRunning;
       case SyncItemStatus.success:
-        return 'Done';
+        return context.l10n.commonDone;
       case SyncItemStatus.failed:
-        return 'Failed';
+        return context.l10n.commonFailed;
       case SyncItemStatus.skipped:
-        return 'Skipped';
+        return context.l10n.commonSkipped;
     }
   }
 }

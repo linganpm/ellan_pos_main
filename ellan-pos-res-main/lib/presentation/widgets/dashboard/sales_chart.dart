@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/controllers/checkout_models.dart';
+import '../../../core/localization/l10n_context.dart';
 import '../../../core/utils/font_utility.dart';
 
 class SalesChart extends StatelessWidget {
@@ -15,10 +16,14 @@ class SalesChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxAmount =
-        points.fold<double>(0, (max, point) => point.amount > max ? point.amount : max);
-    final maxCount =
-        points.fold<int>(0, (max, point) => point.count > max ? point.count : max);
+    final maxAmount = points.fold<double>(
+      0,
+      (max, point) => point.amount > max ? point.amount : max,
+    );
+    final maxCount = points.fold<int>(
+      0,
+      (max, point) => point.count > max ? point.count : max,
+    );
     final amountMax = maxAmount <= 0 ? 100.0 : (maxAmount * 1.2);
     final countMax = maxCount <= 0 ? 4.0 : (maxCount * 1.2);
     final hasSales = points.any((point) => point.amount > 0 || point.count > 0);
@@ -55,11 +60,14 @@ class SalesChart extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Sales trend',
+                context.l10n.dashboardSalesTrend,
                 style: FontUtility.heading.copyWith(fontSize: 20),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4A00E0).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -76,10 +84,16 @@ class SalesChart extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Row(
-            children: const [
-              _LegendDot(color: Color(0xFF4A00E0), label: 'Order total'),
-              SizedBox(width: 16),
-              _LegendDot(color: Color(0xFF00C9FF), label: 'Order count'),
+            children: [
+              _LegendDot(
+                color: const Color(0xFF4A00E0),
+                label: context.l10n.dashboardOrderTotal,
+              ),
+              const SizedBox(width: 16),
+              _LegendDot(
+                color: const Color(0xFF00C9FF),
+                label: context.l10n.dashboardOrderCount,
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -87,7 +101,7 @@ class SalesChart extends StatelessWidget {
             child: !hasSales
                 ? Center(
                     child: Text(
-                      'No sales in this period',
+                      context.l10n.dashboardNoSalesYet,
                       style: FontUtility.body.copyWith(color: Colors.black45),
                     ),
                   )
@@ -111,7 +125,10 @@ class SalesChart extends StatelessWidget {
                             final point = points[index];
                             return [
                               LineTooltipItem(
-                                '${point.label}\n\$${point.amount.toStringAsFixed(2)}\n${point.count} orders',
+                                '${point.label}\n'
+                                '\$${point.amount.toStringAsFixed(2)}\n'
+                                '${point.count} · '
+                                '${context.l10n.dashboardMetricOrders}',
                                 const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -226,7 +243,9 @@ class SalesChart extends StatelessWidget {
                           ),
                           belowBarData: BarAreaData(
                             show: true,
-                            color: const Color(0xFF4A00E0).withValues(alpha: 0.08),
+                            color: const Color(
+                              0xFF4A00E0,
+                            ).withValues(alpha: 0.08),
                           ),
                         ),
                         LineChartBarData(
@@ -276,7 +295,10 @@ class _LegendDot extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
-        Text(label, style: FontUtility.body.copyWith(fontSize: 12, color: Colors.black54)),
+        Text(
+          label,
+          style: FontUtility.body.copyWith(fontSize: 12, color: Colors.black54),
+        ),
       ],
     );
   }

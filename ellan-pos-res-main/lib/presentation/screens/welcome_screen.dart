@@ -8,6 +8,7 @@ import '../../bloc/welcome/welcome_state.dart';
 import '../../core/routes.dart';
 import '../../core/device_setup_store.dart';
 import '../../core/constants/discovery_constants.dart';
+import '../../core/localization/l10n_context.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -15,9 +16,8 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => WelcomeCubit(
-        prefs: context.read<SharedPreferences>(),
-      ),
+      create: (context) =>
+          WelcomeCubit(prefs: context.read<SharedPreferences>()),
       child: const _WelcomeView(),
     );
   }
@@ -60,10 +60,7 @@ class _WelcomeViewState extends State<_WelcomeView> {
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF8E2DE2),
-                    Color(0xFF4A00E0),
-                  ],
+                  colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -82,20 +79,11 @@ class _WelcomeViewState extends State<_WelcomeView> {
                       ),
                       const SizedBox(height: 32),
                       Text(
-                        AppLocalizations.of(context)!.welcomeUnlockBusiness,
+                        context.l10n.appName,
                         style: FontUtility.heading.copyWith(
                           color: Colors.white,
                           fontSize: 42,
                           height: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        AppLocalizations.of(context)!.welcomeDescription,
-                        style: FontUtility.body.copyWith(
-                          color: Colors.white70,
-                          fontSize: 18,
-                          height: 1.5,
                         ),
                       ),
                     ],
@@ -129,7 +117,8 @@ class _WelcomeViewState extends State<_WelcomeView> {
                           children: [
                             Align(
                               alignment: Alignment.centerLeft,
-                              child: TextButton.icon(
+                              child: IconButton(
+                                tooltip: context.l10n.actionBack,
                                 onPressed: state.isLoading
                                     ? null
                                     : () {
@@ -140,12 +129,6 @@ class _WelcomeViewState extends State<_WelcomeView> {
                                         );
                                       },
                                 icon: const Icon(Icons.arrow_back_rounded),
-                                label: Text(
-                                  'Back to Get started',
-                                  style: FontUtility.body.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -153,14 +136,6 @@ class _WelcomeViewState extends State<_WelcomeView> {
                               AppLocalizations.of(context)!.welcomeGetStarted,
                               style: FontUtility.heading.copyWith(
                                 color: const Color(0xFF333333),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Enter the backend server URL and organisation '
-                              'instance id before registering this device.',
-                              style: FontUtility.body.copyWith(
-                                color: Colors.black54,
                               ),
                             ),
                             const SizedBox(height: 32),
@@ -199,9 +174,10 @@ class _WelcomeViewState extends State<_WelcomeView> {
                               ),
                               const SizedBox(height: 24),
                             ],
-                            if (state.savedServers.isNotEmpty) ...[
+                            if (!kIsPosDiscoveryConfiguredByEnv &&
+                                state.savedServers.isNotEmpty) ...[
                               Text(
-                                'Saved servers',
+                                context.l10n.welcomeSavedServers,
                                 style: FontUtility.body.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: const Color(0xFF333333),
@@ -210,14 +186,15 @@ class _WelcomeViewState extends State<_WelcomeView> {
                               const SizedBox(height: 8),
                               InputDecorator(
                                 decoration: _fieldDecoration(
-                                  hintText: 'Choose a saved server',
+                                  hintText:
+                                      context.l10n.welcomeChooseSavedServer,
                                 ),
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton<PosServerEntry>(
                                     value: _selectedEntry(state),
                                     isExpanded: true,
                                     hint: Text(
-                                      'Choose a saved server',
+                                      context.l10n.welcomeChooseSavedServer,
                                       style: FontUtility.body.copyWith(
                                         color: Colors.black38,
                                       ),
@@ -258,57 +235,68 @@ class _WelcomeViewState extends State<_WelcomeView> {
                                     onPressed: state.isLoading
                                         ? null
                                         : () async {
-                                            final cubit =
-                                                context.read<WelcomeCubit>();
-                                            final entry =
-                                                _selectedEntry(state)!;
-                                            final confirmed =
-                                                await showDialog<bool>(
+                                            final cubit = context
+                                                .read<WelcomeCubit>();
+                                            final entry = _selectedEntry(
+                                              state,
+                                            )!;
+                                            final confirmed = await showDialog<bool>(
                                               context: context,
-                                              builder: (dialogContext) =>
-                                                  AlertDialog(
-                                                title: const Text(
-                                                  'Delete saved server',
+                                              builder: (dialogContext) => AlertDialog(
+                                                title: Text(
+                                                  dialogContext
+                                                      .l10n
+                                                      .welcomeDeleteSavedServer,
                                                 ),
                                                 content: Text(
-                                                  'Remove "${entry.displayLabel}" '
-                                                  'from this device?',
+                                                  dialogContext.l10n
+                                                      .welcomeRemoveServerConfirm(
+                                                        entry.displayLabel,
+                                                      ),
                                                 ),
                                                 actions: [
                                                   TextButton(
                                                     onPressed: () =>
                                                         Navigator.pop(
-                                                      dialogContext,
-                                                      false,
+                                                          dialogContext,
+                                                          false,
+                                                        ),
+                                                    child: Text(
+                                                      dialogContext
+                                                          .l10n
+                                                          .actionCancel,
                                                     ),
-                                                    child: const Text('Cancel'),
                                                   ),
                                                   ElevatedButton(
                                                     onPressed: () =>
                                                         Navigator.pop(
-                                                      dialogContext,
-                                                      true,
+                                                          dialogContext,
+                                                          true,
+                                                        ),
+                                                    style:
+                                                        ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              const Color(
+                                                                0xFFFF512F,
+                                                              ),
+                                                          foregroundColor:
+                                                              Colors.white,
+                                                        ),
+                                                    child: Text(
+                                                      dialogContext
+                                                          .l10n
+                                                          .actionDelete,
                                                     ),
-                                                    style: ElevatedButton
-                                                        .styleFrom(
-                                                      backgroundColor:
-                                                          const Color(
-                                                        0xFFFF512F,
-                                                      ),
-                                                      foregroundColor:
-                                                          Colors.white,
-                                                    ),
-                                                    child: const Text('Delete'),
                                                   ),
                                                 ],
                                               ),
                                             );
-                                            if (confirmed != true ||
-                                                !mounted) {
+                                            if (confirmed != true || !mounted) {
                                               return;
                                             }
-                                            await cubit
-                                                .deleteSavedServer(entry);
+                                            await cubit.deleteSavedServer(
+                                              entry,
+                                            );
                                             if (!mounted) return;
                                             _syncControllers(
                                               cubit.state,
@@ -319,9 +307,9 @@ class _WelcomeViewState extends State<_WelcomeView> {
                                       Icons.delete_outline_rounded,
                                       color: Color(0xFFFF512F),
                                     ),
-                                    label: const Text(
-                                      'Delete from list',
-                                      style: TextStyle(
+                                    label: Text(
+                                      context.l10n.welcomeDeleteFromList,
+                                      style: const TextStyle(
                                         color: Color(0xFFFF512F),
                                       ),
                                     ),
@@ -329,61 +317,63 @@ class _WelcomeViewState extends State<_WelcomeView> {
                                 ),
                               const SizedBox(height: 16),
                             ],
-                            Text(
-                              'Server URL',
-                              style: FontUtility.body.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFF333333),
+                            if (!kIsPosDiscoveryConfiguredByEnv) ...[
+                              Text(
+                                context.l10n.welcomeServerUrl,
+                                style: FontUtility.body.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF333333),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextField(
-                              controller: _serverUrlController,
-                              enabled: !state.isLoading,
-                              keyboardType: TextInputType.url,
-                              onChanged: (value) => context
-                                  .read<WelcomeCubit>()
-                                  .serverUrlChanged(value),
-                              decoration: _fieldDecoration(
-                                hintText: 'e.g. http://192.168.1.10:8000',
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: _serverUrlController,
+                                enabled: !state.isLoading,
+                                keyboardType: TextInputType.url,
+                                onChanged: (value) => context
+                                    .read<WelcomeCubit>()
+                                    .serverUrlChanged(value),
+                                decoration: _fieldDecoration(
+                                  hintText: context.l10n.welcomeServerUrlHint,
+                                ),
+                                style: FontUtility.body,
                               ),
-                              style: FontUtility.body,
-                            ),
-                            const SizedBox(height: 20),
-                            Text(
-                              'Organisation instance id',
-                              style: FontUtility.body.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFF333333),
+                              const SizedBox(height: 20),
+                              Text(
+                                context.l10n.welcomeOrgInstanceId,
+                                style: FontUtility.body.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF333333),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextField(
-                              controller: _orgIdController,
-                              enabled: !state.isLoading,
-                              keyboardType: TextInputType.text,
-                              onChanged: (value) => context
-                                  .read<WelcomeCubit>()
-                                  .organizationNameChanged(value),
-                              decoration: _fieldDecoration(
-                                hintText: AppLocalizations.of(context)!
-                                    .welcomeOrgCodeHint,
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: _orgIdController,
+                                enabled: !state.isLoading,
+                                keyboardType: TextInputType.text,
+                                onChanged: (value) => context
+                                    .read<WelcomeCubit>()
+                                    .organizationNameChanged(value),
+                                decoration: _fieldDecoration(
+                                  hintText: AppLocalizations.of(
+                                    context,
+                                  )!.welcomeOrgCodeHint,
+                                ),
+                                style: FontUtility.body,
                               ),
-                              style: FontUtility.body,
-                            ),
-                            const SizedBox(height: 24),
+                              const SizedBox(height: 24),
+                            ],
                             SizedBox(
                               width: double.infinity,
                               height: 60,
                               child: ElevatedButton(
                                 onPressed: state.isValid && !state.isLoading
                                     ? () =>
-                                        context.read<WelcomeCubit>().submit()
+                                          context.read<WelcomeCubit>().submit()
                                     : null,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF4A00E0),
-                                  disabledBackgroundColor:
-                                      Colors.grey.shade300,
+                                  disabledBackgroundColor: Colors.grey.shade300,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -401,7 +391,7 @@ class _WelcomeViewState extends State<_WelcomeView> {
                                           ),
                                         )
                                       : Text(
-                                          'Register device',
+                                          context.l10n.welcomeRegisterDevice,
                                           style: FontUtility.button.copyWith(
                                             color: state.isValid
                                                 ? Colors.white
@@ -424,7 +414,7 @@ class _WelcomeViewState extends State<_WelcomeView> {
                                         );
                                       },
                                 child: Text(
-                                  'Already set up? Sign in',
+                                  context.l10n.welcomeAlreadySetupSignIn,
                                   style: FontUtility.body.copyWith(
                                     color: const Color(0xFF4A00E0),
                                     fontWeight: FontWeight.w600,
@@ -444,7 +434,7 @@ class _WelcomeViewState extends State<_WelcomeView> {
                                         );
                                       },
                                 child: Text(
-                                  'Create a new company instead',
+                                  context.l10n.welcomeCreateCompanyInstead,
                                   style: FontUtility.body.copyWith(
                                     color: Colors.black54,
                                     fontWeight: FontWeight.w600,

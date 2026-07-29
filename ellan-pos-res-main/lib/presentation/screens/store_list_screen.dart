@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 import '../../core/utils/font_utility.dart';
 import '../../core/routes.dart';
 import '../../bloc/store_list/store_list_bloc.dart';
 import '../../bloc/store_list/store_list_state.dart';
 import '../../data/models/store_model.dart';
-import '../../core/localization/l10n/app_localizations.dart';
 
 /// Store List Screen - Premium tablet-optimized UI for store selection
 ///
@@ -36,10 +36,7 @@ class StoreListScreen extends StatelessWidget {
               child: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      Color(0xFF8E2DE2),
-                      Color(0xFF4A00E0),
-                    ],
+                    colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
@@ -58,20 +55,11 @@ class StoreListScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 32),
                         Text(
-                          AppLocalizations.of(context)!.welcomeUnlockBusiness,
+                          context.l10n.appName,
                           style: FontUtility.heading.copyWith(
                             color: Colors.white,
                             fontSize: 42,
                             height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          AppLocalizations.of(context)!.welcomeDescription,
-                          style: FontUtility.body.copyWith(
-                            color: Colors.white70,
-                            fontSize: 18,
-                            height: 1.5,
                           ),
                         ),
                       ],
@@ -94,22 +82,22 @@ class StoreListScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Select Store',
+                          context.l10n.storeListSelectStore,
                           style: FontUtility.heading.copyWith(
                             color: const Color(0xFF333333),
                             fontSize: 36,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          returnToStaffLock
-                              ? 'Choose a branch, then unlock with staff ID'
-                              : 'Choose your store to continue',
-                          style: FontUtility.body.copyWith(
-                            color: Colors.black54,
-                            fontSize: 16,
+                        if (returnToStaffLock) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            context.l10n.storeListChooseBranchUnlock,
+                            style: FontUtility.body.copyWith(
+                              color: Colors.black54,
+                              fontSize: 16,
+                            ),
                           ),
-                        ),
+                        ],
                         const SizedBox(height: 24),
                         _buildSearchField(),
                         const SizedBox(height: 16),
@@ -150,7 +138,7 @@ class StoreListScreen extends StatelessWidget {
               );
             },
             child: Text(
-              'Back to staff unlock',
+              context.l10n.storeListBackToUnlock,
               style: FontUtility.body.copyWith(
                 color: Colors.black54,
                 fontWeight: FontWeight.w600,
@@ -166,7 +154,7 @@ class StoreListScreen extends StatelessWidget {
             );
           },
           child: Text(
-            'Online device sign-in',
+            context.l10n.staffLockOnlineSignIn,
             style: FontUtility.body.copyWith(
               color: Colors.black54,
               fontWeight: FontWeight.w600,
@@ -185,11 +173,13 @@ class StoreListScreen extends StatelessWidget {
             context.read<StoreListCubit>().searchStores(query);
           },
           decoration: InputDecoration(
-            hintText: 'Search by store name or ID...',
+            hintText: context.l10n.storeListSearchHint,
             hintStyle: FontUtility.body.copyWith(color: Colors.black38),
             prefixIcon: const Icon(Icons.search, color: Color(0xFF4A00E0)),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 16,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Colors.black12),
@@ -223,7 +213,7 @@ class StoreListScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Loading stores...',
+                  context.l10n.storeListLoading,
                   style: FontUtility.body.copyWith(
                     color: Colors.black54,
                     fontSize: 14,
@@ -239,11 +229,7 @@ class StoreListScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 48,
-                  color: Colors.red.shade700,
-                ),
+                Icon(Icons.error_outline, size: 48, color: Colors.red.shade700),
                 const SizedBox(height: 16),
                 Text(
                   state.errorMessage,
@@ -256,7 +242,7 @@ class StoreListScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () => context.read<StoreListCubit>().loadStores(),
-                  child: const Text('Retry'),
+                  child: Text(context.l10n.actionRetry),
                 ),
               ],
             ),
@@ -294,7 +280,7 @@ class StoreListScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'No stores found',
+                  context.l10n.storeListEmpty,
                   style: FontUtility.body.copyWith(
                     color: Colors.black54,
                     fontSize: 14,
@@ -407,7 +393,7 @@ class StoreListScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Store ID: ${store.storeId}',
+                      context.l10n.storeListStoreId(store.storeId),
                       style: FontUtility.body.copyWith(
                         color: Colors.black54,
                         fontSize: 12,
@@ -428,8 +414,9 @@ class StoreListScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color:
-                          isSelected ? const Color(0xFF4A00E0) : Colors.black26,
+                      color: isSelected
+                          ? const Color(0xFF4A00E0)
+                          : Colors.black26,
                       width: 2.0,
                     ),
                   ),
@@ -496,7 +483,9 @@ class StoreListScreen extends StatelessWidget {
         if (state is StoreVerificationSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${state.store.storeName} selected successfully!'),
+              content: Text(
+                context.l10n.storeSelectedSuccess(state.store.storeName),
+              ),
               backgroundColor: Colors.green.shade700,
               duration: const Duration(seconds: 2),
             ),
@@ -540,8 +529,9 @@ class StoreListScreen extends StatelessWidget {
         builder: (context, state) {
           final cubit = context.read<StoreListCubit>();
           final isLoading = state is StoreVerificationLoading;
-          final syncMessage =
-              state is StoreVerificationLoading ? state.message : null;
+          final syncMessage = state is StoreVerificationLoading
+              ? state.message
+              : null;
           final isEnabled = (cubit.selectedStoreId ?? '').isNotEmpty;
 
           return SizedBox(
@@ -575,7 +565,8 @@ class StoreListScreen extends StatelessWidget {
                               strokeWidth: 2.5,
                             ),
                           ),
-                          if (syncMessage != null && syncMessage.isNotEmpty) ...[
+                          if (syncMessage != null &&
+                              syncMessage.isNotEmpty) ...[
                             const SizedBox(width: 12),
                             Flexible(
                               child: Text(
@@ -592,9 +583,13 @@ class StoreListScreen extends StatelessWidget {
                         ],
                       )
                     : Text(
-                        returnToStaffLock ? 'Open branch' : 'Continue',
+                        returnToStaffLock
+                            ? context.l10n.storeListOpenBranch
+                            : context.l10n.actionContinue,
                         style: FontUtility.button.copyWith(
-                          color: isEnabled ? Colors.white : Colors.grey.shade500,
+                          color: isEnabled
+                              ? Colors.white
+                              : Colors.grey.shade500,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),

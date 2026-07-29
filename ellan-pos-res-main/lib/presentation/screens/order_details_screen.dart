@@ -11,6 +11,7 @@ import 'package:pos_tablet/core/sell_unit.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/screens/order_payments_screen.dart';
 import 'package:pos_tablet/presentation/widgets/order_list/order_status_badge.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
@@ -77,19 +78,19 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete draft'),
-        content: const Text(
-          'Permanently delete this draft order? This cannot be undone.',
-        ),
+        title: Text(context.l10n.orderDeleteDraft),
+        content: Text(context.l10n.orderDeleteDraftConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Keep'),
+            child: Text(context.l10n.actionKeep),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFF512F)),
-            child: const Text('Delete'),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF512F),
+            ),
+            child: Text(context.l10n.actionDelete),
           ),
         ],
       ),
@@ -102,43 +103,47 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not delete draft: $error')),
+        SnackBar(
+          content: Text(
+            context.l10n.errorCouldNotDeleteDraft(error.toString()),
+          ),
+        ),
       );
     }
   }
 
   Future<void> _cancelOrder() async {
     final controller = getIt<UiStoreController>();
-    final payments = await controller.loadOrder(widget.orderId).then(
-          (order) => order?.payments ?? const <StoreOrderPaymentRecord>[],
-        );
-    final outstanding =
-        payments.where((payment) => !payment.isFullyRefunded).toList();
+    final payments = await controller
+        .loadOrder(widget.orderId)
+        .then((order) => order?.payments ?? const <StoreOrderPaymentRecord>[]);
+    final outstanding = payments
+        .where((payment) => !payment.isFullyRefunded)
+        .toList();
 
     if (outstanding.isNotEmpty) {
       final choice = await showDialog<String>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Refund before cancel'),
+          title: Text(context.l10n.orderRefundBeforeCancelTitle),
           content: Text(
-            '${outstanding.length} payment(s) still have a refundable balance. '
-            'Refund them now to cancel this order, or open Payments to refund individually.',
+            context.l10n.orderDetailsRefundablePayments(outstanding.length),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Not now'),
+              child: Text(context.l10n.orderRefundNotNow),
             ),
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, 'payments'),
-              child: const Text('Go to payments'),
+              child: Text(context.l10n.orderGoToPayments),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, 'refund_cancel'),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFFF512F),
               ),
-              child: const Text('Refund all & cancel'),
+              child: Text(context.l10n.orderRefundAllAndCancel),
             ),
           ],
         ),
@@ -158,17 +163,19 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       try {
         await controller.refundAllAndCancelOrder(
           widget.orderId,
-          reason: 'Order cancelled',
+          reason: context.l10n.orderCancelledTitle,
         );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payments refunded and order cancelled.')),
+          SnackBar(content: Text(context.l10n.orderPaymentsRefundedCancelled)),
         );
         await _load();
       } catch (error) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not cancel: $error')),
+          SnackBar(
+            content: Text(context.l10n.errorCouldNotCancel(error.toString())),
+          ),
         );
       }
       return;
@@ -177,17 +184,19 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Cancel order'),
-        content: const Text('Mark this order as Cancelled?'),
+        title: Text(context.l10n.orderCancelTitle),
+        content: Text(context.l10n.orderCancelConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Keep'),
+            child: Text(context.l10n.actionKeep),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFFF512F)),
-            child: const Text('Cancel order'),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF512F),
+            ),
+            child: Text(context.l10n.orderCancelTitle),
           ),
         ],
       ),
@@ -196,14 +205,16 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     try {
       await controller.cancelOrder(widget.orderId);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Order cancelled.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.orderCancelled)));
       await _load();
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not cancel: $error')),
+        SnackBar(
+          content: Text(context.l10n.errorCouldNotCancel(error.toString())),
+        ),
       );
     }
   }
@@ -216,7 +227,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          'Order #${widget.orderId}',
+          context.l10n.orderNumber(widget.orderId),
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
         leading: IconButton(
@@ -225,25 +236,22 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         ),
         actions: [
           if (_order != null && StoreOrderStatus.canDelete(_order!.statusName))
-            TextButton.icon(
+            IconButton(
+              tooltip: context.l10n.actionDelete,
               onPressed: _loading ? null : _deleteDraft,
-              icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFFF512F)),
-              label: Text(
-                'Delete',
-                style: FontUtility.button.copyWith(color: const Color(0xFFFF512F)),
+              icon: const Icon(
+                Icons.delete_outline_rounded,
+                color: Color(0xFFFF512F),
               ),
             ),
           if (_order != null && StoreOrderStatus.canCancel(_order!.statusName))
-            TextButton.icon(
+            IconButton(
+              tooltip: context.l10n.actionCancel,
               onPressed: _loading ? null : _cancelOrder,
               icon: const Icon(Icons.cancel_outlined, color: Color(0xFFFF512F)),
-              label: Text(
-                'Cancel',
-                style: FontUtility.button.copyWith(color: const Color(0xFFFF512F)),
-              ),
             ),
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: context.l10n.actionRefresh,
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh_rounded, color: Colors.black87),
           ),
@@ -251,7 +259,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: Colors.grey.withValues(alpha: 0.2)),
+          child: Container(
+            height: 1,
+            color: Colors.grey.withValues(alpha: 0.2),
+          ),
         ),
       ),
       body: SafeArea(child: _buildBody()),
@@ -269,8 +280,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline_rounded,
-                  color: Color(0xFFFF512F), size: 48),
+              const Icon(
+                Icons.error_outline_rounded,
+                color: Color(0xFFFF512F),
+                size: 48,
+              ),
               const SizedBox(height: 12),
               Text(
                 _error!,
@@ -281,7 +295,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               OutlinedButton.icon(
                 onPressed: _load,
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Retry'),
+                label: Text(context.l10n.actionRetry),
               ),
             ],
           ),
@@ -339,34 +353,28 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               color: _primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.receipt_long_rounded,
-                color: _primary, size: 28),
+            child: const Icon(
+              Icons.receipt_long_rounded,
+              color: _primary,
+              size: 28,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Text(
-                  'Order #${order.orderId}',
-                  style: FontUtility.heading.copyWith(fontSize: 22),
+                OrderStatusBadge(status: order.statusName),
+                OrderStatusBadge(
+                  status: order.paymentStatus.isEmpty
+                      ? context.l10n.statusUnpaid
+                      : order.paymentStatus,
+                  isPaymentStatus: true,
                 ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    OrderStatusBadge(status: order.statusName),
-                    OrderStatusBadge(
-                      status: order.paymentStatus.isEmpty
-                          ? 'Unpaid'
-                          : order.paymentStatus,
-                      isPaymentStatus: true,
-                    ),
-                    _chip(_displayOrderType(order.orderType)),
-                    if (order.exported) _chip('Synced', tone: Colors.green),
-                  ],
-                ),
+                _chip(_displayOrderType(order.orderType)),
+                if (order.exported)
+                  _chip(context.l10n.commonSynced, tone: Colors.green),
               ],
             ),
           ),
@@ -404,9 +412,16 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.shopping_bag_outlined, color: _primary, size: 20),
+              const Icon(
+                Icons.shopping_bag_outlined,
+                color: _primary,
+                size: 20,
+              ),
               const SizedBox(width: 8),
-              Text('Items', style: FontUtility.heading.copyWith(fontSize: 17)),
+              Text(
+                context.l10n.commonItems,
+                style: FontUtility.heading.copyWith(fontSize: 17),
+              ),
               const Spacer(),
               Text(
                 '${order.items.length}',
@@ -419,7 +434,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
-                'No items on this order.',
+                context.l10n.orderNoItems,
                 style: FontUtility.body.copyWith(color: Colors.black54),
               ),
             )
@@ -441,13 +456,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               final offerLabel = detail.appliedOfferLocalIds.isEmpty
                   ? ''
                   : order.appliedOffers
-                      .where(
-                        (offer) =>
-                            detail.appliedOfferLocalIds.contains(offer.localId),
-                      )
-                      .map((offer) => offer.name)
-                      .where((value) => value.trim().isNotEmpty)
-                      .join(' · ');
+                        .where(
+                          (offer) => detail.appliedOfferLocalIds.contains(
+                            offer.localId,
+                          ),
+                        )
+                        .map((offer) => offer.name)
+                        .where((value) => value.trim().isNotEmpty)
+                        .join(' · ');
               return Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(14),
@@ -463,7 +479,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                         children: [
                           Text(
                             name,
-                            style: FontUtility.subheading.copyWith(fontSize: 15),
+                            style: FontUtility.subheading.copyWith(
+                              fontSize: 15,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -479,18 +497,20 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                           if (addonLabel.isNotEmpty) ...[
                             const SizedBox(height: 4),
                             Text(
-                              'Add-ons: $addonLabel',
+                              context.l10n.orderAddonsLabel(addonLabel),
                               style: FontUtility.body.copyWith(
                                 fontSize: 12,
                                 color: Colors.black54,
                               ),
                             ),
                           ],
-                          if (offerLabel.isNotEmpty || detail.discountAmount > 0) ...[
+                          if (offerLabel.isNotEmpty ||
+                              detail.discountAmount > 0) ...[
                             const SizedBox(height: 4),
                             Text(
                               [
-                                if (offerLabel.isNotEmpty) 'Offer: $offerLabel',
+                                if (offerLabel.isNotEmpty)
+                                  '${context.l10n.commonOffers}: $offerLabel',
                                 if (detail.discountAmount > 0)
                                   '- ${PosCurrency.format(detail.discountAmount)}',
                               ].join(' · '),
@@ -504,9 +524,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                       ),
                     ),
                     Text(
-                      PosCurrency.format(detail.totalAfterDiscount > 0
-                          ? detail.totalAfterDiscount
-                          : item.finalPrice),
+                      PosCurrency.format(
+                        detail.totalAfterDiscount > 0
+                            ? detail.totalAfterDiscount
+                            : item.finalPrice,
+                      ),
                       style: FontUtility.subheading.copyWith(fontSize: 15),
                     ),
                   ],
@@ -516,7 +538,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           const SizedBox(height: 8),
           if (order.appliedOffers.isNotEmpty) ...[
             Text(
-              'Applied offers',
+              context.l10n.orderAppliedOffers,
               style: FontUtility.subheading.copyWith(fontSize: 14),
             ),
             const SizedBox(height: 6),
@@ -566,10 +588,13 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Staff', style: FontUtility.heading.copyWith(fontSize: 15)),
+          Text(
+            context.l10n.commonStaff,
+            style: FontUtility.heading.copyWith(fontSize: 15),
+          ),
           const SizedBox(height: 8),
-          _kv('Name', name),
-          if (reg.isNotEmpty) _kv('Reg no.', reg),
+          _kv(context.l10n.commonName, name),
+          if (reg.isNotEmpty) _kv(context.l10n.commonRegNo, reg),
         ],
       ),
     );
@@ -586,13 +611,22 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Customer', style: FontUtility.heading.copyWith(fontSize: 15)),
+          Text(
+            context.l10n.commonCustomer,
+            style: FontUtility.heading.copyWith(fontSize: 15),
+          ),
           const SizedBox(height: 8),
-          _kv('Name', order.customerName.isEmpty ? 'Walk-in' : order.customerName),
-          if (order.mobile.trim().isNotEmpty) _kv('Phone', order.mobile),
+          _kv(
+            context.l10n.commonName,
+            order.customerName.isEmpty
+                ? context.l10n.commonWalkIn
+                : order.customerName,
+          ),
+          if (order.mobile.trim().isNotEmpty)
+            _kv(context.l10n.commonPhone, order.mobile),
           if (order.tables.isNotEmpty)
             _kv(
-              'Table',
+              context.l10n.commonTable,
               order.tables
                   .map((table) => table.displayLabel)
                   .where((value) => value.trim().isNotEmpty)
@@ -615,47 +649,50 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Summary', style: FontUtility.heading.copyWith(fontSize: 17)),
+          Text(
+            context.l10n.orderSummary,
+            style: FontUtility.heading.copyWith(fontSize: 17),
+          ),
           const SizedBox(height: 14),
           if (order.totalDiscount > 0)
             _summaryAmountRow(
-              'Discount',
+              context.l10n.commonDiscount,
               '- ${PosCurrency.format(order.totalDiscount)}',
               color: Colors.green.shade700,
             ),
           if (meta.delivery > 0.0001)
             _summaryAmountRow(
-              'Delivery',
+              context.l10n.commonDelivery,
               PosCurrency.format(meta.delivery),
             ),
           if (meta.serviceTax > 0.0001)
             _summaryAmountRow(
-              'Service Tax',
+              context.l10n.commonServiceTax,
               '+ ${PosCurrency.format(meta.serviceTax)}',
               color: Colors.orange.shade700,
             ),
           if (meta.tips > 0.0001)
             _summaryAmountRow(
-              'Tips',
+              context.l10n.commonTips,
               '+ ${PosCurrency.format(meta.tips)}',
               color: Colors.blue.shade700,
               bold: true,
             ),
           _summaryAmountRow(
-            'Total',
+            context.l10n.commonTotal,
             PosCurrency.format(total),
             bold: true,
             color: _primary,
           ),
           _summaryAmountRow(
-            'Paid',
+            context.l10n.statusPaid,
             PosCurrency.format(paidTotal),
             bold: true,
             color: Colors.green.shade700,
           ),
           if (balance > 0.0001)
             _summaryAmountRow(
-              'Credit',
+              context.l10n.commonCredit,
               '(${PosCurrency.format(balance)})',
               bold: true,
               color: Colors.red.shade700,
@@ -678,11 +715,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           Expanded(
             child: Text(
               label,
-              style: (bold ? FontUtility.subheading : FontUtility.body).copyWith(
-                fontSize: 14,
-                color: Colors.black54,
-                fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
-              ),
+              style: (bold ? FontUtility.subheading : FontUtility.body)
+                  .copyWith(
+                    fontSize: 14,
+                    color: Colors.black54,
+                    fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+                  ),
             ),
           ),
           Text(
@@ -703,7 +741,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     final remaining = double.parse(
       (orderTotal - paidTotal).clamp(0, orderTotal).toStringAsFixed(2),
     );
-    final canRecord = remaining > 0.0001 &&
+    final canRecord =
+        remaining > 0.0001 &&
         !StoreOrderStatus.isCancelled(order.statusName) &&
         !StoreOrderStatus.isCompleted(order.statusName);
 
@@ -716,7 +755,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         children: [
           Row(
             children: [
-              Text('Payments', style: FontUtility.heading.copyWith(fontSize: 17)),
+              Text(
+                context.l10n.commonPayments,
+                style: FontUtility.heading.copyWith(fontSize: 17),
+              ),
               const Spacer(),
               Text(
                 '${order.payments.length}',
@@ -727,9 +769,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           const SizedBox(height: 8),
           Text(
             order.payments.isEmpty
-                ? 'No payments recorded yet.'
-                : 'Total paid ${PosCurrency.format(paidTotal)}'
-                    '${remaining > 0.0001 ? ' · Due ${PosCurrency.format(remaining)}' : ''}',
+                ? context.l10n.orderDetailsNoPaymentsRecorded
+                : '${context.l10n.orderDetailsTotalPaid(PosCurrency.format(paidTotal))}'
+                      '${remaining > 0.0001 ? context.l10n.orderDetailsDueSuffix(PosCurrency.format(remaining)) : ''}',
             style: FontUtility.body.copyWith(color: Colors.black54),
           ),
           const SizedBox(height: 14),
@@ -741,7 +783,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 ElevatedButton.icon(
                   onPressed: () => _openPayments(order, openRecord: true),
                   icon: const Icon(Icons.add_card_rounded),
-                  label: const Text('Add / Record payment'),
+                  label: Text(context.l10n.orderAddRecordPayment),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _primary,
                     foregroundColor: Colors.white,
@@ -759,8 +801,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 icon: const Icon(Icons.payments_rounded),
                 label: Text(
                   order.payments.isEmpty && !canRecord
-                      ? 'Payments'
-                      : 'View payments',
+                      ? context.l10n.commonPayments
+                      : context.l10n.orderDetailsViewPayments,
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _primary,
@@ -790,7 +832,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       } catch (error) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open draft: $error')),
+          SnackBar(
+            content: Text(
+              context.l10n.orderCouldNotOpenDraft(error.toString()),
+            ),
+          ),
         );
         return;
       }
@@ -823,7 +869,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           '${PosCurrency.format(item.unitPrice)} / ${formatSellQty(unit.baseQty)} ${unit.unitShort}'
           '${packages > 1 ? ' × ${formatSellQty(packages)}' : ''}';
     }
-    return 'Qty ${item.quantity} · ${PosCurrency.format(item.unitPrice)}';
+    return '${context.l10n.commonQuantity} ${item.quantity} · '
+        '${PosCurrency.format(item.unitPrice)}';
   }
 
   Widget _kv(String label, String value, {bool bold = false}) {
@@ -893,7 +940,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   }
 
   String _displayOrderType(String raw) {
-    final normalized = raw.trim().toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+    final normalized = raw.trim().toLowerCase().replaceAll(
+      RegExp(r'[^a-z]'),
+      '',
+    );
     if (normalized.contains('dine')) return 'Dine In';
     if (normalized.contains('deliver')) return 'Delivery';
     if (normalized.contains('pick')) return 'Pickup';

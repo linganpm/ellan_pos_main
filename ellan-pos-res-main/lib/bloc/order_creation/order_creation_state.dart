@@ -6,6 +6,7 @@ class OrderCreationState extends Equatable {
   final String pickupName;
   final String pickupPhone;
   final String pickupEmail;
+
   /// Stable unique sync id for the selected/created customer.
   final String? customerUniqueId;
   final String selectedFloor;
@@ -61,15 +62,15 @@ class OrderCreationState extends Equatable {
 
   @override
   List<Object?> get props => [
-        orderType,
-        pickupName,
-        pickupPhone,
-        pickupEmail,
-        customerUniqueId,
-        selectedFloor,
-        selectedTable,
-        isPickupValid,
-        nameError,
-        phoneError,
-      ];
+    orderType,
+    pickupName,
+    pickupPhone,
+    pickupEmail,
+    customerUniqueId,
+    selectedFloor,
+    selectedTable,
+    isPickupValid,
+    nameError,
+    phoneError,
+  ];
 }

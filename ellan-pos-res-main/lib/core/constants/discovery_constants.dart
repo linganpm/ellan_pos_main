@@ -6,17 +6,23 @@ const String _fallbackRootOrgInstanceId = 'eln-org';
 
 String _envServerOrigin = _fallbackServerOrigin;
 String _envRootOrgInstanceId = _fallbackRootOrgInstanceId;
+bool _hasEnvServerOrigin = false;
+bool _hasEnvRootOrgInstanceId = false;
 
 /// Loads `POS_SERVER_URL` and `POS_ROOT_ORG_INSTANCE_ID` from `.env`.
 Future<void> loadPosDiscoveryEnv() async {
+  var loadedPrimaryEnv = false;
   try {
     await dotenv.load(fileName: '.env');
+    loadedPrimaryEnv = true;
   } catch (e) {
     debugPrint('POS env: .env not loaded ($e); trying .env.example');
     try {
       await dotenv.load(fileName: '.env.example');
     } catch (e2) {
-      debugPrint('POS env: .env.example not loaded ($e2); using built-in defaults');
+      debugPrint(
+        'POS env: .env.example not loaded ($e2); using built-in defaults',
+      );
     }
   }
 
@@ -25,9 +31,11 @@ Future<void> loadPosDiscoveryEnv() async {
     final rootOrg = (dotenv.env['POS_ROOT_ORG_INSTANCE_ID'] ?? '').trim();
     if (server.isNotEmpty) {
       _envServerOrigin = discoveryOrigin(server);
+      _hasEnvServerOrigin = loadedPrimaryEnv;
     }
     if (rootOrg.isNotEmpty) {
       _envRootOrgInstanceId = rootOrg;
+      _hasEnvRootOrgInstanceId = loadedPrimaryEnv;
     }
   }
 
@@ -39,6 +47,12 @@ String get kDefaultServerOrigin => _envServerOrigin;
 
 /// Default parent / root organisation identifier for company signup.
 String get kDefaultRootOrgInstanceId => _envRootOrgInstanceId;
+
+/// Whether both discovery values were explicitly supplied by the bundled
+/// `.env`. When true, setup screens must use them without exposing editable
+/// server or parent-organisation fields.
+bool get kIsPosDiscoveryConfiguredByEnv =>
+    _hasEnvServerOrigin && _hasEnvRootOrgInstanceId;
 
 /// Default bootstrap endpoint used only when the operator has not saved a server yet.
 String get kDefaultDiscoveryUrl => '$_envServerOrigin/api/pos/bootstrap';
@@ -77,13 +91,19 @@ String discoveryOrigin(String discoveryOrBase) {
   try {
     final uri = Uri.parse(raw);
     if (uri.hasScheme && uri.host.isNotEmpty) {
-      return uri.replace(path: '', query: '').toString().replaceAll(RegExp(r'/+$'), '');
+      return uri
+          .replace(path: '', query: '')
+          .toString()
+          .replaceAll(RegExp(r'/+$'), '');
     }
   } catch (_) {
     // Fall through to normalize-based stripping.
   }
   final bootstrap = Uri.parse(normalizeDiscoveryUrl(raw));
-  return bootstrap.replace(path: '', query: '').toString().replaceAll(RegExp(r'/+$'), '');
+  return bootstrap
+      .replace(path: '', query: '')
+      .toString()
+      .replaceAll(RegExp(r'/+$'), '');
 }
 
 /// Activates [url] for every gateway call on this device for the rest of the

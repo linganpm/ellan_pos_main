@@ -12,14 +12,18 @@ class StoreBloc extends Bloc<StoreEvent, StoreState> {
   final InitializeStore initializeStore;
   final StoreRepositoryImpl repository;
 
-  StoreBloc({required this.initializeStore, required this.repository}) : super(StoreInitial()) {
+  StoreBloc({required this.initializeStore, required this.repository})
+    : super(StoreInitial()) {
     on<StoreInitializeEvent>(_onInitialize);
     on<StoreLoadAccessibleStoresEvent>(_onLoadAccessibleStores);
     on<StoreSelectStoreEvent>(_onSelectStore);
     on<StoreLoginEvent>(_onLogin);
   }
 
-  Future<void> _onInitialize(StoreInitializeEvent event, Emitter<StoreState> emit) async {
+  Future<void> _onInitialize(
+    StoreInitializeEvent event,
+    Emitter<StoreState> emit,
+  ) async {
     emit(StoreLoading());
     try {
       final config = await initializeStore.call(orgCode: event.orgCode);
@@ -34,7 +38,10 @@ class StoreBloc extends Bloc<StoreEvent, StoreState> {
     }
   }
 
-  Future<void> _onLoadAccessibleStores(StoreLoadAccessibleStoresEvent event, Emitter<StoreState> emit) async {
+  Future<void> _onLoadAccessibleStores(
+    StoreLoadAccessibleStoresEvent event,
+    Emitter<StoreState> emit,
+  ) async {
     emit(StoreLoading());
     try {
       final stores = repository.accessibleStores();
@@ -44,7 +51,10 @@ class StoreBloc extends Bloc<StoreEvent, StoreState> {
     }
   }
 
-  Future<void> _onSelectStore(StoreSelectStoreEvent event, Emitter<StoreState> emit) async {
+  Future<void> _onSelectStore(
+    StoreSelectStoreEvent event,
+    Emitter<StoreState> emit,
+  ) async {
     final current = state;
     if (current is StoreLoaded) {
       emit(StoreLoaded(stores: current.stores, selectedStoreId: event.storeId));
@@ -54,7 +64,11 @@ class StoreBloc extends Bloc<StoreEvent, StoreState> {
   Future<void> _onLogin(StoreLoginEvent event, Emitter<StoreState> emit) async {
     emit(StoreAuthInProgress());
     try {
-      final success = await repository.login(orgCode: event.orgCode, email: event.email, password: event.password);
+      final success = await repository.login(
+        orgCode: event.orgCode,
+        email: event.email,
+        password: event.password,
+      );
       if (success) {
         emit(StoreAuthSuccess());
       } else {

@@ -1,6 +1,6 @@
 {
-    "name": "pos_tablet",
-    "short_name": "pos_tablet",
+    "name": "EllanPos",
+    "short_name": "EllanPos",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

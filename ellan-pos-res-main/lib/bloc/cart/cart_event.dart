@@ -118,8 +118,12 @@ class ApplyDiscount extends CartEvent {
   });
 
   @override
-  List<Object?> get props =>
-      [percentage, title, targetLineSignature, targetItemName];
+  List<Object?> get props => [
+    percentage,
+    title,
+    targetLineSignature,
+    targetItemName,
+  ];
 }
 
 class RemoveDiscount extends CartEvent {

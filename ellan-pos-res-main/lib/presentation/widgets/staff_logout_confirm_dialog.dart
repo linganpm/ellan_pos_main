@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
+import '../../core/localization/l10n_context.dart';
 
 /// Polished Yes / No confirmation before staff logout (lock screen).
 Future<bool> showStaffLogoutConfirmDialog(BuildContext context) async {
@@ -71,7 +72,7 @@ class StaffLogoutConfirmDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 22),
                 Text(
-                  'Log out?',
+                  context.l10n.staffLogoutConfirmTitle,
                   textAlign: TextAlign.center,
                   style: FontUtility.heading.copyWith(
                     fontSize: 26,
@@ -109,7 +110,7 @@ class StaffLogoutConfirmDialog extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            'No',
+                            context.l10n.commonNo,
                             style: FontUtility.button.copyWith(
                               color: _ink,
                               fontSize: 17,
@@ -134,7 +135,7 @@ class StaffLogoutConfirmDialog extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            'Yes',
+                            context.l10n.commonYes,
                             style: FontUtility.button.copyWith(
                               color: Colors.white,
                               fontSize: 17,

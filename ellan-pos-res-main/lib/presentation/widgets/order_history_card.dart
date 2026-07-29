@@ -3,14 +3,12 @@ import 'package:pos_tablet/core/currency_format.dart';
 import '../../core/utils/font_utility.dart';
 import '../../data/models/order_history_model.dart';
 import 'cart_item_tile.dart';
+import '../../core/localization/l10n_context.dart';
 
 class OrderHistoryCard extends StatelessWidget {
   final OrderHistoryModel order;
 
-  const OrderHistoryCard({
-    super.key,
-    required this.order,
-  });
+  const OrderHistoryCard({super.key, required this.order});
 
   @override
   Widget build(BuildContext context) {
@@ -44,15 +42,17 @@ class OrderHistoryCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.orange.shade200),
                 ),
                 child: Text(
-                  'Preparing',
+                  context.l10n.commonPreparing,
                   style: FontUtility.subheading.copyWith(
                     fontSize: 12,
                     color: Colors.orange.shade800,
@@ -73,19 +73,18 @@ class OrderHistoryCard extends StatelessWidget {
           const Divider(height: 1, thickness: 1),
           const SizedBox(height: 16),
           ...order.items.map((item) {
-            return CartItemTile(
-              cartItem: item,
-              isReadOnly: true,
-            );
+            return CartItemTile(cartItem: item, isReadOnly: true);
           }),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Total Amount',
-                style: FontUtility.subheading
-                    .copyWith(fontSize: 16, color: Colors.grey.shade700),
+                context.l10n.commonTotalAmount,
+                style: FontUtility.subheading.copyWith(
+                  fontSize: 16,
+                  color: Colors.grey.shade700,
+                ),
               ),
               Text(
                 PosCurrency.format(order.totalAmount),

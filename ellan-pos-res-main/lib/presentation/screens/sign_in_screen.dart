@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/localization/l10n/app_localizations.dart';
+import '../../core/localization/l10n_context.dart';
 import '../../core/utils/font_utility.dart';
 import '../../bloc/sign_in/sign_in_cubit.dart';
 import '../../bloc/sign_in/sign_in_state.dart';
@@ -65,16 +66,15 @@ class SignInScreen extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 24,
+                ),
                 child: BlocConsumer<SignInCubit, SignInState>(
                   listener: (context, state) {
                     if (state.isSuccess) {
                       if (state.navigateToHome) {
-                        Navigator.pushReplacementNamed(
-                          context,
-                          AppRoutes.home,
-                        );
+                        Navigator.pushReplacementNamed(context, AppRoutes.home);
                       } else {
                         Navigator.pushReplacementNamed(
                           context,
@@ -89,7 +89,8 @@ class SignInScreen extends StatelessWidget {
                       children: [
                         Align(
                           alignment: Alignment.centerLeft,
-                          child: TextButton.icon(
+                          child: IconButton(
+                            tooltip: context.l10n.actionBack,
                             onPressed: () {
                               if (Navigator.of(context).canPop()) {
                                 Navigator.of(context).pop();
@@ -100,10 +101,9 @@ class SignInScreen extends StatelessWidget {
                                 );
                               }
                             },
-                            icon: const Icon(Icons.arrow_back_rounded),
-                            label: const Text('Back'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFF374151),
+                            icon: const Icon(
+                              Icons.arrow_back_rounded,
+                              color: Color(0xFF374151),
                             ),
                           ),
                         ),
@@ -143,7 +143,7 @@ class _SignInForm extends StatefulWidget {
 
   final SignInState state;
   final InputDecoration Function(String hint, {Widget? suffixIcon})
-      fieldDecoration;
+  fieldDecoration;
   final String? companyIdentifierHint;
   final String? initialIdentifier;
 
@@ -171,7 +171,6 @@ class _SignInFormState extends State<_SignInForm> {
   @override
   Widget build(BuildContext context) {
     final state = widget.state;
-    final companyIdentifierHint = widget.companyIdentifierHint;
     return Material(
       color: Colors.white,
       elevation: 2,
@@ -193,27 +192,6 @@ class _SignInFormState extends State<_SignInForm> {
                   color: const Color(0xFF1F2937),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Sign in to renew this device',
-                textAlign: TextAlign.center,
-                style: FontUtility.body.copyWith(
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (companyIdentifierHint != null &&
-                  companyIdentifierHint.trim().isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Company: ${companyIdentifierHint.trim()}',
-                  textAlign: TextAlign.center,
-                  style: FontUtility.body.copyWith(
-                    color: SignInScreen._primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
               if (state.errorMessage != null) ...[
                 const SizedBox(height: 20),
                 Container(
@@ -224,9 +202,7 @@ class _SignInFormState extends State<_SignInForm> {
                   decoration: BoxDecoration(
                     color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.red.shade200,
-                    ),
+                    border: Border.all(color: Colors.red.shade200),
                   ),
                   child: Text(
                     state.errorMessage!,
@@ -247,7 +223,9 @@ class _SignInFormState extends State<_SignInForm> {
                   fontWeight: FontWeight.w700,
                   fontSize: 17,
                 ),
-                decoration: widget.fieldDecoration('Email / phone / staff ID'),
+                decoration: widget.fieldDecoration(
+                  context.l10n.signInIdentifierHint,
+                ),
               ),
               const SizedBox(height: 14),
               TextField(
@@ -259,7 +237,7 @@ class _SignInFormState extends State<_SignInForm> {
                   fontSize: 17,
                 ),
                 decoration: widget.fieldDecoration(
-                  'Password',
+                  context.l10n.signInPassword,
                   suffixIcon: IconButton(
                     onPressed: () =>
                         context.read<SignInCubit>().togglePasswordVisibility(),
@@ -330,7 +308,7 @@ class _SignInFormState extends State<_SignInForm> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'New company?',
+                    context.l10n.signInNewCompany,
                     style: FontUtility.body.copyWith(
                       color: Colors.black54,
                       fontWeight: FontWeight.w500,
@@ -346,7 +324,7 @@ class _SignInFormState extends State<_SignInForm> {
                             );
                           },
                     child: Text(
-                      'Sign up',
+                      context.l10n.actionSignUp,
                       style: FontUtility.body.copyWith(
                         color: SignInScreen._primary,
                         fontWeight: FontWeight.w700,

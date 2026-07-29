@@ -5,6 +5,7 @@ import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/routes.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/localization/l10n_context.dart';
 
 /// Fast staff unlock / switch screen for shared POS tablets.
 ///
@@ -70,10 +71,7 @@ class _StaffLockViewState extends State<_StaffLockView> {
     _passwordFocus.requestFocus();
   }
 
-  InputDecoration _fieldDecoration({
-    required String hint,
-    Widget? suffixIcon,
-  }) {
+  InputDecoration _fieldDecoration({required String hint, Widget? suffixIcon}) {
     return InputDecoration(
       hintText: hint,
       hintStyle: FontUtility.body.copyWith(
@@ -129,8 +127,9 @@ class _StaffLockViewState extends State<_StaffLockView> {
                 const SizedBox(height: 16),
                 Text(
                   (state.storeName ?? '').trim().isNotEmpty
-                      ? 'Staff · ${state.storeName!.trim()}'
-                      : 'All staff',
+                      ? '${context.l10n.commonStaff} · '
+                            '${state.storeName!.trim()}'
+                      : context.l10n.staffLockAllStaff,
                   style: FontUtility.heading.copyWith(fontSize: 20),
                 ),
                 const SizedBox(height: 12),
@@ -238,7 +237,7 @@ class _StaffLockViewState extends State<_StaffLockView> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'Staff unlock',
+                              context.l10n.staffLockTitle,
                               textAlign: TextAlign.center,
                               style: FontUtility.heading.copyWith(
                                 fontSize: 26,
@@ -249,7 +248,7 @@ class _StaffLockViewState extends State<_StaffLockView> {
                             Text(
                               (state.storeName ?? '').trim().isNotEmpty
                                   ? state.storeName!.trim()
-                                  : 'Branch not loaded',
+                                  : context.l10n.staffLockBranchNotLoaded,
                               textAlign: TextAlign.center,
                               style: FontUtility.subheading.copyWith(
                                 fontSize: 18,
@@ -278,13 +277,14 @@ class _StaffLockViewState extends State<_StaffLockView> {
                                   for (final staff in badges)
                                     _StaffBadge(
                                       name: staff.name,
-                                      selected: state.selectedCustomerId ==
+                                      selected:
+                                          state.selectedCustomerId ==
                                           staff.customerId,
                                       onTap: () => _onStaffSelected(staff),
                                     ),
                                   if (state.hasMoreStaff)
                                     _StaffBadge(
-                                      name: 'More',
+                                      name: context.l10n.staffLockMore,
                                       selected: false,
                                       isMore: true,
                                       onTap: () => _showMoreStaff(state),
@@ -299,14 +299,13 @@ class _StaffLockViewState extends State<_StaffLockView> {
                                   .read<StaffLockCubit>()
                                   .identifierChanged,
                               textInputAction: TextInputAction.next,
-                              onSubmitted: (_) =>
-                                  _passwordFocus.requestFocus(),
+                              onSubmitted: (_) => _passwordFocus.requestFocus(),
                               style: FontUtility.body.copyWith(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 17,
                               ),
                               decoration: _fieldDecoration(
-                                hint: 'Staff ID',
+                                hint: context.l10n.staffLockStaffId,
                               ),
                             ),
                             const SizedBox(height: 14),
@@ -324,8 +323,11 @@ class _StaffLockViewState extends State<_StaffLockView> {
                                 fontSize: 17,
                               ),
                               decoration: _fieldDecoration(
-                                hint: 'Password',
+                                hint: context.l10n.commonPassword,
                                 suffixIcon: IconButton(
+                                  tooltip: state.obscurePassword
+                                      ? context.l10n.signInShowPassword
+                                      : context.l10n.commonHideDetails,
                                   onPressed: context
                                       .read<StaffLockCubit>()
                                       .togglePasswordVisibility,
@@ -354,8 +356,8 @@ class _StaffLockViewState extends State<_StaffLockView> {
                                 onPressed: state.isLoading
                                     ? null
                                     : () => context
-                                        .read<StaffLockCubit>()
-                                        .unlock(),
+                                          .read<StaffLockCubit>()
+                                          .unlock(),
                                 style: FilledButton.styleFrom(
                                   backgroundColor: _primary,
                                   shape: RoundedRectangleBorder(
@@ -372,7 +374,7 @@ class _StaffLockViewState extends State<_StaffLockView> {
                                         ),
                                       )
                                     : Text(
-                                        'Unlock',
+                                        context.l10n.staffLockUnlock,
                                         style: FontUtility.button.copyWith(
                                           fontSize: 17,
                                           fontWeight: FontWeight.w700,
@@ -389,13 +391,11 @@ class _StaffLockViewState extends State<_StaffLockView> {
                                         context,
                                         AppRoutes.storeList,
                                         (route) => false,
-                                        arguments: {
-                                          'returnToStaffLock': true,
-                                        },
+                                        arguments: {'returnToStaffLock': true},
                                       );
                                     },
                               child: Text(
-                                'Switch store',
+                                context.l10n.staffLockSwitchStore,
                                 style: FontUtility.body.copyWith(
                                   color: Colors.black54,
                                   fontWeight: FontWeight.w600,
@@ -413,7 +413,7 @@ class _StaffLockViewState extends State<_StaffLockView> {
                                       );
                                     },
                               child: Text(
-                                'Online device sign-in',
+                                context.l10n.staffLockOnlineSignIn,
                                 style: FontUtility.body.copyWith(
                                   color: Colors.black54,
                                   fontWeight: FontWeight.w600,
@@ -455,8 +455,8 @@ class _StaffBadge extends StatelessWidget {
       color: selected
           ? const Color(0xFF4A00E0)
           : isMore
-              ? Colors.white
-              : const Color(0xFFF3F0FF),
+          ? Colors.white
+          : const Color(0xFFF3F0FF),
       borderRadius: BorderRadius.circular(999),
       child: InkWell(
         onTap: onTap,
@@ -485,14 +485,17 @@ class _StaffBadge extends StatelessWidget {
                     ? Icon(
                         Icons.more_horiz_rounded,
                         size: 18,
-                        color: selected ? Colors.white : const Color(0xFF4A00E0),
+                        color: selected
+                            ? Colors.white
+                            : const Color(0xFF4A00E0),
                       )
                     : Text(
                         initial,
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
-                          color:
-                              selected ? Colors.white : const Color(0xFF4A00E0),
+                          color: selected
+                              ? Colors.white
+                              : const Color(0xFF4A00E0),
                         ),
                       ),
               ),

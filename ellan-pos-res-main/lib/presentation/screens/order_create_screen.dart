@@ -9,6 +9,7 @@ import 'package:pos_tablet/core/currency_format.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/data/models/cart_item_model.dart';
 import 'package:pos_tablet/data/models/product_model.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 import '../../core/utils/font_utility.dart';
 import '../../bloc/cart/cart_bloc.dart';
 import '../../bloc/cart/cart_event.dart';
@@ -29,13 +30,16 @@ class OrderCreateScreenArgs {
   final String? name;
   final String? phone;
   final String? email;
+
   /// Stable unique sync id — never a local SQLite PK.
   final String? customerUniqueId;
   final String? floor;
   final String? table;
+
   /// When restoring a saved cart draft.
   final String? draftId;
   final CartDraftSnapshot? draftSnapshot;
+
   /// Open kitchen order id when continuing after KOT.
   final int? openOrderId;
 
@@ -82,7 +86,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
     final pending = state.cartItems.any((i) => i.pendingKotQuantity > 0.0001);
     if (!pending) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All items already sent to kitchen.')),
+        SnackBar(content: Text(context.l10n.orderAllItemsSentKitchen)),
       );
       return;
     }
@@ -113,8 +117,8 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
               sellUnitShort: item.product.sellUnitShort,
             ),
         ],
-        orderType: (args.orderTypeKey != null &&
-                args.orderTypeKey!.trim().isNotEmpty)
+        orderType:
+            (args.orderTypeKey != null && args.orderTypeKey!.trim().isNotEmpty)
             ? args.orderTypeKey!.trim()
             : args.orderType,
         customerName: args.name,
@@ -155,14 +159,16 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
       );
       if (!mounted) return;
       setState(() => _draftId = draft.id);
-      cartBloc.add(MarkCartKotSent(
-        orderId: result.orderId,
-        batchNumber: result.batchNumber,
-      ));
+      cartBloc.add(
+        MarkCartKotSent(
+          orderId: result.orderId,
+          batchNumber: result.batchNumber,
+        ),
+      );
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            'KOT #${result.batchNumber} sent · Order #${result.orderId} saved',
+            context.l10n.orderCreateKotSent(result.batchNumber, result.orderId),
           ),
           backgroundColor: Colors.green,
         ),
@@ -171,7 +177,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('KOT failed: $error'),
+          content: Text(context.l10n.orderKotFailed(error.toString())),
           backgroundColor: Colors.red.shade700,
         ),
       );
@@ -183,7 +189,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
   Future<void> _saveDraft(BuildContext context, CartState state) async {
     if (state.cartItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add items before saving a draft.')),
+        SnackBar(content: Text(context.l10n.orderCreateAddItemsBeforeDraft)),
       );
       return;
     }
@@ -210,13 +216,15 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
       );
       if (!mounted) return;
       setState(() => _draftId = draft.id);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Draft saved.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.orderDraftSaved)));
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save draft: $error')),
+        SnackBar(
+          content: Text(context.l10n.errorCouldNotSaveDraft(error.toString())),
+        ),
       );
     }
   }
@@ -225,21 +233,19 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete draft?'),
-        content: const Text(
-          'This clears the cart and removes the saved draft.',
-        ),
+        title: Text(context.l10n.orderDeleteDraftQuestion),
+        content: Text(context.l10n.orderCreateDeleteDraftBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.actionCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFFF512F),
             ),
-            child: const Text('Delete'),
+            child: Text(context.l10n.actionDelete),
           ),
         ],
       ),
@@ -252,16 +258,16 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
     if (!mounted) return;
     context.read<CartBloc>().add(ClearCart());
     setState(() => _draftId = null);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Draft deleted.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.orderDraftDeleted)));
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => CartBloc()
-        ..add(LoadInitialData(draft: args.draftSnapshot)),
+      create: (context) =>
+          CartBloc()..add(LoadInitialData(draft: args.draftSnapshot)),
       child: Builder(
         builder: (context) {
           return Scaffold(
@@ -270,37 +276,47 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
               backgroundColor: Colors.white,
               elevation: 0,
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
+                icon: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: Colors.black87,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
               title: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'New ${args.orderType} Order',
+                    context.l10n.orderCreateNewOrderTitle(args.orderType),
                     style: FontUtility.heading.copyWith(fontSize: 20),
                   ),
                   if (args.name != null && args.name!.isNotEmpty)
                     Text(
                       [
-                        args.name,
-                        if (args.phone != null && args.phone!.isNotEmpty)
-                          args.phone,
-                        if (args.table != null && args.table!.isNotEmpty)
-                          '${args.floor ?? ''} ${args.table}'.trim(),
-                      ]
+                            args.name,
+                            if (args.phone != null && args.phone!.isNotEmpty)
+                              args.phone,
+                            if (args.table != null && args.table!.isNotEmpty)
+                              '${args.floor ?? ''} ${args.table}'.trim(),
+                          ]
                           .whereType<String>()
                           .where((part) => part.isNotEmpty)
                           .join(' · '),
-                      style: FontUtility.body
-                          .copyWith(fontSize: 12, color: Colors.grey.shade600),
+                      style: FontUtility.body.copyWith(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
                     )
                   else if (args.table != null)
                     Text(
-                      'Floor: ${args.floor} | Table: ${args.table}',
-                      style: FontUtility.body
-                          .copyWith(fontSize: 12, color: Colors.grey.shade600),
-                    )
+                      context.l10n.orderCreateFloorTable(
+                        args.floor ?? '',
+                        args.table ?? '',
+                      ),
+                      style: FontUtility.body.copyWith(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
                 ],
               ),
               centerTitle: false,
@@ -308,7 +324,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                 BlocBuilder<CartBloc, CartState>(
                   builder: (context, state) {
                     return IconButton(
-                      tooltip: 'Save draft',
+                      tooltip: context.l10n.orderSaveDraft,
                       onPressed: state.cartItems.isEmpty
                           ? null
                           : () => _saveDraft(context, state),
@@ -322,7 +338,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                 BlocBuilder<CartBloc, CartState>(
                   builder: (context, state) {
                     return IconButton(
-                      tooltip: 'Delete draft',
+                      tooltip: context.l10n.orderDeleteDraft,
                       onPressed: state.cartItems.isEmpty && _draftId == null
                           ? null
                           : () => _deleteDraft(context, state),
@@ -346,18 +362,12 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
             body: SafeArea(
               child: Row(
                 children: [
-                  Expanded(
-                    flex: 65,
-                    child: _buildLeftPanel(),
-                  ),
+                  Expanded(flex: 65, child: _buildLeftPanel()),
                   Container(
                     width: 1,
                     color: Colors.grey.withValues(alpha: 0.2),
                   ),
-                  Expanded(
-                    flex: 35,
-                    child: _buildRightPanel(),
-                  ),
+                  Expanded(flex: 35, child: _buildRightPanel()),
                 ],
               ),
             ),
@@ -393,9 +403,9 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                           category: category,
                           isSelected: state.selectedCategoryId == category.id,
                           onTap: () {
-                            context
-                                .read<CartBloc>()
-                                .add(SelectCategory(category.id));
+                            context.read<CartBloc>().add(
+                              SelectCategory(category.id),
+                            );
                           },
                         );
                       },
@@ -405,7 +415,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                   OutlinedButton.icon(
                     onPressed: () => _showMiscItemDialog(context),
                     icon: const Icon(Icons.add_box_outlined, size: 18),
-                    label: const Text('Misc'),
+                    label: Text(context.l10n.orderMisc),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF4A00E0),
                       side: const BorderSide(color: Color(0xFF4A00E0)),
@@ -418,12 +428,14 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                 ],
               ),
             ),
-            
+
             // Products Grid — spacing/columns adapt to the available panel size.
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final layout = _ProductGridLayout.fromConstraints(constraints);
+                  final layout = _ProductGridLayout.fromConstraints(
+                    constraints,
+                  );
                   return Padding(
                     padding: EdgeInsets.fromLTRB(
                       layout.padding,
@@ -459,13 +471,13 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
   }
 
   Future<void> _showMiscItemDialog(BuildContext context) async {
-    final nameController = TextEditingController(text: 'Misc');
+    final nameController = TextEditingController(text: context.l10n.orderMisc);
     final priceController = TextEditingController();
     final added = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Add Misc Item'),
+          title: Text(context.l10n.orderCreateAddMiscItem),
           content: SizedBox(
             width: 360,
             child: Column(
@@ -473,9 +485,9 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Product name',
-                    hintText: 'Misc',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.orderCreateProductName,
+                    hintText: context.l10n.orderCreateMisc,
                   ),
                   textCapitalization: TextCapitalization.sentences,
                 ),
@@ -483,11 +495,12 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                 TextField(
                   controller: priceController,
                   decoration: InputDecoration(
-                    labelText: 'Price',
+                    labelText: context.l10n.commonPrice,
                     prefixText: '${PosCurrency.symbol()} ',
                   ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   autofocus: true,
                 ),
               ],
@@ -496,14 +509,16 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.actionCancel),
             ),
             ElevatedButton(
               onPressed: () {
                 final price = double.tryParse(priceController.text.trim());
                 if (price == null || price <= 0) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    const SnackBar(content: Text('Enter a valid price')),
+                    SnackBar(
+                      content: Text(context.l10n.orderCreateEnterValidPrice),
+                    ),
                   );
                   return;
                 }
@@ -513,7 +528,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                 backgroundColor: const Color(0xFF4A00E0),
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Add'),
+              child: Text(context.l10n.actionAdd),
             ),
           ],
         );
@@ -527,8 +542,8 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
 
     final product = Product(
       id: 'misc-${DateTime.now().microsecondsSinceEpoch}',
-      name: name.isEmpty ? 'Misc' : name,
-      description: 'Misc item',
+      name: name.isEmpty ? context.l10n.orderMisc : name,
+      description: context.l10n.commonMiscItem,
       price: price,
       imageUrl: '',
       categoryId: 'misc',
@@ -558,8 +573,8 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
 
     if (productModel.hasSellUnit != true) {
       context.read<CartBloc>().add(
-            AddProductToCart(productModel, addons: addons),
-          );
+        AddProductToCart(productModel, addons: addons),
+      );
       return;
     }
     final base = productModel.sellUnitBaseQty ?? 1.0;
@@ -593,7 +608,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                 ? sellUnitBillableQty(entered, sellUnit).toInt()
                 : 0;
             return AlertDialog(
-              title: Text('How many $unitShort?'),
+              title: Text(context.l10n.orderCreateHowMany(unitShort)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -605,21 +620,24 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: controller,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     autofocus: true,
                     onChanged: (_) => setDialogState(() {}),
                     decoration: InputDecoration(
-                      labelText: 'Quantity ($unitShort)',
+                      labelText: context.l10n.orderCreateQuantityUnit(
+                        unitShort,
+                      ),
                       border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     entered > 0
-                        ? 'Line total: ${PosCurrency.format(lineTotal)}'
-                            ' ($blocks × ${PosCurrency.format(unitPrice + addons.fold<double>(0, (s, a) => s + a.unitPrice * a.quantity))})'
-                        : 'Enter a quantity greater than zero.',
+                        ? '${context.l10n.commonLineTotal(PosCurrency.format(lineTotal))}'
+                              ' ($blocks × ${PosCurrency.format(unitPrice + addons.fold<double>(0, (s, a) => s + a.unitPrice * a.quantity))})'
+                        : context.l10n.commonEnterQuantityGtZero,
                     style: FontUtility.subheading.copyWith(
                       fontSize: 15,
                       color: const Color(0xFF4A00E0),
@@ -630,7 +648,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancel'),
+                  child: Text(context.l10n.actionCancel),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -642,7 +660,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                     backgroundColor: const Color(0xFF4A00E0),
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Add'),
+                  child: Text(context.l10n.actionAdd),
                 ),
               ],
             );
@@ -653,8 +671,8 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
     controller.dispose();
     if (qty == null || !context.mounted) return;
     context.read<CartBloc>().add(
-          AddProductToCart(productModel, quantity: qty, addons: addons),
-        );
+      AddProductToCart(productModel, quantity: qty, addons: addons),
+    );
   }
 
   /// Returns selected add-ons, or ``null`` if the user cancelled.
@@ -675,7 +693,9 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
 
     final selected = <String, CartAddonSelection>{};
     for (final group in groups) {
-      for (final item in group.items.where((i) => i.active && i.defaultSelected)) {
+      for (final item in group.items.where(
+        (i) => i.active && i.defaultSelected,
+      )) {
         selected[item.addonItemId] = CartAddonSelection(
           addonGroupId: group.addonGroupId,
           addonGroupName: group.addonGroupName,
@@ -733,9 +753,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                             contentPadding: EdgeInsets.zero,
                             value: selected.containsKey(item.addonItemId),
                             title: Text(item.addonItemName),
-                            subtitle: Text(
-                              PosCurrency.format(item.sellPrice),
-                            ),
+                            subtitle: Text(PosCurrency.format(item.sellPrice)),
                             onChanged: (checked) {
                               setDialogState(() {
                                 if (checked == true) {
@@ -743,7 +761,8 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                                   final current = selected.values
                                       .where(
                                         (a) =>
-                                            a.addonGroupId == group.addonGroupId,
+                                            a.addonGroupId ==
+                                            group.addonGroupId,
                                       )
                                       .length;
                                   if (max != null && current >= max) {
@@ -757,15 +776,16 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                                     }
                                     if (first != null) selected.remove(first);
                                   }
-                                  selected[item.addonItemId] = CartAddonSelection(
-                                    addonGroupId: group.addonGroupId,
-                                    addonGroupName: group.addonGroupName,
-                                    minSelections: group.minSelections,
-                                    maxSelections: group.maxSelections,
-                                    addonItemId: item.addonItemId,
-                                    addonItemName: item.addonItemName,
-                                    unitPrice: item.sellPrice,
-                                  );
+                                  selected[item.addonItemId] =
+                                      CartAddonSelection(
+                                        addonGroupId: group.addonGroupId,
+                                        addonGroupName: group.addonGroupName,
+                                        minSelections: group.minSelections,
+                                        maxSelections: group.maxSelections,
+                                        addonItemId: item.addonItemId,
+                                        addonItemName: item.addonItemName,
+                                        unitPrice: item.sellPrice,
+                                      );
                                 } else {
                                   selected.remove(item.addonItemId);
                                 }
@@ -786,20 +806,20 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancel'),
+                  child: Text(context.l10n.actionCancel),
                 ),
                 ElevatedButton(
                   onPressed: validationError != null
                       ? null
                       : () => Navigator.pop(
-                            dialogContext,
-                            selected.values.toList(growable: false),
-                          ),
+                          dialogContext,
+                          selected.values.toList(growable: false),
+                        ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF4A00E0),
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Continue'),
+                  child: Text(context.l10n.actionContinue),
                 ),
               ],
             );
@@ -826,10 +846,14 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                       isHistoryActive: state.isHistoryTabActive,
                       newOrderCount: state.totalItems,
                       onNewOrderTap: () {
-                        context.read<CartBloc>().add(const ToggleCheckoutTab(false));
+                        context.read<CartBloc>().add(
+                          const ToggleCheckoutTab(false),
+                        );
                       },
                       onHistoryTap: () {
-                        context.read<CartBloc>().add(const ToggleCheckoutTab(true));
+                        context.read<CartBloc>().add(
+                          const ToggleCheckoutTab(true),
+                        );
                       },
                     ),
 
@@ -847,10 +871,15 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
               Expanded(
                 flex: 26,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4.0),
-                  child:                   OrderSummaryWidget(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 4.0,
+                  ),
+                  child: OrderSummaryWidget(
                     subTotal: state.subTotal,
-                    deliveryCharge: state.cartItems.isEmpty ? 0 : state.deliveryCharge,
+                    deliveryCharge: state.cartItems.isEmpty
+                        ? 0
+                        : state.deliveryCharge,
                     netTotal: state.cartItems.isEmpty ? 0 : state.netTotal,
                     discounts: state.discounts,
                     discountAmounts: {
@@ -871,7 +900,8 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
               Expanded(
                 flex: 11,
                 child: CheckoutFooterButtons(
-                  hasItems: state.cartItems.isNotEmpty && !state.isHistoryTabActive,
+                  hasItems:
+                      state.cartItems.isNotEmpty && !state.isHistoryTabActive,
                   onKOT: () => _sendKot(context, state),
                   onBill: () {
                     final billArgs = OrderCreateScreenArgs(
@@ -911,11 +941,17 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.shopping_cart_outlined, size: 64, color: Colors.grey.shade300),
+            Icon(
+              Icons.shopping_cart_outlined,
+              size: 64,
+              color: Colors.grey.shade300,
+            ),
             const SizedBox(height: 16),
             Text(
-              'Your cart is empty',
-              style: FontUtility.subheading.copyWith(color: Colors.grey.shade500),
+              context.l10n.orderCreateCartEmpty,
+              style: FontUtility.subheading.copyWith(
+                color: Colors.grey.shade500,
+              ),
             ),
           ],
         ),
@@ -930,10 +966,14 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
         return CartItemTile(
           cartItem: item,
           onIncrease: () {
-            context.read<CartBloc>().add(UpdateCartItemQuantity(item, item.quantity + 1));
+            context.read<CartBloc>().add(
+              UpdateCartItemQuantity(item, item.quantity + 1),
+            );
           },
           onDecrease: () {
-            context.read<CartBloc>().add(UpdateCartItemQuantity(item, item.quantity - 1));
+            context.read<CartBloc>().add(
+              UpdateCartItemQuantity(item, item.quantity - 1),
+            );
           },
           onRemove: () {
             context.read<CartBloc>().add(RemoveProductFromCart(item));
@@ -953,11 +993,17 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.history_rounded, size: 64, color: Colors.grey.shade300),
+                  Icon(
+                    Icons.history_rounded,
+                    size: 64,
+                    color: Colors.grey.shade300,
+                  ),
                   const SizedBox(height: 16),
                   Text(
-                    'No order history yet',
-                    style: FontUtility.subheading.copyWith(color: Colors.grey.shade500),
+                    context.l10n.orderCreateNoOrderHistory,
+                    style: FontUtility.subheading.copyWith(
+                      color: Colors.grey.shade500,
+                    ),
                   ),
                 ],
               ),
@@ -991,18 +1037,20 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Past Orders',
+            context.l10n.orderCreatePastOrders,
             style: FontUtility.subheading.copyWith(color: Colors.grey.shade700),
           ),
           IconButton(
             onPressed: () {
               // Optionally trigger a bloc event to reload history if it was from an API
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('History Refreshed')),
+                SnackBar(
+                  content: Text(context.l10n.orderCreateHistoryRefreshed),
+                ),
               );
             },
             icon: const Icon(Icons.refresh_rounded, color: Color(0xFF4A00E0)),
-            tooltip: 'Refresh History',
+            tooltip: context.l10n.actionRefresh,
           ),
         ],
       ),
@@ -1082,8 +1130,10 @@ class _ProductGridLayout {
 
     // Choose row height so roughly 30 tiles fit the viewport.
     final targetRows = (targetVisible / cols).ceil().clamp(4, 7);
-    final tileH = ((height - (targetRows - 1) * gap) / targetRows)
-        .clamp(tileW * 0.88, tileW * 1.28);
+    final tileH = ((height - (targetRows - 1) * gap) / targetRows).clamp(
+      tileW * 0.88,
+      tileW * 1.28,
+    );
     final aspect = tileW / tileH;
 
     return _ProductGridLayout(

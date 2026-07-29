@@ -38,8 +38,16 @@ class StoreRepositoryImpl implements StoreRepository {
   }
 
   @override
-  Future<bool> login({required String orgCode, required String email, required String password}) {
-    return controller.loginToOrganisation(orgCode: orgCode, email: email, password: password);
+  Future<bool> login({
+    required String orgCode,
+    required String email,
+    required String password,
+  }) {
+    return controller.loginToOrganisation(
+      orgCode: orgCode,
+      email: email,
+      password: password,
+    );
   }
 
   @override

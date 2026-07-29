@@ -3,6 +3,7 @@ import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
@@ -71,18 +72,20 @@ class _CatalogScreenState extends State<CatalogScreen>
     final catalogue = _catalogue;
     if (catalogue == null) return const [];
     final q = _query.trim().toLowerCase();
-    return catalogue.products.where((product) {
-      if (_selectedCategoryId != null &&
-          product.categoryId != _selectedCategoryId) {
-        return false;
-      }
-      if (q.isEmpty) return true;
-      return product.name.toLowerCase().contains(q) ||
-          product.productName.toLowerCase().contains(q) ||
-          product.packageName.toLowerCase().contains(q) ||
-          (product.barcode ?? '').toLowerCase().contains(q) ||
-          product.categoryName.toLowerCase().contains(q);
-    }).toList(growable: false);
+    return catalogue.products
+        .where((product) {
+          if (_selectedCategoryId != null &&
+              product.categoryId != _selectedCategoryId) {
+            return false;
+          }
+          if (q.isEmpty) return true;
+          return product.name.toLowerCase().contains(q) ||
+              product.productName.toLowerCase().contains(q) ||
+              product.packageName.toLowerCase().contains(q) ||
+              (product.barcode ?? '').toLowerCase().contains(q) ||
+              product.categoryName.toLowerCase().contains(q);
+        })
+        .toList(growable: false);
   }
 
   @override
@@ -93,16 +96,17 @@ class _CatalogScreenState extends State<CatalogScreen>
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          'Catalogs',
+          context.l10n.commonCatalogs,
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
         leading: IconButton(
+          tooltip: context.l10n.actionBack,
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            tooltip: 'Refresh from local DB',
+            tooltip: context.l10n.catalogRefreshLocal,
             onPressed: _load,
             icon: const Icon(Icons.refresh_rounded, color: _accent),
           ),
@@ -119,12 +123,12 @@ class _CatalogScreenState extends State<CatalogScreen>
                 tabs: [
                   Tab(
                     text: _catalogue == null
-                        ? 'Packages'
-                        : 'Packages (${_catalogue!.products.length})',
+                        ? context.l10n.commonProducts
+                        : context.l10n.catalogPackagesCount(
+                            _catalogue?.products.length ?? 0,
+                          ),
                   ),
-                  Tab(
-                    text: 'Offers (${_offers.length})',
-                  ),
+                  Tab(text: context.l10n.catalogOffersCount(_offers.length)),
                 ],
               ),
               Container(height: 1, color: Colors.grey.withValues(alpha: 0.2)),
@@ -146,19 +150,31 @@ class _CatalogScreenState extends State<CatalogScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(_error!, style: FontUtility.body.copyWith(color: Colors.red)),
-            TextButton(onPressed: _load, child: const Text('Retry')),
+            TextButton(onPressed: _load, child: Text(context.l10n.actionRetry)),
           ],
         ),
       );
     }
 
-    final catalogue = _catalogue!;
+    final catalogue = _catalogue;
+    if (catalogue == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            context.l10n.catalogNoCatalogueDevice,
+            textAlign: TextAlign.center,
+            style: FontUtility.body.copyWith(color: Colors.black54),
+          ),
+        ),
+      );
+    }
     if (catalogue.products.isEmpty && _offers.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'No catalogue on this device yet. Open Sync and pull products, add-ons, and offers.',
+            context.l10n.catalogNoCatalogueDevice,
             style: FontUtility.body.copyWith(color: Colors.black54),
             textAlign: TextAlign.center,
           ),
@@ -168,10 +184,7 @@ class _CatalogScreenState extends State<CatalogScreen>
 
     return TabBarView(
       controller: _tabs,
-      children: [
-        _buildPackagesTab(catalogue),
-        _buildOffersTab(),
-      ],
+      children: [_buildPackagesTab(catalogue), _buildOffersTab()],
     );
   }
 
@@ -188,7 +201,7 @@ class _CatalogScreenState extends State<CatalogScreen>
               children: [
                 _categoryTile(
                   id: null,
-                  name: 'All packages',
+                  name: context.l10n.catalogAllPackages,
                   count: catalogue.products.length,
                 ),
                 ...catalogue.categories.map((category) {
@@ -214,7 +227,7 @@ class _CatalogScreenState extends State<CatalogScreen>
                 child: TextField(
                   onChanged: (value) => setState(() => _query = value),
                   decoration: InputDecoration(
-                    hintText: 'Search product, package, barcode…',
+                    hintText: context.l10n.catalogSearchExtended,
                     prefixIcon: const Icon(Icons.search_rounded),
                     filled: true,
                     fillColor: Colors.white,
@@ -230,8 +243,10 @@ class _CatalogScreenState extends State<CatalogScreen>
                 child: products.isEmpty
                     ? Center(
                         child: Text(
-                          'No packages in this view',
-                          style: FontUtility.body.copyWith(color: Colors.black54),
+                          context.l10n.catalogNoPackagesView,
+                          style: FontUtility.body.copyWith(
+                            color: Colors.black54,
+                          ),
                         ),
                       )
                     : ListView.separated(
@@ -240,7 +255,8 @@ class _CatalogScreenState extends State<CatalogScreen>
                         separatorBuilder: (_, __) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final product = products[index];
-                          final offer = _offerTags[product.id] ??
+                          final offer =
+                              _offerTags[product.id] ??
                               (product.variantId == null
                                   ? null
                                   : _offerTags['${product.variantId}']);
@@ -248,7 +264,6 @@ class _CatalogScreenState extends State<CatalogScreen>
                           return _PackageRow(
                             product: product,
                             offerLabel: offer,
-                            addonGroups: groups,
                             onOpen: () => _openPackageDetail(product, groups),
                           );
                         },
@@ -289,8 +304,10 @@ class _CatalogScreenState extends State<CatalogScreen>
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: selected ? _accent : Colors.grey.shade200,
                     borderRadius: BorderRadius.circular(10),
@@ -315,7 +332,7 @@ class _CatalogScreenState extends State<CatalogScreen>
     if (_offers.isEmpty) {
       return Center(
         child: Text(
-          'No active offers synced for this store',
+          context.l10n.catalogNoActiveOffers,
           style: FontUtility.body.copyWith(color: Colors.black54),
         ),
       );
@@ -355,7 +372,7 @@ class _CatalogScreenState extends State<CatalogScreen>
         if (min != null && min > 0) {
           return 'Bill ≥ \$${min.toStringAsFixed(2)}';
         }
-        return 'Bill offer';
+        return context.l10n.catalogBillOffer;
       default:
         return offer.name;
     }
@@ -390,17 +407,19 @@ class _CatalogScreenState extends State<CatalogScreen>
     PosCatalogProduct product,
     List<StoreProductAddonGroupRecord> groups,
   ) {
-    final matchingOffers = _offers.where((offer) {
-      if (offer.offerType == StoreOfferType.totalOffer) return true;
-      for (final target in offer.targetIds) {
-        final key = target.trim();
-        if (key == product.id) return true;
-        if (product.variantId != null && key == '${product.variantId}') {
-          return true;
-        }
-      }
-      return false;
-    }).toList(growable: false);
+    final matchingOffers = _offers
+        .where((offer) {
+          if (offer.offerType == StoreOfferType.totalOffer) return true;
+          for (final target in offer.targetIds) {
+            final key = target.trim();
+            if (key == product.id) return true;
+            if (product.variantId != null && key == '${product.variantId}') {
+              return true;
+            }
+          }
+          return false;
+        })
+        .toList(growable: false);
 
     showModalBottomSheet<void>(
       context: context,
@@ -433,22 +452,16 @@ class _CatalogScreenState extends State<CatalogScreen>
 class _PackageRow extends StatelessWidget {
   final PosCatalogProduct product;
   final String? offerLabel;
-  final List<StoreProductAddonGroupRecord> addonGroups;
   final VoidCallback onOpen;
 
   const _PackageRow({
     required this.product,
     required this.offerLabel,
-    required this.addonGroups,
     required this.onOpen,
   });
 
   @override
   Widget build(BuildContext context) {
-    final addonCount = addonGroups.fold<int>(
-      0,
-      (sum, group) => sum + group.items.length,
-    );
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
@@ -504,20 +517,6 @@ class _PackageRow extends StatelessWidget {
                       children: [
                         if (product.categoryName.isNotEmpty)
                           _metaChip(product.categoryName),
-                        if (product.hasSellUnit)
-                          _metaChip(
-                            'Sell unit ${product.sellUnitDetail}'
-                            '${product.sellUnitLabel != null && product.sellUnitLabel!.isNotEmpty ? ' · ${product.sellUnitLabel}' : ''}',
-                          ),
-                        if (addonGroups.isNotEmpty)
-                          _metaChip(
-                            '${addonGroups.length} add-on group'
-                            '${addonGroups.length == 1 ? '' : 's'}'
-                            '${addonCount > 0 ? ' · $addonCount items' : ''}',
-                          ),
-                        if (product.barcode != null &&
-                            product.barcode!.trim().isNotEmpty)
-                          _metaChip('Barcode ${product.barcode}'),
                       ],
                     ),
                   ],
@@ -537,7 +536,9 @@ class _PackageRow extends StatelessWidget {
                   if (product.mrpPrice != null &&
                       product.mrpPrice! > product.price)
                     Text(
-                      'MRP \$${product.mrpPrice!.toStringAsFixed(2)}',
+                      context.l10n.catalogMrpPrice(
+                        '\$${product.mrpPrice!.toStringAsFixed(2)}',
+                      ),
                       style: FontUtility.body.copyWith(
                         fontSize: 11,
                         color: Colors.black45,
@@ -566,12 +567,13 @@ class _PackageRow extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 8),
-                  Text(
-                    'Details',
-                    style: FontUtility.body.copyWith(
-                      fontSize: 12,
-                      color: const Color(0xFF4A00E0),
-                      fontWeight: FontWeight.w600,
+                  IconButton(
+                    tooltip: context.l10n.commonDetails,
+                    visualDensity: VisualDensity.compact,
+                    onPressed: onOpen,
+                    icon: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Color(0xFF4A00E0),
                     ),
                   ),
                 ],
@@ -634,10 +636,12 @@ class _PackageDetailSheet extends StatelessWidget {
           product.packageName.isNotEmpty ? product.packageName : product.name,
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
-        if (product.productName.isNotEmpty) ...[
+        if (product.productName.isNotEmpty &&
+            product.productName != product.packageName &&
+            product.productName != product.name) ...[
           const SizedBox(height: 4),
           Text(
-            'Product · ${product.productName}',
+            context.l10n.catalogProductPrefix(product.productName),
             style: FontUtility.body.copyWith(color: Colors.black54),
           ),
         ],
@@ -646,34 +650,40 @@ class _PackageDetailSheet extends StatelessWidget {
           spacing: 10,
           runSpacing: 8,
           children: [
-            _detailStat('Sell', '\$${product.price.toStringAsFixed(2)}'),
+            _detailStat(
+              context.l10n.catalogSell,
+              '\$${product.price.toStringAsFixed(2)}',
+            ),
             if (product.mrpPrice != null)
               _detailStat('MRP', '\$${product.mrpPrice!.toStringAsFixed(2)}'),
             if (product.buyPrice != null)
               _detailStat('Buy', '\$${product.buyPrice!.toStringAsFixed(2)}'),
             if (product.hasSellUnit)
-              _detailStat('Unit', product.sellUnitDetail),
+              _detailStat(context.l10n.catalogUnit, product.sellUnitDetail),
             if (product.categoryName.isNotEmpty)
-              _detailStat('Category', product.categoryName),
+              _detailStat(
+                context.l10n.storeSetupCategory,
+                product.categoryName,
+              ),
             if (product.barcode != null && product.barcode!.trim().isNotEmpty)
-              _detailStat('Barcode', product.barcode!.trim()),
+              _detailStat(context.l10n.catalogBarcode, product.barcode!.trim()),
             if (product.variantId != null)
               _detailStat('Variant #', '${product.variantId}'),
           ],
         ),
         const SizedBox(height: 22),
-        Text('Add-ons', style: FontUtility.subheading.copyWith(fontSize: 16)),
+        Text(
+          context.l10n.commonAddons,
+          style: FontUtility.subheading.copyWith(fontSize: 16),
+        ),
         const SizedBox(height: 8),
         if (addonGroups.isEmpty)
           Text(
-            'No add-on groups linked to this package',
+            context.l10n.catalogNoAddonGroups,
             style: FontUtility.body.copyWith(color: Colors.black45),
           )
         else
           ...addonGroups.map((group) {
-            final minMax = group.maxSelections == null
-                ? 'Min ${group.minSelections}'
-                : 'Min ${group.minSelections} · Max ${group.maxSelections}';
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(12),
@@ -684,27 +694,14 @@ class _PackageDetailSheet extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          group.addonGroupName,
-                          style: FontUtility.subheading.copyWith(fontSize: 14),
-                        ),
-                      ),
-                      Text(
-                        minMax,
-                        style: FontUtility.body.copyWith(
-                          fontSize: 11,
-                          color: Colors.black45,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    group.addonGroupName,
+                    style: FontUtility.subheading.copyWith(fontSize: 14),
                   ),
                   const SizedBox(height: 8),
                   if (group.items.isEmpty)
                     Text(
-                      'No items in this group',
+                      context.l10n.catalogNoItemsInGroup,
                       style: FontUtility.body.copyWith(
                         fontSize: 12,
                         color: Colors.black45,
@@ -741,11 +738,14 @@ class _PackageDetailSheet extends StatelessWidget {
             );
           }),
         const SizedBox(height: 14),
-        Text('Offers', style: FontUtility.subheading.copyWith(fontSize: 16)),
+        Text(
+          context.l10n.commonOffers,
+          style: FontUtility.subheading.copyWith(fontSize: 16),
+        ),
         const SizedBox(height: 8),
         if (offers.isEmpty)
           Text(
-            'No offers target this package',
+            context.l10n.catalogNoOffersTargetPackage,
             style: FontUtility.body.copyWith(color: Colors.black45),
           )
         else
@@ -781,41 +781,12 @@ class _PackageDetailSheet extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _offerSummary(offer),
-                    style: FontUtility.body.copyWith(
-                      fontSize: 12,
-                      color: Colors.black54,
-                    ),
-                  ),
                 ],
               ),
             );
           }),
       ],
     );
-  }
-
-  String _offerSummary(StoreOfferRecord offer) {
-    final parts = <String>[
-      'Type ${offer.offerType}',
-      'Target ${offer.targetType}',
-    ];
-    if (offer.percentageValue != null) {
-      parts.add('${offer.percentageValue}% off');
-    }
-    if (offer.flatValue != null) {
-      parts.add('\$${offer.flatValue!.toStringAsFixed(2)} off');
-    }
-    if (offer.buyQuantity != null && offer.getQuantity != null) {
-      parts.add('Buy ${offer.buyQuantity} get ${offer.getQuantity}');
-    }
-    if (offer.minimumBillAmount != null) {
-      parts.add('Min bill \$${offer.minimumBillAmount!.toStringAsFixed(2)}');
-    }
-    parts.add(offer.active ? 'Active' : 'Inactive');
-    return parts.join(' · ');
   }
 
   Widget _detailStat(String label, String value) {
@@ -830,12 +801,12 @@ class _PackageDetailSheet extends StatelessWidget {
         children: [
           Text(
             label,
-            style: FontUtility.body.copyWith(fontSize: 11, color: Colors.black45),
+            style: FontUtility.body.copyWith(
+              fontSize: 11,
+              color: Colors.black45,
+            ),
           ),
-          Text(
-            value,
-            style: FontUtility.subheading.copyWith(fontSize: 13),
-          ),
+          Text(value, style: FontUtility.subheading.copyWith(fontSize: 13)),
         ],
       ),
     );
@@ -874,8 +845,10 @@ class _OfferDetailCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF512F).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -891,30 +864,10 @@ class _OfferDetailCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              _chip('Type ${offer.offerType}'),
-              _chip('Target ${offer.targetType}'),
-              if (offer.percentageValue != null)
-                _chip('${offer.percentageValue}%'),
-              if (offer.flatValue != null)
-                _chip('\$${offer.flatValue!.toStringAsFixed(2)} flat'),
-              if (offer.buyQuantity != null && offer.getQuantity != null)
-                _chip('Buy ${offer.buyQuantity} Get ${offer.getQuantity}'),
-              if (offer.minimumBillAmount != null)
-                _chip(
-                  'Min bill \$${offer.minimumBillAmount!.toStringAsFixed(2)}',
-                ),
-              _chip(offer.active ? 'Active' : 'Inactive'),
-            ],
-          ),
           if (targetNames.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
-              'Applies to',
+              context.l10n.catalogAppliesTo,
               style: FontUtility.body.copyWith(
                 fontSize: 12,
                 color: Colors.black45,
@@ -928,20 +881,6 @@ class _OfferDetailCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-
-  Widget _chip(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F1F5),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        style: FontUtility.body.copyWith(fontSize: 11, color: Colors.black54),
       ),
     );
   }

@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// Model representing a Store in the POS system.
-/// 
+///
 /// Contains store identification details and user role information
 /// for a specific store location.
 class StoreModel extends Equatable {
@@ -22,11 +22,7 @@ class StoreModel extends Equatable {
   });
 
   /// Creates a copy of this StoreModel with optional field overrides
-  StoreModel copyWith({
-    String? storeId,
-    String? storeName,
-    String? storeRole,
-  }) {
+  StoreModel copyWith({String? storeId, String? storeName, String? storeRole}) {
     return StoreModel(
       storeId: storeId ?? this.storeId,
       storeName: storeName ?? this.storeName,
@@ -45,14 +41,9 @@ class StoreModel extends Equatable {
 
   /// Converts StoreModel to JSON map
   Map<String, dynamic> toJson() {
-    return {
-      'storeId': storeId,
-      'storeName': storeName,
-      'storeRole': storeRole,
-    };
+    return {'storeId': storeId, 'storeName': storeName, 'storeRole': storeRole};
   }
 
   @override
   List<Object?> get props => [storeId, storeName, storeRole];
 }
-

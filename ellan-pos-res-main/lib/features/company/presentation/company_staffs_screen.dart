@@ -6,6 +6,7 @@ import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/core/utils/user_facing_error.dart';
 import 'package:pos_tablet/features/store_setup/presentation/staff_signup_screen.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 /// List store staff and add cashiers (online signup).
 class CompanyStaffsScreen extends StatefulWidget {
@@ -69,7 +70,10 @@ class _CompanyStaffsScreenState extends State<CompanyStaffsScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = userFacingError(e, fallback: 'Could not load staff.');
+        _error = userFacingError(
+          e,
+          fallback: context.l10n.errorCouldNotLoadStaff,
+        );
         _loading = false;
       });
     }
@@ -86,10 +90,12 @@ class _CompanyStaffsScreenState extends State<CompanyStaffsScreen> {
 
   String _roleLabel(String raw) {
     final role = raw.trim().toLowerCase();
-    if (role.isEmpty) return 'Cashier';
-    if (role.contains('admin')) return 'Store admin';
-    if (role.contains('cashier') || role.contains('member') || role.contains('support')) {
-      return 'Cashier';
+    if (role.isEmpty) return context.l10n.storeSetupCashier;
+    if (role.contains('admin')) return context.l10n.storeSetupStoreAdmin;
+    if (role.contains('cashier') ||
+        role.contains('member') ||
+        role.contains('support')) {
+      return context.l10n.storeSetupCashier;
     }
     return raw.trim();
   }
@@ -103,7 +109,7 @@ class _CompanyStaffsScreenState extends State<CompanyStaffsScreen> {
         foregroundColor: _ink,
         elevation: 0,
         title: Text(
-          'Staff',
+          context.l10n.commonStaff,
           style: FontUtility.heading.copyWith(
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -111,180 +117,177 @@ class _CompanyStaffsScreenState extends State<CompanyStaffsScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: _loading ? null : _reload,
-            icon: const Icon(Icons.refresh_rounded),
+          Tooltip(
+            message: context.l10n.actionRefresh,
+            child: Semantics(
+              label: context.l10n.actionRefresh,
+              button: true,
+              child: IconButton(
+                onPressed: _loading ? null : _reload,
+                icon: const Icon(Icons.refresh_rounded),
+              ),
+            ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _addStaff,
-        backgroundColor: _primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.person_add_alt_1_rounded),
-        label: Text(
-          'Add cashier',
-          style: FontUtility.body.copyWith(fontWeight: FontWeight.w800),
+      floatingActionButton: Tooltip(
+        message: context.l10n.storeSetupAddCashier,
+        child: Semantics(
+          label: context.l10n.storeSetupAddCashier,
+          button: true,
+          child: FloatingActionButton(
+            onPressed: _addStaff,
+            backgroundColor: _primary,
+            foregroundColor: Colors.white,
+            child: const Icon(Icons.person_add_alt_1_rounded),
+          ),
         ),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: _primary))
           : _error != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                      _error!,
-                      textAlign: TextAlign.center,
-                      style: FontUtility.body.copyWith(
-                        color: const Color(0xFFB91C1C),
-                        fontWeight: FontWeight.w600,
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: FontUtility.body.copyWith(
+                    color: const Color(0xFFB91C1C),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            )
+          : _staff.isEmpty
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: _primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(
+                        Icons.groups_rounded,
+                        color: _primary,
+                        size: 36,
                       ),
                     ),
-                  ),
-                )
-              : _staff.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 72,
-                              height: 72,
-                              decoration: BoxDecoration(
-                                color: _primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Icon(
-                                Icons.groups_rounded,
-                                color: _primary,
-                                size: 36,
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            Text(
-                              'No cashiers yet',
-                              style: FontUtility.heading.copyWith(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: _ink,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Add a cashier with name, email, phone and password.',
-                              textAlign: TextAlign.center,
-                              style: FontUtility.body.copyWith(
-                                color: _muted,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
+                    const SizedBox(height: 18),
+                    Text(
+                      context.l10n.storeSetupNoCashiersYet,
+                      style: FontUtility.heading.copyWith(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: _ink,
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
-                      itemCount: _staff.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) {
-                        final s = _staff[i];
-                        final detail = _detailsById[s.customerId] ?? const {};
-                        final email = '${detail['email'] ?? ''}'.trim();
-                        final phone = '${detail['phone'] ?? ''}'.trim();
-                        final role = _roleLabel('${detail['role'] ?? ''}');
-                        final name = s.name.trim().isNotEmpty
-                            ? s.name.trim()
-                            : '${detail['name'] ?? s.identifier}'.trim();
-                        final identifier = s.identifier.trim();
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
-                                blurRadius: 14,
-                                offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
+              itemCount: _staff.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (_, i) {
+                final s = _staff[i];
+                final detail = _detailsById[s.customerId] ?? const {};
+                final email = '${detail['email'] ?? ''}'.trim();
+                final phone = '${detail['phone'] ?? ''}'.trim();
+                final role = _roleLabel('${detail['role'] ?? ''}');
+                final name = s.name.trim().isNotEmpty
+                    ? s.name.trim()
+                    : '${detail['name'] ?? s.identifier}'.trim();
+                final identifier = s.identifier.trim();
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 14,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                    child: Row(
+                      children: [
+                        _StaffAvatar(
+                          name: name.isEmpty ? '?' : name,
+                          photoPath: '${detail['photo_path'] ?? ''}'.trim(),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name.isEmpty ? identifier : name,
+                                style: FontUtility.body.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 17,
+                                  color: _ink,
+                                ),
                               ),
-                            ],
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                            child: Row(
-                              children: [
-                                _StaffAvatar(
-                                  name: name.isEmpty ? '?' : name,
-                                  photoPath:
-                                      '${detail['photo_path'] ?? ''}'.trim(),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        name.isEmpty ? identifier : name,
-                                        style: FontUtility.body.copyWith(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 17,
-                                          color: _ink,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      if (email.isNotEmpty)
-                                        Text(
-                                          email,
-                                          style: FontUtility.body.copyWith(
-                                            color: _muted,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      if (phone.isNotEmpty) ...[
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          phone,
-                                          style: FontUtility.body.copyWith(
-                                            color: const Color(0xFF9CA3AF),
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
+                              const SizedBox(height: 4),
+                              if (email.isNotEmpty)
+                                Text(
+                                  email,
+                                  style: FontUtility.body.copyWith(
+                                    color: _muted,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14,
                                   ),
                                 ),
-                                const SizedBox(width: 10),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: _primary.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Text(
-                                    role,
-                                    style: FontUtility.body.copyWith(
-                                      color: _primary,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 12,
-                                    ),
+                              if (phone.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  phone,
+                                  style: FontUtility.body.copyWith(
+                                    color: const Color(0xFF9CA3AF),
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13,
                                   ),
                                 ),
                               ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            role,
+                            style: FontUtility.body.copyWith(
+                              color: _primary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
                             ),
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }

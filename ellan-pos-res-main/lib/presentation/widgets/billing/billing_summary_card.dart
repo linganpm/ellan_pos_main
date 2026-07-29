@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/currency_format.dart';
 import '../../../core/utils/font_utility.dart';
 import '../../../data/models/cart_discount_line.dart';
+import '../../../core/localization/l10n_context.dart';
 
 class BillingSummaryCard extends StatelessWidget {
   final double subTotal;
@@ -47,17 +48,22 @@ class BillingSummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildRow('Subtotal', PosCurrency.format(subTotal)),
+          _buildRow(context.l10n.commonSubtotal, PosCurrency.format(subTotal)),
           if (deliveryCharge > 0.0001) ...[
             const SizedBox(height: 12),
-            _buildRow('Delivery Charge', PosCurrency.format(deliveryCharge)),
+            _buildRow(
+              context.l10n.commonDeliveryCharge,
+              PosCurrency.format(deliveryCharge),
+            ),
           ],
           if (offerAppliedAmount > 0.0001) ...[
             const SizedBox(height: 12),
             _buildRow(
               offerLabels.isEmpty
-                  ? 'Offer applied'
-                  : 'Offer · ${offerLabels.take(2).join(', ')}',
+                  ? context.l10n.commonOfferApplied
+                  : context.l10n.commonOfferLabel(
+                      offerLabels.take(2).join(', '),
+                    ),
               '-${PosCurrency.format(offerAppliedAmount)}',
               color: Colors.green.shade700,
             ),
@@ -73,7 +79,9 @@ class BillingSummaryCard extends StatelessWidget {
           if (serviceTaxPercentage > 0) ...[
             const SizedBox(height: 12),
             _buildRow(
-              'Service Tax (${serviceTaxPercentage.toStringAsFixed(1)}%)',
+              context.l10n.commonServiceTaxPct(
+                serviceTaxPercentage.toStringAsFixed(1),
+              ),
               '+${PosCurrency.format(serviceTaxValue)}',
               color: Colors.orange.shade700,
             ),
@@ -81,7 +89,7 @@ class BillingSummaryCard extends StatelessWidget {
           if (tipsAmount > 0) ...[
             const SizedBox(height: 12),
             _buildRow(
-              'Tips',
+              context.l10n.commonTips,
               '+${PosCurrency.format(tipsAmount)}',
               color: Colors.blue.shade700,
             ),
@@ -94,13 +102,17 @@ class BillingSummaryCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Net Total',
-                style: FontUtility.heading
-                    .copyWith(fontSize: 24, color: Colors.black87),
+                context.l10n.commonNetTotal,
+                style: FontUtility.heading.copyWith(
+                  fontSize: 24,
+                  color: Colors.black87,
+                ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4A00E0).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),

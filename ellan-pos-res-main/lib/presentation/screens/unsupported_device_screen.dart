@@ -21,7 +21,7 @@ class UnsupportedDeviceScreen extends StatelessWidget {
                   color: Colors.black45,
                   blurRadius: 15,
                   offset: Offset(0, 10),
-                )
+                ),
               ],
             ),
             padding: const EdgeInsets.all(40),

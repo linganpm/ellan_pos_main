@@ -42,7 +42,9 @@ class CheckoutFooterButtons extends StatelessWidget {
                 elevation: hasItems ? 2 : 0,
                 shadowColor: Colors.black.withOpacity(0.1),
                 side: BorderSide(
-                  color: hasItems ? const Color(0xFF4A00E0).withOpacity(0.5) : Colors.transparent,
+                  color: hasItems
+                      ? const Color(0xFF4A00E0).withOpacity(0.5)
+                      : Colors.transparent,
                   width: 1.5,
                 ),
                 shape: RoundedRectangleBorder(
@@ -53,7 +55,9 @@ class CheckoutFooterButtons extends StatelessWidget {
                 'KOT',
                 style: FontUtility.heading.copyWith(
                   fontSize: 18,
-                  color: hasItems ? const Color(0xFF4A00E0) : Colors.grey.shade400,
+                  color: hasItems
+                      ? const Color(0xFF4A00E0)
+                      : Colors.grey.shade400,
                 ),
               ),
             ),

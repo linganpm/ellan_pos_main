@@ -10,6 +10,7 @@ class Product {
   final String? sellUnitLabel;
   final double? sellUnitBaseQty;
   final int? sellUnitCode;
+
   /// Free-text POS line (no catalogue variant required).
   final bool isMisc;
 
@@ -29,7 +30,9 @@ class Product {
   });
 
   bool get hasSellUnit =>
-      sellUnitCode != null && sellUnitShort != null && sellUnitShort!.isNotEmpty;
+      sellUnitCode != null &&
+      sellUnitShort != null &&
+      sellUnitShort!.isNotEmpty;
 
   @override
   bool operator ==(Object other) =>

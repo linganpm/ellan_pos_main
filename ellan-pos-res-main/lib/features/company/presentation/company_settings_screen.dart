@@ -14,6 +14,7 @@ import 'package:pos_tablet/core/pos_report_mailer_defaults.dart';
 import 'package:pos_tablet/core/pos_wallet_variant_defaults.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/core/utils/user_facing_error.dart';
+import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 /// Edit open-store company profile (online + local store_info mirror).
 class CompanySettingsScreen extends StatefulWidget {
@@ -86,10 +87,10 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
     final storeSi = store.serviceInstanceId > 0
         ? '${store.serviceInstanceId}'
         : (RegExp(r'^\d+$').hasMatch(remote)
-            ? remote
-            : (RegExp(r'^\d+$').hasMatch(store.scope.storeId)
-                ? store.scope.storeId
-                : (remote.isNotEmpty ? remote : store.uniqueId)));
+              ? remote
+              : (RegExp(r'^\d+$').hasMatch(store.scope.storeId)
+                    ? store.scope.storeId
+                    : (remote.isNotEmpty ? remote : store.uniqueId)));
     return {
       'org_instance_id': orgInstance,
       'orgId': orgInstance,
@@ -106,7 +107,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
     final store = context.read<UiStoreController>().store;
     if (store == null) {
       setState(() {
-        _error = 'Open a store first.';
+        _error = context.l10n.homeOpenStoreFirst;
         _loading = false;
       });
       return;
@@ -148,9 +149,9 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
         try {
           final origin = discoveryOrigin(kDiscoveryUrl);
           final refs = _storeRefs();
-          final uri = Uri.parse('$origin/api/pos/store/profile').replace(
-            queryParameters: refs,
-          );
+          final uri = Uri.parse(
+            '$origin/api/pos/store/profile',
+          ).replace(queryParameters: refs);
           final response = await http.get(
             uri,
             headers: {'Authorization': 'Bearer $token'},
@@ -194,7 +195,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
     } catch (e) {
       _error = userFacingError(
         e,
-        fallback: 'Could not load company settings.',
+        fallback: context.l10n.errorCouldNotLoadCompanySettings,
       );
     }
     if (!mounted) return;
@@ -220,14 +221,15 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
           await store.wallets.addLocalVariant(
             store.scope,
             variantId: id,
-            label: name.isEmpty ? 'Wallet' : name,
+            label: name.isEmpty ? context.l10n.companyWallet : name,
             variantName: name,
             variantType: (row['type'] as num?)?.toInt(),
           );
         }
       }
-      final localAfterSeed =
-          local.isEmpty ? await store.wallets.list(store.scope, skipAuth: true) : local;
+      final localAfterSeed = local.isEmpty
+          ? await store.wallets.list(store.scope, skipAuth: true)
+          : local;
       final cachedVariants = await store.wallets.listVariants(store.scope);
       if (!mounted) return;
       setState(() {
@@ -301,8 +303,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
         for (final w in refreshed)
           if (w.walletVariantId != null) w.walletVariantId!,
       };
-      final effectiveLinked =
-          linked.isNotEmpty ? linked : linkedFromLocal;
+      final effectiveLinked = linked.isNotEmpty ? linked : linkedFromLocal;
       final persisted = await store.wallets.listVariants(store.scope);
 
       if (!mounted) return;
@@ -339,7 +340,9 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
       }
     } catch (_) {}
     final snippet = response.body.trim();
-    if (snippet.isNotEmpty && snippet.length <= 160 && !snippet.startsWith('<')) {
+    if (snippet.isNotEmpty &&
+        snippet.length <= 160 &&
+        !snippet.startsWith('<')) {
       return snippet;
     }
     return '$fallback (HTTP ${response.statusCode})';
@@ -349,15 +352,16 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
     final controller = context.read<UiStoreController>();
     final store = controller.store;
     if (store == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Open a store first.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.homeOpenStoreFirst)));
       return;
     }
 
     final variantId = (variant['id'] as num?)?.toInt();
     if (variantId == null) return;
-    final label = '${variant['name'] ?? 'Payment method'}'.trim();
+    final label = '${variant['name'] ?? context.l10n.companyPaymentMethod}'
+        .trim();
 
     setState(() {
       _addingWallet = true;
@@ -404,7 +408,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
       // Remote failure is fine — local wallet is already on the branch.
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$label added to this branch.')),
+        SnackBar(content: Text(context.l10n.companyPaymentMethodAdded(label))),
       );
       await _loadWallets();
     } catch (e) {
@@ -412,7 +416,10 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            userFacingError(e, fallback: 'Could not add payment method.'),
+            userFacingError(
+              e,
+              fallback: context.l10n.errorCouldNotAddPaymentMethod,
+            ),
           ),
           backgroundColor: Colors.red.shade700,
         ),
@@ -441,21 +448,23 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
         else if (w.label.trim().isNotEmpty)
           w.label.trim().toLowerCase(),
     };
-    final available = _variants.where((v) {
-      final id = (v['id'] as num?)?.toInt();
-      final name = '${v['name'] ?? ''}'.trim().toLowerCase();
-      if (id != null && linked.contains(id)) return false;
-      if (name.isNotEmpty && linkedNames.contains(name)) return false;
-      return true;
-    }).toList(growable: false);
+    final available = _variants
+        .where((v) {
+          final id = (v['id'] as num?)?.toInt();
+          final name = '${v['name'] ?? ''}'.trim().toLowerCase();
+          if (id != null && linked.contains(id)) return false;
+          if (name.isNotEmpty && linkedNames.contains(name)) return false;
+          return true;
+        })
+        .toList(growable: false);
 
     if (available.isEmpty) {
       final message = _variants.isEmpty
-          ? 'No payment method variants are available from the server.'
-          : 'All payment methods are already on this branch.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+          ? context.l10n.companyNoPaymentVariants
+          : context.l10n.companyAllPaymentMethodsAdded;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
       return;
     }
 
@@ -487,7 +496,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
                   child: Text(
-                    'Tap a method to add',
+                    context.l10n.companyTapMethodToAdd,
                     style: FontUtility.heading.copyWith(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
@@ -522,7 +531,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                           ),
                         ),
                         title: Text(
-                          '${v['name'] ?? 'Method'}',
+                          '${v['name'] ?? context.l10n.companyMethod}',
                           style: FontUtility.body.copyWith(
                             fontWeight: FontWeight.w700,
                             fontSize: 17,
@@ -538,8 +547,10 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                                   fontSize: 13,
                                 ),
                               ),
-                        trailing: const Icon(Icons.add_circle_outline_rounded,
-                            color: _primary),
+                        trailing: const Icon(
+                          Icons.add_circle_outline_rounded,
+                          color: _primary,
+                        ),
                         onTap: () => Navigator.pop(ctx, v),
                       );
                     },
@@ -567,8 +578,9 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
       final support = await getApplicationSupportDirectory();
       final dir = Directory(p.join(support.path, 'company_logos'));
       await dir.create(recursive: true);
-      final ext =
-          p.extension(sourcePath).isEmpty ? '.jpg' : p.extension(sourcePath);
+      final ext = p.extension(sourcePath).isEmpty
+          ? '.jpg'
+          : p.extension(sourcePath);
       final dest = File(p.join(dir.path, '${store.storeId}$ext'));
       await File(sourcePath).copy(dest.path);
       await store.setCompanyLogoLocal(dest.path);
@@ -582,11 +594,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            userFacingError(
-              e,
-              fallback:
-                  'Could not pick logo. Fully restart the app (stop + run), then try again.',
-            ),
+            userFacingError(e, fallback: context.l10n.errorCouldNotPickLogo),
           ),
         ),
       );
@@ -642,7 +650,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
           '.',
           'Images (*.png *.jpg *.jpeg *.webp *.gif *.bmp)',
         ]) ??
-        await run('yad', const [
+        await run('yad', [
           '--file',
           '--title=Choose company logo',
           '--file-filter=Images | *.png *.jpg *.jpeg *.webp *.gif *.bmp',
@@ -655,12 +663,12 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Logo file path'),
+          title: Text(context.l10n.companyLogoFilePath),
           content: SizedBox(
             width: 480,
             child: TextField(
               controller: ctrl,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: '/path/to/logo.png',
                 border: OutlineInputBorder(),
               ),
@@ -670,11 +678,11 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.actionCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Use file'),
+              child: Text(context.l10n.companyUseFile),
             ),
           ],
         );
@@ -684,9 +692,9 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
     final path = ctrl.text.trim();
     if (path.isEmpty || !File(path).existsSync()) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('File not found.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.l10n.errorFileNotFound)));
       }
       return null;
     }
@@ -700,9 +708,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
     final token = login?.accessToken?.trim() ?? '';
     if (store == null) return;
     if (token.isEmpty) {
-      setState(
-        () => _error = 'Sign in online first to update company settings.',
-      );
+      setState(() => _error = context.l10n.errorSignInOnlineFirst);
       return;
     }
 
@@ -732,7 +738,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
         }),
       );
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        String message = 'Could not save company settings.';
+        String message = context.l10n.errorCouldNotSaveCompanySettings;
         try {
           final body = jsonDecode(response.body);
           if (body is Map && body['message'] != null) {
@@ -769,7 +775,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Company settings saved.')),
+        SnackBar(content: Text(context.l10n.companySettingsSaved)),
       );
       await _load();
     } catch (e) {
@@ -777,7 +783,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
       setState(
         () => _error = userFacingError(
           e,
-          fallback: 'Could not save company settings.',
+          fallback: context.l10n.errorCouldNotSaveCompanySettings,
         ),
       );
     } finally {
@@ -867,10 +873,8 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
     );
   }
 
-  Widget _fieldGap(Widget child) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: child,
-      );
+  Widget _fieldGap(Widget child) =>
+      Padding(padding: const EdgeInsets.only(bottom: 12), child: child);
 
   @override
   Widget build(BuildContext context) {
@@ -881,7 +885,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
         foregroundColor: _ink,
         elevation: 0.5,
         title: Text(
-          'Company settings',
+          context.l10n.companySettingsTitle,
           style: FontUtility.heading.copyWith(
             fontSize: 22,
             fontWeight: FontWeight.w800,
@@ -907,8 +911,10 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline_rounded,
-                            color: Colors.red.shade700),
+                        Icon(
+                          Icons.error_outline_rounded,
+                          color: Colors.red.shade700,
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
@@ -926,7 +932,9 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                   const SizedBox(height: 16),
                 ],
                 Text(
-                  _name.text.trim().isNotEmpty ? _name.text.trim() : 'Branch',
+                  _name.text.trim().isNotEmpty
+                      ? _name.text.trim()
+                      : context.l10n.companyBranch,
                   style: FontUtility.heading.copyWith(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
@@ -935,7 +943,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'SI $_siLabel',
+                  context.l10n.commonServiceInstanceShort(_siLabel),
                   style: FontUtility.body.copyWith(
                     color: _muted,
                     fontSize: 14,
@@ -953,7 +961,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                 _section(
                   accent: const Color(0xFFEC4899),
                   icon: Icons.image_rounded,
-                  title: 'Logo',
+                  title: context.l10n.companyLogo,
                   children: [
                     Row(
                       children: [
@@ -964,7 +972,8 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                             color: const Color(0xFFFDF2F8),
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(color: const Color(0xFFFBCFE8)),
-                            image: (_logoPath != null &&
+                            image:
+                                (_logoPath != null &&
                                     File(_logoPath!).existsSync())
                                 ? DecorationImage(
                                     image: FileImage(File(_logoPath!)),
@@ -972,7 +981,8 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                                   )
                                 : null,
                           ),
-                          child: (_logoPath != null &&
+                          child:
+                              (_logoPath != null &&
                                   File(_logoPath!).existsSync())
                               ? null
                               : const Icon(
@@ -988,8 +998,8 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                             children: [
                               Text(
                                 _logoPendingSync
-                                    ? 'Saved on this device · syncs with Save'
-                                    : 'Branch logo',
+                                    ? context.l10n.companySavedOnDevice
+                                    : context.l10n.companyBranchLogo,
                                 style: FontUtility.body.copyWith(
                                   color: _muted,
                                   fontWeight: FontWeight.w600,
@@ -999,7 +1009,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                               FilledButton.tonalIcon(
                                 onPressed: _pickLogo,
                                 icon: const Icon(Icons.upload_rounded),
-                                label: const Text('Upload logo'),
+                                label: Text(context.l10n.companyUploadLogo),
                               ),
                             ],
                           ),
@@ -1011,7 +1021,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                 _section(
                   accent: _primary,
                   icon: Icons.storefront_rounded,
-                  title: 'Branch',
+                  title: context.l10n.companyBranch,
                   children: [
                     _fieldGap(
                       TextField(
@@ -1021,7 +1031,9 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                           fontSize: 17,
                           color: _ink,
                         ),
-                        decoration: _fieldDecoration('Branch / store name'),
+                        decoration: _fieldDecoration(
+                          context.l10n.companyBranchStoreName,
+                        ),
                       ),
                     ),
                     _fieldGap(
@@ -1032,7 +1044,9 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                           fontSize: 17,
                           color: _ink,
                         ),
-                        decoration: _fieldDecoration('Identifier'),
+                        decoration: _fieldDecoration(
+                          context.l10n.companyIdentifier,
+                        ),
                       ),
                     ),
                     TextField(
@@ -1043,14 +1057,14 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                         fontSize: 17,
                         color: _ink,
                       ),
-                      decoration: _fieldDecoration('Address'),
+                      decoration: _fieldDecoration(context.l10n.companyAddress),
                     ),
                   ],
                 ),
                 _section(
                   accent: const Color(0xFF0EA5E9),
                   icon: Icons.contact_mail_rounded,
-                  title: 'Contact',
+                  title: context.l10n.companyContact,
                   children: [
                     _fieldGap(
                       TextField(
@@ -1061,7 +1075,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                           fontSize: 17,
                           color: _ink,
                         ),
-                        decoration: _fieldDecoration('Phone'),
+                        decoration: _fieldDecoration(context.l10n.commonPhone),
                       ),
                     ),
                     TextField(
@@ -1072,14 +1086,14 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                         fontSize: 17,
                         color: _ink,
                       ),
-                      decoration: _fieldDecoration('Email'),
+                      decoration: _fieldDecoration(context.l10n.commonEmail),
                     ),
                   ],
                 ),
                 _section(
                   accent: const Color(0xFF059669),
                   icon: Icons.badge_rounded,
-                  title: 'Legal',
+                  title: context.l10n.companyLegal,
                   children: [
                     _fieldGap(
                       TextField(
@@ -1089,7 +1103,9 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                           fontSize: 17,
                           color: _ink,
                         ),
-                        decoration: _fieldDecoration('Registration number'),
+                        decoration: _fieldDecoration(
+                          context.l10n.companyRegistrationNumber,
+                        ),
                       ),
                     ),
                     TextField(
@@ -1099,7 +1115,9 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                         fontSize: 17,
                         color: _ink,
                       ),
-                      decoration: _fieldDecoration('Tax registration number'),
+                      decoration: _fieldDecoration(
+                        context.l10n.companyTaxRegistrationNumber,
+                      ),
                     ),
                   ],
                 ),
@@ -1123,7 +1141,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                             ),
                           )
                         : Text(
-                            'Save changes',
+                            context.l10n.companySaveChanges,
                             style: FontUtility.button.copyWith(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
@@ -1135,90 +1153,84 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                 _section(
                   accent: const Color(0xFF6366F1),
                   icon: Icons.mail_rounded,
-                  title: 'System email (locked)',
+                  title: context.l10n.companySystemEmailLocked,
                   children: [
-                    Text(
-                      'Report and invoice/bookings mailers are fixed by Ellan POS. '
-                      'Credentials cannot be changed or added on the tablet.',
-                      style: FontUtility.body.copyWith(
-                        color: _muted,
-                        fontSize: 14,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
                     ...(_fixedMailers.isEmpty
                             ? PosReportMailerDefaults.localPublicRows()
                             : _fixedMailers)
                         .map((row) {
-                      final purpose = '${row['purpose'] ?? ''}';
-                      final label = purpose == PosReportMailerDefaults.invoicePurpose
-                          ? 'Invoice / bookings'
-                          : 'Sales reports';
-                      return Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEEF2FF),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$label · locked',
-                              style: FontUtility.body.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: _primary,
-                              ),
+                          final purpose = '${row['purpose'] ?? ''}';
+                          final label =
+                              purpose == PosReportMailerDefaults.invoicePurpose
+                              ? 'Invoice / bookings'
+                              : context.l10n.companySalesReports;
+                          return Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEEF2FF),
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${row['from_email'] ?? row['username'] ?? PosReportMailerDefaults.fromEmail}',
-                              style: FontUtility.body.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: _ink,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  context.l10n.companyLabelLocked(label),
+                                  style: FontUtility.body.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: _primary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${row['from_email'] ?? row['username'] ?? PosReportMailerDefaults.fromEmail}',
+                                  style: FontUtility.body.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: _ink,
+                                  ),
+                                ),
+                                Text(
+                                  '${row['from_name'] ?? ''}',
+                                  style: FontUtility.body.copyWith(
+                                    color: _muted,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                Text(
+                                  '${row['host'] ?? PosReportMailerDefaults.host}',
+                                  style: FontUtility.body.copyWith(
+                                    color: _muted,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              '${row['from_name'] ?? ''}',
-                              style: FontUtility.body.copyWith(
-                                color: _muted,
-                                fontSize: 13,
-                              ),
-                            ),
-                            Text(
-                              '${row['host'] ?? PosReportMailerDefaults.host}',
-                              style: FontUtility.body.copyWith(
-                                color: _muted,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
+                          );
+                        }),
                   ],
                 ),
                 const SizedBox(height: 8),
                 _section(
                   accent: const Color(0xFFF59E0B),
                   icon: Icons.account_balance_wallet_rounded,
-                  title: 'Wallet',
+                  title: context.l10n.companyWallet,
                   children: [
                     Align(
                       alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: (_walletsLoading || _addingWallet)
-                            ? null
-                            : _pickVariantToAdd,
-                        icon: const Icon(Icons.add_rounded),
-                        label: Text(
-                          'Add to branch',
-                          style: FontUtility.body.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: _primary,
+                      child: Tooltip(
+                        message: context.l10n.companyAddToBranch,
+                        child: Semantics(
+                          label: context.l10n.companyAddToBranch,
+                          button: true,
+                          child: IconButton(
+                            onPressed: (_walletsLoading || _addingWallet)
+                                ? null
+                                : _pickVariantToAdd,
+                            icon: const Icon(
+                              Icons.add_rounded,
+                              color: _primary,
+                            ),
                           ),
                         ),
                       ),
@@ -1234,7 +1246,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Text(
-                          'No payment methods on this branch yet. Use Add to branch.',
+                          context.l10n.companyNoPaymentMethodsBranch,
                           style: FontUtility.body.copyWith(
                             color: _muted,
                             fontSize: 15,
@@ -1260,9 +1272,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFFBEB),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: const Color(0xFFFDE68A),
-                            ),
+                            border: Border.all(color: const Color(0xFFFDE68A)),
                           ),
                           child: Row(
                             children: [
