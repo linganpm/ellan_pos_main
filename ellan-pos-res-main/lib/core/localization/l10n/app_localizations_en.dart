@@ -171,6 +171,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get billingComplete => 'COMPLETE';
 
   @override
+  String get billingCompleteWithoutPayment => 'COMPLETE WITHOUT PAYMENT';
+
+  @override
   String get billingCompletingCheckout => 'Completing checkout…';
 
   @override
@@ -1401,7 +1404,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get creditsWarnOnly => 'Warn only';
 
   @override
+  String get customerAdvanceAdd => 'Add customer advance';
+
+  @override
+  String get customerAdvanceAvailable => 'Advance available';
+
+  @override
+  String customerAdvanceAvailableValue(String amount) {
+    return 'Advance available: $amount';
+  }
+
+  @override
+  String get customerAdvanceExplanation =>
+      'Money received is applied to any balance due first. The remainder stays available for future sales.';
+
+  @override
+  String get customerAdvanceRecord => 'Record advance';
+
+  @override
+  String get customerAdvanceRecorded => 'Customer advance recorded.';
+
+  @override
   String get customerBalanceDue => 'Balance due';
+
+  @override
+  String customerBalanceDueValue(String amount) {
+    return 'Balance due: $amount';
+  }
 
   @override
   String get customerCouldNotSave => 'Could not save customer';
@@ -2189,7 +2218,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get orderCreateSaveDraftTooltip => 'Save draft';
+  String get orderCreateSaveDraftTooltip =>
+      'Save cart draft (Home drafts, not Purchases list)';
 
   @override
   String get orderCreateTitle => 'New order';
@@ -2238,7 +2268,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orderDraftDeleted => 'Draft deleted.';
 
   @override
-  String get orderDraftSaved => 'Draft saved.';
+  String get orderDraftSaved =>
+      'Cart draft saved. Open it from Home → Saved drafts.';
 
   @override
   String get orderGoToPayments => 'Go to payments';
@@ -2504,7 +2535,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get orderSaveDraft => 'Save draft';
+  String get orderSaveDraft => 'Save cart draft';
 
   @override
   String get orderSummary => 'Summary';

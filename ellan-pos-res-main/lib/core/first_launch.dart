@@ -18,7 +18,23 @@ Future<void> openStoreAndSyncCatalogue({
   void Function(StoreSyncProgressUpdate update)? onProgress,
 }) async {
   final setupStore = DeviceSetupStore(prefs);
-  await controller.openStore(storeId);
+
+  try {
+    await controller.openStore(storeId);
+  } catch (e) {
+    final lower = e.toString().toLowerCase();
+    final isDbError = lower.contains('databaseexception') ||
+        lower.contains('sqliteexception') ||
+        lower.contains('no such column') ||
+        lower.contains('no such table') ||
+        lower.contains('unique constraint');
+    if (!isDbError) rethrow;
+
+    // Local DB schema is stale — delete it and retry so migrations recreate
+    // fresh tables. The catalogue sync below will repopulate data.
+    await controller.deleteStoreDatabase(storeId);
+    await controller.openStore(storeId);
+  }
 
   final hasLocalCatalogue = setupStore.isCatalogSyncedForStore(storeId);
   try {

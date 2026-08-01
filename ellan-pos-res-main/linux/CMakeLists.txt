@@ -41,7 +41,9 @@ endif()
 # of modifying this function.
 function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_features(${TARGET} PUBLIC cxx_std_14)
-  target_compile_options(${TARGET} PRIVATE -Wall -Werror)
+  # Plugins (e.g. printing) still trip -Wsign-compare under newer GCC; keep
+  # -Werror for other warnings but do not fail the build on that one.
+  target_compile_options(${TARGET} PRIVATE -Wall -Werror -Wno-error=sign-compare)
   target_compile_options(${TARGET} PRIVATE "$<$<NOT:$<CONFIG:Debug>>:-O3>")
   target_compile_definitions(${TARGET} PRIVATE "$<$<NOT:$<CONFIG:Debug>>:NDEBUG>")
 endfunction()

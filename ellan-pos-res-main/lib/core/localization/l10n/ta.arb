@@ -54,7 +54,7 @@
   "billingAddDiscount": "தள்ளுபடி சேர்",
   "billingAddDiscountCaps": "தள்ளுபடி சேர்",
   "billingAddOnePaymentFirst": "முதலில் குறைந்தது ஒரு பணம் சேர்க்கவும்.",
-  "billingAddPayment": "கட்டணம் சேர்",
+  "billingAddPayment": "தொகை சேர்",
   "billingAddPaymentTitle": "பணம் சேர்",
   "billingAddTips": "டிப்ஸ் சேர்",
   "billingAmountExceedsRemaining": "தொகை மீதமுள்ளதை ({amount}) மீறக்கூடாது.",
@@ -72,6 +72,7 @@
   "billingAttachCustomer": "இந்த பில்லுடன் வாடிக்கையாளரை இணைக்கவும் (கடனுக்கு அவசியம்).",
   "billingCheckoutComplete": "செக்அவுட் முடிந்தது",
   "billingComplete": "முடி",
+  "billingCompleteWithoutPayment": "பணம் இல்லாமல் முடி",
   "billingCompletingCheckout": "செக்அவுட் முடிக்கிறது…",
   "billingCoverFullOrCredit": "முழுத் தொகையையும் செலுத்தவும் அல்லது நிலுவையை வாடிக்கையாளர் கடனில் வைக்கவும்.",
   "billingCreditCancelled": "கடன் ரத்து. செக்அவுட் முடிக்கப்படவில்லை.",
@@ -369,7 +370,7 @@
     }
   },
   "commonPaymentMode": "கட்டண முறை",
-  "commonPaymentNumber": "கட்டணம் #{id}",
+  "commonPaymentNumber": "தொகை #{id}",
   "@commonPaymentNumber": {
     "placeholders": {
       "id": {
@@ -580,7 +581,7 @@
   },
   "creditsCancelScheduleTitle": "திட்டமிட்ட திருப்பிச் செலுத்தலை ரத்துசெய்",
   "creditsCollect": "வசூல்",
-  "creditsCollectPayment": "கட்டணம் வசூலி",
+  "creditsCollectPayment": "தொகை வசூலி",
   "creditsCollectedScheduled": "அட்டவணையிடப்பட்ட {amount} வசூலிக்கப்பட்டது",
   "@creditsCollectedScheduled": {
     "placeholders": {
@@ -752,7 +753,28 @@
   "creditsVoidRepaymentTitle": "திருப்பிச் செலுத்தலை ரத்துசெய்",
   "creditsVoidedOnPos": "POS டேப்லெட்டில் ரத்துசெய்யப்பட்டது",
   "creditsWarnOnly": "எச்சரிக்கை மட்டும்",
+  "customerAdvanceAdd": "வாடிக்கையாளர் முன்பணத்தைச் சேர்",
+  "customerAdvanceAvailable": "கிடைக்கும் முன்பணம்",
+  "customerAdvanceAvailableValue": "கிடைக்கும் முன்பணம்: {amount}",
+  "@customerAdvanceAvailableValue": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "customerAdvanceExplanation": "பெறப்பட்ட தொகை முதலில் நிலுவைத் தொகையில் கழிக்கப்படும். மீதமுள்ள தொகை எதிர்கால விற்பனைக்கான முன்பணமாக இருக்கும்.",
+  "customerAdvanceRecord": "முன்பணத்தைப் பதிவு செய்",
+  "customerAdvanceRecorded": "வாடிக்கையாளர் முன்பணம் பதிவுசெய்யப்பட்டது.",
   "customerBalanceDue": "நிலுவைத் தொகை",
+  "customerBalanceDueValue": "நிலுவைத் தொகை: {amount}",
+  "@customerBalanceDueValue": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "customerCouldNotSave": "வாடிக்கையாளரைச் சேமிக்க முடியவில்லை",
   "customerCreditHistory": "கடன் வரலாறு",
   "customerEmailOptional": "மின்னஞ்சல் (விரும்பினால்)",
@@ -1138,7 +1160,7 @@
   "languageEnglish": "ஆங்கிலம்",
   "languageLabel": "மொழி",
   "languageTamil": "தமிழ்",
-  "orderAddRecordPayment": "கட்டணம் சேர் / பதிவு செய்",
+  "orderAddRecordPayment": "தொகை சேர் / பதிவு செய்",
   "orderAddonsLabel": "துணைப்பொருட்கள்: {labels}",
   "@orderAddonsLabel": {
     "placeholders": {
@@ -1149,7 +1171,7 @@
   },
   "orderAllItemsSentKitchen": "அனைத்து பொருட்களும் ஏற்கனவே சமையலறைக்கு அனுப்பப்பட்டன.",
   "orderAlreadyFullyPaid": "இந்த ஆர்டர் ஏற்கனவே முழுமையாகச் செலுத்தப்பட்டது.",
-  "orderAlreadyFullyRefunded": "இந்தக் கட்டணம் ஏற்கனவே முழுமையாகத் திருப்பப்பட்டது.",
+  "orderAlreadyFullyRefunded": "இந்தத் தொகை ஏற்கனவே முழுமையாகத் திருப்பப்பட்டது.",
   "orderAppliedOffers": "பயன்படுத்தப்பட்ட சலுகைகள்",
   "orderCancelConfirm": "இந்த ஆர்டரை ரத்துசெய்யப்பட்டதாகக் குறிக்கவா?",
   "orderCancelTitle": "ஆர்டரை ரத்துசெய்",
@@ -1198,7 +1220,7 @@
   "orderCreatePastOrders": "கடந்த ஆர்டர்கள்",
   "orderCreateProductName": "பொருள் பெயர்",
   "orderCreateQuantityUnit": "அளவு ({unit})",
-  "orderCreateSaveDraftTooltip": "வரைவைச் சேமி",
+  "orderCreateSaveDraftTooltip": "வண்டி வரைவைச் சேமி (முகப்பு வரைவுகள்; கொள்முதல் பட்டியல் அல்ல)",
   "orderCreateTitle": "புதிய ஆர்டர்",
   "orderCreationSaveContinue": "சேமித்துத் தொடருங்கள்",
   "orderDeleteDraft": "வரைவை நீக்கு",
@@ -1219,7 +1241,7 @@
   "orderDetailsTotalPaid": "மொத்தம் செலுத்தப்பட்டது {amount}",
   "orderDetailsViewPayments": "பணம் செலுத்தல்களைக் காண்க",
   "orderDraftDeleted": "வரைவு நீக்கப்பட்டது.",
-  "orderDraftSaved": "வரைவு சேமிக்கப்பட்டது.",
+  "orderDraftSaved": "வண்டி வரைவு சேமிக்கப்பட்டது. முகப்பு → சேமிக்கப்பட்ட வரைவுகள் வழியாகத் திறக்கவும்.",
   "orderGoToPayments": "கட்டணங்களுக்குச் செல்",
   "orderHistoryId": "{id} · ஆர்டர் #{orderId}",
   "@orderHistoryId": {
@@ -1247,7 +1269,7 @@
   "orderListColumnName": "பெயர்",
   "orderListColumnOrderId": "ஆர்டர் ஐடி",
   "orderListColumnOrderType": "வகை",
-  "orderListColumnPayment": "கட்டணம்",
+  "orderListColumnPayment": "தொகை",
   "orderListColumnSlNo": "வ.எண்",
   "orderListColumnStatus": "நிலை",
   "orderListColumnTime": "நேரம்",
@@ -1301,7 +1323,7 @@
       }
     }
   },
-  "orderPaymentFailed": "கட்டணம் தோல்வி: {error}",
+  "orderPaymentFailed": "தொகை பதிவு தோல்வி: {error}",
   "@orderPaymentFailed": {
     "placeholders": {
       "error": {
@@ -1371,7 +1393,7 @@
       }
     }
   },
-  "orderSaveDraft": "வரைவைச் சேமி",
+  "orderSaveDraft": "வண்டி வரைவைச் சேமி",
   "orderSummary": "சுருக்கம்",
   "orderSyncedRemote": "ரிமோட் பேக்கெண்டிற்கு ஒத்திசைக்கப்பட்டது",
   "orderTypeDineIn": "உள்ளே சாப்பிடுபவர்கள்",

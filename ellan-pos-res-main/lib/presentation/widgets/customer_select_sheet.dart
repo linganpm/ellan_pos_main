@@ -28,6 +28,8 @@ Future<CustomerSelectResult?> showCustomerSelectSheet(
   String? subtitle,
   String? confirmLabel,
   bool isDismissible = true,
+  List<String>? roles,
+  String customerGroup = 'retail_customer',
 }) {
   final resolvedTitle = title ?? context.l10n.commonSelectCustomer;
   final resolvedConfirm = confirmLabel ?? context.l10n.actionContinue;
@@ -42,6 +44,8 @@ Future<CustomerSelectResult?> showCustomerSelectSheet(
       title: resolvedTitle,
       subtitle: subtitle,
       confirmLabel: resolvedConfirm,
+      roles: roles,
+      customerGroup: customerGroup,
     ),
   );
 }
@@ -50,12 +54,16 @@ class CustomerSelectSheet extends StatefulWidget {
   final String title;
   final String? subtitle;
   final String confirmLabel;
+  final List<String>? roles;
+  final String customerGroup;
 
   const CustomerSelectSheet({
     super.key,
     required this.title,
     this.subtitle,
     required this.confirmLabel,
+    this.roles,
+    this.customerGroup = 'retail_customer',
   });
 
   @override
@@ -127,7 +135,10 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
       _searchError = null;
     });
     try {
-      final rows = await getIt<UiStoreController>().searchCustomers(trimmed);
+      final rows = await getIt<UiStoreController>().searchCustomers(
+        trimmed,
+        roles: widget.roles,
+      );
       if (!mounted) return;
       setState(() {
         _searching = false;
@@ -185,7 +196,9 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
     setState(() {
       _selected = CustomerSelectResult(
         customerUniqueId: hit.uniqueId,
-        name: hit.name.isEmpty ? _kDefaultCustomerName : hit.name,
+        name: hit.name.isEmpty
+            ? (hit.phone.isEmpty ? _kDefaultCustomerName : hit.phone)
+            : hit.name,
         phone: hit.phone,
         email: hit.email ?? '',
       );
@@ -212,9 +225,10 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
       try {
         final customer = await getIt<UiStoreController>()
             .createDirectoryCustomer(
-              name: name.isEmpty ? _kDefaultCustomerName : name,
+              name: name.isEmpty ? phone : name,
               phone: phone,
               email: email.isEmpty ? null : email,
+              customerGroup: widget.customerGroup,
             );
         if (!mounted) return;
         if (customer == null || customer.customerId.trim().isEmpty) {
@@ -227,7 +241,11 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
         Navigator.of(context).pop(
           CustomerSelectResult(
             customerUniqueId: customer.customerId,
-            name: customer.name.isEmpty ? _kDefaultCustomerName : customer.name,
+            name: customer.name.isEmpty
+                ? (customer.phone.isEmpty
+                      ? _kDefaultCustomerName
+                      : customer.phone)
+                : customer.name,
             phone: customer.phone,
             email: customer.email,
           ),
@@ -470,7 +488,9 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                               itemBuilder: (context, index) {
                                 final hit = _searchHits[index];
                                 final displayName = hit.name.isEmpty
-                                    ? _kDefaultCustomerName
+                                    ? (hit.phone.isEmpty
+                                          ? _kDefaultCustomerName
+                                          : hit.phone)
                                     : hit.name;
                                 return ListTile(
                                   dense: true,

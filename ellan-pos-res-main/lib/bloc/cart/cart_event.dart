@@ -12,11 +12,15 @@ abstract class CartEvent extends Equatable {
 
 class LoadInitialData extends CartEvent {
   final CartDraftSnapshot? draft;
+  final String pricingMode;
 
-  const LoadInitialData({this.draft});
+  const LoadInitialData({
+    this.draft,
+    this.pricingMode = 'selling',
+  });
 
   @override
-  List<Object?> get props => [draft];
+  List<Object?> get props => [draft, pricingMode];
 }
 
 /// Snapshot applied after catalogue load to restore a saved draft cart.

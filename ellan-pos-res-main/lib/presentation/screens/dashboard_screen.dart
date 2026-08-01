@@ -30,6 +30,7 @@ class _DashboardView extends StatelessWidget {
   const _DashboardView();
 
   static const _filters = [
+    'All Time',
     'Yesterday',
     'Today',
     'This Week',
@@ -422,6 +423,8 @@ class _DashboardView extends StatelessWidget {
           initialTypeFilter: typeFilter,
           initialStatusFilter: statusFilter,
           periodFilter: periodFilter,
+          pricingMode: 'selling',
+          title: 'Sales',
         ),
       ),
     );
@@ -461,6 +464,13 @@ class _DashboardView extends StatelessWidget {
 
   String _getLocalizedFilter(BuildContext context, String filter) {
     switch (filter) {
+      case 'All Time':
+        return Localizations.localeOf(context)
+                .languageCode
+                .toLowerCase()
+                .startsWith('ta')
+            ? 'முழு காலம்'
+            : 'All Time';
       case 'Yesterday':
         return AppLocalizations.of(context)!.dashboardFilterYesterday;
       case 'Today':

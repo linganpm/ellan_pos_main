@@ -19,6 +19,7 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
   final String initialTypeFilter;
   final String? initialStatusFilter;
   final String? periodFilter;
+  final String? pricingModeFilter;
   List<OrderListModel> _allOrders = [];
   List<PosOrderType> _orderTypes = OrderTypesRepository.defaults;
   DateTime? _periodStart;
@@ -31,6 +32,7 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
     this.initialTypeFilter = 'All',
     this.initialStatusFilter,
     this.periodFilter,
+    this.pricingModeFilter,
   }) : _controller = controller ?? getIt<UiStoreController>(),
        super(OrderListInitial()) {
     on<FetchInitialOrders>(_onFetchInitialOrders);
@@ -44,7 +46,9 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
   }
 
   Future<void> _loadOrdersFromDb() async {
-    final summaries = await _controller.loadOrders();
+    final summaries = await _controller.loadOrders(
+      pricingMode: pricingModeFilter,
+    );
     try {
       _orderTypes = await _controller.loadOrderTypes();
     } catch (_) {
@@ -68,6 +72,7 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
       orderId: '${summary.orderId}',
       orderType: mapped.label,
       orderTypeKey: mapped.key,
+      pricingMode: summary.pricingMode,
       customerName: summary.customerName.isEmpty
           ? 'Walk-in'
           : summary.customerName,
@@ -358,6 +363,7 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
         orderId: order.orderId,
         orderType: order.orderType,
         orderTypeKey: order.orderTypeKey,
+        pricingMode: order.pricingMode,
         floorName: order.floorName,
         tableNumber: order.tableNumber,
         customerName: order.customerName,

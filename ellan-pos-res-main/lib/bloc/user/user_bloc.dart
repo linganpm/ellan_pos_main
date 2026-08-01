@@ -100,6 +100,21 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         } catch (e, st) {
           // ignore: avoid_print
           print('UserBloc: open store for lock failed: $e\n$st');
+          // Stale DB schema — delete and retry so migrations recreate tables.
+          final lower = e.toString().toLowerCase();
+          if (lower.contains('databaseexception') ||
+              lower.contains('sqliteexception') ||
+              lower.contains('no such column') ||
+              lower.contains('no such table')) {
+            try {
+              await controller.deleteStoreDatabase(selectedStoreId);
+              await controller.openStore(selectedStoreId);
+              await controller.logout();
+            } catch (e2, st2) {
+              // ignore: avoid_print
+              print('UserBloc: retry after DB reset also failed: $e2\n$st2');
+            }
+          }
         }
       }
 

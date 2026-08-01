@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
+import 'package:pos_tablet/core/currency_format.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/utils/customer_identity.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
@@ -9,6 +10,7 @@ import 'package:pos_tablet/presentation/screens/credits_screen.dart';
 import 'package:pos_tablet/presentation/screens/order_details_screen.dart';
 import 'package:pos_tablet/presentation/screens/order_list_screen.dart';
 import 'package:pos_tablet/presentation/screens/order_payments_screen.dart';
+import 'package:pos_tablet/presentation/widgets/credit/customer_advance_dialog.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 /// Directory customer profile: identity, credit balance, and history shortcuts.
@@ -30,8 +32,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   double _outstanding = 0;
   double _creditTotal = 0;
   double _repaid = 0;
+  double _advanceBalance = 0;
+  double _totalAdvances = 0;
   int _orderCount = 0;
   int _paymentCount = 0;
+
+  double get _accountBalance => _outstanding - _advanceBalance;
 
   List<StoreOrderSummary> _recentOrders = [];
   List<StoreCreditRecord> _recentCredits = [];
@@ -51,11 +57,55 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         return context.l10n.commonBusiness;
       case 'retail_customer':
         return context.l10n.commonRetail;
+      case 'supplier':
+        return 'Supplier';
       default:
         return _customer.role.isEmpty
             ? context.l10n.commonCustomer
             : _customer.role;
     }
+  }
+
+  String get _pricingModeFilter =>
+      _customer.role == 'supplier' ? 'buying' : 'selling';
+
+  String get _ordersTitle {
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
+    if (_customer.role == 'supplier') {
+      return isTamil ? 'கொள்முதல்' : 'Purchases';
+    }
+    return isTamil ? 'விற்பனை' : 'Sales';
+  }
+
+  String get _creditSalesLabel {
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
+    if (_customer.role == 'supplier') {
+      return isTamil ? 'கொள்முதல் கடன்' : 'Purchase Credit';
+    }
+    return context.l10n.creditsCreditSoFar;
+  }
+
+  String get _advancesLabel {
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
+    return isTamil ? 'முன்பணங்கள்' : 'Advances';
+  }
+
+  String get _advanceLabel {
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
+    return isTamil ? 'முன்பணம்' : 'Advance';
+  }
+
+  bool _isAdvanceRepayment(StoreCreditRepaymentRecord payment) {
+    return payment.localId.startsWith('customer-advance') ||
+        (payment.advanceAmount > 0.0001 && payment.allocatedAmount <= 0.0001);
   }
 
   @override
@@ -97,14 +147,16 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       final customerId = _customer.customerId;
 
       final results = await Future.wait([
-        controller.loadOrders(),
+        controller.loadOrders(pricingMode: _pricingModeFilter),
         controller.loadCreditRecords(customerId: customerId),
         controller.loadCreditRepayments(customerId: customerId),
+        controller.loadCustomerAdvanceBalance(customerId),
       ]);
 
       final allOrders = results[0] as List<StoreOrderSummary>;
       final credits = results[1] as List<StoreCreditRecord>;
       final repayments = results[2] as List<StoreCreditRepaymentRecord>;
+      final advanceBalance = results[3] as double;
 
       final orders = allOrders.where(_orderMatches).toList(growable: false)
         ..sort((a, b) {
@@ -147,6 +199,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           0,
           (sum, row) => sum + row.outstandingAmount,
         );
+        _advanceBalance = advanceBalance;
+        _totalAdvances = sortedPayments
+            .where(_isAdvanceRepayment)
+            .fold<double>(0, (sum, row) => sum + row.totalAmount);
         _loading = false;
       });
     } catch (error) {
@@ -165,6 +221,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         builder: (_) => OrderListScreen(
           customerId: _customer.customerId,
           customerName: _displayName,
+          pricingMode: _pricingModeFilter,
+          title: _ordersTitle,
         ),
       ),
     );
@@ -182,6 +240,42 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       ),
     );
     if (mounted) await _load();
+  }
+
+  Future<void> _addCustomerAdvance() async {
+    final result = await showDialog<CustomerAdvanceResult>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => CustomerAdvanceDialog(
+        customerName: _displayName,
+        accountBalance: _accountBalance,
+      ),
+    );
+    if (result == null || !mounted) return;
+    try {
+      await getIt<UiStoreController>().recordCustomerAdvance(
+        customerId: _customer.customerId,
+        amount: result.amount,
+        paymentMode: result.paymentMode,
+        referenceId: result.referenceId,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.customerAdvanceRecorded),
+          backgroundColor: Colors.green.shade700,
+        ),
+      );
+      await _load();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
   }
 
   Future<void> _openCreditList() async {
@@ -420,43 +514,89 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             children: [
               Expanded(
                 child: _metricTile(
-                  context.l10n.customerBalanceDue,
-                  _outstanding,
-                  emphasize: true,
+                  context.l10n.commonBalanceDue,
+                  _accountBalance,
+                  accountBalance: true,
                 ),
               ),
               Expanded(
                 child: _metricTile(
-                  context.l10n.creditsCreditSoFar,
+                  _creditSalesLabel,
                   _creditTotal,
                 ),
               ),
               Expanded(child: _metricTile(context.l10n.creditsRepaid, _repaid)),
+              Expanded(
+                child: _metricTile(
+                  _advancesLabel,
+                  _totalAdvances,
+                  positive: true,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 14),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: _openCreditAccount,
-              icon: const Icon(Icons.account_balance_wallet_rounded),
-              label: Text(context.l10n.creditsOpenAccount),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _primary,
-                side: const BorderSide(color: _primary),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 14,
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _openCreditAccount,
+                icon: const Icon(Icons.account_balance_wallet_rounded),
+                label: Text(context.l10n.creditsOpenAccount),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _primary,
+                  side: const BorderSide(color: _primary),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
                 ),
               ),
-            ),
+              FilledButton.icon(
+                onPressed: _addCustomerAdvance,
+                icon: const Icon(Icons.add_card_rounded),
+                label: Text(context.l10n.customerAdvanceAdd),
+                style: FilledButton.styleFrom(
+                  backgroundColor: _primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _metricTile(String label, double amount, {bool emphasize = false}) {
+  Widget _metricTile(
+    String label,
+    double amount, {
+    bool emphasize = false,
+    bool positive = false,
+    bool accountBalance = false,
+  }) {
+    final Color valueColor;
+    if (accountBalance) {
+      if (amount > 0.0001) {
+        valueColor = Colors.red.shade700;
+      } else if (amount < -0.0001) {
+        valueColor = Colors.green.shade700;
+      } else {
+        valueColor = Colors.black87;
+      }
+    } else {
+      valueColor = amount > 0.0001
+          ? (emphasize
+                ? Colors.red.shade700
+                : positive
+                ? Colors.green.shade700
+                : Colors.black87)
+          : Colors.black87;
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -466,12 +606,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          '\$${amount.toStringAsFixed(2)}',
+          PosCurrency.format(amount),
           style: FontUtility.subheading.copyWith(
             fontSize: 18,
-            color: emphasize && amount > 0.0001
-                ? Colors.red.shade700
-                : Colors.black87,
+            color: valueColor,
           ),
         ),
       ],
@@ -570,9 +708,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       children: [
         for (final payment in _recentPayments) ...[
           _historyTile(
-            title: payment.paymentMode.isEmpty
+            title: _isAdvanceRepayment(payment)
+                ? _advanceLabel
+                : payment.paymentMode.isEmpty
                 ? context.l10n.commonPaymentNumber(payment.id.toString())
-                : payment.paymentMode,
+                : payment.paymentMode.toUpperCase(),
             subtitle: payment.createdOn,
             trailing: '\$${payment.totalAmount.toStringAsFixed(2)}',
             onTap: _openCreditAccount,

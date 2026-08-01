@@ -6,6 +6,7 @@ import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/screens/credit_account_detail_screen.dart';
 import 'package:pos_tablet/presentation/screens/scheduled_payments_screen.dart';
 import 'package:pos_tablet/presentation/widgets/credit/credit_collect_payment_dialog.dart';
+import 'package:pos_tablet/presentation/widgets/customer_select_sheet.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 enum _CreditSortMode { highest, longPending }
@@ -24,9 +25,10 @@ class CreditsScreen extends StatefulWidget {
 class _CreditsScreenState extends State<CreditsScreen> {
   List<StoreCustomerCreditSummary> _summaries = const [];
   List<StoreCreditRecord> _records = const [];
+  List<StoreCreditRepaymentRecord> _repayments = const [];
   bool _loading = true;
   String? _error;
-  bool _outstandingOnly = true;
+  bool _outstandingOnly = false;
   _CreditSortMode _sortMode = _CreditSortMode.highest;
   final TextEditingController _searchController = TextEditingController();
 
@@ -64,10 +66,12 @@ class _CreditsScreenState extends State<CreditsScreen> {
         descending: _sortMode != _CreditSortMode.longPending,
       );
       final records = await controller.loadCreditRecords();
+      final repayments = await controller.loadCreditRepayments();
       if (!mounted) return;
       setState(() {
         _summaries = summaries;
         _records = records;
+        _repayments = repayments;
         _loading = false;
       });
     } catch (error) {
@@ -92,6 +96,41 @@ class _CreditsScreenState extends State<CreditsScreen> {
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) return 0;
     return now.difference(parsed.toLocal()).inDays;
+  }
+
+  bool _isAdvanceRepayment(StoreCreditRepaymentRecord repayment) {
+    return repayment.localId.startsWith('customer-advance') ||
+        (repayment.advanceAmount > 0.0001 &&
+            repayment.allocatedAmount <= 0.0001);
+  }
+
+  Map<String, double> get _advanceTotalsByCustomer {
+    final totals = <String, double>{};
+    for (final repayment in _repayments.where(_isAdvanceRepayment)) {
+      totals.update(
+        repayment.customerId,
+        (value) => value + repayment.totalAmount,
+        ifAbsent: () => repayment.totalAmount,
+      );
+    }
+    return totals;
+  }
+
+  Map<String, double> get _advanceBalanceByCustomer {
+    final balances = <String, double>{};
+    for (final repayment in _repayments) {
+      balances.update(
+        repayment.customerId,
+        (value) => value + repayment.advanceAmount,
+        ifAbsent: () => repayment.advanceAmount,
+      );
+    }
+    return balances;
+  }
+
+  double _netBalanceFor(StoreCustomerCreditSummary row) {
+    final advance = _advanceBalanceByCustomer[row.customerId] ?? 0;
+    return row.totalOutstandingAmount - advance;
   }
 
   /// Cumulative outstanding aged at least [minDays] (30+, 60+, 90+).
@@ -121,7 +160,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
               _normalizeCustomerId(row.customerId) != scopedId) {
             return false;
           }
-          if (_outstandingOnly && row.totalOutstandingAmount <= 0.0001) {
+          if (_outstandingOnly && _netBalanceFor(row) <= 0.0001) {
             return false;
           }
           if (query.isEmpty) return true;
@@ -209,11 +248,38 @@ class _CreditsScreenState extends State<CreditsScreen> {
     if (mounted) await _load();
   }
 
+  Future<void> _openOrAddCreditAccount() async {
+    final selected = await showCustomerSelectSheet(
+      context,
+      title: context.l10n.commonOpenCreditAccount,
+      confirmLabel: context.l10n.commonOpenCreditAccount,
+    );
+    if (selected == null || !mounted) return;
+
+    final customerId = selected.customerUniqueId.trim();
+    if (customerId.isEmpty) return;
+
+    final customerName = selected.name.trim().isEmpty
+        ? context.l10n.commonCustomer
+        : selected.name.trim();
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreditAccountDetailScreen(
+          customerId: customerId,
+          customerName: customerName,
+        ),
+      ),
+    );
+    if (mounted) await _load();
+  }
+
   @override
   Widget build(BuildContext context) {
     final outstanding = _summaries.fold<double>(
       0,
-      (sum, row) => sum + row.totalOutstandingAmount,
+      (sum, row) => sum + _netBalanceFor(row),
     );
     final aging30 = _agingAtLeast(30);
     final aging60 = _agingAtLeast(60);
@@ -239,6 +305,11 @@ class _CreditsScreenState extends State<CreditsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          IconButton(
+            tooltip: context.l10n.commonOpenCreditAccount,
+            onPressed: _openOrAddCreditAccount,
+            icon: const Icon(Icons.person_add_alt_1_rounded, color: Color(0xFF4A00E0)),
+          ),
           IconButton(
             tooltip: context.l10n.actionRefresh,
             onPressed: _load,
@@ -290,9 +361,13 @@ class _CreditsScreenState extends State<CreditsScreen> {
                       children: [
                         Expanded(
                           child: _summaryChip(
-                            context.l10n.commonOutstanding,
+                            context.l10n.commonBalanceDue,
                             '\$${outstanding.toStringAsFixed(2)}',
-                            const Color(0xFFFF512F),
+                            outstanding > 0.0001
+                                ? const Color(0xFFFF512F)
+                                : outstanding < -0.0001
+                                ? Colors.green.shade700
+                                : Colors.black87,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -473,7 +548,9 @@ class _CreditsScreenState extends State<CreditsScreen> {
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final row = rows[index];
-        final canCollect = row.totalOutstandingAmount > 0.0001;
+        final netBalance = _netBalanceFor(row);
+        final canCollect = netBalance > 0.0001;
+        final advances = _advanceTotalsByCustomer[row.customerId] ?? 0;
         final name = row.customerName.trim().isEmpty
             ? context.l10n.commonCustomer
             : row.customerName;
@@ -519,6 +596,8 @@ class _CreditsScreenState extends State<CreditsScreen> {
                             '${row.creditCount} ${context.l10n.creditsCreditSales}',
                             '${context.l10n.creditsCreditSoFar} '
                                 '\$${row.totalCreditAmount.toStringAsFixed(2)}',
+                            'Advances '
+                              '\$${advances.toStringAsFixed(2)}',
                             '${context.l10n.creditsRepaid} '
                                 '\$${row.totalPaidAmount.toStringAsFixed(2)}',
                             if (pendingDays != null)
@@ -536,15 +615,19 @@ class _CreditsScreenState extends State<CreditsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '\$${row.totalOutstandingAmount.toStringAsFixed(2)}',
+                        '\$${netBalance.toStringAsFixed(2)}',
                         style: FontUtility.heading.copyWith(
                           fontSize: 18,
-                          color: const Color(0xFFFF512F),
+                          color: netBalance > 0.0001
+                              ? const Color(0xFFFF512F)
+                              : netBalance < -0.0001
+                              ? Colors.green.shade700
+                              : Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        context.l10n.commonOutstanding,
+                        context.l10n.commonBalanceDue,
                         style: FontUtility.body.copyWith(
                           fontSize: 12,
                           color: Colors.black45,
@@ -556,7 +639,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                             ? () => _openCollectPayment(
                                 customerId: row.customerId,
                                 customerName: row.customerName,
-                                outstanding: row.totalOutstandingAmount,
+                                outstanding: netBalance,
                               )
                             : null,
                         child: Text(context.l10n.creditsCollect),

@@ -57,10 +57,46 @@ enum _WalletPayAction { complete, addPayment }
 
 enum RightPanelMode { payment, discount, tax, tips }
 
-class BillingSummaryScreen extends StatefulWidget {
+class SalesBillingScreen extends StatelessWidget {
   final OrderCreateScreenArgs orderArgs;
 
-  const BillingSummaryScreen({super.key, required this.orderArgs});
+  const SalesBillingScreen({super.key, required this.orderArgs});
+
+  @override
+  Widget build(BuildContext context) {
+    return BillingSummaryScreen(
+      orderArgs: orderArgs.withPricingMode(StoreOrderPricingMode.selling),
+      screenTitle: 'Sales billing',
+    );
+  }
+}
+
+class PurchaseBillingScreen extends StatelessWidget {
+  final OrderCreateScreenArgs orderArgs;
+
+  const PurchaseBillingScreen({super.key, required this.orderArgs});
+
+  @override
+  Widget build(BuildContext context) {
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
+    return BillingSummaryScreen(
+      orderArgs: orderArgs.withPricingMode(StoreOrderPricingMode.buying),
+      screenTitle: isTamil ? 'கொள்முதல் பில்லிங்' : 'Purchase billing',
+    );
+  }
+}
+
+class BillingSummaryScreen extends StatefulWidget {
+  final OrderCreateScreenArgs orderArgs;
+  final String? screenTitle;
+
+  const BillingSummaryScreen({
+    super.key,
+    required this.orderArgs,
+    this.screenTitle,
+  });
 
   @override
   State<BillingSummaryScreen> createState() => _BillingSummaryScreenState();
@@ -83,6 +119,8 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
   String? _customerPhone;
   String? _customerEmail;
 
+  bool get _isBuying => widget.orderArgs.pricingMode == 'buying';
+
   @override
   void initState() {
     super.initState();
@@ -93,7 +131,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _loadWallets();
-        _loadDenominations();
+        if (!_isBuying) _loadDenominations();
       }
     });
   }
@@ -122,6 +160,12 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       if (!mounted) return;
       setState(() {
         _wallets = wallets;
+        if (_selectedWallet == null && wallets.isNotEmpty) {
+          _selectedWallet = wallets.firstWhere(
+            (wallet) => wallet.paymentMode == StoreOrderPaymentMode.cash,
+            orElse: () => wallets.first,
+          );
+        }
         _walletsLoading = false;
       });
     } catch (error) {
@@ -230,12 +274,18 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
 
     final selected = await showCustomerSelectSheet(
       context,
-      title: context.l10n.billingCustomerForCredit,
-      subtitle: context.l10n.billingSelectCustomerCredit(
-        PosCurrency.format(remaining),
-      ),
-      confirmLabel: context.l10n.commonUseCustomer,
+      title: _isBuying
+          ? 'Supplier for payable'
+          : context.l10n.billingCustomerForCredit,
+      subtitle: _isBuying
+          ? 'Select the supplier for ${PosCurrency.format(remaining)} payable'
+          : context.l10n.billingSelectCustomerCredit(
+              PosCurrency.format(remaining),
+            ),
+      confirmLabel: _isBuying ? 'Use supplier' : context.l10n.commonUseCustomer,
       isDismissible: false,
+      roles: _isBuying ? const ['supplier'] : null,
+      customerGroup: _isBuying ? 'supplier' : 'retail_customer',
     );
     if (!mounted) return false;
     if (selected == null) {
@@ -266,9 +316,13 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     if (_isCheckingOut) return;
     final selected = await showCustomerSelectSheet(
       context,
-      title: context.l10n.commonSelectCustomer,
-      subtitle: context.l10n.billingAttachCustomer,
-      confirmLabel: context.l10n.commonUseCustomer,
+      title: _isBuying ? 'Select supplier' : context.l10n.commonSelectCustomer,
+      subtitle: _isBuying
+          ? 'Attach a supplier to this purchase'
+          : context.l10n.billingAttachCustomer,
+      confirmLabel: _isBuying ? 'Use supplier' : context.l10n.commonUseCustomer,
+      roles: _isBuying ? const ['supplier'] : null,
+      customerGroup: _isBuying ? 'supplier' : 'retail_customer',
     );
     if (!mounted || selected == null) return;
     final id = selected.customerUniqueId.trim();
@@ -300,8 +354,10 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     final name = (_customerName ?? '').trim();
     final phone = (_customerPhone ?? '').trim();
     final title = hasCustomer
-        ? (name.isNotEmpty ? name : context.l10n.commonCustomer)
-        : context.l10n.commonSelectCustomer;
+        ? (name.isNotEmpty
+              ? name
+              : (_isBuying ? 'Supplier' : context.l10n.commonCustomer))
+        : (_isBuying ? 'Select supplier' : context.l10n.commonSelectCustomer);
     final subtitle = hasCustomer
         ? [
             if (phone.isNotEmpty) phone,
@@ -338,7 +394,9 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                       : Colors.grey.shade200,
                   child: Icon(
                     hasCustomer
-                        ? Icons.person_rounded
+                        ? (_isBuying
+                              ? Icons.local_shipping_rounded
+                              : Icons.person_rounded)
                         : Icons.person_add_alt_1_rounded,
                     size: 20,
                     color: hasCustomer
@@ -422,7 +480,9 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Text(
-                context.l10n.billingPaymentSale(resolvedPaymentLabel),
+                _isBuying
+                    ? '$resolvedPaymentLabel · Supplier payable'
+                    : context.l10n.billingPaymentSale(resolvedPaymentLabel),
               ),
               content: SizedBox(
                 width: 420,
@@ -437,29 +497,31 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                         ),
                         style: FontUtility.body,
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        context.l10n.commonPlan,
-                        style: FontUtility.subheading,
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          ChoiceChip(
-                            label: Text(context.l10n.creditsOneShot),
-                            selected: mode == 'oneshot',
-                            onSelected: (_) =>
-                                setDialogState(() => mode = 'oneshot'),
-                          ),
-                          ChoiceChip(
-                            label: Text(context.l10n.creditsInstallments),
-                            selected: mode == 'installments',
-                            onSelected: (_) =>
-                                setDialogState(() => mode = 'installments'),
-                          ),
-                        ],
-                      ),
+                      if (!_isBuying) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          context.l10n.commonPlan,
+                          style: FontUtility.subheading,
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          children: [
+                            ChoiceChip(
+                              label: Text(context.l10n.creditsOneShot),
+                              selected: mode == 'oneshot',
+                              onSelected: (_) =>
+                                  setDialogState(() => mode = 'oneshot'),
+                            ),
+                            ChoiceChip(
+                              label: Text(context.l10n.creditsInstallments),
+                              selected: mode == 'installments',
+                              onSelected: (_) =>
+                                  setDialogState(() => mode = 'installments'),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       if (mode == 'oneshot') ...[
                         Text(
@@ -633,6 +695,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                 widget.orderArgs.orderTypeKey!.trim().isNotEmpty)
             ? widget.orderArgs.orderTypeKey!.trim()
             : widget.orderArgs.orderType,
+        pricingMode: widget.orderArgs.pricingMode,
         customerName: _customerName ?? widget.orderArgs.name,
         customerPhone: _customerPhone ?? widget.orderArgs.phone,
         customerEmail: _customerEmail ?? widget.orderArgs.email,
@@ -674,6 +737,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     setState(() => _isCheckingOut = true);
 
     try {
+      final canClosePurchaseWithBalance = _isBuying && allowBalanceDue;
       var remaining = _remainingDue(state.netTotal);
       if (_tenders.isEmpty && remaining > 0.0001 && !allowBalanceDue) {
         if (!mounted) return;
@@ -694,8 +758,11 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
         return;
       }
 
-      // Remaining balance → customer credit account (select/create customer).
-      if (remaining > 0.0001 && allowBalanceDue) {
+      // Sales balances require a customer credit account. Purchases may close
+      // unpaid or partially paid without creating a supplier payable account.
+      if (remaining > 0.0001 &&
+          allowBalanceDue &&
+          !canClosePurchaseWithBalance) {
         final attached = await _attachRemainingAsCredit(remaining: remaining);
         if (!attached || !mounted) return;
         remaining = _remainingDue(state.netTotal);
@@ -709,7 +776,8 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       }
 
       remaining = _remainingDue(state.netTotal);
-      if (_tenders.isEmpty || remaining > 0.0001) {
+      if (!canClosePurchaseWithBalance &&
+          (_tenders.isEmpty || remaining > 0.0001)) {
         if (!mounted) return;
         PosToast.failed(context, detail: context.l10n.billingCoverFullOrCredit);
         return;
@@ -724,7 +792,9 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
         if (!mounted) return;
         PosToast.failed(
           context,
-          detail: context.l10n.billingCreditNeedsCustomer,
+          detail: _isBuying
+              ? 'Supplier payable requires a supplier.'
+              : context.l10n.billingCreditNeedsCustomer,
         );
         return;
       }
@@ -786,15 +856,21 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                 widget.orderArgs.orderTypeKey!.trim().isNotEmpty)
             ? widget.orderArgs.orderTypeKey!.trim()
             : widget.orderArgs.orderType,
+        pricingMode: widget.orderArgs.pricingMode,
+        existingOrderId: widget.orderArgs.openOrderId,
         customerName: _customerName ?? widget.orderArgs.name,
         customerPhone: _customerPhone ?? widget.orderArgs.phone,
         customerEmail: _customerEmail ?? widget.orderArgs.email,
-        customerUniqueId: creditCustomerId ?? widget.orderArgs.customerUniqueId,
+        customerUniqueId:
+            creditCustomerId ??
+            _customerUniqueId ??
+            widget.orderArgs.customerUniqueId,
         creditCustomerId: creditCustomerId,
         tableId: widget.orderArgs.table,
         tipsAmount: state.tipsAmount,
         serviceTaxAmount: state.serviceTaxValue,
         discountAmount: state.discountValue,
+        offerAmount: state.offerAppliedAmount,
         deliveryCharge: state.deliveryCharge,
       );
 
@@ -1061,7 +1137,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
           onPressed: _isCheckingOut ? null : () => Navigator.pop(context),
         ),
         title: Text(
-          context.l10n.billingTitle,
+          widget.screenTitle ?? context.l10n.billingTitle,
           style: FontUtility.heading.copyWith(fontSize: 20),
         ),
         centerTitle: false,
@@ -1388,6 +1464,19 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       case RightPanelMode.payment:
         final remaining = _remainingDue(state.netTotal);
         final covered = _tenderTotal();
+        if (_tenderAmountController.text.trim().isEmpty && remaining > 0.0001) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            if (_tenderAmountController.text.trim().isEmpty &&
+                _remainingDue(state.netTotal) > 0.0001) {
+              setState(() {
+                _tenderAmountController.text = _remainingDue(
+                  state.netTotal,
+                ).toStringAsFixed(2);
+              });
+            }
+          });
+        }
         final typedAmount =
             double.tryParse(_tenderAmountController.text.trim()) ?? 0;
         final change = typedAmount > remaining + 0.0001
@@ -1540,18 +1629,19 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                       spacing: 10,
                       runSpacing: 10,
                       children: [
-                        for (final denom in _denominations)
-                          _DenomButton(
-                            label: PosCurrency.format(denom, decimals: 0),
-                            onPressed: _isCheckingOut || remaining <= 0.0001
-                                ? null
-                                : () {
-                                    setState(() {
-                                      _tenderAmountController.text = denom
-                                          .toStringAsFixed(2);
-                                    });
-                                  },
-                          ),
+                        if (!_isBuying)
+                          for (final denom in _denominations)
+                            _DenomButton(
+                              label: PosCurrency.format(denom, decimals: 0),
+                              onPressed: _isCheckingOut || remaining <= 0.0001
+                                  ? null
+                                  : () {
+                                      setState(() {
+                                        _tenderAmountController.text = denom
+                                            .toStringAsFixed(2);
+                                      });
+                                    },
+                            ),
                         _DenomButton(
                           label: context.l10n.commonExact,
                           onPressed: _isCheckingOut || remaining <= 0.0001
@@ -1689,9 +1779,15 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                         final coversDue =
                             remaining <= 0.0001 ||
                             typedAmount + 0.0001 >= remaining;
-                        final creditWalletSelected =
-                            _selectedWallet?.paymentMode ==
-                            StoreOrderPaymentMode.credit;
+                        if (remaining > 0.0001 &&
+                            typedAmount > 0.0001 &&
+                            _selectedWallet == null) {
+                          PosToast.failed(
+                            context,
+                            detail: context.l10n.billingAddOnePaymentFirst,
+                          );
+                          return;
+                        }
                         if (!coversDue) {
                           // Partial typed amount: commit it, then place remainder on credit.
                           if (typedAmount > 0.0001) {
@@ -1701,9 +1797,8 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                               remaining,
                             );
                             if (!mounted) return;
-                            // Credit wallet cancelled at customer/plan — do not
-                            // continue into unpaid/balance checkout.
-                            if (creditWalletSelected && !added) return;
+                            // Tender cancelled or rejected — do not continue.
+                            if (!added) return;
                           }
                           if (!mounted) return;
                           await _completeCheckout(
@@ -1721,7 +1816,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                             remaining,
                           );
                           if (!mounted) return;
-                          if (creditWalletSelected && !added) return;
+                          if (!added) return;
                         }
                         if (!mounted) return;
                         await _completeCheckout(
@@ -1759,7 +1854,11 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                         state,
                         allowBalanceDue: true,
                       ),
-                child: Text(context.l10n.billingPlaceFullOnCredit),
+                child: Text(
+                  _isBuying
+                      ? context.l10n.billingCompleteWithoutPayment
+                      : context.l10n.billingPlaceFullOnCredit,
+                ),
               ),
               TextButton(
                 onPressed: _isCheckingOut
@@ -1837,7 +1936,15 @@ class _DiscountPanelState extends State<_DiscountPanel> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: context.l10n.commonDiscount);
+    _titleController = TextEditingController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_userEditedTitle && _selectedItemSignature == null) {
+      _titleController.text = context.l10n.commonDiscount;
+    }
   }
 
   @override

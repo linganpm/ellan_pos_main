@@ -26,11 +26,13 @@ import 'refunds_screen.dart';
 class HomeScreen extends StatefulWidget {
   final bool openNewOrderSheet;
   final bool openOrders;
+  final String? openOrdersPricingMode;
 
   const HomeScreen({
     super.key,
     this.openNewOrderSheet = false,
     this.openOrders = false,
+    this.openOrdersPricingMode,
   });
 
   @override
@@ -49,10 +51,16 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (widget.openOrders) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const OrderListScreen()),
-        );
+        final mode = (widget.openOrdersPricingMode ?? '').trim();
+        final Widget target;
+        if (mode == 'buying') {
+          target = const PurchasesListScreen();
+        } else if (mode == 'selling') {
+          target = const SalesListScreen();
+        } else {
+          target = const SalesListScreen();
+        }
+        Navigator.push(context, MaterialPageRoute(builder: (_) => target));
       } else if (widget.openNewOrderSheet) {
         showOrderCreationBottomSheet(context);
       }
@@ -62,6 +70,21 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadDraftCount() async {
     try {
       final drafts = await CartDraftStore.list();
+      final controller = getIt<UiStoreController>();
+      if (controller.store != null) {
+        for (final draft in drafts) {
+          final orderId = draft.args.openOrderId;
+          if (orderId == null) continue;
+          try {
+            await controller.alignOrderPricingMode(
+              orderId,
+              draft.args.pricingMode,
+            );
+          } catch (_) {
+            // A stale draft must not block the home screen.
+          }
+        }
+      }
       if (!mounted) return;
       if (_draftCount == drafts.length) return;
       setState(() => _draftCount = drafts.length);
@@ -193,6 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final args = OrderCreateScreenArgs(
       orderType: draft.args.orderType,
       orderTypeKey: draft.args.orderTypeKey,
+      pricingMode: draft.args.pricingMode,
       name: draft.args.name,
       phone: draft.args.phone,
       email: draft.args.email,
@@ -211,7 +235,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => OrderCreateScreen(args: args)),
+      MaterialPageRoute(
+        builder: (_) => args.pricingMode == 'buying'
+            ? PurchaseOrderScreen(args: args)
+            : SalesOrderScreen(args: args),
+      ),
     );
     if (mounted) await _loadDraftCount();
   }
@@ -354,17 +382,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Expanded(
                                     child: _buildMenuCard(
                                       context,
-                                      title: AppLocalizations.of(
-                                        context,
-                                      )!.homeOrdersList,
-                                      iconData: Icons.receipt_long_rounded,
-                                      color: const Color(0xFF8E2DE2),
+                                      title: 'Sales',
+                                      iconData: Icons.trending_up_rounded,
+                                      color: const Color(0xFF178A45),
                                       onTap: () {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                const OrderListScreen(),
+                                                const SalesListScreen(),
                                           ),
                                         );
                                       },
@@ -374,15 +400,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Expanded(
                                     child: _buildMenuCard(
                                       context,
-                                      title: context.l10n.homeCustomers,
-                                      iconData: Icons.people_alt_rounded,
-                                      color: const Color(0xFF00C9FF),
+                                      title:
+                                          Localizations.localeOf(context)
+                                              .languageCode
+                                              .toLowerCase()
+                                              .startsWith('ta')
+                                          ? 'கொள்முதல்'
+                                          : 'Purchases',
+                                      iconData: Icons.trending_down_rounded,
+                                      color: const Color(0xFFD32F2F),
                                       onTap: () {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                const CustomersScreen(),
+                                                const PurchasesListScreen(),
                                           ),
                                         );
                                       },
@@ -491,7 +523,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 20),
-                                  const Expanded(child: SizedBox.shrink()),
+                                  Expanded(
+                                    child: _buildMenuCard(
+                                      context,
+                                      title: context.l10n.homeCustomers,
+                                      iconData: Icons.people_alt_rounded,
+                                      color: const Color(0xFF00C9FF),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const CustomersScreen(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
                                   const SizedBox(width: 20),
                                   const Expanded(child: SizedBox.shrink()),
                                 ],

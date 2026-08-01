@@ -25,6 +25,9 @@ class CartState extends Equatable {
   final double tipsAmount;
   final String? selectedPaymentMethod;
 
+  /// Trade direction for this cart: selling | buying.
+  final String pricingMode;
+
   const CartState({
     this.isLoading = true,
     this.categories = const [],
@@ -40,7 +43,10 @@ class CartState extends Equatable {
     this.serviceTaxPercentage = 0.0,
     this.tipsAmount = 0.0,
     this.selectedPaymentMethod,
+    this.pricingMode = 'selling',
   });
+
+  bool get isBuying => pricingMode == 'buying';
 
   List<Product> get filteredProducts {
     if (selectedCategoryId == 'all') {
@@ -150,6 +156,7 @@ class CartState extends Equatable {
     double? serviceTaxPercentage,
     double? tipsAmount,
     String? selectedPaymentMethod,
+    String? pricingMode,
     bool clearPaymentMethod = false,
   }) {
     return CartState(
@@ -169,6 +176,7 @@ class CartState extends Equatable {
       selectedPaymentMethod: clearPaymentMethod
           ? null
           : (selectedPaymentMethod ?? this.selectedPaymentMethod),
+      pricingMode: pricingMode ?? this.pricingMode,
     );
   }
 
@@ -188,5 +196,6 @@ class CartState extends Equatable {
     serviceTaxPercentage,
     tipsAmount,
     selectedPaymentMethod,
+    pricingMode,
   ];
 }

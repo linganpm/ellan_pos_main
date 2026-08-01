@@ -184,11 +184,33 @@ class _OrderListRowState extends State<OrderListRow> {
                 // Name
                 Expanded(
                   flex: 3,
-                  child: Text(
-                    widget.order.customerName,
-                    style: _greyStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.order.customerName,
+                        style: _greyStyle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (widget.order.isPurchase)
+                        Text(
+                          Localizations.localeOf(context)
+                                  .languageCode
+                                  .toLowerCase()
+                                  .startsWith('ta')
+                              ? 'விநியோகஸ்தர்'
+                              : 'Supplier',
+                          style: _greyStyle.copyWith(
+                            fontSize: 10,
+                            color: const Color(0xFFD32F2F),
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
                   ),
                 ),
                 // Time

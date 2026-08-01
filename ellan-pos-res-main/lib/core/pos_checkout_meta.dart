@@ -7,6 +7,7 @@ class PosCheckoutMeta {
   final double serviceTax;
   final double discount;
   final double delivery;
+  final double previousBalance;
 
   const PosCheckoutMeta({
     this.staffName = '',
@@ -15,6 +16,7 @@ class PosCheckoutMeta {
     this.serviceTax = 0,
     this.discount = 0,
     this.delivery = 0,
+    this.previousBalance = 0,
   });
 
   static const _sep = '|';
@@ -27,6 +29,8 @@ class PosCheckoutMeta {
       if (serviceTax > 0.0001) 'tax=${serviceTax.toStringAsFixed(2)}',
       if (discount > 0.0001) 'disc=${discount.toStringAsFixed(2)}',
       if (delivery > 0.0001) 'del=${delivery.toStringAsFixed(2)}',
+      if (previousBalance.abs() > 0.0001)
+        'prev=${previousBalance.toStringAsFixed(2)}',
     ];
     return parts.join(_sep);
   }
@@ -49,6 +53,7 @@ class PosCheckoutMeta {
     var tax = 0.0;
     var disc = 0.0;
     var del = 0.0;
+    var previousBalance = 0.0;
     var indexed = 0;
     for (final part in parts) {
       final piece = part.trim();
@@ -61,6 +66,8 @@ class PosCheckoutMeta {
         disc = double.tryParse(piece.substring(5)) ?? 0;
       } else if (piece.startsWith('del=')) {
         del = double.tryParse(piece.substring(4)) ?? 0;
+      } else if (piece.startsWith('prev=')) {
+        previousBalance = double.tryParse(piece.substring(5)) ?? 0;
       } else if (indexed == 0) {
         name = piece;
         indexed++;
@@ -76,6 +83,7 @@ class PosCheckoutMeta {
       serviceTax: tax,
       discount: disc,
       delivery: del,
+      previousBalance: previousBalance,
     );
   }
 

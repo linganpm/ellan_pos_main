@@ -2,6 +2,7 @@ class OrderListModel {
   final String id;
   final String orderId;
   final String orderType;
+  final String pricingMode;
 
   /// Normalized backend key used for type filters (e.g. PICKUP, DINEIN).
   final String orderTypeKey;
@@ -35,6 +36,7 @@ class OrderListModel {
     required this.id,
     required this.orderId,
     required this.orderType,
+    this.pricingMode = 'selling',
     this.orderTypeKey = '',
     this.floorName,
     this.tableNumber,
@@ -62,6 +64,8 @@ class OrderListModel {
     final key = orderTypeKey.replaceAll(RegExp(r'[^A-Z]'), '');
     return key == 'DINEIN' || orderType.toLowerCase().contains('dine');
   }
+
+  bool get isPurchase => pricingMode == 'buying';
 
   String get formattedTableInfo {
     if (isDineIn && floorName != null && tableNumber != null) {

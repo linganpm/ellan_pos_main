@@ -23,11 +23,12 @@ class ProductItemCard extends StatelessWidget {
               '${_fmtQty(product.sellUnitBaseQty ?? 1)} ${product.sellUnitShort}'
         : PosCurrency.format(product.price);
 
-    final pad = compact ? 6.0 : 8.0;
-    final nameSize = compact ? 11.0 : 12.5;
-    final priceSize = compact ? 11.0 : 12.5;
-    final iconSize = compact ? 20.0 : 24.0;
-    final radius = compact ? 8.0 : 10.0;
+    final pad = compact ? 8.0 : 10.0;
+    final nameSize = compact ? 13.5 : 15.0;
+    final priceSize = compact ? 15.0 : 17.0;
+    final iconSize = compact ? 16.0 : 18.0;
+    final imageHeight = compact ? 42.0 : 52.0;
+    final radius = compact ? 10.0 : 12.0;
 
     return Material(
       color: Colors.white,
@@ -38,7 +39,14 @@ class ProductItemCard extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.07)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Stack(
             children: [
@@ -47,10 +55,11 @@ class ProductItemCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
+                    SizedBox(
+                      height: imageHeight,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F8),
+                          color: const Color(0xFFF5F7FB),
                           borderRadius: BorderRadius.circular(radius - 2),
                         ),
                         child: product.imageUrl.trim().isEmpty
@@ -73,21 +82,26 @@ class ProductItemCard extends StatelessWidget {
                               ),
                       ),
                     ),
-                    SizedBox(height: compact ? 4 : 6),
+                    SizedBox(height: compact ? 7 : 8),
                     Text(
                       product.name,
                       style: FontUtility.subheading.copyWith(
                         fontSize: nameSize,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF202A35),
+                        height: 1.18,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: compact ? 1 : 2),
+                    SizedBox(height: compact ? 3 : 4),
                     Text(
                       priceLabel,
                       style: FontUtility.heading.copyWith(
                         fontSize: priceSize,
-                        color: const Color(0xFF4A00E0),
+                        color: const Color(0xFF0B7285),
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.2,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

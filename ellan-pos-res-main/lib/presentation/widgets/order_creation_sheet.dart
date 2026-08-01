@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/order_types_repository.dart';
@@ -15,8 +16,13 @@ import '../screens/order_create_screen.dart';
 const _kAccent = Color(0xFF4A00E0);
 const _kDefaultCustomerName = 'Guest';
 const _kLastOrderTypeKey = 'posLastSelectedOrderType';
+const _kLastPricingModeKey = 'posLastSelectedPricingMode';
 
-Future<void> showOrderCreationBottomSheet(BuildContext context) {
+Future<void> showOrderCreationBottomSheet(
+  BuildContext context, {
+  String? initialPricingMode,
+  bool lockPricingMode = false,
+}) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -25,14 +31,23 @@ Future<void> showOrderCreationBottomSheet(BuildContext context) {
     builder: (sheetContext) {
       return BlocProvider(
         create: (_) => OrderCreationBloc(),
-        child: const OrderCreationBottomSheet(),
+        child: OrderCreationBottomSheet(
+          initialPricingMode: initialPricingMode,
+          lockPricingMode: lockPricingMode,
+        ),
       );
     },
   );
 }
 
 class OrderCreationBottomSheet extends StatefulWidget {
-  const OrderCreationBottomSheet();
+  final String? initialPricingMode;
+  final bool lockPricingMode;
+
+  const OrderCreationBottomSheet({
+    this.initialPricingMode,
+    this.lockPricingMode = false,
+  });
 
   @override
   State<OrderCreationBottomSheet> createState() =>
@@ -52,12 +67,37 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
   String? _searchError;
   List<PosOrderType> _orderTypes = OrderTypesRepository.defaults;
   PosOrderType? _selectedType;
+  String _pricingMode = StoreOrderPricingMode.selling;
+
+  bool get _isBuying => _pricingMode == StoreOrderPricingMode.buying;
 
   @override
   void initState() {
     super.initState();
     _selectedType = _orderTypes.first;
+    _pricingMode = StoreOrderPricingMode.normalize(widget.initialPricingMode);
     _restoreLastOrderType();
+    if (widget.initialPricingMode == null) {
+      _restoreLastPricingMode();
+    }
+  }
+
+  Future<void> _restoreLastPricingMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_kLastPricingModeKey);
+    if (!mounted) return;
+    setState(() {
+      _pricingMode = StoreOrderPricingMode.normalize(saved);
+    });
+  }
+
+  void _selectPricingMode(String mode) {
+    if (widget.lockPricingMode) return;
+    final normalized = StoreOrderPricingMode.normalize(mode);
+    setState(() => _pricingMode = normalized);
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString(_kLastPricingModeKey, normalized);
+    });
   }
 
   Future<void> _restoreLastOrderType() async {
@@ -118,24 +158,24 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
       hintStyle: FontUtility.body.copyWith(
         color: Colors.black38,
         fontWeight: FontWeight.w500,
-        fontSize: 15,
+        fontSize: 17,
       ),
       prefixIcon: prefixIcon,
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: const Color(0xFFF7F8FB),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD0D5DD), width: 2),
+        borderSide: const BorderSide(color: Color(0xFFD0D5DD), width: 3),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD0D5DD), width: 2),
+        borderSide: const BorderSide(color: Color(0xFFD0D5DD), width: 3),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _kAccent, width: 2.5),
+        borderSide: const BorderSide(color: _kAccent, width: 3.5),
       ),
     );
   }
@@ -151,6 +191,8 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
   String _resolvedCustomerName(OrderCreationState state) {
     final name = state.pickupName.trim();
     if (name.isNotEmpty) return name;
+    final phone = state.pickupPhone.trim();
+    if (phone.isNotEmpty) return phone;
     return _kDefaultCustomerName;
   }
 
@@ -170,7 +212,12 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     });
     try {
       final controller = getIt<UiStoreController>();
-      final rows = await controller.searchCustomers(trimmed);
+      final rows = await controller.searchCustomers(
+        trimmed,
+        roles: _isBuying
+            ? const ['supplier']
+            : const ['retail_customer', 'business_customer'],
+      );
       if (!mounted) return;
       setState(() {
         _searchHits = rows
@@ -227,7 +274,9 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     context.read<OrderCreationBloc>().add(
       SelectPickupCustomer(
         customerUniqueId: hit.uniqueId,
-        name: hit.name.isEmpty ? _kDefaultCustomerName : hit.name,
+        name: hit.name.isEmpty
+            ? (hit.phone.isEmpty ? _kDefaultCustomerName : hit.phone)
+            : hit.name,
         phone: hit.phone,
         email: hit.email ?? '',
       ),
@@ -259,9 +308,10 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     try {
       final controller = getIt<UiStoreController>();
       final customer = await controller.createDirectoryCustomer(
-        name: name.isEmpty ? _kDefaultCustomerName : name,
+        name: name.isEmpty ? phone : name,
         phone: phone,
         email: email.isEmpty ? null : email,
+        customerGroup: _isBuying ? 'supplier' : 'retail_customer',
       );
       if (!mounted) return false;
       if (customer == null) {
@@ -274,7 +324,11 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
       context.read<OrderCreationBloc>().add(
         SelectPickupCustomer(
           customerUniqueId: customer.customerId,
-          name: customer.name.isEmpty ? _kDefaultCustomerName : customer.name,
+          name: customer.name.isEmpty
+              ? (customer.phone.isEmpty
+                    ? _kDefaultCustomerName
+                    : customer.phone)
+              : customer.name,
           phone: customer.phone,
           email: customer.email,
         ),
@@ -307,6 +361,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
           ? _selectedType!.label
           : 'Pickup',
       orderTypeKey: _selectedType?.key,
+      pricingMode: _pricingMode,
       name: _resolvedCustomerName(latest),
       phone: latest.pickupPhone,
       email: latest.pickupEmail,
@@ -314,7 +369,11 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     );
     navigator.pop();
     await navigator.push(
-      MaterialPageRoute(builder: (_) => OrderCreateScreen(args: args)),
+      MaterialPageRoute(
+        builder: (_) => _isBuying
+            ? PurchaseOrderScreen(args: args)
+            : SalesOrderScreen(args: args),
+      ),
     );
   }
 
@@ -332,6 +391,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
           ? _selectedType!.label
           : 'DineIn',
       orderTypeKey: _selectedType?.key,
+      pricingMode: _pricingMode,
       name: _resolvedCustomerName(latest),
       phone: latest.pickupPhone,
       email: latest.pickupEmail,
@@ -343,7 +403,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     );
     navigator.pop();
     await navigator.push(
-      MaterialPageRoute(builder: (_) => OrderCreateScreen(args: args)),
+      MaterialPageRoute(builder: (_) => SalesOrderScreen(args: args)),
     );
   }
 
@@ -358,12 +418,12 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
       ),
       child: Center(
         child: Container(
-          width: isTablet ? 720 : screenWidth,
+          width: isTablet ? 900 : screenWidth,
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.9,
+            maxHeight: MediaQuery.of(context).size.height * 0.96,
           ),
           margin: EdgeInsets.only(
-            top: MediaQuery.of(context).size.height * 0.06,
+            top: MediaQuery.of(context).size.height * 0.02,
           ),
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -373,18 +433,10 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 14, 12, 8),
+                padding: const EdgeInsets.fromLTRB(24, 8, 12, 0),
                 child: Row(
                   children: [
-                    Expanded(
-                      child: Text(
-                        context.l10n.commonNewOrder,
-                        style: FontUtility.heading.copyWith(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
+                    const Spacer(),
                     IconButton(
                       icon: const Icon(Icons.close_rounded),
                       onPressed: () => Navigator.pop(context),
@@ -400,11 +452,15 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildOrderTypeCards(),
-                          const SizedBox(height: 20),
+                          _buildPricingModeToggle(),
+                          const SizedBox(height: 16),
+                          if (!_isBuying) ...[
+                            _buildOrderTypeCards(),
+                            const SizedBox(height: 20),
+                          ],
                           _buildCustomerSection(context, state),
                           const SizedBox(height: 20),
-                          if (_selectedType?.isDineIn == true)
+                          if (!_isBuying && _selectedType?.isDineIn == true)
                             _buildDineInFlow(context, state)
                           else
                             _buildPickupActions(context, state),
@@ -418,6 +474,36 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPricingModeToggle() {
+    return Row(
+      children: [
+        Expanded(
+          child: _PricingModeChip(
+            label: 'Sell',
+            icon: Icons.trending_up_rounded,
+            color: const Color(0xFF178A45),
+            selected: !_isBuying,
+            onTap: widget.lockPricingMode
+                ? null
+                : () => _selectPricingMode(StoreOrderPricingMode.selling),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _PricingModeChip(
+            label: 'Buy',
+            icon: Icons.trending_down_rounded,
+            color: const Color(0xFFD32F2F),
+            selected: _isBuying,
+            onTap: widget.lockPricingMode
+                ? null
+                : () => _selectPricingMode(StoreOrderPricingMode.buying),
+          ),
+        ),
+      ],
     );
   }
 
@@ -528,7 +614,9 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
               fontSize: 16,
             ),
             decoration: _fieldDecoration(
-              hint: context.l10n.customerSearchHintFull,
+              hint: _isBuying
+                  ? 'Search supplier by name, phone, or email'
+                  : context.l10n.customerSearchHintFull,
               prefixIcon: const Icon(Icons.search_rounded),
               suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -583,7 +671,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
                 itemBuilder: (context, index) {
                   final hit = _searchHits[index];
                   final displayName = hit.name.isEmpty
-                      ? _kDefaultCustomerName
+                      ? (hit.phone.isEmpty ? _kDefaultCustomerName : hit.phone)
                       : hit.name;
                   return ListTile(
                     dense: true,
@@ -721,7 +809,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
                 : Text(
                     _creatingCustomer
                         ? context.l10n.customerSaveContinue
-                        : AppLocalizations.of(context)!.pickupAddButton,
+                        : 'Select',
                     style: FontUtility.button.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -917,6 +1005,70 @@ class _OrderTypeCard extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
                   color: selected ? Colors.white : Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PricingModeChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  const _PricingModeChip({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? color : color.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          height: 124,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(width: selected ? 4 : 2, color: color),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 38, color: selected ? Colors.white : color),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: FontUtility.heading.copyWith(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 26,
+                  color: selected ? Colors.white : color,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                onTap == null
+                    ? (selected ? 'Locked' : '')
+                    : (selected ? 'Selected' : 'Tap to select'),
+                style: FontUtility.body.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: selected
+                      ? Colors.white.withValues(alpha: 0.9)
+                      : color.withValues(alpha: 0.8),
                 ),
               ),
             ],

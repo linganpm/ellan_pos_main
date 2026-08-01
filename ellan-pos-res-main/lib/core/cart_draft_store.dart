@@ -8,6 +8,7 @@ import 'package:pos_tablet/data/models/product_model.dart';
 class CartDraftArgs {
   final String orderType;
   final String? orderTypeKey;
+  final String pricingMode;
   final String? name;
   final String? phone;
   final String? email;
@@ -19,6 +20,7 @@ class CartDraftArgs {
   const CartDraftArgs({
     required this.orderType,
     this.orderTypeKey,
+    this.pricingMode = 'selling',
     this.name,
     this.phone,
     this.email,
@@ -31,6 +33,7 @@ class CartDraftArgs {
   Map<String, dynamic> toJson() => {
     'orderType': orderType,
     'orderTypeKey': orderTypeKey,
+    'pricingMode': pricingMode,
     'name': name,
     'phone': phone,
     'email': email,
@@ -44,6 +47,7 @@ class CartDraftArgs {
     return CartDraftArgs(
       orderType: '${json['orderType'] ?? 'Pickup'}',
       orderTypeKey: json['orderTypeKey'] as String?,
+      pricingMode: '${json['pricingMode'] ?? 'selling'}',
       name: json['name'] as String?,
       phone: json['phone'] as String?,
       email: json['email'] as String?,

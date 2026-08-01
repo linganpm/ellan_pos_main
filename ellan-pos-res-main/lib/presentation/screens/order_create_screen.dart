@@ -27,6 +27,9 @@ class OrderCreateScreenArgs {
   final String orderType; // Display label (Pickup, On-Site, …)
   /// Stable synced key (PICKUP, ONSITE, …) used for checkout/export.
   final String? orderTypeKey;
+
+  /// Trade direction: selling | buying.
+  final String pricingMode;
   final String? name;
   final String? phone;
   final String? email;
@@ -46,6 +49,7 @@ class OrderCreateScreenArgs {
   OrderCreateScreenArgs({
     required this.orderType,
     this.orderTypeKey,
+    this.pricingMode = 'selling',
     this.name,
     this.phone,
     this.email,
@@ -56,6 +60,45 @@ class OrderCreateScreenArgs {
     this.draftSnapshot,
     this.openOrderId,
   });
+
+  OrderCreateScreenArgs withPricingMode(String value) {
+    return OrderCreateScreenArgs(
+      orderType: orderType,
+      orderTypeKey: orderTypeKey,
+      pricingMode: StoreOrderPricingMode.requireSupported(value),
+      name: name,
+      phone: phone,
+      email: email,
+      customerUniqueId: customerUniqueId,
+      floor: floor,
+      table: table,
+      draftId: draftId,
+      draftSnapshot: draftSnapshot,
+      openOrderId: openOrderId,
+    );
+  }
+}
+
+class SalesOrderScreen extends StatelessWidget {
+  final OrderCreateScreenArgs args;
+
+  const SalesOrderScreen({super.key, required this.args});
+
+  @override
+  Widget build(BuildContext context) => OrderCreateScreen(
+    args: args.withPricingMode(StoreOrderPricingMode.selling),
+  );
+}
+
+class PurchaseOrderScreen extends StatelessWidget {
+  final OrderCreateScreenArgs args;
+
+  const PurchaseOrderScreen({super.key, required this.args});
+
+  @override
+  Widget build(BuildContext context) => OrderCreateScreen(
+    args: args.withPricingMode(StoreOrderPricingMode.buying),
+  );
 }
 
 class OrderCreateScreen extends StatefulWidget {
@@ -121,6 +164,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
             (args.orderTypeKey != null && args.orderTypeKey!.trim().isNotEmpty)
             ? args.orderTypeKey!.trim()
             : args.orderType,
+        pricingMode: args.pricingMode,
         customerName: args.name,
         customerPhone: args.phone,
         customerEmail: args.email,
@@ -139,6 +183,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
         args: CartDraftArgs(
           orderType: args.orderType,
           orderTypeKey: args.orderTypeKey,
+          pricingMode: args.pricingMode,
           name: args.name,
           phone: args.phone,
           email: args.email,
@@ -199,6 +244,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
         args: CartDraftArgs(
           orderType: args.orderType,
           orderTypeKey: args.orderTypeKey,
+          pricingMode: args.pricingMode,
           name: args.name,
           phone: args.phone,
           email: args.email,
@@ -266,8 +312,13 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          CartBloc()..add(LoadInitialData(draft: args.draftSnapshot)),
+      create: (context) => CartBloc()
+        ..add(
+          LoadInitialData(
+            draft: args.draftSnapshot,
+            pricingMode: args.pricingMode,
+          ),
+        ),
       child: Builder(
         builder: (context) {
           return Scaffold(
@@ -286,7 +337,17 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    context.l10n.orderCreateNewOrderTitle(args.orderType),
+                    args.pricingMode == 'buying'
+                        ? (Localizations.localeOf(
+                                context,
+                              ).languageCode.toLowerCase().startsWith('ta')
+                              ? 'கொள்முதல் ஆர்டர்'
+                              : 'Purchase order')
+                        : (Localizations.localeOf(
+                                context,
+                              ).languageCode.toLowerCase().startsWith('ta')
+                              ? 'விற்பனை ஆர்டர்'
+                              : 'Sales order'),
                     style: FontUtility.heading.copyWith(fontSize: 20),
                   ),
                   if (args.name != null && args.name!.isNotEmpty)
@@ -324,7 +385,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                 BlocBuilder<CartBloc, CartState>(
                   builder: (context, state) {
                     return IconButton(
-                      tooltip: context.l10n.orderSaveDraft,
+                      tooltip: context.l10n.orderCreateSaveDraftTooltip,
                       onPressed: state.cartItems.isEmpty
                           ? null
                           : () => _saveDraft(context, state),
@@ -436,30 +497,11 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                   final layout = _ProductGridLayout.fromConstraints(
                     constraints,
                   );
-                  return Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      layout.padding,
-                      4,
-                      layout.padding,
-                      layout.padding,
-                    ),
-                    child: GridView.builder(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: layout.crossAxisCount,
-                        childAspectRatio: layout.childAspectRatio,
-                        crossAxisSpacing: layout.spacing,
-                        mainAxisSpacing: layout.spacing,
-                      ),
-                      itemCount: state.filteredProducts.length,
-                      itemBuilder: (context, index) {
-                        final product = state.filteredProducts[index];
-                        return ProductItemCard(
-                          product: product,
-                          onTap: () => _onProductTap(context, product),
-                          compact: layout.compact,
-                        );
-                      },
-                    ),
+                  return _buildCenteredProductGrid(
+                    context,
+                    state,
+                    layout,
+                    constraints,
                   );
                 },
               ),
@@ -467,6 +509,81 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildCenteredProductGrid(
+    BuildContext context,
+    CartState state,
+    _ProductGridLayout layout,
+    BoxConstraints constraints,
+  ) {
+    final productCount = state.filteredProducts.length;
+    final tileWidth = layout.compact ? 116.0 : 146.0;
+    final tileHeight = tileWidth / layout.childAspectRatio;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFFDF8F3), Color(0xFFF6FAFF)],
+          ),
+          border: Border.all(color: const Color(0xFFE0E7EF)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: productCount == 0
+              ? Center(
+                  child: Text(
+                    context.l10n.catalogEmpty,
+                    style: FontUtility.body.copyWith(
+                      color: Colors.black54,
+                      fontSize: 14,
+                    ),
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: EdgeInsets.all(layout.spacing),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: (constraints.maxHeight - (layout.spacing * 2))
+                          .clamp(0, double.infinity),
+                    ),
+                    child: Center(
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        runAlignment: WrapAlignment.center,
+                        spacing: layout.spacing,
+                        runSpacing: layout.spacing,
+                        children: [
+                          for (final product in state.filteredProducts)
+                            SizedBox(
+                              width: tileWidth,
+                              height: tileHeight,
+                              child: ProductItemCard(
+                                product: product,
+                                onTap: () => _onProductTap(context, product),
+                                compact: layout.compact,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+        ),
+      ),
     );
   }
 
@@ -907,6 +1024,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                     final billArgs = OrderCreateScreenArgs(
                       orderType: args.orderType,
                       orderTypeKey: args.orderTypeKey,
+                      pricingMode: args.pricingMode,
                       name: args.name,
                       phone: args.phone,
                       email: args.email,
@@ -921,7 +1039,9 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                       MaterialPageRoute(
                         builder: (navContext) => BlocProvider.value(
                           value: context.read<CartBloc>(),
-                          child: BillingSummaryScreen(orderArgs: billArgs),
+                          child: args.pricingMode == 'buying'
+                              ? PurchaseBillingScreen(orderArgs: billArgs)
+                              : SalesBillingScreen(orderArgs: billArgs),
                         ),
                       ),
                     );

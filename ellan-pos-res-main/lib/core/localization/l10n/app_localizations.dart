@@ -404,6 +404,12 @@ abstract class AppLocalizations {
   /// **'COMPLETE'**
   String get billingComplete;
 
+  /// No description provided for @billingCompleteWithoutPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'COMPLETE WITHOUT PAYMENT'**
+  String get billingCompleteWithoutPayment;
+
   /// No description provided for @billingCompletingCheckout.
   ///
   /// In en, this message translates to:
@@ -2604,11 +2610,53 @@ abstract class AppLocalizations {
   /// **'Warn only'**
   String get creditsWarnOnly;
 
+  /// No description provided for @customerAdvanceAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add customer advance'**
+  String get customerAdvanceAdd;
+
+  /// No description provided for @customerAdvanceAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Advance available'**
+  String get customerAdvanceAvailable;
+
+  /// No description provided for @customerAdvanceAvailableValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Advance available: {amount}'**
+  String customerAdvanceAvailableValue(String amount);
+
+  /// No description provided for @customerAdvanceExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Money received is applied to any balance due first. The remainder stays available for future sales.'**
+  String get customerAdvanceExplanation;
+
+  /// No description provided for @customerAdvanceRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Record advance'**
+  String get customerAdvanceRecord;
+
+  /// No description provided for @customerAdvanceRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer advance recorded.'**
+  String get customerAdvanceRecorded;
+
   /// No description provided for @customerBalanceDue.
   ///
   /// In en, this message translates to:
   /// **'Balance due'**
   String get customerBalanceDue;
+
+  /// No description provided for @customerBalanceDueValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance due: {amount}'**
+  String customerBalanceDueValue(String amount);
 
   /// No description provided for @customerCouldNotSave.
   ///
@@ -3969,7 +4017,7 @@ abstract class AppLocalizations {
   /// No description provided for @orderCreateSaveDraftTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Save draft'**
+  /// **'Save cart draft (Home drafts, not Purchases list)'**
   String get orderCreateSaveDraftTooltip;
 
   /// No description provided for @orderCreateTitle.
@@ -4053,7 +4101,7 @@ abstract class AppLocalizations {
   /// No description provided for @orderDraftSaved.
   ///
   /// In en, this message translates to:
-  /// **'Draft saved.'**
+  /// **'Cart draft saved. Open it from Home → Saved drafts.'**
   String get orderDraftSaved;
 
   /// No description provided for @orderGoToPayments.
@@ -4485,7 +4533,7 @@ abstract class AppLocalizations {
   /// No description provided for @orderSaveDraft.
   ///
   /// In en, this message translates to:
-  /// **'Save draft'**
+  /// **'Save cart draft'**
   String get orderSaveDraft;
 
   /// No description provided for @orderSummary.

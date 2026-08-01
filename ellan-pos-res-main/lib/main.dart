@@ -108,6 +108,14 @@ class PosTabletApp extends StatelessWidget {
                   headlineMedium: FontUtility.heading,
                   bodyMedium: FontUtility.body,
                 ),
+                inputDecorationTheme: InputDecorationTheme(
+                  hintStyle: FontUtility.body.copyWith(
+                    color: const Color(0xFF9CA3AF),
+                  ),
+                  labelStyle: FontUtility.body.copyWith(
+                    color: const Color(0xFF9CA3AF),
+                  ),
+                ),
               ),
               builder: (context, child) {
                 // Wrap the entire app with the device restriction widget

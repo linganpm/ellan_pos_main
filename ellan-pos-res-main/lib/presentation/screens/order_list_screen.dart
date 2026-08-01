@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/currency_format.dart';
+import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
+import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/order_types_repository.dart';
+import 'package:pos_tablet/core/pos_checkout_meta.dart';
 import 'package:pos_tablet/presentation/widgets/order_creation_sheet.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 import '../../core/localization/l10n/app_localizations.dart';
@@ -12,8 +16,41 @@ import '../../bloc/order_list/order_list_bloc.dart';
 import '../../bloc/order_list/order_list_event.dart';
 import '../../bloc/order_list/order_list_state.dart';
 import '../widgets/order_list/order_list_row.dart';
+import '../widgets/receipt_preview_dialog.dart';
 import 'order_details_screen.dart';
 import 'order_payments_screen.dart';
+
+class SalesListScreen extends StatelessWidget {
+  const SalesListScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isTamil =
+        Localizations.localeOf(context).languageCode.toLowerCase().startsWith(
+          'ta',
+        );
+    return OrderListScreen(
+      pricingMode: StoreOrderPricingMode.selling,
+      title: isTamil ? 'விற்பனை' : 'Sales',
+    );
+  }
+}
+
+class PurchasesListScreen extends StatelessWidget {
+  const PurchasesListScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isTamil =
+        Localizations.localeOf(context).languageCode.toLowerCase().startsWith(
+          'ta',
+        );
+    return OrderListScreen(
+      pricingMode: StoreOrderPricingMode.buying,
+      title: isTamil ? 'கொள்முதல்' : 'Purchases',
+    );
+  }
+}
 
 class OrderListScreen extends StatelessWidget {
   final String? customerId;
@@ -21,6 +58,8 @@ class OrderListScreen extends StatelessWidget {
   final String? initialTypeFilter;
   final String? initialStatusFilter;
   final String? periodFilter;
+  final String? pricingMode;
+  final String? title;
 
   const OrderListScreen({
     super.key,
@@ -29,6 +68,8 @@ class OrderListScreen extends StatelessWidget {
     this.initialTypeFilter,
     this.initialStatusFilter,
     this.periodFilter,
+    this.pricingMode,
+    this.title,
   });
 
   @override
@@ -40,12 +81,15 @@ class OrderListScreen extends StatelessWidget {
         initialTypeFilter: initialTypeFilter ?? 'All',
         initialStatusFilter: initialStatusFilter,
         periodFilter: periodFilter,
+        pricingModeFilter: pricingMode,
       )..add(FetchInitialOrders()),
       child: _OrderListScreenContent(
         customerId: customerId,
         customerName: customerName,
         periodFilter: periodFilter,
         initialStatusFilter: initialStatusFilter,
+        pricingMode: pricingMode,
+        title: title,
       ),
     );
   }
@@ -56,12 +100,16 @@ class _OrderListScreenContent extends StatefulWidget {
   final String? customerName;
   final String? periodFilter;
   final String? initialStatusFilter;
+  final String? pricingMode;
+  final String? title;
 
   const _OrderListScreenContent({
     this.customerId,
     this.customerName,
     this.periodFilter,
     this.initialStatusFilter,
+    this.pricingMode,
+    this.title,
   });
 
   @override
@@ -108,6 +156,8 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
     final parts = <String>[];
     if (widget.customerName != null && widget.customerName!.trim().isNotEmpty) {
       parts.add(widget.customerName!.trim());
+    } else if ((widget.title ?? '').trim().isNotEmpty) {
+      parts.add(widget.title!.trim());
     } else {
       parts.add(AppLocalizations.of(context)!.homeOrdersList);
     }
@@ -144,7 +194,11 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
           ),
           IconButton(
             tooltip: AppLocalizations.of(context)!.homeCreateOrder,
-            onPressed: () => showOrderCreationBottomSheet(context),
+            onPressed: () => showOrderCreationBottomSheet(
+              context,
+              initialPricingMode: widget.pricingMode,
+              lockPricingMode: (widget.pricingMode ?? '').trim().isNotEmpty,
+            ),
             icon: const Icon(Icons.add_rounded, color: Color(0xFF4A00E0)),
           ),
           const SizedBox(width: 8),
@@ -526,10 +580,15 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => OrderPaymentsScreen(
-                      orderId: orderId,
-                      orderLabel: '#${order.orderId}',
-                    ),
+                    builder: (_) => order.isPurchase
+                        ? PurchaseOrderPaymentsScreen(
+                            orderId: orderId,
+                            orderLabel: '#${order.orderId}',
+                          )
+                        : SalesOrderPaymentsScreen(
+                            orderId: orderId,
+                            orderLabel: '#${order.orderId}',
+                          ),
                   ),
                 );
               }
@@ -559,37 +618,56 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
     );
   }
 
-  void _showPrintDialog(BuildContext context, String orderId) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          context.l10n.orderListPrintInvoiceTitle,
-          style: FontUtility.heading.copyWith(fontSize: 20),
-        ),
-        content: Text(
-          context.l10n.orderListPrintInvoiceBody(orderId),
-          style: FontUtility.body,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              context.l10n.actionCancel,
-              style: FontUtility.button.copyWith(color: Colors.black54),
+  Future<void> _showPrintDialog(BuildContext context, String orderId) async {
+    final parsedOrderId = int.tryParse(orderId);
+    if (parsedOrderId == null) return;
+    final controller = getIt<UiStoreController>();
+    final order = await controller.loadOrder(parsedOrderId);
+    if (!context.mounted) return;
+    if (order == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.orderListUnableOpenOrder(orderId))),
+      );
+      return;
+    }
+    final meta = PosCheckoutMeta.parse(order.createdBy);
+    final paid = order.payments.fold<double>(
+      0,
+      (sum, payment) => sum + payment.amount,
+    );
+    final paymentLabel = order.payments
+        .map((payment) => payment.paymentMode)
+        .where((mode) => mode.trim().isNotEmpty)
+        .toSet()
+        .join(' + ');
+    await showReceiptPreviewDialog(
+      context,
+      ReceiptPreviewData(
+        orderId: order.orderId,
+        storeName: order.restaurantName,
+        pricingMode: order.pricingMode,
+        partyName: order.customerName,
+        partyId: order.customerUniqueId ?? '',
+        paymentLabel: paymentLabel.isEmpty ? order.paymentStatus : paymentLabel,
+        previousBalance: meta.previousBalance,
+        subtotal: order.totalValue,
+        offerAmount: order.offerAppliedValue,
+        discountAmount: meta.discount,
+        deliveryAmount: meta.delivery,
+        taxAmount: meta.serviceTax,
+        tipsAmount: meta.tips,
+        total: order.finalValue,
+        paid: paid,
+        balanceDue: (order.finalValue - paid).clamp(0, order.finalValue),
+        items: [
+          for (final detail in order.items)
+            ReceiptPreviewItem(
+              name: detail.item.itemName.trim().isNotEmpty
+                  ? detail.item.itemName.trim()
+                  : detail.item.productId,
+              quantityLabel: '${detail.item.quantity}×',
+              amount: detail.item.finalPrice,
             ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4A00E0),
-              foregroundColor: Colors.white,
-            ),
-            child: Text(
-              context.l10n.actionPrint,
-              style: FontUtility.button.copyWith(color: Colors.white),
-            ),
-          ),
         ],
       ),
     );

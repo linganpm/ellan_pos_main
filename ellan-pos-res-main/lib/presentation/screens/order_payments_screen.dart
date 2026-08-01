@@ -12,6 +12,62 @@ import 'package:pos_tablet/presentation/widgets/billing/order_add_payment_dialog
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class SalesOrderPaymentsScreen extends StatelessWidget {
+  final int orderId;
+  final String? orderLabel;
+  final bool autoOpenRecord;
+
+  const SalesOrderPaymentsScreen({
+    super.key,
+    required this.orderId,
+    this.orderLabel,
+    this.autoOpenRecord = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isTamil =
+        Localizations.localeOf(context).languageCode.toLowerCase().startsWith(
+          'ta',
+        );
+    return OrderPaymentsScreen(
+      orderId: orderId,
+      orderLabel: orderLabel,
+      autoOpenRecord: autoOpenRecord,
+      screenTitle: isTamil ? 'விற்பனை பணப்பரிவர்த்தனைகள்' : 'Sale payments',
+    );
+  }
+}
+
+class PurchaseOrderPaymentsScreen extends StatelessWidget {
+  final int orderId;
+  final String? orderLabel;
+  final bool autoOpenRecord;
+
+  const PurchaseOrderPaymentsScreen({
+    super.key,
+    required this.orderId,
+    this.orderLabel,
+    this.autoOpenRecord = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isTamil =
+        Localizations.localeOf(context).languageCode.toLowerCase().startsWith(
+          'ta',
+        );
+    return OrderPaymentsScreen(
+      orderId: orderId,
+      orderLabel: orderLabel,
+      autoOpenRecord: autoOpenRecord,
+      screenTitle: isTamil
+          ? 'கொள்முதல் பணப்பரிவர்த்தனைகள்'
+          : 'Purchase payments',
+    );
+  }
+}
+
 /// Lists every payment recorded against a single order.
 class OrderPaymentsScreen extends StatefulWidget {
   final int orderId;
@@ -19,12 +75,14 @@ class OrderPaymentsScreen extends StatefulWidget {
 
   /// When true, open the record-payment dialog after the first successful load.
   final bool autoOpenRecord;
+  final String? screenTitle;
 
   const OrderPaymentsScreen({
     super.key,
     required this.orderId,
     this.orderLabel,
     this.autoOpenRecord = false,
+    this.screenTitle,
   });
 
   @override
@@ -280,6 +338,13 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
   @override
   Widget build(BuildContext context) {
     final titleOrder = widget.orderLabel ?? '#${widget.orderId}';
+    final isTamil =
+        Localizations.localeOf(context).languageCode.toLowerCase().startsWith(
+          'ta',
+        );
+    final defaultTitle = _order?.pricingMode == StoreOrderPricingMode.buying
+        ? (isTamil ? 'கொள்முதல் பணப்பரிவர்த்தனைகள்' : 'Purchase payments')
+        : (isTamil ? 'விற்பனை பணப்பரிவர்த்தனைகள்' : 'Sale payments');
     final status = _order?.statusName ?? '';
     final canAdd =
         !_loading &&
@@ -294,7 +359,7 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          '${context.l10n.commonPayments} · $titleOrder',
+          '${widget.screenTitle ?? defaultTitle} · $titleOrder',
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
         leading: IconButton(

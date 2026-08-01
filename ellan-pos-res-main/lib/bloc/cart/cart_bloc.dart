@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/controllers/checkout_models.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
@@ -36,12 +37,16 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     LoadInitialData event,
     Emitter<CartState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true));
+    final pricingMode = StoreOrderPricingMode.normalize(event.pricingMode);
+    final isBuying = pricingMode == StoreOrderPricingMode.buying;
+    emit(state.copyWith(isLoading: true, pricingMode: pricingMode));
 
     try {
       final controller = getIt<UiStoreController>();
       final catalogue = await controller.loadCatalogue();
-      final offerTags = await controller.loadProductOfferTags();
+      final offerTags = isBuying
+          ? const <String, String>{}
+          : await controller.loadProductOfferTags();
 
       final categories = <CategoryModel>[
         const CategoryModel(id: 'all', name: 'All Items', imageUrl: ''),
@@ -61,10 +66,14 @@ class CartBloc extends Bloc<CartEvent, CartState> {
             id: product.id,
             name: product.name,
             description: '',
-            price: product.price,
+            price: isBuying
+                ? (product.buyPrice != null && product.buyPrice! > 0
+                      ? product.buyPrice!
+                      : product.price)
+                : product.price,
             imageUrl: '',
             categoryId: product.categoryId.toString(),
-            offerTag: offerTags[product.id],
+            offerTag: isBuying ? null : offerTags[product.id],
             sellUnitCode: product.sellUnitCode,
             sellUnitShort: product.sellUnitShort,
             sellUnitLabel: product.sellUnitLabel,
@@ -75,6 +84,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       emit(
         state.copyWith(
           isLoading: false,
+          pricingMode: pricingMode,
           categories: categories,
           products: products,
           selectedCategoryId: 'all',
@@ -83,6 +93,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
           serviceTaxPercentage: event.draft?.serviceTaxPercentage ?? 0,
           tipsAmount: event.draft?.tipsAmount ?? 0,
           deliveryCharge: event.draft?.deliveryCharge ?? 0,
+          offerAppliedAmount: 0,
+          offerLabels: const [],
         ),
       );
       await _refreshOffers(emit);
@@ -90,6 +102,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       emit(
         state.copyWith(
           isLoading: false,
+          pricingMode: pricingMode,
           categories: const [
             CategoryModel(id: 'all', name: 'All Items', imageUrl: ''),
           ],
@@ -244,7 +257,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   }
 
   Future<void> _refreshOffers(Emitter<CartState> emit) async {
-    if (state.cartItems.isEmpty) {
+    if (state.isBuying || state.cartItems.isEmpty) {
       emit(state.copyWith(offerAppliedAmount: 0, offerLabels: const []));
       return;
     }

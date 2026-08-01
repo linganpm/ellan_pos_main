@@ -139,6 +139,13 @@ class CheckoutCompletionResult {
   final String restaurantName;
   final String paymentStatus;
   final double balanceDue;
+  final String pricingMode;
+  final String customerName;
+  final String customerId;
+  final double previousBalance;
+  final double offerAmount;
+  final double tipsAmount;
+  final double discountAmount;
 
   const CheckoutCompletionResult({
     required this.orderId,
@@ -148,6 +155,13 @@ class CheckoutCompletionResult {
     required this.restaurantName,
     this.paymentStatus = 'Paid',
     this.balanceDue = 0,
+    this.pricingMode = 'selling',
+    this.customerName = '',
+    this.customerId = '',
+    this.previousBalance = 0,
+    this.offerAmount = 0,
+    this.tipsAmount = 0,
+    this.discountAmount = 0,
   });
 }
 

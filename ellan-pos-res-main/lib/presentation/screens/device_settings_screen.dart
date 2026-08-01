@@ -27,6 +27,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
   DeviceSettingsSnapshot? _snapshot;
   List<StoreSyncAttemptRecord> _history = const [];
   late final TextEditingController _denominationsController;
+  late final TextEditingController _serveNumberMaximumController;
 
   @override
   void initState() {
@@ -34,12 +35,14 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
     _denominationsController = TextEditingController(
       text: DeviceSettingsStore.defaultCashDenominations,
     );
+    _serveNumberMaximumController = TextEditingController(text: '100');
     _load();
   }
 
   @override
   void dispose() {
     _denominationsController.dispose();
+    _serveNumberMaximumController.dispose();
     super.dispose();
   }
 
@@ -52,6 +55,10 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
       final controller = getIt<UiStoreController>();
       final snapshot = await controller.loadDeviceSettingsSnapshot();
       final denomStore = await DeviceSettingsStore.open();
+      var serveNumberMaximum = 100;
+      try {
+        serveNumberMaximum = await controller.loadServeNumberMaximum();
+      } catch (_) {}
       List<StoreSyncAttemptRecord> history = const [];
       try {
         history = await controller.loadSyncHistory(limit: 20);
@@ -63,6 +70,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         _snapshot = snapshot;
         _history = history;
         _denominationsController.text = denomStore.loadCashDenominationsRaw();
+        _serveNumberMaximumController.text = '$serveNumberMaximum';
         _loading = false;
       });
     } catch (error) {
@@ -90,6 +98,35 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
           content: Text(context.l10n.errorCouldNotSaveDenoms(error.toString())),
         ),
       );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _saveServeNumberMaximum() async {
+    final maximum = int.tryParse(_serveNumberMaximumController.text.trim());
+    if (maximum == null || maximum < 1 || maximum > 9999) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a maximum between 1 and 9999.')),
+      );
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      await getIt<UiStoreController>().updateServeNumberMaximum(maximum);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Service numbers will rotate from 1 after reaching $maximum.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -413,6 +450,44 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                   onPressed: _saving ? null : _saveDenominations,
                   style: FilledButton.styleFrom(backgroundColor: _primary),
                   child: Text(context.l10n.deviceSaveDenominations),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        _sectionCard(
+          title: 'Service number rotation',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Maximum service number. The next number rotates back to 1.',
+                style: FontUtility.body.copyWith(
+                  fontSize: 13,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _serveNumberMaximumController,
+                enabled: !_saving,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Maximum service number',
+                  hintText: '100',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton(
+                  onPressed: _saving ? null : _saveServeNumberMaximum,
+                  style: FilledButton.styleFrom(backgroundColor: _primary),
+                  child: const Text('Save service number maximum'),
                 ),
               ),
             ],

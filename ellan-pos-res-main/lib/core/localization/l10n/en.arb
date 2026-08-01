@@ -72,6 +72,7 @@
   "billingAttachCustomer": "Attach a customer to this bill (required for credit).",
   "billingCheckoutComplete": "Checkout complete",
   "billingComplete": "COMPLETE",
+  "billingCompleteWithoutPayment": "COMPLETE WITHOUT PAYMENT",
   "billingCompletingCheckout": "Completing checkout…",
   "billingCoverFullOrCredit": "Cover the full amount or put the balance on credit with a customer.",
   "billingCreditCancelled": "Credit cancelled. Checkout was not completed.",
@@ -849,7 +850,28 @@
   "creditsVoidRepaymentTitle": "Void repayment",
   "creditsVoidedOnPos": "Voided on POS tablet",
   "creditsWarnOnly": "Warn only",
+  "customerAdvanceAdd": "Add customer advance",
+  "customerAdvanceAvailable": "Advance available",
+  "customerAdvanceAvailableValue": "Advance available: {amount}",
+  "@customerAdvanceAvailableValue": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "customerAdvanceExplanation": "Money received is applied to any balance due first. The remainder stays available for future sales.",
+  "customerAdvanceRecord": "Record advance",
+  "customerAdvanceRecorded": "Customer advance recorded.",
   "customerBalanceDue": "Balance due",
+  "customerBalanceDueValue": "Balance due: {amount}",
+  "@customerBalanceDueValue": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "customerCouldNotSave": "Could not save customer",
   "customerCreditHistory": "Credit history",
   "customerEmailOptional": "Email (optional)",
@@ -1378,7 +1400,7 @@
       }
     }
   },
-  "orderCreateSaveDraftTooltip": "Save draft",
+  "orderCreateSaveDraftTooltip": "Save cart draft (Home drafts, not Purchases list)",
   "orderCreateTitle": "New order",
   "orderCreationSaveContinue": "Save & continue",
   "orderDeleteDraft": "Delete draft",
@@ -1413,7 +1435,7 @@
   },
   "orderDetailsViewPayments": "View payments",
   "orderDraftDeleted": "Draft deleted.",
-  "orderDraftSaved": "Draft saved.",
+  "orderDraftSaved": "Cart draft saved. Open it from Home → Saved drafts.",
   "orderGoToPayments": "Go to payments",
   "orderHistoryId": "{id} · Order #{orderId}",
   "@orderHistoryId": {
@@ -1651,7 +1673,7 @@
       }
     }
   },
-  "orderSaveDraft": "Save draft",
+  "orderSaveDraft": "Save cart draft",
   "orderSummary": "Summary",
   "orderSyncedRemote": "Synced to remote backend",
   "orderTypeDineIn": "Dine-In",

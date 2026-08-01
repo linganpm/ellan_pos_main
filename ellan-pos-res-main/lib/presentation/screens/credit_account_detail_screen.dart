@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
+import 'package:pos_tablet/core/currency_format.dart';
 import 'package:pos_tablet/core/device_setup_store.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/utils/customer_identity.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/widgets/credit/credit_collect_payment_dialog.dart';
 import 'package:pos_tablet/presentation/widgets/credit/credit_schedule_repayment_dialog.dart';
+import 'package:pos_tablet/presentation/widgets/credit/customer_advance_dialog.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -33,11 +35,52 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
   List<StoreCustomerLedgerEntry> _ledger = [];
   List<StoreCreditInstallmentRecord> _installments = [];
   List<StoreScheduledCreditRepayment> _scheduled = [];
+  double _advanceBalance = 0;
   double? _creditLimitMax;
   bool _creditLimitIsCustomer = false;
   bool _creditLimitHardBlock = false;
   int _creditNetDays = 14;
   String _identityLabel = '';
+  bool _isSupplierAccount = false;
+  double _totalAdvances = 0;
+
+  String get _advanceLabel {
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
+    return isTamil ? 'முன்பணம்' : 'Advance';
+  }
+
+  String get _purchaseCreditLabel {
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
+    return isTamil ? 'கொள்முதல் கடன்' : 'Purchase Credit';
+  }
+
+  String get _purchaseRepaymentLabel {
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
+    return isTamil ? 'கொள்முதல் திருப்பிச் செலுத்தல்' : 'Purchase Repayment';
+  }
+
+  String get _appliedLabel {
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
+    return isTamil ? 'பயன்படுத்தப்பட்டது' : 'Applied';
+  }
+
+  String get _creditsSectionTitle {
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
+    if (_isSupplierAccount) {
+      return isTamil ? 'கொள்முதல் கடன்கள்' : 'Purchase Credits';
+    }
+    return context.l10n.creditsCreditSales;
+  }
 
   String get _displayName => widget.customerName.trim().isEmpty
       ? context.l10n.commonCustomer
@@ -52,10 +95,13 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
   double get _outstanding =>
       _credits.fold<double>(0, (sum, row) => sum + row.outstandingAmount);
 
+  double get _accountBalance => _outstanding - _advanceBalance;
+
   double get _creditUsedRatio {
     final limit = _creditLimitMax;
     if (limit == null || limit <= 0) return 0;
-    return (_outstanding / limit).clamp(0.0, 1.0);
+    final used = _accountBalance > 0 ? _accountBalance : 0.0;
+    return (used / limit).clamp(0.0, 1.0);
   }
 
   @override
@@ -88,6 +134,9 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
       final scheduled = await controller.loadScheduledCreditRepayments(
         customerId: widget.customerId,
       );
+      final advanceBalance = await controller.loadCustomerAdvanceBalance(
+        widget.customerId,
+      );
       final creditIds = credits.map((row) => row.id).toSet();
       final scopedInstallments = installments
           .where((row) => creditIds.contains(row.creditId))
@@ -110,6 +159,11 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
         _ledger = ledger;
         _installments = scopedInstallments;
         _scheduled = scheduled;
+        _advanceBalance = advanceBalance;
+        _isSupplierAccount = directoryCustomer?.role == 'supplier';
+        _totalAdvances = repayments
+            .where(_isAdvanceRepayment)
+            .fold<double>(0, (sum, row) => sum + row.totalAmount);
         _creditLimitMax = (customerLimit != null && customerLimit > 0)
             ? customerLimit
             : storeLimit;
@@ -132,7 +186,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
     int? preferCreditId,
     double? outstandingOverride,
   }) async {
-    final outstanding = outstandingOverride ?? _outstanding;
+    final outstanding = outstandingOverride ?? (_accountBalance > 0 ? _accountBalance : 0.0);
     if (outstanding <= 0.0001) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.creditsNothingOutstanding)),
@@ -176,6 +230,42 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(context.l10n.errorCollectFailed(error.toString())),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
+  }
+
+  Future<void> _addAdvance() async {
+    final result = await showDialog<CustomerAdvanceResult>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => CustomerAdvanceDialog(
+        customerName: _displayName,
+        accountBalance: _accountBalance,
+      ),
+    );
+    if (result == null || !mounted) return;
+    try {
+      await getIt<UiStoreController>().recordCustomerAdvance(
+        customerId: widget.customerId,
+        amount: result.amount,
+        paymentMode: result.paymentMode,
+        referenceId: result.referenceId,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.customerAdvanceRecorded),
+          backgroundColor: Colors.green.shade700,
+        ),
+      );
+      await _load();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString()),
           backgroundColor: Colors.red.shade700,
         ),
       );
@@ -358,11 +448,18 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
     final value = (raw ?? '').trim();
     if (value.isEmpty) return '-';
     final parsed = DateTime.tryParse(value);
-    if (parsed == null)
+    if (parsed == null) {
       return value.length >= 10 ? value.substring(0, 10) : value;
+    }
     return '${parsed.year.toString().padLeft(4, '0')}-'
         '${parsed.month.toString().padLeft(2, '0')}-'
         '${parsed.day.toString().padLeft(2, '0')}';
+  }
+
+  bool _isAdvanceRepayment(StoreCreditRepaymentRecord repayment) {
+    return repayment.localId.startsWith('customer-advance') ||
+      (repayment.advanceAmount > 0.0001 &&
+        repayment.allocatedAmount <= 0.0001);
   }
 
   @override
@@ -438,15 +535,21 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                       children: [
                         Expanded(
                           child: _metricCard(
-                            context.l10n.commonOutstanding,
-                            '\$${_outstanding.toStringAsFixed(2)}',
-                            const Color(0xFFFF512F),
+                            context.l10n.commonBalanceDue,
+                            PosCurrency.format(_accountBalance),
+                            _accountBalance > 0.0001
+                                ? const Color(0xFFFF512F)
+                                : _accountBalance < -0.0001
+                                ? Colors.green.shade700
+                                : Colors.black87,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: _metricCard(
-                            context.l10n.creditsCreditSoFar,
+                            _isSupplierAccount
+                                ? _purchaseCreditLabel
+                                : context.l10n.creditsCreditSoFar,
                             '\$${_creditSoFar.toStringAsFixed(2)}',
                             const Color(0xFF4A00E0),
                           ),
@@ -457,6 +560,14 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                             context.l10n.creditsRepaid,
                             '\$${_repaid.toStringAsFixed(2)}',
                             Colors.green.shade700,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _metricCard(
+                            'Advances',
+                            '\$${_totalAdvances.toStringAsFixed(2)}',
+                            Colors.teal.shade700,
                           ),
                         ),
                       ],
@@ -471,9 +582,14 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                         runSpacing: 8,
                         children: [
                           FilledButton.icon(
-                            onPressed: _outstanding > 0.0001 ? _collect : null,
+                            onPressed: _accountBalance > 0.0001 ? _collect : null,
                             icon: const Icon(Icons.payments_outlined),
                             label: Text(context.l10n.creditsCollectPayment),
+                          ),
+                          FilledButton.tonalIcon(
+                            onPressed: _addAdvance,
+                            icon: const Icon(Icons.add_card_rounded),
+                            label: Text(context.l10n.customerAdvanceAdd),
                           ),
                           OutlinedButton.icon(
                             onPressed: _scheduleRepayment,
@@ -508,7 +624,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                     ),
                     const SizedBox(height: 16),
                     _sectionCard(
-                      title: context.l10n.creditsCreditSales,
+                      title: _creditsSectionTitle,
                       child: _credits.isEmpty
                           ? _emptyInline(context.l10n.creditsNoCreditSales)
                           : Column(
@@ -577,7 +693,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
   Widget _creditLimitCard() {
     final limit = _creditLimitMax;
     final hasLimit = limit != null && limit > 0;
-    final used = _outstanding;
+    final used = _accountBalance > 0 ? _accountBalance : 0.0;
     final remaining = hasLimit ? (limit - used).clamp(0.0, limit) : 0.0;
     final ratio = hasLimit ? _creditUsedRatio : 0.0;
     return Container(
@@ -859,10 +975,22 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
 
   Widget _ledgerRow(StoreCustomerLedgerEntry entry) {
     final isCredit = entry.entryType == StoreCustomerLedgerEntryType.credit;
+    final repayment = isCredit
+      ? null
+      : _repayments.where((row) => row.id == entry.entryId).firstOrNull;
+    final isAdvanceRepayment = repayment != null && _isAdvanceRepayment(repayment);
     final title = isCredit
-        ? (entry.orderId == null
-              ? context.l10n.creditsCreditSalePlain
-              : context.l10n.creditsCreditSaleOrder('${entry.orderId}'))
+      ? (entry.orderId == null
+        ? (_isSupplierAccount
+          ? _purchaseCreditLabel
+          : context.l10n.creditsCreditSalePlain)
+        : (_isSupplierAccount
+          ? '$_purchaseCreditLabel · ${context.l10n.commonOrderLabel} ${entry.orderId}'
+          : context.l10n.creditsCreditSaleOrder('${entry.orderId}')))
+      : isAdvanceRepayment
+      ? _advanceLabel
+      : _isSupplierAccount
+      ? _purchaseRepaymentLabel
         : context.l10n.creditsRepaymentMode(
             (entry.paymentMode ?? '-').toUpperCase(),
           );
@@ -885,6 +1013,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                 const SizedBox(height: 2),
                 Text(
                   '${_shortDate(entry.timestamp)}'
+                  '${!isCredit && !isAdvanceRepayment && _isSupplierAccount ? ' · ${(entry.paymentMode ?? '-').toUpperCase()}' : ''}'
                   '${entry.referenceId == null || entry.referenceId!.isEmpty ? '' : ' · ${entry.referenceId}'}'
                   '${entry.deleted ? ' · ${context.l10n.creditsLedgerVoided}' : ''}',
                   style: FontUtility.body.copyWith(
@@ -908,6 +1037,12 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
   }
 
   Widget _creditSaleRow(StoreCreditRecord credit) {
+    final title = _isSupplierAccount
+        ? '$_purchaseCreditLabel · ${context.l10n.commonOrderLabel} ${credit.orderId}'
+        : context.l10n.creditsCreditOrderLine(
+            credit.id.toString(),
+            credit.orderId.toString(),
+          );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -917,10 +1052,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  context.l10n.creditsCreditOrderLine(
-                    credit.id.toString(),
-                    credit.orderId.toString(),
-                  ),
+                  title,
                   style: FontUtility.subheading.copyWith(fontSize: 14),
                 ),
                 const SizedBox(height: 2),
@@ -933,6 +1065,16 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                     color: Colors.black54,
                   ),
                 ),
+                if (_isSupplierAccount && credit.paidAmount > 0.0001) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '${_advanceLabel} ${context.l10n.commonOfAmount('\$${credit.paidAmount.toStringAsFixed(2)}')} ${_appliedLabel.toLowerCase()}',
+                    style: FontUtility.body.copyWith(
+                      fontSize: 12,
+                      color: Colors.teal.shade700,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1005,6 +1147,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
 
   Widget _repaymentRow(StoreCreditRepaymentRecord repayment) {
     final voided = repayment.deleted;
+    final isAdvance = _isAdvanceRepayment(repayment);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -1014,7 +1157,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '\$${repayment.totalAmount.toStringAsFixed(2)} · ${repayment.paymentMode.toUpperCase()}',
+                  '\$${repayment.totalAmount.toStringAsFixed(2)} · ${isAdvance ? _advanceLabel : repayment.paymentMode.toUpperCase()}',
                   style: FontUtility.subheading.copyWith(
                     fontSize: 14,
                     decoration: voided ? TextDecoration.lineThrough : null,
@@ -1023,6 +1166,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                 const SizedBox(height: 2),
                 Text(
                   '${_shortDate(repayment.paidOn)}'
+                  '${isAdvance ? ' · ${repayment.paymentMode.toUpperCase()}' : ''}'
                   '${repayment.referenceId == null || repayment.referenceId!.isEmpty ? '' : ' · ${repayment.referenceId}'}'
                   '${voided ? ' · ${context.l10n.creditsLedgerVoided}' : ''}',
                   style: FontUtility.body.copyWith(

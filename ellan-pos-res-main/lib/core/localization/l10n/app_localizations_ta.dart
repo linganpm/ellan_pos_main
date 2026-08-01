@@ -136,7 +136,7 @@ class AppLocalizationsTa extends AppLocalizations {
       'முதலில் குறைந்தது ஒரு பணம் சேர்க்கவும்.';
 
   @override
-  String get billingAddPayment => 'கட்டணம் சேர்';
+  String get billingAddPayment => 'தொகை சேர்';
 
   @override
   String get billingAddPaymentTitle => 'பணம் சேர்';
@@ -170,6 +170,9 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get billingComplete => 'முடி';
+
+  @override
+  String get billingCompleteWithoutPayment => 'பணம் இல்லாமல் முடி';
 
   @override
   String get billingCompletingCheckout => 'செக்அவுட் முடிக்கிறது…';
@@ -755,7 +758,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String commonPaymentNumber(String id) {
-    return 'கட்டணம் #$id';
+    return 'தொகை #$id';
   }
 
   @override
@@ -1184,7 +1187,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get creditsCollect => 'வசூல்';
 
   @override
-  String get creditsCollectPayment => 'கட்டணம் வசூலி';
+  String get creditsCollectPayment => 'தொகை வசூலி';
 
   @override
   String creditsCollectedScheduled(String amount) {
@@ -1420,7 +1423,34 @@ class AppLocalizationsTa extends AppLocalizations {
   String get creditsWarnOnly => 'எச்சரிக்கை மட்டும்';
 
   @override
+  String get customerAdvanceAdd => 'வாடிக்கையாளர் முன்பணத்தைச் சேர்';
+
+  @override
+  String get customerAdvanceAvailable => 'கிடைக்கும் முன்பணம்';
+
+  @override
+  String customerAdvanceAvailableValue(String amount) {
+    return 'கிடைக்கும் முன்பணம்: $amount';
+  }
+
+  @override
+  String get customerAdvanceExplanation =>
+      'பெறப்பட்ட தொகை முதலில் நிலுவைத் தொகையில் கழிக்கப்படும். மீதமுள்ள தொகை எதிர்கால விற்பனைக்கான முன்பணமாக இருக்கும்.';
+
+  @override
+  String get customerAdvanceRecord => 'முன்பணத்தைப் பதிவு செய்';
+
+  @override
+  String get customerAdvanceRecorded =>
+      'வாடிக்கையாளர் முன்பணம் பதிவுசெய்யப்பட்டது.';
+
+  @override
   String get customerBalanceDue => 'நிலுவைத் தொகை';
+
+  @override
+  String customerBalanceDueValue(String amount) {
+    return 'நிலுவைத் தொகை: $amount';
+  }
 
   @override
   String get customerCouldNotSave => 'வாடிக்கையாளரைச் சேமிக்க முடியவில்லை';
@@ -2102,7 +2132,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get languageTamil => 'தமிழ்';
 
   @override
-  String get orderAddRecordPayment => 'கட்டணம் சேர் / பதிவு செய்';
+  String get orderAddRecordPayment => 'தொகை சேர் / பதிவு செய்';
 
   @override
   String orderAddonsLabel(String labels) {
@@ -2119,7 +2149,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get orderAlreadyFullyRefunded =>
-      'இந்தக் கட்டணம் ஏற்கனவே முழுமையாகத் திருப்பப்பட்டது.';
+      'இந்தத் தொகை ஏற்கனவே முழுமையாகத் திருப்பப்பட்டது.';
 
   @override
   String get orderAppliedOffers => 'பயன்படுத்தப்பட்ட சலுகைகள்';
@@ -2226,7 +2256,8 @@ class AppLocalizationsTa extends AppLocalizations {
   }
 
   @override
-  String get orderCreateSaveDraftTooltip => 'வரைவைச் சேமி';
+  String get orderCreateSaveDraftTooltip =>
+      'வண்டி வரைவைச் சேமி (முகப்பு வரைவுகள்; கொள்முதல் பட்டியல் அல்ல)';
 
   @override
   String get orderCreateTitle => 'புதிய ஆர்டர்';
@@ -2276,7 +2307,8 @@ class AppLocalizationsTa extends AppLocalizations {
   String get orderDraftDeleted => 'வரைவு நீக்கப்பட்டது.';
 
   @override
-  String get orderDraftSaved => 'வரைவு சேமிக்கப்பட்டது.';
+  String get orderDraftSaved =>
+      'வண்டி வரைவு சேமிக்கப்பட்டது. முகப்பு → சேமிக்கப்பட்ட வரைவுகள் வழியாகத் திறக்கவும்.';
 
   @override
   String get orderGoToPayments => 'கட்டணங்களுக்குச் செல்';
@@ -2314,7 +2346,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get orderListColumnOrderType => 'வகை';
 
   @override
-  String get orderListColumnPayment => 'கட்டணம்';
+  String get orderListColumnPayment => 'தொகை';
 
   @override
   String get orderListColumnSlNo => 'வ.எண்';
@@ -2409,7 +2441,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String orderPaymentFailed(String error) {
-    return 'கட்டணம் தோல்வி: $error';
+    return 'தொகை பதிவு தோல்வி: $error';
   }
 
   @override
@@ -2545,7 +2577,7 @@ class AppLocalizationsTa extends AppLocalizations {
   }
 
   @override
-  String get orderSaveDraft => 'வரைவைச் சேமி';
+  String get orderSaveDraft => 'வண்டி வரைவைச் சேமி';
 
   @override
   String get orderSummary => 'சுருக்கம்';

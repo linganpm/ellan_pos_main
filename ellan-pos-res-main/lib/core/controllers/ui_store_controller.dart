@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -909,6 +912,42 @@ class UiStoreController {
     );
   }
 
+  /// Delete the local SQLite DB for the current organisation so the next
+  /// [openStore] recreates it with the current schema.
+  Future<void> deleteStoreDatabase(String storeId) async {
+    try {
+      final existing = _store;
+      if (existing != null) {
+        try {
+          await existing.close();
+        } catch (_) {}
+        _store = null;
+      }
+      final config = _requireConfig();
+      final login = _requireOrganisationLogin();
+      final dbRoot = await databaseFactory.getDatabasesPath();
+      final dbFileName = config.buildOrganisationDatabaseFileName(
+        login.organisation.orgId,
+      );
+      final dbFile = File(p.join(dbRoot, dbFileName));
+      if (await dbFile.exists()) {
+        await dbFile.delete();
+      }
+      // Also delete journal/wal files.
+      for (final suffix in ['-journal', '-wal', '-shm']) {
+        final f = File('${dbFile.path}$suffix');
+        if (await f.exists()) {
+          try {
+            await f.delete();
+          } catch (_) {}
+        }
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('deleteStoreDatabase: $e');
+    }
+  }
+
   Future<void> openStore(String storeId) async {
     final config = _requireConfig();
     final login = _requireOrganisationLogin();
@@ -996,9 +1035,24 @@ class UiStoreController {
     return _requireStore().auth.currentCustomer();
   }
 
-  Future<List<StoreOrderSummary>> loadOrders() {
+  Future<List<StoreOrderSummary>> loadOrders({String? pricingMode}) {
     final store = _requireStore();
-    return store.orders.listSummaries(store.scope);
+    return store.orders.listSummaries(store.scope, pricingMode: pricingMode);
+  }
+
+  Future<bool> alignOrderPricingMode(int orderId, String pricingMode) {
+    final store = _requireStore();
+    return store.orders.alignPricingMode(store.scope, orderId, pricingMode);
+  }
+
+  Future<int> loadServeNumberMaximum() {
+    final store = _requireStore();
+    return store.orders.getServeNumberMaximum(store.scope);
+  }
+
+  Future<void> updateServeNumberMaximum(int maximum) {
+    final store = _requireStore();
+    return store.orders.setServeNumberMaximum(store.scope, maximum);
   }
 
   Future<StoreOrderDetails?> loadOrder(int orderId) {
@@ -1079,10 +1133,15 @@ class UiStoreController {
 
   /// Completes checkout: create order → add cart lines → take payment(s) →
   /// close when fully paid. Supports split / partial tenders.
+  ///
+  /// When [existingOrderId] is set (for example after KOT), that scoped open
+  /// order is finalized instead of creating a duplicate.
   Future<CheckoutCompletionResult> completeCheckout({
     required List<CheckoutLineItem> items,
     required List<CheckoutPaymentLine> payments,
     required String orderType,
+    String pricingMode = StoreOrderPricingMode.selling,
+    int? existingOrderId,
     String? customerName,
     String? customerPhone,
     String? customerEmail,
@@ -1092,6 +1151,7 @@ class UiStoreController {
     double tipsAmount = 0,
     double serviceTaxAmount = 0,
     double discountAmount = 0,
+    double offerAmount = 0,
     double deliveryCharge = 0,
   }) async {
     final store = _requireStore();
@@ -1100,13 +1160,15 @@ class UiStoreController {
     }
 
     final resolvedOrderType = _mapOrderType(orderType);
+    final resolvedPricingMode = StoreOrderPricingMode.normalize(pricingMode);
+    final isBuying = resolvedPricingMode == StoreOrderPricingMode.buying;
     final timestamp = DateTime.now().toIso8601String();
     final sessionCustomer = await store.auth.currentCustomer();
     final staffName = (sessionCustomer?.name ?? '').trim().isNotEmpty
         ? sessionCustomer!.name.trim()
         : (sessionCustomer?.email ?? sessionCustomer?.customerId ?? 'POS');
     final staffReg = (sessionCustomer?.usrRegNum ?? '').trim();
-    final createdBy = PosCheckoutMeta(
+    var createdBy = PosCheckoutMeta(
       staffName: staffName,
       staffReg: staffReg,
       tips: tipsAmount,
@@ -1127,18 +1189,71 @@ class UiStoreController {
           name: customerName.trim(),
           phone: customerPhone.trim(),
           email: customerEmail,
+          customerGroup: isBuying ? 'supplier' : 'retail_customer',
         );
         resolvedCustomerId = created?.customerId;
       } else {
-        resolvedCustomerId = await store.customers.recordDirectoryCustomer(
-          scope: store.scope,
-          name: customerName.trim(),
-          phone: customerPhone.trim(),
-          email: customerEmail,
-          uniqueId: resolvedCustomerId,
-        );
+        final existing = await store.customers.getById(resolvedCustomerId);
+        final expectedRole = isBuying ? 'supplier' : 'retail_customer';
+        final sameName =
+            (existing?.name.trim().toLowerCase() ?? '') ==
+            customerName.trim().toLowerCase();
+        final samePhone =
+            (existing?.phone.trim() ?? '') == customerPhone.trim();
+        final sameEmail =
+            (existing?.email.trim().toLowerCase() ?? '') ==
+            (customerEmail ?? '').trim().toLowerCase();
+        final sameRole =
+            (existing?.role.trim().toLowerCase() ?? '') == expectedRole;
+        if (existing == null ||
+            !sameName ||
+            !samePhone ||
+            !sameEmail ||
+            !sameRole) {
+          resolvedCustomerId = await store.customers.recordDirectoryCustomer(
+            scope: store.scope,
+            name: customerName.trim(),
+            phone: customerPhone.trim(),
+            email: customerEmail,
+            uniqueId: resolvedCustomerId,
+            role: expectedRole,
+          );
+        }
       }
     }
+
+    var previousBalance = 0.0;
+    if ((resolvedCustomerId ?? '').trim().isNotEmpty) {
+      try {
+        final partyId = resolvedCustomerId!.trim();
+        final records = await store.credits.listRecords(
+          store.scope,
+          customerId: partyId,
+        );
+        previousBalance = records.fold<double>(
+          0,
+          (sum, record) => sum + record.outstandingAmount,
+        );
+        if (records.isEmpty) {
+          final account = await store.credits.getAccountByCustomer(
+            store.scope,
+            partyId,
+          );
+          previousBalance = account?.outstandingBalance ?? 0;
+        }
+      } catch (_) {
+        previousBalance = 0;
+      }
+    }
+    createdBy = PosCheckoutMeta(
+      staffName: staffName,
+      staffReg: staffReg,
+      tips: tipsAmount,
+      serviceTax: serviceTaxAmount,
+      discount: discountAmount,
+      delivery: deliveryCharge,
+      previousBalance: previousBalance,
+    ).encode();
 
     final needsCreditCustomer = payments.any(
       (line) =>
@@ -1153,74 +1268,174 @@ class UiStoreController {
       if (resolvedCreditCustomerId == null ||
           resolvedCreditCustomerId.isEmpty) {
         throw StateError(
-          'Credit checkout requires a customer. Search or add a customer before paying on credit.',
+          isBuying
+              ? 'Payable checkout requires a supplier. Search or add a supplier before placing the balance on account.'
+              : 'Credit checkout requires a customer. Search or add a customer before paying on credit.',
         );
       }
     }
 
+    if (isBuying) {
+      final supplierId = (resolvedCustomerId ?? '').trim();
+      if (supplierId.isEmpty) {
+        throw StateError(
+          'Purchase checkout requires a supplier. Search or add a supplier before checkout.',
+        );
+      }
+      resolvedCreditCustomerId ??= supplierId;
+    }
+
     final hasPayablePayment = payments.any((line) => line.amount > 0.0001);
-    if (!hasPayablePayment) {
+    if (!hasPayablePayment && !isBuying) {
       throw StateError(
         'Cannot checkout without at least one payment. Select a customer to put remaining balance on credit, or add another tender.',
       );
     }
 
-    final orderId = await store.orders.create(
-      store.scope,
-      StoreCreateOrderRequest(
-        restaurantName: store.storeName,
-        customerName: (customerName != null && customerName.trim().isNotEmpty)
-            ? customerName.trim()
-            : 'Walk-in Customer',
-        mobile: (customerPhone != null && customerPhone.trim().isNotEmpty)
-            ? customerPhone.trim()
-            : '+1000000000',
-        customerUniqueId: resolvedCustomerId,
-        statusName: 'Pending',
-        total: 0,
-        serviceInstance: store.serviceInstanceId,
-        createdBy: createdBy,
-        createdOn: timestamp,
-        paymentStatus: 'Unpaid',
-        orderType: resolvedOrderType,
-      ),
-    );
+    var orderId = existingOrderId;
+    var reusedExistingOrder = false;
+    if (orderId != null) {
+      final existing = await store.orders.getById(store.scope, orderId);
+      if (existing == null ||
+          StoreOrderStatus.isCompleted(existing.statusName) ||
+          StoreOrderStatus.isCancelled(existing.statusName)) {
+        orderId = null;
+      } else {
+        reusedExistingOrder = true;
+        await store.orders.alignPricingMode(
+          store.scope,
+          orderId,
+          resolvedPricingMode,
+        );
+        if (StoreOrderStatus.isDraft(existing.statusName) ||
+            StoreOrderStatus.isInitiated(existing.statusName)) {
+          await store.orders.updateStatus(
+            store.scope,
+            orderId,
+            StoreOrderStatus.pending,
+          );
+        }
+      }
+    }
 
-    for (final item in items) {
-      await store.orders.addItem(
+    if (orderId == null) {
+      orderId = await store.orders.create(
         store.scope,
-        StoreAddOrderItemRequest(
-          orderId: orderId,
-          productVariantId: item.productVariantId,
-          productId: item.productId,
-          itemName: item.itemName,
-          tableId: tableId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          sellPrice: item.unitPrice,
-          mrpPrice: item.unitPrice,
-          finalPrice: item.lineTotal ?? (item.unitPrice * item.quantity),
+        StoreCreateOrderRequest(
+          restaurantName: store.storeName,
+          customerName: (customerName != null && customerName.trim().isNotEmpty)
+              ? customerName.trim()
+              : (isBuying ? 'Unspecified Supplier' : 'Walk-in Customer'),
+          mobile: (customerPhone != null && customerPhone.trim().isNotEmpty)
+              ? customerPhone.trim()
+              : '+1000000000',
+          customerUniqueId: resolvedCustomerId,
+          statusName: 'Pending',
+          total: 0,
+          serviceInstance: store.serviceInstanceId,
           createdBy: createdBy,
           createdOn: timestamp,
-          addons: [
-            for (final addon in item.addons)
-              StoreAddOrderItemAddonRequest(
-                addonGroupId: addon.addonGroupId,
-                addonGroupName: addon.addonGroupName,
-                minSelections: addon.minSelections,
-                maxSelections: addon.maxSelections,
-                addonItemId: addon.addonItemId,
-                addonItemName: addon.addonItemName,
-                quantity: addon.quantity,
-                sellPrice: addon.unitPrice,
-                mrpPrice: addon.unitPrice,
-                unitPrice: addon.unitPrice,
-                createdOn: timestamp,
-              ),
-          ],
+          paymentStatus: 'Unpaid',
+          orderType: resolvedOrderType,
+          pricingMode: resolvedPricingMode,
         ),
-        refreshTotals: false,
       );
+    }
+
+    if (reusedExistingOrder) {
+      final existingItems = await store.orders.listItems(store.scope, orderId);
+      final qtyByVariant = <String, double>{};
+      for (final row in existingItems) {
+        final key = row.productVariantId.trim().isNotEmpty
+            ? row.productVariantId
+            : row.productId;
+        qtyByVariant[key] = (qtyByVariant[key] ?? 0) + row.quantity.toDouble();
+      }
+      for (final item in items) {
+        final key = item.productVariantId.trim().isNotEmpty
+            ? item.productVariantId
+            : item.productId;
+        final have = qtyByVariant[key] ?? 0;
+        final want = item.quantity;
+        final delta = want - have;
+        if (delta <= 0.0001) continue;
+        await store.orders.addItem(
+          store.scope,
+          StoreAddOrderItemRequest(
+            orderId: orderId,
+            productVariantId: item.productVariantId,
+            productId: item.productId,
+            itemName: item.itemName,
+            tableId: tableId,
+            quantity: delta,
+            unitPrice: item.unitPrice,
+            sellPrice: item.unitPrice,
+            mrpPrice: item.unitPrice,
+            pricingMode: resolvedPricingMode,
+            finalPrice: item.unitPrice * delta,
+            createdBy: createdBy,
+            createdOn: timestamp,
+            addons: [
+              for (final addon in item.addons)
+                StoreAddOrderItemAddonRequest(
+                  addonGroupId: addon.addonGroupId,
+                  addonGroupName: addon.addonGroupName,
+                  minSelections: addon.minSelections,
+                  maxSelections: addon.maxSelections,
+                  addonItemId: addon.addonItemId,
+                  addonItemName: addon.addonItemName,
+                  quantity: addon.quantity,
+                  sellPrice: addon.unitPrice,
+                  mrpPrice: addon.unitPrice,
+                  unitPrice: addon.unitPrice,
+                  createdOn: timestamp,
+                ),
+            ],
+          ),
+          refreshTotals: false,
+          recalculateItemPricing: false,
+        );
+        qtyByVariant[key] = have + delta;
+      }
+    } else {
+      for (final item in items) {
+        await store.orders.addItem(
+          store.scope,
+          StoreAddOrderItemRequest(
+            orderId: orderId,
+            productVariantId: item.productVariantId,
+            productId: item.productId,
+            itemName: item.itemName,
+            tableId: tableId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            sellPrice: item.unitPrice,
+            mrpPrice: item.unitPrice,
+            pricingMode: resolvedPricingMode,
+            finalPrice: item.lineTotal ?? (item.unitPrice * item.quantity),
+            createdBy: createdBy,
+            createdOn: timestamp,
+            addons: [
+              for (final addon in item.addons)
+                StoreAddOrderItemAddonRequest(
+                  addonGroupId: addon.addonGroupId,
+                  addonGroupName: addon.addonGroupName,
+                  minSelections: addon.minSelections,
+                  maxSelections: addon.maxSelections,
+                  addonItemId: addon.addonItemId,
+                  addonItemName: addon.addonItemName,
+                  quantity: addon.quantity,
+                  sellPrice: addon.unitPrice,
+                  mrpPrice: addon.unitPrice,
+                  unitPrice: addon.unitPrice,
+                  createdOn: timestamp,
+                ),
+            ],
+          ),
+          refreshTotals: false,
+          recalculateItemPricing: false,
+        );
+      }
     }
 
     // One offer/total pass after all lines — avoids O(n) full-order rebuilds.
@@ -1263,6 +1478,16 @@ class UiStoreController {
     }
 
     var totalPaid = 0.0;
+    if (reusedExistingOrder) {
+      final existingPayments = await store.orders.listPayments(
+        store.scope,
+        orderId,
+      );
+      totalPaid = existingPayments.fold<double>(
+        0,
+        (sum, payment) => sum + payment.amount,
+      );
+    }
     final modeLabels = <String>[];
     for (final line in payments) {
       if (line.amount <= 0.0001) continue;
@@ -1313,16 +1538,54 @@ class UiStoreController {
     }
 
     totalPaid = double.parse(totalPaid.toStringAsFixed(2));
-    final balance = double.parse(
+    var balance = double.parse(
       (amountDue - totalPaid).clamp(0, amountDue).toStringAsFixed(2),
     );
+
+    if (isBuying && balance > 0.0001) {
+      final supplierId =
+          (resolvedCreditCustomerId ?? resolvedCustomerId ?? '').trim();
+      if (supplierId.isEmpty) {
+        throw StateError(
+          'Purchase checkout requires a supplier for payable balance.',
+        );
+      }
+      await store.credits.create(
+        store.scope,
+        StoreCreateCreditRequest(
+          orgId: store.orgId,
+          customerId: supplierId,
+          orderId: orderId,
+          amount: balance,
+          createdOn: timestamp,
+          updatedOn: timestamp,
+        ),
+      );
+      await store.orders.addPayment(
+        store.scope,
+        orderId,
+        StoreCreateOrderPaymentRequest(
+          paymentMode: StoreOrderPaymentMode.credit,
+          amount: balance,
+          customerId: supplierId,
+          referenceId:
+              'pos-credit-auto-$orderId-${DateTime.now().millisecondsSinceEpoch}',
+        ),
+      );
+      totalPaid = double.parse((totalPaid + balance).toStringAsFixed(2));
+      modeLabels.add(StoreOrderPaymentMode.credit);
+      balance = double.parse(
+        (amountDue - totalPaid).clamp(0, amountDue).toStringAsFixed(2),
+      );
+    }
+
     final paymentStatus = totalPaid <= 0.0001
         ? 'Unpaid'
         : (balance <= 0.0001 ? 'Paid' : 'Partial');
     await store.orders.updatePaymentStatus(store.scope, orderId, paymentStatus);
 
     String statusName = 'Pending';
-    if (balance <= 0.0001 && totalPaid > 0) {
+    if (isBuying || (balance <= 0.0001 && totalPaid > 0)) {
       await store.orders.close(store.scope, orderId);
       statusName = 'Closed';
     }
@@ -1335,6 +1598,13 @@ class UiStoreController {
       restaurantName: store.storeName,
       paymentStatus: paymentStatus,
       balanceDue: balance,
+      pricingMode: resolvedPricingMode,
+      customerName: (customerName ?? '').trim(),
+      customerId: (resolvedCustomerId ?? '').trim(),
+      previousBalance: previousBalance,
+      offerAmount: offerAmount,
+      tipsAmount: tipsAmount,
+      discountAmount: discountAmount,
     );
   }
 
@@ -1537,6 +1807,7 @@ class UiStoreController {
   Future<int> saveDraftFromCart({
     required List<CheckoutLineItem> items,
     required String orderType,
+    String pricingMode = StoreOrderPricingMode.selling,
     String? customerName,
     String? customerPhone,
     String? customerEmail,
@@ -1609,10 +1880,14 @@ class UiStoreController {
         createdOn: timestamp,
         paymentStatus: 'Unpaid',
         orderType: _mapOrderType(orderType),
+        pricingMode: StoreOrderPricingMode.normalize(pricingMode),
         exported: true,
       ),
     );
 
+    final resolvedDraftPricingMode = StoreOrderPricingMode.normalize(
+      pricingMode,
+    );
     for (final item in items) {
       await store.orders.addItem(
         store.scope,
@@ -1626,6 +1901,7 @@ class UiStoreController {
           unitPrice: item.unitPrice,
           sellPrice: item.unitPrice,
           mrpPrice: item.unitPrice,
+          pricingMode: resolvedDraftPricingMode,
           finalPrice: item.lineTotal ?? (item.unitPrice * item.quantity),
           createdBy: createdBy,
           createdOn: timestamp,
@@ -1741,6 +2017,7 @@ class UiStoreController {
     int? existingOrderId,
     required List<CheckoutLineItem> items,
     required String orderType,
+    String pricingMode = StoreOrderPricingMode.selling,
     String? customerName,
     String? customerPhone,
     String? customerEmail,
@@ -1801,12 +2078,19 @@ class UiStoreController {
       final existing = await store.orders.getById(store.scope, orderId);
       if (existing == null) {
         orderId = null;
-      } else if (StoreOrderStatus.isDraft(existing.statusName)) {
-        await store.orders.updateStatus(
+      } else {
+        await store.orders.alignPricingMode(
           store.scope,
           orderId,
-          StoreOrderStatus.pending,
+          StoreOrderPricingMode.normalize(pricingMode),
         );
+        if (StoreOrderStatus.isDraft(existing.statusName)) {
+          await store.orders.updateStatus(
+            store.scope,
+            orderId,
+            StoreOrderStatus.pending,
+          );
+        }
       }
     }
 
@@ -1829,8 +2113,10 @@ class UiStoreController {
           createdOn: timestamp,
           paymentStatus: 'Unpaid',
           orderType: _mapOrderType(orderType),
+          pricingMode: StoreOrderPricingMode.normalize(pricingMode),
         ),
       );
+      final resolvedPricingMode = StoreOrderPricingMode.normalize(pricingMode);
       for (final item in items) {
         await store.orders.addItem(
           store.scope,
@@ -1844,6 +2130,7 @@ class UiStoreController {
             unitPrice: item.unitPrice,
             sellPrice: item.unitPrice,
             mrpPrice: item.unitPrice,
+            pricingMode: resolvedPricingMode,
             finalPrice: item.lineTotal ?? (item.unitPrice * item.quantity),
             createdBy: createdBy,
             createdOn: timestamp,
@@ -2360,23 +2647,31 @@ class UiStoreController {
     );
   }
 
-  Future<List<StoreCustomer>> searchCustomers(String query) {
+  Future<List<StoreCustomer>> searchCustomers(
+    String query, {
+    List<String>? roles,
+  }) {
     final store = _requireStore();
     return store.customers.searchDirectoryDetails(
       scope: store.scope,
       nameQuery: query,
       limit: 50,
+      roles: roles,
     );
   }
 
-  /// Creates (or reuses) a retail customer via the gateway and stores them
+  /// Creates (or reuses) a directory party via the gateway and stores them
   /// locally under the backend user id (``user_{id}``).
   Future<StoreCustomer?> createDirectoryCustomer({
     required String name,
     required String phone,
     String? email,
+    String customerGroup = 'retail_customer',
   }) async {
     final store = _requireStore();
+    final resolvedGroup = customerGroup.trim().isEmpty
+        ? 'retail_customer'
+        : customerGroup.trim().toLowerCase();
     final uri = Uri.parse(kDiscoveryUrl).replace(path: '/api/pos/customers');
     final response = await http.post(
       uri,
@@ -2388,7 +2683,7 @@ class UiStoreController {
         'name': name.trim(),
         'phone': phone.trim(),
         if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
-        'customer_group': 'retail_customer',
+        'customer_group': resolvedGroup,
       }),
     );
     final body = jsonDecode(response.body);
@@ -2413,6 +2708,7 @@ class UiStoreController {
       phone: customer['phone']?.toString() ?? phone,
       email: customer['email']?.toString() ?? email,
       uniqueId: customerId,
+      role: resolvedGroup,
     );
     return store.customers.getById(customerId);
   }
@@ -2516,6 +2812,27 @@ class UiStoreController {
       store.scope,
       customerId: customerId,
       includeDeleted: includeDeleted,
+    );
+  }
+
+  Future<double> loadCustomerAdvanceBalance(String customerId) {
+    final store = _requireStore();
+    return store.credits.getCustomerAdvanceBalance(store.scope, customerId);
+  }
+
+  Future<int> recordCustomerAdvance({
+    required String customerId,
+    required double amount,
+    required String paymentMode,
+    String? referenceId,
+  }) {
+    final store = _requireStore();
+    return store.credits.recordCustomerAdvance(
+      store.scope,
+      customerId: customerId,
+      amount: amount,
+      paymentMode: paymentMode,
+      referenceId: referenceId,
     );
   }
 
@@ -2623,18 +2940,28 @@ class UiStoreController {
 
   /// Builds dashboard metrics for [filter] from the on-device SQLite store.
   ///
-  /// [filter] is one of: Yesterday, Today, This Week, This Month, This Year.
+  /// [filter] is one of: All Time, Yesterday, Today, This Week,
+  /// This Month, This Year.
   /// Date ranges and hourly buckets use the organisation / store timezone.
-  Future<PosDashboardSnapshot> loadDashboardSnapshot(String filter) async {
+  /// [pricingMode] keeps sell and buy dashboards separate (default selling).
+  Future<PosDashboardSnapshot> loadDashboardSnapshot(
+    String filter, {
+    String pricingMode = StoreOrderPricingMode.selling,
+  }) async {
     final store = _requireStore();
     final scope = store.scope;
     final tzName = _orgTimezoneName;
     final range = _dashboardDateRange(filter, tzName);
+    final resolvedPricingMode = StoreOrderPricingMode.normalize(pricingMode);
     final orders = await store.orders.listSummaries(scope);
     final orderTypes = await loadOrderTypes();
     final inRange = orders
         .where((order) {
           if (StoreOrderStatus.isDraft(order.statusName)) return false;
+          if (StoreOrderPricingMode.normalize(order.pricingMode) !=
+              resolvedPricingMode) {
+            return false;
+          }
           final created = OrgTimezone.tryParseWallClock(
             order.createdOn,
             tzName,
@@ -2989,7 +3316,9 @@ class UiStoreController {
           OrgTimezone.tryParseWallClock(row.createdOn, tzName);
       if (paidAt == null) continue;
       if (paidAt.isBefore(range.start) || !paidAt.isBefore(range.end)) continue;
-      repaymentsAmount += row.totalAmount;
+      // Count only the portion applied to open credit. Unallocated remainder
+      // is customer advance, not a repayment.
+      repaymentsAmount += row.allocatedAmount;
     }
 
     final refunds = await store.orders.listRefunds(scope);
@@ -3077,6 +3406,11 @@ class UiStoreController {
     final now = OrgTimezone.nowWallClock(tzName);
     final today = OrgTimezone.startOfDay(now);
     switch (filter) {
+      case 'All Time':
+        return (
+          start: DateTime(1970, 1, 1),
+          end: today.add(const Duration(days: 1)),
+        );
       case 'Yesterday':
         final start = today.subtract(const Duration(days: 1));
         return (start: start, end: today);

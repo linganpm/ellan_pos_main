@@ -8,6 +8,7 @@ import '../../core/controllers/checkout_models.dart';
 import '../../bloc/cart/cart_bloc.dart';
 import '../../bloc/cart/cart_state.dart';
 import '../../bloc/cart/cart_event.dart';
+import '../widgets/receipt_preview_dialog.dart';
 import 'home_screen.dart';
 
 class InvoiceScreen extends StatelessWidget {
@@ -31,7 +32,14 @@ class InvoiceScreen extends StatelessWidget {
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Text(
-          context.l10n.invoiceTitle,
+          checkoutResult?.pricingMode == 'buying'
+              ? (Localizations.localeOf(context)
+                          .languageCode
+                          .toLowerCase()
+                          .startsWith('ta')
+                      ? 'கொள்முதல் பில்'
+                      : 'Purchase bill')
+              : context.l10n.invoiceTitle,
           style: FontUtility.heading.copyWith(fontSize: 20),
         ),
         centerTitle: false,
@@ -283,13 +291,46 @@ class InvoiceScreen extends StatelessWidget {
                                     label: context.l10n.actionPrint,
                                     icon: Icons.print_rounded,
                                     onPressed: () {
-                                      ScaffoldMessenger.of(
+                                      showReceiptPreviewDialog(
                                         context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            context.l10n.invoicePrinting,
-                                          ),
+                                        ReceiptPreviewData(
+                                          orderId: checkoutResult?.orderId ?? 0,
+                                          storeName:
+                                              checkoutResult?.restaurantName ??
+                                              '',
+                                          pricingMode:
+                                              checkoutResult?.pricingMode ??
+                                              state.pricingMode,
+                                          partyName:
+                                              checkoutResult?.customerName ??
+                                              '',
+                                          partyId:
+                                              checkoutResult?.customerId ?? '',
+                                          paymentLabel: paymentLabel,
+                                          previousBalance:
+                                              checkoutResult?.previousBalance ??
+                                              0,
+                                          subtotal: state.subTotal,
+                                          offerAmount: state.offerAppliedAmount,
+                                          discountAmount: state.discountValue,
+                                          deliveryAmount: state.deliveryCharge,
+                                          taxAmount: state.serviceTaxValue,
+                                          tipsAmount: state.tipsAmount,
+                                          total: state.netTotal,
+                                          paid:
+                                              checkoutResult?.totalPaid ??
+                                              state.netTotal,
+                                          balanceDue:
+                                              checkoutResult?.balanceDue ?? 0,
+                                          items: [
+                                            for (final item in state.cartItems)
+                                              ReceiptPreviewItem(
+                                                name: item.product.name,
+                                                quantityLabel:
+                                                    '${item.quantity == item.quantity.roundToDouble() ? item.quantity.toInt() : item.quantity}×',
+                                                amount: item.totalPrice,
+                                              ),
+                                          ],
                                         ),
                                       );
                                     },
@@ -336,7 +377,10 @@ class InvoiceScreen extends StatelessWidget {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (context) => const HomeScreen(openOrders: true),
+        builder: (context) => HomeScreen(
+          openOrders: true,
+          openOrdersPricingMode: checkoutResult?.pricingMode,
+        ),
       ),
       (route) => false,
     );
