@@ -35,8 +35,7 @@ class StoreOrganisation {
       orgName: row['org_name'] as String? ?? row['orgName'] as String? ?? '',
       orgCode: row['org_code'] as String? ?? row['orgCode'] as String? ?? '',
       logo: row['logo'] as String? ?? '',
-      posCode:
-          row['pos_code'] as String? ?? row['posCode'] as String? ?? '',
+      posCode: row['pos_code'] as String? ?? row['posCode'] as String? ?? '',
     );
   }
 
@@ -251,10 +250,7 @@ class StoreOrganisationLoginResult {
       'organisationRole': organisationRole,
       'accessibleStores': [
         for (final entry in accessibleStores)
-          {
-            'store': entry.store.toRow(),
-            'access': entry.access.toRow(),
-          },
+          {'store': entry.store.toRow(), 'access': entry.access.toRow()},
       ],
       if (customerRow != null) 'customer': customerRow,
       if (accessToken != null && accessToken!.isNotEmpty)
@@ -282,9 +278,7 @@ class StoreOrganisationLoginResult {
             store: StoreDirectoryEntry.fromRow(
               storeRaw.cast<String, dynamic>(),
             ),
-            access: StoreRoleAccess.fromRow(
-              accessRaw.cast<String, dynamic>(),
-            ),
+            access: StoreRoleAccess.fromRow(accessRaw.cast<String, dynamic>()),
           ),
         );
       }
@@ -309,16 +303,25 @@ class StoreOrganisationLoginResult {
       customerRow: json['customer'] is Map
           ? (json['customer'] as Map).cast<String, dynamic>()
           : null,
-      accessToken: '${json['access_token'] ?? json['accessToken'] ?? ''}'.trim().isEmpty
+      accessToken:
+          '${json['access_token'] ?? json['accessToken'] ?? ''}'.trim().isEmpty
           ? null
           : '${json['access_token'] ?? json['accessToken']}'.trim(),
-      refreshToken: '${json['refresh_token'] ?? json['refreshToken'] ?? ''}'.trim().isEmpty
+      refreshToken:
+          '${json['refresh_token'] ?? json['refreshToken'] ?? ''}'
+              .trim()
+              .isEmpty
           ? null
           : '${json['refresh_token'] ?? json['refreshToken']}'.trim(),
-      sessionId: '${json['session_id'] ?? json['sessionId'] ?? ''}'.trim().isEmpty
+      sessionId:
+          '${json['session_id'] ?? json['sessionId'] ?? ''}'.trim().isEmpty
           ? null
           : '${json['session_id'] ?? json['sessionId']}'.trim(),
-      serviceInstanceId: si == null ? null : '$si'.trim().isEmpty ? null : '$si'.trim(),
+      serviceInstanceId: si == null
+          ? null
+          : '$si'.trim().isEmpty
+          ? null
+          : '$si'.trim(),
     );
   }
 }
@@ -581,11 +584,7 @@ class StoreOrderType {
     if (normalized.isNotEmpty) {
       return normalized;
     }
-    throw ArgumentError.value(
-      rawValue,
-      'orderType',
-      'Unsupported order type.',
-    );
+    throw ArgumentError.value(rawValue, 'orderType', 'Unsupported order type.');
   }
 }
 
@@ -976,6 +975,7 @@ class StoreOrderSummary {
 
   /// Actual sale time recorded on the device (ISO string) — not sync time.
   final String? createdOn;
+
   /// POS checkout staff meta (`Name|reg|tips=…`) from `orders.created_by`.
   final String createdBy;
   final int itemCount;
@@ -983,6 +983,7 @@ class StoreOrderSummary {
   final bool exported;
   final String? lastImportedAt;
   final String? lastExportedAt;
+
   /// Rotating kitchen/serve reference in range 10–99.
   final int? serveNumber;
 
@@ -1074,6 +1075,7 @@ class StoreOrderDetails {
   final String restaurantName;
   final String customerName;
   final String mobile;
+  final String? customerUniqueId;
   final String statusName;
   final double totalValue;
   final double offerAppliedValue;
@@ -1107,6 +1109,7 @@ class StoreOrderDetails {
     required this.restaurantName,
     required this.customerName,
     required this.mobile,
+    required this.customerUniqueId,
     required this.statusName,
     required this.totalValue,
     required this.offerAppliedValue,
@@ -1142,6 +1145,7 @@ class StoreOrderDetails {
       restaurantName: row['restaurant_name'] as String? ?? '',
       customerName: row['name'] as String? ?? '',
       mobile: row['mobile'] as String? ?? '',
+      customerUniqueId: row['customer_unique_id'] as String?,
       statusName: row['status_name'] as String? ?? '',
       totalValue:
           (row['total_value'] as num?)?.toDouble() ??
@@ -1193,6 +1197,7 @@ class StoreCreateOrderRequest {
   final String restaurantName;
   final String customerName;
   final String mobile;
+
   /// Stable backend user id reference (``user_{id}``) — never a local SQLite PK.
   final String? customerUniqueId;
   final String statusName;
@@ -1210,7 +1215,8 @@ class StoreCreateOrderRequest {
   final bool exported;
   final String? lastImportedAt;
   final String? lastExportedAt;
-  /// Optional kitchen/serve ref (10–99). Allocated automatically when omitted.
+
+  /// Optional kitchen/serve ref (1–configured maximum).
   final int? serveNumber;
 
   const StoreCreateOrderRequest({
@@ -1598,6 +1604,7 @@ class StoreOrderItemRecord {
   final int orderId;
   final String productVariantId;
   final String productId;
+
   /// Display name for free-text / misc lines (and optional catalogue override).
   final String itemName;
   final String? tableId;
@@ -1651,8 +1658,9 @@ class StoreOrderItemRecord {
       orderId: (row['order_id'] as num?)?.toInt() ?? 0,
       productVariantId: row['product_variant_id'] as String? ?? '',
       productId: row['product_id'] as String? ?? '',
-      itemName: '${row['item_name'] ?? row['product_name'] ?? row['name'] ?? ''}'
-          .trim(),
+      itemName:
+          '${row['item_name'] ?? row['product_name'] ?? row['name'] ?? ''}'
+              .trim(),
       tableId: row['table_id'] as String?,
       tableName: row['table_name'] as String?,
       floorId: row['floor_id'] as String?,
@@ -2212,7 +2220,8 @@ class StoreProductCategoryRecord {
       storeId: row['storeId'] as String? ?? '',
       localId: localId,
       uniqueId: row['unique_id'] as String?,
-      categoryId: (row['categoryId'] as num?)?.toInt() ??
+      categoryId:
+          (row['categoryId'] as num?)?.toInt() ??
           int.tryParse(localId.replaceFirst('cat_', '')) ??
           0,
       name: row['name'] as String? ?? '',
@@ -2407,6 +2416,7 @@ class StoreCreditRecord {
 class StoreCreditCustomerSortBy {
   static const String amount = 'amount';
   static const String name = 'name';
+
   /// Oldest unpaid credit first (longest pending).
   static const String pending = 'pending';
 
@@ -2446,6 +2456,7 @@ class StoreCustomerCreditSummary {
   final double totalOutstandingAmount;
   final int creditCount;
   final String latestCreditOn;
+
   /// Created/due timestamp of the oldest still-unpaid credit for this customer.
   final String? oldestOutstandingOn;
 
@@ -2504,10 +2515,8 @@ class StoreCreditAccountRecord {
       creditLimitAmount: rawLimit == null
           ? null
           : (rawLimit as num?)?.toDouble(),
-      outstandingBalance:
-          (row['outstanding_balance'] as num?)?.toDouble() ?? 0,
-      totalCreditSoFar:
-          (row['total_credit_so_far'] as num?)?.toDouble() ?? 0,
+      outstandingBalance: (row['outstanding_balance'] as num?)?.toDouble() ?? 0,
+      totalCreditSoFar: (row['total_credit_so_far'] as num?)?.toDouble() ?? 0,
       totalRepaid: (row['total_repaid'] as num?)?.toDouble() ?? 0,
       remoteId: (row['remote_id'] as num?)?.toInt(),
       localId: row['local_id'] as String? ?? '',
@@ -2578,7 +2587,8 @@ class StoreScheduledCreditRepayment {
       customerId: row['customerId'] as String? ?? '',
       amount: (row['amount'] as num?)?.toDouble() ?? 0,
       dueDate: row['due_date'] as String? ?? '',
-      status: row['status'] as String? ??
+      status:
+          row['status'] as String? ??
           StoreScheduledCreditRepaymentStatus.scheduled,
       collectedRepaymentId: (row['collected_repayment_id'] as num?)?.toInt(),
       createdOn: row['created_on'] as String? ?? '',
@@ -2637,6 +2647,8 @@ class StoreCreditRepaymentRecord {
   final String customerId;
   final String paymentMode;
   final double totalAmount;
+  final double allocatedAmount;
+  final double advanceAmount;
   final String? referenceId;
   final String paidOn;
   final String createdOn;
@@ -2655,6 +2667,8 @@ class StoreCreditRepaymentRecord {
     required this.customerId,
     required this.paymentMode,
     required this.totalAmount,
+    required this.allocatedAmount,
+    required this.advanceAmount,
     required this.referenceId,
     required this.paidOn,
     required this.createdOn,
@@ -2675,6 +2689,8 @@ class StoreCreditRepaymentRecord {
       customerId: row['customerId'] as String? ?? '',
       paymentMode: row['payment_mode'] as String? ?? '',
       totalAmount: (row['total_amount'] as num?)?.toDouble() ?? 0,
+      allocatedAmount: (row['allocated_amount'] as num?)?.toDouble() ?? 0,
+      advanceAmount: (row['advance_amount'] as num?)?.toDouble() ?? 0,
       referenceId: row['reference_id'] as String?,
       paidOn: row['paid_on'] as String? ?? '',
       createdOn: row['created_on'] as String? ?? '',
@@ -2747,10 +2763,13 @@ class StoreCreateCreditRequest {
   final double amount;
   final String createdOn;
   final String? updatedOn;
+
   /// Optional ISO date (`YYYY-MM-DD`) for net terms.
   final String? dueDate;
+
   /// Formal installment count (2–4). Null/0 = one-shot.
   final int? installmentCount;
+
   /// `weekly` or `monthly`.
   final String? installmentCadence;
 
@@ -2877,9 +2896,7 @@ List<StoreCreditInstallmentPlanItem> buildCreditInstallmentPlan({
   final base = startDate ?? DateTime.now();
   final unit = double.parse((totalAmount / n).toStringAsFixed(2));
   final amounts = List<double>.filled(n, unit);
-  final allocated = double.parse(
-    (unit * (n - 1)).toStringAsFixed(2),
-  );
+  final allocated = double.parse((unit * (n - 1)).toStringAsFixed(2));
   amounts[n - 1] = double.parse((totalAmount - allocated).toStringAsFixed(2));
 
   return List.generate(n, (i) {

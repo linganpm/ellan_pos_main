@@ -5,13 +5,25 @@ class StoreOrdersService {
 
   StoreOrdersService._(this._store);
 
-  Future<List<StoreOrderSummary>> listSummaries(StoreScope scope) => _store._listOrderSummaries(scope);
+  Future<List<StoreOrderSummary>> listSummaries(
+    StoreScope scope, {
+    String? pricingMode,
+  }) => _store._listOrderSummaries(scope, pricingMode: pricingMode);
 
-  Future<StoreOrderDetails?> getById(StoreScope scope, int orderId) => _store._getOrderDetails(scope, orderId);
+  Future<int> getServeNumberMaximum(StoreScope scope) =>
+      _store._getServeNumberMaximum(scope);
 
-  Future<StoreOrderDetails?> details(StoreScope scope, int orderId) => _store._getOrderDetails(scope, orderId);
+  Future<void> setServeNumberMaximum(StoreScope scope, int maximum) =>
+      _store._setServeNumberMaximum(scope, maximum);
 
-  Future<int> create(StoreScope scope, StoreCreateOrderRequest request) => _store._createOrder(scope, request);
+  Future<StoreOrderDetails?> getById(StoreScope scope, int orderId) =>
+      _store._getOrderDetails(scope, orderId);
+
+  Future<StoreOrderDetails?> details(StoreScope scope, int orderId) =>
+      _store._getOrderDetails(scope, orderId);
+
+  Future<int> create(StoreScope scope, StoreCreateOrderRequest request) =>
+      _store._createOrder(scope, request);
 
   Future<int> updateStatus(StoreScope scope, int orderId, String status) {
     return _store._updateOrderStatus(scope, orderId, status);
@@ -23,6 +35,14 @@ class StoreOrdersService {
     String paymentStatus,
   ) {
     return _store._updateOrderPaymentStatus(scope, orderId, paymentStatus);
+  }
+
+  Future<bool> alignPricingMode(
+    StoreScope scope,
+    int orderId,
+    String pricingMode,
+  ) {
+    return _store._alignOrderPricingMode(scope, orderId, pricingMode);
   }
 
   /// Overrides order money columns after checkout adjustments (tips / tax / etc.).
@@ -54,11 +74,17 @@ class StoreOrdersService {
     return _store._getOrderItemRecords(scope, orderId);
   }
 
-  Future<List<StoreOrderItemAddonRecord>> listItemAddons(StoreScope scope, int itemId) {
+  Future<List<StoreOrderItemAddonRecord>> listItemAddons(
+    StoreScope scope,
+    int itemId,
+  ) {
     return _store._getOrderItemAddonRecords(scope, itemId);
   }
 
-  Future<List<StoreOrderPaymentRecord>> listPayments(StoreScope scope, int orderId) {
+  Future<List<StoreOrderPaymentRecord>> listPayments(
+    StoreScope scope,
+    int orderId,
+  ) {
     return _store._getOrderPaymentRecords(scope, orderId);
   }
 
@@ -69,7 +95,10 @@ class StoreOrdersService {
     return _store._getOrderRefundRecords(scope, orderId: orderId);
   }
 
-  Future<List<StoreKitchenCancellationRecord>> listKitchenCancellations(StoreScope scope, int orderId) {
+  Future<List<StoreKitchenCancellationRecord>> listKitchenCancellations(
+    StoreScope scope,
+    int orderId,
+  ) {
     return _store._getKitchenCancellationRecords(scope, orderId);
   }
 
@@ -77,11 +106,13 @@ class StoreOrdersService {
     StoreScope scope,
     StoreAddOrderItemRequest request, {
     bool refreshTotals = true,
+    bool recalculateItemPricing = true,
   }) {
     return _store._createOrderItem(
       scope,
       request,
       refreshTotals: refreshTotals,
+      recalculateItemPricing: recalculateItemPricing,
     );
   }
 
@@ -90,7 +121,10 @@ class StoreOrdersService {
     return _store._refreshOrderTotals(scope, orderId);
   }
 
-  Future<int> addItemAddon(StoreScope scope, StoreAddOrderItemAddonRequest request) {
+  Future<int> addItemAddon(
+    StoreScope scope,
+    StoreAddOrderItemAddonRequest request,
+  ) {
     return _store._createOrderItemAddon(scope, request);
   }
 
@@ -106,7 +140,11 @@ class StoreOrdersService {
     return _store._deleteOrderItemAddon(scope, addonId);
   }
 
-  Future<int> addPayment(StoreScope scope, int orderId, StoreCreateOrderPaymentRequest request) {
+  Future<int> addPayment(
+    StoreScope scope,
+    int orderId,
+    StoreCreateOrderPaymentRequest request,
+  ) {
     return _store._addOrderPayment(scope, request, orderId);
   }
 

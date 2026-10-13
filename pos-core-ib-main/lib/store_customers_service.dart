@@ -116,6 +116,7 @@ class StoreCustomersService {
     String? phoneQuery,
     int? limit,
     int? offset,
+    List<String>? roles,
   }) async {
     final rows = await _store._searchCustomers(
       scope: scope,
@@ -123,7 +124,7 @@ class StoreCustomersService {
       phoneQuery: phoneQuery,
       limit: limit,
       offset: offset,
-      roles: CustomerRepository.directoryCustomerRoles,
+      roles: roles ?? CustomerRepository.directoryCustomerRoles,
     );
     return rows.map(StoreCustomer.fromRow).toList(growable: false);
   }

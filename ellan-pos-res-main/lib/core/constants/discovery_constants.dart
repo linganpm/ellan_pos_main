@@ -9,14 +9,21 @@ String _envRootOrgInstanceId = _fallbackRootOrgInstanceId;
 bool _hasEnvServerOrigin = false;
 bool _hasEnvRootOrgInstanceId = false;
 
-/// Loads `POS_SERVER_URL` and `POS_ROOT_ORG_INSTANCE_ID` from `.env`.
+/// Bundled env asset to read; `--dart-define=POS_ENV_FILE=.env.development`
+/// selects another one (see run.sh).
+const String _posEnvFile = String.fromEnvironment(
+  'POS_ENV_FILE',
+  defaultValue: '.env',
+);
+
+/// Loads `POS_SERVER_URL` and `POS_ROOT_ORG_INSTANCE_ID` from [_posEnvFile].
 Future<void> loadPosDiscoveryEnv() async {
   var loadedPrimaryEnv = false;
   try {
-    await dotenv.load(fileName: '.env');
+    await dotenv.load(fileName: _posEnvFile);
     loadedPrimaryEnv = true;
   } catch (e) {
-    debugPrint('POS env: .env not loaded ($e); trying .env.example');
+    debugPrint('POS env: $_posEnvFile not loaded ($e); trying .env.example');
     try {
       await dotenv.load(fileName: '.env.example');
     } catch (e2) {

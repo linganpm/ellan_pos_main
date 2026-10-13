@@ -11,6 +11,7 @@
 #   ./run.sh              # web browser at http://127.0.0.1:8080 (default)
 #   ./run.sh web          # same as default
 #   ./run.sh linux        # Linux desktop (needs working OpenGL/GPU drivers)
+#   ./run.sh linux development  # Linux desktop using ellan-pos-res-main/.env.development
 #   ./run.sh android      # Android emulator/device (default: Pixel_Tablet)
 #   ./run.sh android Pixel_7
 #   ./run.sh studio       # open Android Studio on the Flutter app
@@ -37,6 +38,12 @@ if ! command -v flutter >/dev/null 2>&1; then
 fi
 
 cd "$APP"
+
+# Dart's HTTP client honours HTTP(S)_PROXY but only matches exact NO_PROXY hosts
+# (not wildcards like 127.*), so local backend calls would go through the proxy.
+for var in NO_PROXY no_proxy; do
+  export "$var=${!var:+${!var},}127.0.0.1,localhost,::1"
+done
 
 # Prefer the sibling pos-core package in this monorepo.
 if [[ -d "$CORE" ]]; then
@@ -79,10 +86,20 @@ case "$TARGET" in
       fi
       echo "Using Mesa software GL fallback..."
     fi
+    ENV_ARGS=()
+    if [[ -n "${2:-}" ]]; then
+      ENV_FILE=".env.$2"
+      if [[ ! -f "$APP/$ENV_FILE" ]]; then
+        echo "error: $APP/$ENV_FILE not found" >&2
+        exit 1
+      fi
+      ENV_ARGS=(--dart-define=POS_ENV_FILE="$ENV_FILE")
+    fi
     echo "Launching POS on Linux desktop..."
     echo "  app:  $APP"
     echo "  core: $CORE"
-    exec flutter run -d linux
+    echo "  env:  ${ENV_FILE:-.env}"
+    exec flutter run -d linux "${ENV_ARGS[@]}"
     ;;
   android|emulator)
     [[ -f android/gradlew ]] || flutter create --platforms=android .

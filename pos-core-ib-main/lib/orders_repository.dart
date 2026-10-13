@@ -67,20 +67,18 @@ class OrdersRepository {
           skippedCount += 1;
           continue;
         }
-        final statusName = '${orderMap['status']?['status_name'] ?? orderMap['status_name'] ?? ''}'
-            .trim();
+        final statusName =
+            '${orderMap['status']?['status_name'] ?? orderMap['status_name'] ?? ''}'
+                .trim();
         // Never ingest Draft / Initiated from cloud — those stay device-local.
         if (StoreOrderStatus.isSyncExcluded(statusName)) {
           skippedCount += 1;
           continue;
         }
         final orderId =
-            jsonAsInt(orderMap['order_id']) ??
-            jsonAsInt(orderMap['id']) ??
-            0;
+            jsonAsInt(orderMap['order_id']) ?? jsonAsInt(orderMap['id']) ?? 0;
         final remoteId =
-            jsonAsInt(orderMap['remote_id']) ??
-            jsonAsInt(orderMap['id']);
+            jsonAsInt(orderMap['remote_id']) ?? jsonAsInt(orderMap['id']);
         final uniqueId =
             orderMap['unique_id'] as String? ?? orderMap['uniqueId'] as String?;
         final localId = orderMap['local_id'] as String?;
@@ -102,80 +100,84 @@ class OrdersRepository {
           skippedCount += 1;
           continue;
         }
-        final localPending = existing != null &&
+        final localPending =
+            existing != null &&
             ((existing['exported'] as num?)?.toInt() ?? 1) == 0;
         // Pending local rows: apply cloud-newer header only — never wipe
         // payments/items that may still be waiting to export.
         final replaceChildren = !localPending;
-        final exportedFlag = localPending
-            ? 0
-            : (markAsExported ? 1 : 0);
+        final exportedFlag = localPending ? 0 : (markAsExported ? 1 : 0);
         final resolvedUpdatedOn =
             remoteUpdatedOn?.toUtc().toIso8601String() ??
-            _parseTimestamp(orderMap['created_on'] ?? orderMap['createdOn'])
-                ?.toUtc()
-                .toIso8601String() ??
+            _parseTimestamp(
+              orderMap['created_on'] ?? orderMap['createdOn'],
+            )?.toUtc().toIso8601String() ??
             importedAt;
+        final incomingPricingMode =
+            orderMap['pricing_mode'] ?? orderMap['pricingMode'];
+        final resolvedPricingMode =
+            '${incomingPricingMode ?? ''}'.trim().isEmpty
+            ? StoreOrderPricingMode.normalize(existing?['pricing_mode'])
+            : StoreOrderPricingMode.normalize(incomingPricingMode);
         await db.transaction((txn) async {
-          await _upsertOrder(
-            scope,
-            {
-              'orgId': scope.orgId,
-              'storeId': scope.storeId,
-              'unique_id': uniqueId,
-              'local_id': localId,
-              'remote_id': remoteId,
-              'order_id': orderId,
-              'restaurant_name': orderMap['restaurant_name'],
-              'name': orderMap['name'],
-              'mobile': orderMap['mobile'],
-              'customer_unique_id': orderMap['customer_unique_id'] ??
-                  orderMap['customerUniqueId'] ??
-                  orderMap['customer_id'] ??
-                  orderMap['customerId'],
-              'status_name':
-                  orderMap['status']?['status_name'] ?? orderMap['status_name'],
-              'total_value':
-                  jsonAsDouble(orderMap['total_value']) ??
-                  jsonAsDouble(orderMap['totalValue']) ??
-                  jsonAsDouble(orderMap['total']) ??
-                  0,
-              'offer_applied_value':
-                  jsonAsDouble(orderMap['offer_applied_value']) ??
-                  jsonAsDouble(orderMap['offerAppliedValue']) ??
-                  0,
-              'final_value':
-                  jsonAsDouble(orderMap['final_value']) ??
-                  jsonAsDouble(orderMap['finalValue']) ??
-                  jsonAsDouble(orderMap['total']) ??
-                  0,
-              'total':
-                  jsonAsDouble(orderMap['final_value']) ??
-                  jsonAsDouble(orderMap['finalValue']) ??
-                  jsonAsDouble(orderMap['total']) ??
-                  0,
-              'service_instance': jsonAsInt(orderMap['service_instance']) ?? 1,
-              'created_by': _preferCreatedBy(
-                orderMap['created_by'] ?? orderMap['staff_name'],
-                staffReg: orderMap['staff_reg'],
-              ),
-              'created_on':
-                  orderMap['created_on'] ?? DateTime.now().toIso8601String(),
-              'updated_on': resolvedUpdatedOn,
-              'payment_status': orderMap['payment_status'] ?? 'Unpaid',
-              'order_type': StoreOrderType.requireSupported(
-                orderMap['order_type'] ?? orderMap['type_str'],
-                typeCode: jsonAsInt(orderMap['type']),
-              ),
-              'pricing_mode': StoreOrderPricingMode.normalize(
-                orderMap['pricing_mode'],
-              ),
-              'exported': exportedFlag,
-              'last_imported_at': importedAt,
-              'last_exported_at': null,
-            },
-            executor: txn,
-          );
+          await _upsertOrder(scope, {
+            'orgId': scope.orgId,
+            'storeId': scope.storeId,
+            'unique_id': uniqueId,
+            'local_id': localId,
+            'remote_id': remoteId,
+            'order_id': orderId,
+            'restaurant_name': orderMap['restaurant_name'],
+            'name': orderMap['name'],
+            'mobile': orderMap['mobile'],
+            'customer_unique_id':
+                orderMap['customer_unique_id'] ??
+                orderMap['customerUniqueId'] ??
+                orderMap['customer_id'] ??
+                orderMap['customerId'],
+            'status_name':
+                orderMap['status']?['status_name'] ?? orderMap['status_name'],
+            'total_value':
+                jsonAsDouble(orderMap['total_value']) ??
+                jsonAsDouble(orderMap['totalValue']) ??
+                jsonAsDouble(orderMap['total']) ??
+                0,
+            'offer_applied_value':
+                jsonAsDouble(orderMap['offer_applied_value']) ??
+                jsonAsDouble(orderMap['offerAppliedValue']) ??
+                0,
+            'final_value':
+                jsonAsDouble(orderMap['final_value']) ??
+                jsonAsDouble(orderMap['finalValue']) ??
+                jsonAsDouble(orderMap['total']) ??
+                0,
+            'total':
+                jsonAsDouble(orderMap['final_value']) ??
+                jsonAsDouble(orderMap['finalValue']) ??
+                jsonAsDouble(orderMap['total']) ??
+                0,
+            'service_instance':
+                jsonAsInt(orderMap['service_instance']) ??
+                jsonAsInt(orderMap['serviceInstance']) ??
+                jsonAsInt(existing?['service_instance']) ??
+                1,
+            'created_by': _preferCreatedBy(
+              orderMap['created_by'] ?? orderMap['staff_name'],
+              staffReg: orderMap['staff_reg'],
+            ),
+            'created_on':
+                orderMap['created_on'] ?? DateTime.now().toIso8601String(),
+            'updated_on': resolvedUpdatedOn,
+            'payment_status': orderMap['payment_status'] ?? 'Unpaid',
+            'order_type': StoreOrderType.requireSupported(
+              orderMap['order_type'] ?? orderMap['type_str'],
+              typeCode: jsonAsInt(orderMap['type']),
+            ),
+            'pricing_mode': resolvedPricingMode,
+            'exported': exportedFlag,
+            'last_imported_at': importedAt,
+            'last_exported_at': null,
+          }, executor: txn);
           if (replaceChildren) {
             await replaceOrderPayments(
               scope,
@@ -186,7 +188,11 @@ class OrdersRepository {
             await replaceOrderItems(
               scope,
               orderId,
-              _extractItemsForOrder(orderMap, scope, importedAt),
+              _extractItemsForOrder(
+                {...orderMap, 'pricing_mode': resolvedPricingMode},
+                scope,
+                importedAt,
+              ),
               executor: txn,
             );
           }
@@ -221,7 +227,8 @@ class OrdersRepository {
       'restaurant_name': order['restaurant_name'],
       'name': order['name'],
       'mobile': order['mobile'],
-      'customer_unique_id': order['customer_unique_id'] ??
+      'customer_unique_id':
+          order['customer_unique_id'] ??
           order['customerUniqueId'] ??
           order['customer_id'] ??
           order['customerId'],
@@ -267,7 +274,17 @@ class OrdersRepository {
     );
   }
 
-  Future<List<Map<String, dynamic>>> listOrders(StoreScope scope) async {
+  Future<List<Map<String, dynamic>>> listOrders(
+    StoreScope scope, {
+    String? pricingMode,
+  }) async {
+    final args = <Object?>[scope.orgId, scope.storeId];
+    var pricingClause = '';
+    final normalizedPricing = (pricingMode ?? '').trim();
+    if (normalizedPricing.isNotEmpty) {
+      pricingClause = 'AND o.pricing_mode = ? ';
+      args.add(StoreOrderPricingMode.normalize(normalizedPricing));
+    }
     return await db.rawQuery(
       'SELECT o.orgId, o.storeId, o.unique_id, o.local_id, o.remote_id, o.order_id, '
       'o.restaurant_name, o.name, o.mobile, o.customer_unique_id, o.status_name, '
@@ -290,8 +307,9 @@ class OrdersRepository {
       '  0'
       ') AS paid_total '
       'FROM orders o WHERE o.orgId = ? AND o.storeId = ? '
+      '$pricingClause'
       'ORDER BY o.created_on DESC, o.id DESC',
-      [scope.orgId, scope.storeId],
+      args,
     );
   }
 
@@ -337,12 +355,72 @@ class OrdersRepository {
     );
   }
 
-  /// Allocates the next rotating kitchen/serve number in range 10–99.
+  Future<bool> alignOrderPricingMode(
+    StoreScope scope,
+    int orderId,
+    String pricingMode,
+  ) async {
+    final normalized = StoreOrderPricingMode.requireSupported(pricingMode);
+    return db.transaction((txn) async {
+      final rows = await txn.query(
+        'orders',
+        columns: ['pricing_mode'],
+        where: 'orgId = ? AND storeId = ? AND order_id = ?',
+        whereArgs: [scope.orgId, scope.storeId, orderId],
+        limit: 1,
+      );
+      if (rows.isEmpty) return false;
+      if (StoreOrderPricingMode.normalize(rows.first['pricing_mode']) ==
+          normalized) {
+        return true;
+      }
+
+      final now = DateTime.now().toUtc().toIso8601String();
+      await txn.update(
+        'orders',
+        {
+          'pricing_mode': normalized,
+          'updated_on': now,
+          'exported': 0,
+          'last_exported_at': null,
+        },
+        where: 'orgId = ? AND storeId = ? AND order_id = ?',
+        whereArgs: [scope.orgId, scope.storeId, orderId],
+      );
+      await txn.update(
+        'order_items',
+        {'pricing_mode': normalized},
+        where: 'orgId = ? AND storeId = ? AND order_id = ?',
+        whereArgs: [scope.orgId, scope.storeId, orderId],
+      );
+      await txn.update(
+        'order_item_addons',
+        {'pricing_mode': normalized},
+        where: 'orgId = ? AND storeId = ? AND order_id = ?',
+        whereArgs: [scope.orgId, scope.storeId, orderId],
+      );
+      return true;
+    });
+  }
+
+  /// Allocates the next rotating kitchen/serve number in range 1–configured max.
   Future<int> allocateServeNumber(StoreScope scope) async {
     const counterName = 'serve_number';
-    const minServe = 10;
-    const maxServe = 99;
+    const maximumName = 'serve_number_max';
+    const minServe = 1;
     return db.transaction((txn) async {
+      final maximumRows = await txn.query(
+        'store_counters',
+        columns: ['value'],
+        where: 'orgId = ? AND storeId = ? AND name = ?',
+        whereArgs: [scope.orgId, scope.storeId, maximumName],
+        limit: 1,
+      );
+      final maxServe =
+          ((maximumRows.isEmpty ? null : maximumRows.first['value'] as num?)
+                      ?.toInt() ??
+                  100)
+              .clamp(minServe, 9999);
       final rows = await txn.query(
         'store_counters',
         columns: ['value'],
@@ -371,6 +449,36 @@ class OrdersRepository {
       }
       return next;
     });
+  }
+
+  Future<int> getServeNumberMaximum(StoreScope scope) async {
+    final rows = await db.query(
+      'store_counters',
+      columns: ['value'],
+      where: 'orgId = ? AND storeId = ? AND name = ?',
+      whereArgs: [scope.orgId, scope.storeId, 'serve_number_max'],
+      limit: 1,
+    );
+    return ((rows.isEmpty ? null : rows.first['value'] as num?)?.toInt() ?? 100)
+        .clamp(1, 9999);
+  }
+
+  Future<void> setServeNumberMaximum(StoreScope scope, int maximum) async {
+    final value = maximum.clamp(1, 9999);
+    final updated = await db.update(
+      'store_counters',
+      {'value': value},
+      where: 'orgId = ? AND storeId = ? AND name = ?',
+      whereArgs: [scope.orgId, scope.storeId, 'serve_number_max'],
+    );
+    if (updated == 0) {
+      await db.insert('store_counters', {
+        'orgId': scope.orgId,
+        'storeId': scope.storeId,
+        'name': 'serve_number_max',
+        'value': value,
+      });
+    }
   }
 
   Future<int> updatePaymentStatus(
@@ -518,15 +626,11 @@ class OrdersRepository {
         'kitchen_sent_at': itemRow['kitchen_sent_at'],
       }, conflictAlgorithm: ConflictAlgorithm.replace);
       for (final addon in addons) {
-        await addOrderItemAddon(
-          scope,
-          {
-            ...addon,
-            'order_id': orderId,
-            'order_item_id': itemId,
-          },
-          executor: dbx,
-        );
+        await addOrderItemAddon(scope, {
+          ...addon,
+          'order_id': orderId,
+          'order_item_id': itemId,
+        }, executor: dbx);
       }
     }
   }
@@ -748,7 +852,10 @@ class OrdersRepository {
     );
   }
 
-  Future<double> getPaymentRefundedTotal(StoreScope scope, int paymentId) async {
+  Future<double> getPaymentRefundedTotal(
+    StoreScope scope,
+    int paymentId,
+  ) async {
     final rows = await db.rawQuery(
       '''
       SELECT COALESCE(SUM(amount), 0) AS total FROM order_refunds
@@ -759,7 +866,10 @@ class OrdersRepository {
     return (rows.first['total'] as num?)?.toDouble() ?? 0;
   }
 
-  Future<int> addOrderRefund(StoreScope scope, Map<String, dynamic> refund) async {
+  Future<int> addOrderRefund(
+    StoreScope scope,
+    Map<String, dynamic> refund,
+  ) async {
     final id = await db.insert('order_refunds', {
       ...refund,
       'orgId': scope.orgId,
@@ -1033,30 +1143,21 @@ class OrdersRepository {
     final placeholders = List.filled(orderIds.length, '?').join(', ');
     final scopeArgs = [scope.orgId, scope.storeId, ...orderIds];
 
-    final payments = await db.rawQuery(
-      '''
+    final payments = await db.rawQuery('''
       SELECT * FROM order_payments
       WHERE orgId = ? AND storeId = ? AND order_id IN ($placeholders)
       ORDER BY order_id ASC, created_on ASC, id ASC
-      ''',
-      scopeArgs,
-    );
-    final refunds = await db.rawQuery(
-      '''
+      ''', scopeArgs);
+    final refunds = await db.rawQuery('''
       SELECT * FROM order_refunds
       WHERE orgId = ? AND storeId = ? AND order_id IN ($placeholders)
       ORDER BY order_id ASC, created_on ASC, id ASC
-      ''',
-      scopeArgs,
-    );
-    final items = await db.rawQuery(
-      '''
+      ''', scopeArgs);
+    final items = await db.rawQuery('''
       SELECT * FROM order_items
       WHERE orgId = ? AND storeId = ? AND order_id IN ($placeholders)
       ORDER BY order_id ASC, id ASC
-      ''',
-      scopeArgs,
-    );
+      ''', scopeArgs);
     final itemIds = items
         .map((row) => (row['id'] as num?)?.toInt() ?? 0)
         .where((id) => id != 0)
@@ -1100,21 +1201,25 @@ class OrdersRepository {
       (itemsByOrder[orderId] ??= <Map<String, dynamic>>[]).add(withAddons);
     }
 
-    return orders.map((order) {
-      final orderId = (order['order_id'] as num?)?.toInt() ?? 0;
-      return {
-        ..._orderRowToSyncJson(order),
-        'payments': (paymentsByOrder[orderId] ?? const <Map<String, dynamic>>[])
-            .map(_paymentRowToSyncJson)
-            .toList(growable: false),
-        'refunds': (refundsByOrder[orderId] ?? const <Map<String, dynamic>>[])
-            .map(_refundRowToSyncJson)
-            .toList(growable: false),
-        'items': (itemsByOrder[orderId] ?? const <Map<String, dynamic>>[])
-            .map(_orderItemRowToSyncJson)
-            .toList(growable: false),
-      };
-    }).toList(growable: false);
+    return orders
+        .map((order) {
+          final orderId = (order['order_id'] as num?)?.toInt() ?? 0;
+          return {
+            ..._orderRowToSyncJson(order),
+            'payments':
+                (paymentsByOrder[orderId] ?? const <Map<String, dynamic>>[])
+                    .map(_paymentRowToSyncJson)
+                    .toList(growable: false),
+            'refunds':
+                (refundsByOrder[orderId] ?? const <Map<String, dynamic>>[])
+                    .map(_refundRowToSyncJson)
+                    .toList(growable: false),
+            'items': (itemsByOrder[orderId] ?? const <Map<String, dynamic>>[])
+                .map(_orderItemRowToSyncJson)
+                .toList(growable: false),
+          };
+        })
+        .toList(growable: false);
   }
 
   List<Map<String, dynamic>> _extractPaymentsForOrder(
@@ -1188,6 +1293,9 @@ class OrdersRepository {
       return const [];
     }
 
+    final orderPricingMode = StoreOrderPricingMode.normalize(
+      order['pricing_mode'] ?? order['pricingMode'],
+    );
     final items = <Map<String, dynamic>>[];
     for (final rawItem in rawItems.whereType<Map>()) {
       final item = rawItem.cast<String, dynamic>();
@@ -1243,7 +1351,11 @@ class OrdersRepository {
                 '',
             'qty': addonQuantity,
             'pricing_mode': StoreOrderPricingMode.normalize(
-              addon['pricing_mode'] ?? addon['pricingMode'],
+              addon['pricing_mode'] ??
+                  addon['pricingMode'] ??
+                  item['pricing_mode'] ??
+                  item['pricingMode'] ??
+                  orderPricingMode,
             ),
             'sell_price':
                 jsonAsDouble(addon['sell_price']) ??
@@ -1281,12 +1393,9 @@ class OrdersRepository {
         'item_name':
             '${item['item_name'] ?? item['itemName'] ?? item['product_name'] ?? item['productName'] ?? item['name'] ?? ''}'
                 .trim(),
-        'qty':
-            jsonAsDouble(item['qty']) ??
-            jsonAsDouble(item['quantity']) ??
-            0,
+        'qty': jsonAsDouble(item['qty']) ?? jsonAsDouble(item['quantity']) ?? 0,
         'pricing_mode': StoreOrderPricingMode.normalize(
-          item['pricing_mode'] ?? item['pricingMode'],
+          item['pricing_mode'] ?? item['pricingMode'] ?? orderPricingMode,
         ),
         'sell_price':
             jsonAsDouble(item['sell_price']) ??
@@ -1295,8 +1404,7 @@ class OrdersRepository {
             jsonAsDouble(item['unitPrice']) ??
             0,
         'buy_price':
-            jsonAsDouble(item['buy_price']) ??
-            jsonAsDouble(item['buyPrice']),
+            jsonAsDouble(item['buy_price']) ?? jsonAsDouble(item['buyPrice']),
         'mrp_price':
             jsonAsDouble(item['mrp_price']) ??
             jsonAsDouble(item['mrpPrice']) ??
@@ -1532,10 +1640,7 @@ class OrdersRepository {
           .toIso8601String();
       updated += await db.update(
         'orders',
-        {
-          'export_fail_count': fails,
-          'next_export_at': nextAt,
-        },
+        {'export_fail_count': fails, 'next_export_at': nextAt},
         where: 'id = ?',
         whereArgs: [rows.first['id']],
       );

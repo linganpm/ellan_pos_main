@@ -66,12 +66,14 @@ class Store {
   final StorePrinterAdapter _printerAdapter;
   final Duration _sessionDuration;
   StoreConfig _config;
+
   /// Short-lived auth cache so checkout/order loops do not re-hit SQLite
   /// for session + store-access on every role check.
   StoreSession? _sessionCache;
   DateTime? _sessionCacheAt;
   DateTime? _localAccessCheckedAt;
   static const Duration _sessionCacheTtl = Duration(seconds: 3);
+
   /// Latest store_settings blob from credits import (consumed by the tablet).
   Map<String, dynamic>? _lastImportedCreditStoreSettings;
   late final StoreAuthService auth = StoreAuthService._(this);
@@ -153,10 +155,7 @@ class Store {
 
   /// Persist a picked logo file path for later company-settings sync.
   Future<void> setCompanyLogoLocal(String absolutePath) async {
-    await saveCompanyProfileLocal(
-      logo: absolutePath,
-      logoPendingSync: true,
-    );
+    await saveCompanyProfileLocal(logo: absolutePath, logoPendingSync: true);
   }
 
   Future<List<Map<String, dynamic>>> listReportSubscribers() async {
@@ -170,12 +169,7 @@ class Store {
     );
     // Keep a `cadence` alias for older UI callers.
     return rows
-        .map(
-          (row) => {
-            ...row,
-            'cadence': row['periodicity'] ?? 'daily',
-          },
-        )
+        .map((row) => {...row, 'cadence': row['periodicity'] ?? 'daily'})
         .toList(growable: false);
   }
 
@@ -188,7 +182,8 @@ class Store {
     if (trimmed.isEmpty || !trimmed.contains('@')) return;
     final existing = await _db.query(
       'subscribers',
-      where: 'orgId = ? AND storeId = ? AND email = ? AND type = ? AND deleted = 0',
+      where:
+          'orgId = ? AND storeId = ? AND email = ? AND type = ? AND deleted = 0',
       whereArgs: [orgId, storeId, trimmed, 'report'],
       limit: 1,
     );
@@ -249,32 +244,28 @@ class Store {
       );
     }
     final now = DateTime.now().toIso8601String();
-    return _db.insert(
-      'subscribers',
-      {
-        'local_id': _newLocalSyncId('subscriber'),
-        'orgId': orgId,
-        'storeId': storeId,
-        'name': name.trim().isEmpty
-            ? (trimmed.isNotEmpty ? trimmed : phone)
-            : name.trim(),
-        'email': trimmed,
-        'phone_number': phone.isEmpty ? null : phone,
-        'country_id': countryId?.trim(),
-        'user_id': userId?.trim(),
-        'type': 'report',
-        'notification_type': channel,
-        'periodicity': kind,
-        'deleted': 0,
-        'active': 1,
-        'is_owner_default': 0,
-        'created_on': now,
-        'updated_on': now,
-        'pending_sync': 1,
-        'exported': 0,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    return _db.insert('subscribers', {
+      'local_id': _newLocalSyncId('subscriber'),
+      'orgId': orgId,
+      'storeId': storeId,
+      'name': name.trim().isEmpty
+          ? (trimmed.isNotEmpty ? trimmed : phone)
+          : name.trim(),
+      'email': trimmed,
+      'phone_number': phone.isEmpty ? null : phone,
+      'country_id': countryId?.trim(),
+      'user_id': userId?.trim(),
+      'type': 'report',
+      'notification_type': channel,
+      'periodicity': kind,
+      'deleted': 0,
+      'active': 1,
+      'is_owner_default': 0,
+      'created_on': now,
+      'updated_on': now,
+      'pending_sync': 1,
+      'exported': 0,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> deleteReportSubscriber(int id) async {
@@ -314,30 +305,30 @@ class Store {
       final type = (row['type'] as String?)?.trim().toLowerCase() ?? 'report';
       final notificationType =
           (row['notification_type'] as String?)?.trim().toLowerCase() ??
-              (row['notificationType'] as String?)?.trim().toLowerCase() ??
-              'email';
+          (row['notificationType'] as String?)?.trim().toLowerCase() ??
+          'email';
       var periodicity =
           (row['periodicity'] as String?)?.trim().toLowerCase() ??
-              (row['cadence'] as String?)?.trim().toLowerCase() ??
-              'daily';
+          (row['cadence'] as String?)?.trim().toLowerCase() ??
+          'daily';
       if (periodicity == 'annual' || periodicity == 'yearly') {
         periodicity = 'annually';
       }
-      final remoteId = (row['remote_id'] as num?)?.toInt() ??
-          (row['id'] as num?)?.toInt();
+      final remoteId =
+          (row['remote_id'] as num?)?.toInt() ?? (row['id'] as num?)?.toInt();
       final localId = (row['local_id'] as String?)?.trim().isNotEmpty == true
           ? (row['local_id'] as String).trim()
           : (remoteId != null
-              ? 'subscriber-$remoteId'
-              : _newLocalSyncId('subscriber'));
+                ? 'subscriber-$remoteId'
+                : _newLocalSyncId('subscriber'));
       final deleted = row['deleted'] is bool
           ? ((row['deleted'] as bool) ? 1 : 0)
           : ((row['deleted'] as num?)?.toInt() ?? 0);
       final active = deleted == 1
           ? 0
           : (row['active'] is bool
-              ? ((row['active'] as bool) ? 1 : 0)
-              : ((row['active'] as num?)?.toInt() ?? 1));
+                ? ((row['active'] as bool) ? 1 : 0)
+                : ((row['active'] as num?)?.toInt() ?? 1));
       final values = <String, Object?>{
         'local_id': localId,
         'remote_id': remoteId,
@@ -406,8 +397,7 @@ class Store {
         await _db.insert('subscribers', values);
       } else {
         // Prefer server truth when not pending local edits.
-        final pending =
-            ((existing['pending_sync'] as num?)?.toInt() ?? 0) == 1;
+        final pending = ((existing['pending_sync'] as num?)?.toInt() ?? 0) == 1;
         if (pending) continue;
         await _db.update(
           'subscribers',
@@ -543,26 +533,24 @@ class Store {
     }
     final existing = await loadEmailConfig(purpose);
     if (existing != null && ((existing['locked'] as num?)?.toInt() ?? 0) == 1) {
-      throw StateError('This email configuration is locked and cannot be changed.');
+      throw StateError(
+        'This email configuration is locked and cannot be changed.',
+      );
     }
-    await _db.insert(
-      'store_email_config',
-      {
-        'orgId': orgId,
-        'storeId': storeId,
-        'purpose': purpose,
-        'host': host.trim(),
-        'port': port,
-        'username': username.trim(),
-        'password': password,
-        'from_email': fromEmail.trim(),
-        'from_name': fromName.trim(),
-        'use_tls': useTls ? 1 : 0,
-        'locked': locked ? 1 : 0,
-        'pending_sync': pendingSync ? 1 : 0,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await _db.insert('store_email_config', {
+      'orgId': orgId,
+      'storeId': storeId,
+      'purpose': purpose,
+      'host': host.trim(),
+      'port': port,
+      'username': username.trim(),
+      'password': password,
+      'from_email': fromEmail.trim(),
+      'from_name': fromName.trim(),
+      'use_tls': useTls ? 1 : 0,
+      'locked': locked ? 1 : 0,
+      'pending_sync': pendingSync ? 1 : 0,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   /// Upsert locked system mailers from gateway public rows (no password).
@@ -590,34 +578,31 @@ class Store {
       // Never accept a password field from remote rows.
       final host = '${row['host'] ?? ''}'.trim();
       final username = '${row['username'] ?? ''}'.trim();
-      final fromEmail =
-          '${row['from_email'] ?? row['fromEmail'] ?? username}'.trim();
+      final fromEmail = '${row['from_email'] ?? row['fromEmail'] ?? username}'
+          .trim();
       final fromName = '${row['from_name'] ?? row['fromName'] ?? ''}'.trim();
-      final port = (row['port'] as num?)?.toInt() ??
+      final port =
+          (row['port'] as num?)?.toInt() ??
           int.tryParse('${row['port'] ?? ''}') ??
           587;
       final useTls = row['use_tls'] is bool
           ? (row['use_tls'] as bool)
           : ((row['use_tls'] as num?)?.toInt() ?? 1) == 1;
 
-      await _db.insert(
-        'store_email_config',
-        {
-          'orgId': orgId,
-          'storeId': storeId,
-          'purpose': purpose,
-          'host': host,
-          'port': port,
-          'username': username,
-          'password': password,
-          'from_email': fromEmail,
-          'from_name': fromName,
-          'use_tls': useTls ? 1 : 0,
-          'locked': 1,
-          'pending_sync': 0,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await _db.insert('store_email_config', {
+        'orgId': orgId,
+        'storeId': storeId,
+        'purpose': purpose,
+        'host': host,
+        'port': port,
+        'username': username,
+        'password': password,
+        'from_email': fromEmail,
+        'from_name': fromName,
+        'use_tls': useTls ? 1 : 0,
+        'locked': 1,
+        'pending_sync': 0,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
   }
 
@@ -632,31 +617,28 @@ class Store {
     required String invoicesFromName,
     bool useTls = true,
   }) async {
-    await applyFixedEmailMailersFromRemote(
-      [
-        {
-          'purpose': 'sales_reports',
-          'host': host,
-          'port': port,
-          'username': username,
-          'from_email': fromEmail,
-          'from_name': reportsFromName,
-          'use_tls': useTls,
-          'locked': true,
-        },
-        {
-          'purpose': 'invoice_booking',
-          'host': host,
-          'port': port,
-          'username': username,
-          'from_email': fromEmail,
-          'from_name': invoicesFromName,
-          'use_tls': useTls,
-          'locked': true,
-        },
-      ],
-      localPasswordFallback: password,
-    );
+    await applyFixedEmailMailersFromRemote([
+      {
+        'purpose': 'sales_reports',
+        'host': host,
+        'port': port,
+        'username': username,
+        'from_email': fromEmail,
+        'from_name': reportsFromName,
+        'use_tls': useTls,
+        'locked': true,
+      },
+      {
+        'purpose': 'invoice_booking',
+        'host': host,
+        'port': port,
+        'username': username,
+        'from_email': fromEmail,
+        'from_name': invoicesFromName,
+        'use_tls': useTls,
+        'locked': true,
+      },
+    ], localPasswordFallback: password);
   }
 
   /// Ensure the fixed system report mailer row exists (immutable).
@@ -686,8 +668,10 @@ class Store {
   static const String _storeSessionTable = 'store_session';
   static const String _deviceAccessTable = 'device_access_cache';
   static const String _syncAttemptsTable = 'sync_attempts';
+
   /// Soft safety cap so a misbehaving device cannot grow forever.
   static const int _syncAttemptsHardCap = 5000;
+
   /// Keep sync history for at least this many days on device.
   static const int _syncAttemptsKeepDays = 45;
 
@@ -1019,7 +1003,7 @@ class Store {
     // Ensure parent directory exists before attempting to open database
     final file = File(path);
     await file.parent.create(recursive: true);
-    
+
     return databaseFactoryFfi.openDatabase(
       path,
       options: OpenDatabaseOptions(
@@ -1633,8 +1617,10 @@ class Store {
     String? deviceId,
     StoreConfig? config,
     String configPath = StoreConfig.defaultAssetPath,
+
     /// When true, skip remote gateway login and use local customer hashes.
     bool preferLocal = false,
+
     /// Cached bootstrap payload for offline local login (avoids network lookup).
     Map<String, dynamic>? localBootstrap,
   }) async {
@@ -1643,8 +1629,9 @@ class Store {
       configPath: configPath,
     );
 
-    final remoteLoginUrl =
-        preferLocal ? null : _resolveRemoteLoginUrl(resolvedConfig);
+    final remoteLoginUrl = preferLocal
+        ? null
+        : _resolveRemoteLoginUrl(resolvedConfig);
     if (remoteLoginUrl != null) {
       return _loginToOrganisationRemote(
         orgCode: orgCode,
@@ -1660,7 +1647,8 @@ class Store {
     if (preferLocal) {
       bootstrap = localBootstrap;
     } else {
-      bootstrap = localBootstrap ??
+      bootstrap =
+          localBootstrap ??
           await _fetchBootstrapPayload(
             config: resolvedConfig,
             orgCode: orgCode,
@@ -1846,8 +1834,7 @@ class Store {
       return null;
     }
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      String message =
-          'Login failed with status ${response.statusCode}.';
+      String message = 'Login failed with status ${response.statusCode}.';
       try {
         final errorBody = jsonDecode(response.body);
         if (errorBody is Map && errorBody['message'] != null) {
@@ -1884,9 +1871,7 @@ class Store {
             store: StoreDirectoryEntry.fromRow(
               storeRaw.cast<String, dynamic>(),
             ),
-            access: StoreRoleAccess.fromRow(
-              accessRaw.cast<String, dynamic>(),
-            ),
+            access: StoreRoleAccess.fromRow(accessRaw.cast<String, dynamic>()),
           ),
         );
       }
@@ -1915,8 +1900,9 @@ class Store {
       sessionId: '${payload['session_id'] ?? ''}'.trim().isEmpty
           ? null
           : '${payload['session_id']}'.trim(),
-      serviceInstanceId:
-          si == null || '$si'.trim().isEmpty ? null : '$si'.trim(),
+      serviceInstanceId: si == null || '$si'.trim().isEmpty
+          ? null
+          : '$si'.trim(),
     );
   }
 
@@ -2331,13 +2317,14 @@ class Store {
         );
     var metadata = accessibleStore.store;
     var dbRoot = databasePath;
-    
+
     // If no explicit path provided, get default and validate it
     if (dbRoot == null) {
       dbRoot = await databaseFactoryFfi.getDatabasesPath();
-      
+
       // Fallback to temp directory if default path is invalid (e.g., read-only system path)
-      if (dbRoot.startsWith('/') && !dbRoot.startsWith(Directory.systemTemp.path)) {
+      if (dbRoot.startsWith('/') &&
+          !dbRoot.startsWith(Directory.systemTemp.path)) {
         try {
           // Check if we can write to this directory
           final testFile = File(p.join(dbRoot, '.write_test'));
@@ -2349,7 +2336,7 @@ class Store {
         }
       }
     }
-    
+
     final existingDb = await _openExistingOrganisationDatabaseIfPresent(
       orgId: metadata.orgId,
       dbRoot: dbRoot,
@@ -2818,7 +2805,8 @@ class Store {
     );
     final customerStoreId = '${customer['storeId'] ?? ''}'.trim();
     final roleFromCustomer = '${customer['role'] ?? ''}'.trim().toLowerCase();
-    final isDirectoryCustomer = roleFromCustomer == 'retail_customer' ||
+    final isDirectoryCustomer =
+        roleFromCustomer == 'retail_customer' ||
         roleFromCustomer == 'business_customer';
     // Prefer store_roles; allow same-branch customer row for operators when
     // roles were not imported yet (otherwise unlock traps the tablet).
@@ -2833,7 +2821,8 @@ class Store {
       email: customer['email'] as String? ?? request.email,
       loginAt: DateTime.now().toIso8601String(),
       organisationRole: customer['role'] as String? ?? '',
-      storeRole: storeRole?['role'] as String? ??
+      storeRole:
+          storeRole?['role'] as String? ??
           (roleFromCustomer.isNotEmpty ? roleFromCustomer : 'member'),
     );
     await _saveSession(_db, session);
@@ -2936,7 +2925,8 @@ class Store {
         final email = '${row['email'] ?? ''}'.trim().toLowerCase();
         final phone = '${row['phone'] ?? ''}'.replaceAll(RegExp(r'[^0-9]'), '');
         final reg = '${row['usr_reg_num'] ?? ''}'.trim().toLowerCase();
-        final match = (email.isNotEmpty && email == keyLower) ||
+        final match =
+            (email.isNotEmpty && email == keyLower) ||
             (reg.isNotEmpty && (reg == keyLower || reg == digits)) ||
             (digits.length >= 7 &&
                 phone.length >= 7 &&
@@ -3038,15 +3028,33 @@ class Store {
   }
 
   // Orders
-  Future<List<Map<String, dynamic>>> _listOrders(StoreScope scope) async {
+  Future<List<Map<String, dynamic>>> _listOrders(
+    StoreScope scope, {
+    String? pricingMode,
+  }) async {
     _validateScope(scope);
     await _requireRole('member');
-    return _ordersRepo.listOrders(scope);
+    return _ordersRepo.listOrders(scope, pricingMode: pricingMode);
   }
 
-  Future<List<StoreOrderSummary>> _listOrderSummaries(StoreScope scope) async {
-    final rows = await _listOrders(scope);
+  Future<List<StoreOrderSummary>> _listOrderSummaries(
+    StoreScope scope, {
+    String? pricingMode,
+  }) async {
+    final rows = await _listOrders(scope, pricingMode: pricingMode);
     return rows.map(StoreOrderSummary.fromRow).toList();
+  }
+
+  Future<int> _getServeNumberMaximum(StoreScope scope) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    return _ordersRepo.getServeNumberMaximum(scope);
+  }
+
+  Future<void> _setServeNumberMaximum(StoreScope scope, int maximum) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    await _ordersRepo.setServeNumberMaximum(scope, maximum);
   }
 
   Future<void> _importOrdersFromJsonFile(
@@ -3174,6 +3182,7 @@ class Store {
       restaurantName: row['restaurant_name'] as String? ?? '',
       customerName: row['name'] as String? ?? '',
       mobile: row['mobile'] as String? ?? '',
+      customerUniqueId: row['customer_unique_id'] as String?,
       statusName: row['status_name'] as String? ?? '',
       totalValue:
           (row['total_value'] as num?)?.toDouble() ??
@@ -3233,6 +3242,16 @@ class Store {
     return _ordersRepo.updatePaymentStatus(scope, orderId, paymentStatus);
   }
 
+  Future<bool> _alignOrderPricingMode(
+    StoreScope scope,
+    int orderId,
+    String pricingMode,
+  ) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    return _ordersRepo.alignOrderPricingMode(scope, orderId, pricingMode);
+  }
+
   Future<int> _closeOrder(
     StoreScope scope,
     int orderId, {
@@ -3248,8 +3267,11 @@ class Store {
         (order['final_value'] as num?)?.toDouble() ??
         (order['total'] as num?)?.toDouble() ??
         0;
+    final pricingMode = StoreOrderPricingMode.normalize(order['pricing_mode']);
     final paidTotal = await _ordersRepo.getOrderPaymentsTotal(scope, orderId);
-    if (paidTotal + 0.0001 < orderTotal) {
+    // Buy-mode orders represent procurement and may close without customer payment.
+    if (pricingMode != StoreOrderPricingMode.buying &&
+        paidTotal + 0.0001 < orderTotal) {
       throw StoreOrderStateException(
         'Cannot close order $orderId. Paid amount $paidTotal is less than final price $orderTotal.',
       );
@@ -3312,10 +3334,7 @@ class Store {
           ? 0.0
           : await _ordersRepo.getPaymentRefundedTotal(scope, paymentId);
       records.add(
-        StoreOrderPaymentRecord.fromRow({
-          ...row,
-          'refunded_amount': refunded,
-        }),
+        StoreOrderPaymentRecord.fromRow({...row, 'refunded_amount': refunded}),
       );
     }
     return records;
@@ -3342,7 +3361,11 @@ class Store {
     await _requireRole('member');
     final amount = double.parse(request.amount.toStringAsFixed(2));
     if (amount <= 0) {
-      throw ArgumentError.value(request.amount, 'amount', 'Refund must be > 0.');
+      throw ArgumentError.value(
+        request.amount,
+        'amount',
+        'Refund must be > 0.',
+      );
     }
     final payments = await _ordersRepo.getOrderPayments(scope, orderId);
     Map<String, dynamic>? payment;
@@ -3358,8 +3381,10 @@ class Store {
       );
     }
     final paid = (payment['amount'] as num?)?.toDouble() ?? 0;
-    final already =
-        await _ordersRepo.getPaymentRefundedTotal(scope, request.paymentId);
+    final already = await _ordersRepo.getPaymentRefundedTotal(
+      scope,
+      request.paymentId,
+    );
     final remaining = double.parse((paid - already).toStringAsFixed(2));
     if (amount > remaining + 0.0001) {
       throw StoreOrderStateException(
@@ -3385,11 +3410,9 @@ class Store {
     final order = await _ordersRepo.getOrderById(scope, orderId);
     final localOrderId = order?['local_id'] as String?;
     if (localOrderId != null && localOrderId.isNotEmpty) {
-      await _ordersRepo.markOrdersExported(
-        scope,
-        [localOrderId],
-        exported: false,
-      );
+      await _ordersRepo.markOrdersExported(scope, [
+        localOrderId,
+      ], exported: false);
     }
     return refundId;
   }
@@ -3508,10 +3531,59 @@ class Store {
     final evaluationItems = <StoreOfferEvaluationItem>[];
     final addonsByItemId = <int, List<StoreOrderItemAddonRecord>>{};
 
+    final orderRow = await _ordersRepo.getOrderById(scope, orderId);
+    final orderPricingMode = StoreOrderPricingMode.normalize(
+      orderRow?['pricing_mode'],
+    );
+    final skipOffers = orderPricingMode == StoreOrderPricingMode.buying;
+
+    // Buying never evaluates offers. Return its totals directly instead of
+    // loading every product/category and running the sell offer engine. This
+    // removes most of the checkout-time SQLite round trips for buy orders.
+    if (skipOffers) {
+      final addonLists = await Future.wait(
+        itemRecords.map((item) => _getOrderItemAddonRecords(scope, item.id)),
+      );
+      for (var index = 0; index < itemRecords.length; index++) {
+        final item = itemRecords[index];
+        itemDetails.add(
+          StoreOrderItemDetails(
+            item: item,
+            addons: addonLists[index],
+            discountAmount: 0,
+            totalAfterDiscount: _roundCurrency(item.finalPrice),
+            appliedOfferLocalIds: const [],
+          ),
+        );
+      }
+      final itemsGross = itemRecords.fold<double>(
+        0,
+        (sum, item) => sum + item.finalPrice,
+      );
+      return {
+        'subtotal': _roundCurrency(itemsGross),
+        'totalDiscount': 0.0,
+        'total': _roundCurrency(itemsGross),
+        'items': itemDetails,
+        'appliedOffers': const <StoreAppliedOfferRecord>[],
+      };
+    }
+
     final offersFuture = _offersRepo.listOffers(scope, activeOnly: true);
     final itemContexts = await Future.wait(
       itemRecords.map((item) async {
         final addons = await _getOrderItemAddonRecords(scope, item.id);
+        if (skipOffers) {
+          return (
+            item: item,
+            addons: addons,
+            variant: null as Map<String, dynamic>?,
+            product: null as Map<String, dynamic>?,
+            categoryLocalId: null as String?,
+            categoryId: null as int?,
+            category: null as Map<String, dynamic>?,
+          );
+        }
         final variant = await _productRepo.getProductVariantById(
           scope,
           item.productVariantId,
@@ -3539,6 +3611,7 @@ class Store {
 
     for (final ctx in itemContexts) {
       addonsByItemId[ctx.item.id] = ctx.addons;
+      if (skipOffers) continue;
       final enteredQuantity = ctx.item.quantity.toDouble();
       final baseQty = (ctx.variant?['sell_unit_base_qty'] as num?)?.toDouble();
       var billableQuantity = enteredQuantity <= 0 ? 1.0 : enteredQuantity;
@@ -3701,7 +3774,12 @@ class Store {
     required double? fallbackPrice,
   }) {
     if (pricingMode == StoreOrderPricingMode.buying) {
-      return buyPrice ?? sellPrice ?? fallbackPrice ?? 0;
+      // Existing catalogues commonly have buy_price=0 rather than NULL.
+      // Treat that as unconfigured so checkout agrees with the tablet cart,
+      // which displays the fallback transaction price for those variants.
+      if (buyPrice != null && buyPrice > 0) return buyPrice;
+      if (fallbackPrice != null && fallbackPrice > 0) return fallbackPrice;
+      return sellPrice ?? 0;
     }
     return sellPrice ?? buyPrice ?? fallbackPrice ?? 0;
   }
@@ -4208,6 +4286,7 @@ class Store {
     StoreScope scope,
     StoreAddOrderItemRequest request, {
     bool refreshTotals = true,
+    bool recalculateItemPricing = true,
   }) async {
     await _validateOrderItemAddonsForVariant(
       scope,
@@ -4248,11 +4327,13 @@ class Store {
         refreshTotals: false,
       );
     }
-    await _recalculateOrderItemPricing(
-      scope,
-      itemId,
-      refreshTotals: refreshTotals,
-    );
+    if (recalculateItemPricing) {
+      await _recalculateOrderItemPricing(
+        scope,
+        itemId,
+        refreshTotals: refreshTotals,
+      );
+    }
     return itemId;
   }
 
@@ -4543,8 +4624,7 @@ class Store {
     // Store-wide defaults travel with credits so tablet config stays current.
     final storeSettings = data['store_settings'];
     if (storeSettings is Map) {
-      _lastImportedCreditStoreSettings =
-          storeSettings.cast<String, dynamic>();
+      _lastImportedCreditStoreSettings = storeSettings.cast<String, dynamic>();
     }
 
     for (final accountRow in _extractRowList(data['accounts'])) {
@@ -4583,11 +4663,8 @@ class Store {
             (accountRow['outstanding_balance'] as num?)?.toDouble() ?? 0,
         'total_credit_so_far':
             (accountRow['total_credit_so_far'] as num?)?.toDouble() ?? 0,
-        'total_repaid':
-            (accountRow['total_repaid'] as num?)?.toDouble() ?? 0,
-        'updated_on':
-            accountRow['updated_on'] as String? ??
-            now,
+        'total_repaid': (accountRow['total_repaid'] as num?)?.toDouble() ?? 0,
+        'updated_on': accountRow['updated_on'] as String? ?? now,
       };
       if (existing == null) {
         await _db.insert(
@@ -4844,7 +4921,8 @@ class Store {
     return rows.map(StoreProductVariantRecord.fromRow).toList();
   }
 
-  Future<List<StoreProductVariantRecord>> _getProductVariantRecordsByCategoryLocalId(
+  Future<List<StoreProductVariantRecord>>
+  _getProductVariantRecordsByCategoryLocalId(
     StoreScope scope,
     String categoryLocalId,
   ) async {
@@ -4959,11 +5037,7 @@ class Store {
   }) async {
     _validateScope(scope);
     await _requireRole('admin');
-    return _productRepo.markOffersExported(
-      scope,
-      localIds,
-      exported: exported,
-    );
+    return _productRepo.markOffersExported(scope, localIds, exported: exported);
   }
 
   Future<void> _markCatalogRelatedExported(
@@ -5195,7 +5269,10 @@ class Store {
     for (final offer in offers) {
       final offerId = '${offer['local_id'] ?? offer['localId'] ?? ''}'.trim();
       if (offerId.isEmpty) continue;
-      final targets = await _productRepo.listOfferTargetVariantIds(scope, offerId);
+      final targets = await _productRepo.listOfferTargetVariantIds(
+        scope,
+        offerId,
+      );
       final currentlyLinked = targets.contains(variantId);
       final shouldLink = selectedOfferLocalIds.contains(offerId);
       if (currentlyLinked == shouldLink) continue;
@@ -5288,9 +5365,7 @@ class Store {
   Future<int> _recordSyncAttempt(StoreSyncOperationResult result) async {
     await _requireValidSession();
     final id = await _saveSyncAttempt(_db, result);
-    unawaited(
-      StoreSyncDiagnosticsLog.append(result, dbFilePath: _db.path),
-    );
+    unawaited(StoreSyncDiagnosticsLog.append(result, dbFilePath: _db.path));
     return id;
   }
 
@@ -5975,19 +6050,20 @@ class Store {
     }
     for (final raw in rawWallets.whereType<Map>()) {
       final row = raw.cast<String, dynamic>();
-      final remoteId = (row['remote_id'] as num?)?.toInt() ??
-          (row['id'] as num?)?.toInt();
+      final remoteId =
+          (row['remote_id'] as num?)?.toInt() ?? (row['id'] as num?)?.toInt();
       final localId = (row['local_id'] as String?)?.trim().isNotEmpty == true
           ? (row['local_id'] as String).trim()
           : (remoteId != null ? 'wallet-$remoteId' : _newLocalSyncId('wallet'));
       final label = (row['label'] as String?)?.trim().isNotEmpty == true
           ? (row['label'] as String).trim()
           : (row['wallet_variant_name'] as String?)?.trim().isNotEmpty == true
-              ? (row['wallet_variant_name'] as String).trim()
-              : 'Wallet';
+          ? (row['wallet_variant_name'] as String).trim()
+          : 'Wallet';
       final paymentModeRaw =
           (row['payment_mode'] as String?)?.trim().toLowerCase() ?? '';
-      final paymentMode = StoreOrderPaymentMode.supported.contains(paymentModeRaw)
+      final paymentMode =
+          StoreOrderPaymentMode.supported.contains(paymentModeRaw)
           ? paymentModeRaw
           : StoreOrderPaymentMode.cash;
       final values = <String, Object?>{
@@ -5997,8 +6073,8 @@ class Store {
         'remote_id': remoteId,
         'wallet_variant_id': (row['wallet_variant_id'] as num?)?.toInt(),
         'wallet_variant_type': (row['wallet_variant_type'] as num?)?.toInt(),
-        'wallet_variant_pg_type':
-            (row['wallet_variant_pg_type'] as num?)?.toInt(),
+        'wallet_variant_pg_type': (row['wallet_variant_pg_type'] as num?)
+            ?.toInt(),
         'wallet_variant_name': row['wallet_variant_name'] as String?,
         'acc_name': row['acc_name'] as String?,
         'label': label,
@@ -6043,13 +6119,10 @@ class Store {
 
     final rawVariants = data['variants'];
     if (rawVariants is List && rawVariants.isNotEmpty) {
-      await _saveWalletVariantCatalogue(
-        scope,
-        [
-          for (final row in rawVariants.whereType<Map>())
-            Map<String, dynamic>.from(row),
-        ],
-      );
+      await _saveWalletVariantCatalogue(scope, [
+        for (final row in rawVariants.whereType<Map>())
+          Map<String, dynamic>.from(row),
+      ]);
     }
   }
 
@@ -6149,7 +6222,8 @@ class Store {
 
     final existing = await _db.query(
       'wallets',
-      where: 'orgId = ? AND storeId = ? AND wallet_variant_id = ? AND active = 1',
+      where:
+          'orgId = ? AND storeId = ? AND wallet_variant_id = ? AND active = 1',
       whereArgs: [scope.orgId, scope.storeId, variantId],
       limit: 1,
     );
@@ -6589,7 +6663,61 @@ class Store {
         }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
     }
+    await _allocateAvailableCustomerAdvance(
+      scope,
+      customerId: request.customerId,
+      creditId: creditId,
+      amount: request.amount,
+    );
+    if (plan.isNotEmpty) {
+      await _refreshCreditInstallmentPaidAmounts(scope, creditId);
+    }
     return creditId;
+  }
+
+  Future<void> _allocateAvailableCustomerAdvance(
+    StoreScope scope, {
+    required String customerId,
+    required int creditId,
+    required double amount,
+  }) async {
+    var remaining = amount;
+    if (remaining <= 0.0001 || customerId.trim().isEmpty) return;
+    await _db.transaction((txn) async {
+      final repayments = await txn.rawQuery(
+        '''
+        SELECT
+          r.id,
+          MAX(r.total_amount - COALESCE(SUM(a.allocated_amount), 0), 0)
+            AS available_amount
+        FROM credit_repayments r
+        LEFT JOIN credit_repayment_allocations a ON a.repayment_id = r.id
+        WHERE r.orgId = ? AND r.storeId = ? AND r.customerId = ?
+          AND r.deleted_on IS NULL
+        GROUP BY r.id
+        HAVING available_amount > 0.0001
+        ORDER BY r.paid_on ASC, r.id ASC
+        ''',
+        [scope.orgId, scope.storeId, customerId.trim()],
+      );
+      for (final repayment in repayments) {
+        if (remaining <= 0.0001) break;
+        final available =
+            (repayment['available_amount'] as num?)?.toDouble() ?? 0;
+        final apply = available < remaining ? available : remaining;
+        if (apply <= 0.0001) continue;
+        await txn.insert(
+          'credit_repayment_allocations',
+          {
+            'repayment_id': (repayment['id'] as num).toInt(),
+            'credit_id': creditId,
+            'allocated_amount': double.parse(apply.toStringAsFixed(2)),
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+        remaining = double.parse((remaining - apply).toStringAsFixed(2));
+      }
+    });
   }
 
   Future<List<StoreCreditRecord>> _listCreditRecords(
@@ -6683,9 +6811,66 @@ class Store {
       );
     }
 
-    final summaries = summariesByCustomer.values
-        .where((summary) => summary.totalOutstandingAmount > 0)
-        .toList(growable: false);
+    final accountRows = await _db.rawQuery(
+      '''
+      SELECT
+        a.customerId,
+        a.total_credit_so_far,
+        a.total_repaid,
+        a.outstanding_balance,
+        a.updated_on,
+        COALESCE(
+          NULLIF(MAX(cu.name), ''),
+          NULLIF(MAX(cu2.name), ''),
+          ''
+        ) AS customer_name
+      FROM credit_accounts a
+      LEFT JOIN customers cu ON cu.customerId = a.customerId
+      LEFT JOIN customers cu2 ON (
+        (a.customerId LIKE 'user_%' AND cu2.customerId = SUBSTR(a.customerId, 6))
+        OR (a.customerId NOT LIKE 'user_%' AND cu2.customerId = 'user_' || a.customerId)
+      )
+      WHERE a.orgId = ? AND a.storeId = ?
+      GROUP BY a.customerId, a.total_credit_so_far, a.total_repaid, a.outstanding_balance, a.updated_on
+      ''',
+      [scope.orgId, scope.storeId],
+    );
+
+    for (final row in accountRows) {
+      final customerId = '${row['customerId'] ?? ''}'.trim();
+      if (customerId.isEmpty) continue;
+      final existing = summariesByCustomer[customerId];
+      final customerName = '${row['customer_name'] ?? ''}'.trim();
+      if (existing == null) {
+        summariesByCustomer[customerId] = StoreCustomerCreditSummary(
+          customerId: customerId,
+          customerName: customerName,
+          totalCreditAmount:
+              (row['total_credit_so_far'] as num?)?.toDouble() ?? 0,
+          totalPaidAmount: (row['total_repaid'] as num?)?.toDouble() ?? 0,
+          totalOutstandingAmount:
+              (row['outstanding_balance'] as num?)?.toDouble() ?? 0,
+          creditCount: 0,
+          latestCreditOn: '${row['updated_on'] ?? ''}',
+          oldestOutstandingOn: null,
+        );
+        continue;
+      }
+      if (existing.customerName.isEmpty && customerName.isNotEmpty) {
+        summariesByCustomer[customerId] = StoreCustomerCreditSummary(
+          customerId: existing.customerId,
+          customerName: customerName,
+          totalCreditAmount: existing.totalCreditAmount,
+          totalPaidAmount: existing.totalPaidAmount,
+          totalOutstandingAmount: existing.totalOutstandingAmount,
+          creditCount: existing.creditCount,
+          latestCreditOn: existing.latestCreditOn,
+          oldestOutstandingOn: existing.oldestOutstandingOn,
+        );
+      }
+    }
+
+    final summaries = summariesByCustomer.values.toList(growable: false);
 
     final sorted = summaries.toList(growable: false)
       ..sort((left, right) {
@@ -6791,13 +6976,23 @@ class Store {
   }) async {
     _validateScope(scope);
     await _requireRole('admin');
-    final rows = await _db.query(
-      'credits',
-      where: 'orgId = ? AND storeId = ?',
-      whereArgs: [scope.orgId, scope.storeId],
-      orderBy: 'updated_on DESC, id DESC',
-      limit: limit,
-      offset: offset,
+    final limitClause = limit == null ? '' : 'LIMIT $limit';
+    final offsetClause = offset == null ? '' : 'OFFSET $offset';
+    final rows = await _db.rawQuery(
+      '''
+      SELECT
+        c.*,
+        o.pricing_mode AS order_pricing_mode
+      FROM credits c
+      LEFT JOIN orders o
+        ON o.order_id = c.order_id
+       AND o.orgId = c.orgId
+       AND o.storeId = c.storeId
+      WHERE c.orgId = ? AND c.storeId = ?
+      ORDER BY c.updated_on DESC, c.id DESC
+      $limitClause $offsetClause
+      ''',
+      [scope.orgId, scope.storeId],
     );
     return rows.map(_creditRowToSyncJson).toList(growable: false);
   }
@@ -6818,12 +7013,18 @@ class Store {
     if (!includeDeleted) {
       whereClauses.add('deleted_on IS NULL');
     }
-    return _db.query(
-      'credit_repayments',
-      where: whereClauses.join(' AND '),
-      whereArgs: whereArgs,
-      orderBy: 'paid_on DESC, id DESC',
-    );
+    return _db.rawQuery('''
+      SELECT
+        r.*,
+        COALESCE(SUM(a.allocated_amount), 0) AS allocated_amount,
+        MAX(r.total_amount - COALESCE(SUM(a.allocated_amount), 0), 0)
+          AS advance_amount
+      FROM credit_repayments r
+      LEFT JOIN credit_repayment_allocations a ON a.repayment_id = r.id
+      WHERE ${whereClauses.map((clause) => 'r.$clause').join(' AND ')}
+      GROUP BY r.id
+      ORDER BY r.paid_on DESC, r.id DESC
+      ''', whereArgs);
   }
 
   Future<List<StoreCreditRepaymentRecord>> _listCreditRepaymentRecords(
@@ -6955,6 +7156,12 @@ class Store {
   }
 
   Map<String, dynamic> _creditRowToSyncJson(Map<String, dynamic> row) {
+    final pricingMode = StoreOrderPricingMode.normalize(
+      row['order_pricing_mode'] ?? row['pricing_mode'],
+    );
+    final accountType = pricingMode == StoreOrderPricingMode.buying
+        ? 'supplier_payable'
+        : 'customer_receivable';
     return {
       'orgId': row['orgId'],
       'storeId': row['storeId'],
@@ -6966,6 +7173,8 @@ class Store {
       'due_date': row['due_date'],
       'created_on': row['created_on'],
       'updated_on': row['updated_on'],
+      'account_type': accountType,
+      'pricing_mode': pricingMode,
     };
   }
 
@@ -6976,6 +7185,7 @@ class Store {
       'local_id': row['local_id'],
       'remote_id': row['remote_id'],
       'customerId': row['customerId'],
+      'account_type': 'customer_receivable',
       'payment_mode': row['payment_mode'],
       'total_amount': row['total_amount'],
       'reference_id': row['reference_id'],
@@ -7054,11 +7264,7 @@ class Store {
           : (apply > 0.0001 ? 'partial' : 'open');
       await _db.update(
         'credit_installments',
-        {
-          'paid_amount': apply,
-          'status': status,
-          'updated_on': now,
-        },
+        {'paid_amount': apply, 'status': status, 'updated_on': now},
         where: 'id = ?',
         whereArgs: [row['id']],
       );
@@ -7090,23 +7296,25 @@ class Store {
       limit: limit,
       offset: offset,
     );
-    return rows.map((row) {
-      return {
-        'orgId': row['orgId'],
-        'storeId': row['storeId'],
-        'local_id': row['local_id'],
-        'remote_id': row['remote_id'],
-        'credit_local_id': row['credit_local_id'],
-        'credit_remote_id': null,
-        'sequence': row['sequence'],
-        'amount': row['amount'],
-        'paid_amount': row['paid_amount'],
-        'due_date': row['due_date'],
-        'status': row['status'],
-        'created_on': row['created_on'],
-        'updated_on': row['updated_on'],
-      };
-    }).toList(growable: false);
+    return rows
+        .map((row) {
+          return {
+            'orgId': row['orgId'],
+            'storeId': row['storeId'],
+            'local_id': row['local_id'],
+            'remote_id': row['remote_id'],
+            'credit_local_id': row['credit_local_id'],
+            'credit_remote_id': null,
+            'sequence': row['sequence'],
+            'amount': row['amount'],
+            'paid_amount': row['paid_amount'],
+            'due_date': row['due_date'],
+            'status': row['status'],
+            'created_on': row['created_on'],
+            'updated_on': row['updated_on'],
+          };
+        })
+        .toList(growable: false);
   }
 
   Future<List<StoreCreditInstallmentRecord>> _listCreditInstallments(
@@ -7296,6 +7504,115 @@ class Store {
     return rows.isEmpty ? null : rows.first;
   }
 
+  Future<double> _getCustomerAdvanceBalance(
+    StoreScope scope,
+    String customerId,
+  ) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    final normalizedCustomerId = customerId.trim();
+    if (normalizedCustomerId.isEmpty) return 0;
+    final rows = await _db.rawQuery(
+      '''
+      SELECT COALESCE(SUM(
+        MAX(r.total_amount - COALESCE(a.allocated_amount, 0), 0)
+      ), 0) AS advance_balance
+      FROM credit_repayments r
+      LEFT JOIN (
+        SELECT repayment_id, SUM(allocated_amount) AS allocated_amount
+        FROM credit_repayment_allocations
+        GROUP BY repayment_id
+      ) a ON a.repayment_id = r.id
+      WHERE r.orgId = ? AND r.storeId = ? AND r.customerId = ?
+        AND r.deleted_on IS NULL
+      ''',
+      [scope.orgId, scope.storeId, normalizedCustomerId],
+    );
+    return double.parse(
+      ((rows.first['advance_balance'] as num?)?.toDouble() ?? 0)
+          .toStringAsFixed(2),
+    );
+  }
+
+  Future<int> _recordCustomerAdvance(
+    StoreScope scope, {
+    required String customerId,
+    required double amount,
+    required String paymentMode,
+    String? referenceId,
+    String? paidOn,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    final normalizedCustomerId = customerId.trim();
+    if (normalizedCustomerId.isEmpty) {
+      throw ArgumentError.value(customerId, 'customerId', 'Required.');
+    }
+    if (amount <= 0) {
+      throw ArgumentError.value(amount, 'amount', 'Must be greater than zero.');
+    }
+    final normalizedMode = paymentMode.trim().toLowerCase();
+    if (!StoreCreditRepaymentMode.supported.contains(normalizedMode)) {
+      throw ArgumentError.value(
+        paymentMode,
+        'paymentMode',
+        'Unsupported advance payment mode.',
+      );
+    }
+    final customer = await _customerRepo.getCustomerById(normalizedCustomerId);
+    final storeRole = await _customerRepo.getStoreRole(
+      orgId: scope.orgId,
+      customerId: normalizedCustomerId,
+      storeId: scope.storeId,
+    );
+    final isStoreOwned = customer?['storeId'] == scope.storeId;
+    if (customer == null ||
+        customer['orgId'] != scope.orgId ||
+        (!isStoreOwned && storeRole == null)) {
+      throw ArgumentError(
+        'Customer $normalizedCustomerId was not found in this store.',
+      );
+    }
+    final storedCustomerId =
+        '${storeRole?['customerId'] ?? customer['customerId']}';
+    final paidAt = paidOn ?? DateTime.now().toIso8601String();
+    final allocations = await _buildFifoCreditAllocations(
+      scope,
+      customerId: storedCustomerId,
+      amount: amount,
+      allowRemainder: true,
+    );
+    final repaymentId = await _db.transaction((txn) async {
+      final id = await txn.insert('credit_repayments', {
+        'orgId': scope.orgId,
+        'storeId': scope.storeId,
+        'local_id': _newLocalSyncId('customer-advance'),
+        'remote_id': null,
+        'customerId': storedCustomerId,
+        'payment_mode': normalizedMode,
+        'total_amount': double.parse(amount.toStringAsFixed(2)),
+        'reference_id': referenceId?.trim().isEmpty == true
+            ? null
+            : referenceId?.trim(),
+        'paid_on': paidAt,
+        'created_on': paidAt,
+        'updated_on': paidAt,
+      });
+      for (final allocation in allocations) {
+        await txn.insert('credit_repayment_allocations', {
+          'repayment_id': id,
+          'credit_id': allocation.creditId,
+          'allocated_amount': allocation.allocatedAmount,
+        });
+      }
+      return id;
+    });
+    for (final creditId in allocations.map((row) => row.creditId).toSet()) {
+      await _refreshCreditInstallmentPaidAmounts(scope, creditId);
+    }
+    return repaymentId;
+  }
+
   Future<int> _recordCreditRepayment(
     StoreScope scope,
     StoreCreateCreditRepaymentRequest request,
@@ -7429,19 +7746,17 @@ class Store {
   }
 
   Future<List<StoreCreateCreditRepaymentAllocationRequest>>
-      _buildFifoCreditAllocations(
+  _buildFifoCreditAllocations(
     StoreScope scope, {
     required String customerId,
     required double amount,
     int? preferCreditId,
+    bool allowRemainder = false,
   }) async {
     if (amount <= 0) {
       return const [];
     }
-    final openCredits = await _listCreditRecords(
-      scope,
-      customerId: customerId,
-    );
+    final openCredits = await _listCreditRecords(scope, customerId: customerId);
     final open = openCredits
         .where((credit) => !credit.settled && credit.outstandingAmount > 0.0001)
         .toList(growable: true);
@@ -7471,7 +7786,7 @@ class Store {
       );
       remaining = double.parse((remaining - apply).toStringAsFixed(2));
     }
-    if (remaining > 0.0001) {
+    if (remaining > 0.0001 && !allowRemainder) {
       throw ArgumentError(
         'Payment exceeds outstanding balance by ${remaining.toStringAsFixed(2)}.',
       );
@@ -7852,11 +8167,7 @@ class Store {
       );
     }
 
-    await _ensureLoggedInCustomerPersisted(
-      _db,
-      login: login,
-      storeId: storeId,
-    );
+    await _ensureLoggedInCustomerPersisted(_db, login: login, storeId: storeId);
     for (final entry in login.accessibleStores.where(
       (entry) => entry.access.orgId == orgId,
     )) {

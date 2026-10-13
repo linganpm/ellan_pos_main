@@ -75,6 +75,33 @@ class StoreCreditsService {
     );
   }
 
+  /// Records money received before a sale. Existing receivables are settled
+  /// FIFO first; any remainder stays available as customer advance.
+  Future<int> recordCustomerAdvance(
+    StoreScope scope, {
+    required String customerId,
+    required double amount,
+    required String paymentMode,
+    String? referenceId,
+    String? paidOn,
+  }) {
+    return _store._recordCustomerAdvance(
+      scope,
+      customerId: customerId,
+      amount: amount,
+      paymentMode: paymentMode,
+      referenceId: referenceId,
+      paidOn: paidOn,
+    );
+  }
+
+  Future<double> getCustomerAdvanceBalance(
+    StoreScope scope,
+    String customerId,
+  ) {
+    return _store._getCustomerAdvanceBalance(scope, customerId);
+  }
+
   Future<int> deleteRepayment(
     StoreScope scope,
     int repaymentId,

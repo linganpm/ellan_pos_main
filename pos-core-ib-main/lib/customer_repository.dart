@@ -15,6 +15,15 @@ class CustomerRepository {
     'business_customer',
   ];
 
+  static const List<String> directorySupplierRoles = [
+    'supplier',
+  ];
+
+  static const List<String> directoryPartyRoles = [
+    ...directoryCustomerRoles,
+    ...directorySupplierRoles,
+  ];
+
   /// Common customer reference is the backend user id: ``user_{id}``.
   static bool isUserCustomerId(String? value) {
     final raw = (value ?? '').trim();
