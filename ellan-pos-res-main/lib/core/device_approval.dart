@@ -32,6 +32,33 @@ class OrganisationNotFoundException implements Exception {
   String toString() => userMessage;
 }
 
+/// Raised when the organisation has not approved this tablet (suspended,
+/// rejected, deactivated, pending or unregistered).
+class DeviceAccessDeniedException implements Exception {
+  final String status;
+
+  const DeviceAccessDeniedException(this.status);
+
+  String get userMessage => switch (status) {
+    'suspended' =>
+      'This device is suspended. Contact your organisation administrator.',
+    'rejected' =>
+      'This device registration was rejected. '
+          'Contact your organisation administrator.',
+    'inactive' =>
+      'This device has been deactivated. '
+          'Contact your organisation administrator.',
+    'pending' =>
+      'This device is awaiting approval from your organisation administrator.',
+    _ =>
+      'This device is not approved for this organisation. '
+          'Contact your organisation administrator.',
+  };
+
+  @override
+  String toString() => userMessage;
+}
+
 /// Outcome of the organisation-side check for this tablet.
 class DeviceApproval {
   final bool registered;

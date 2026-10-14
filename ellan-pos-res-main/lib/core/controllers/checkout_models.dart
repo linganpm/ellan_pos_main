@@ -227,6 +227,10 @@ class PosDashboardSnapshot {
   final int cancelledCount;
   final int totalOrders;
   final double totalSales;
+
+  /// Outstanding balance of unpaid and partially paid orders in range.
+  final double pendingAmount;
+  final int pendingCount;
   final double cashShare;
   final double cardShare;
   final double onlineShare;
@@ -247,6 +251,8 @@ class PosDashboardSnapshot {
     required this.cancelledCount,
     required this.totalOrders,
     required this.totalSales,
+    this.pendingAmount = 0,
+    this.pendingCount = 0,
     required this.cashShare,
     required this.cardShare,
     required this.onlineShare,

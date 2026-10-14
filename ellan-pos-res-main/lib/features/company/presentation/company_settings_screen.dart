@@ -14,6 +14,9 @@ import 'package:pos_tablet/core/pos_report_mailer_defaults.dart';
 import 'package:pos_tablet/core/pos_wallet_variant_defaults.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/core/utils/user_facing_error.dart';
+import 'package:pos_tablet/core/store_trade_modes.dart';
+import 'package:pos_tablet/core/di/service_locator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 /// Edit open-store company profile (online + local store_info mirror).
@@ -50,6 +53,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
   List<Map<String, dynamic>> _variants = const [];
   Set<int> _linkedVariantIds = {};
   List<Map<String, dynamic>> _fixedMailers = const [];
+  StoreTradeModes _tradeModes = StoreTradeModes.current();
 
   @override
   void initState() {
@@ -791,6 +795,84 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
     }
   }
 
+  Future<void> _setTradeMode({bool? sell, bool? buy}) async {
+    final nextSell = sell ?? _tradeModes.sell;
+    final nextBuy = buy ?? _tradeModes.buy;
+    if (!nextSell && !nextBuy) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.storeTradeNeedOne)));
+      return;
+    }
+    final storeId = context.read<UiStoreController>().store?.scope.storeId;
+    if (storeId == null) return;
+    final next = StoreTradeModes(sell: nextSell, buy: nextBuy);
+    setState(() => _tradeModes = next);
+    await next.save(getIt<SharedPreferences>(), storeId);
+  }
+
+  Widget _tradeModeTile({
+    required String label,
+    required String hint,
+    required IconData icon,
+    required Color color,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: selected ? color.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: selected ? color : const Color(0xFFE5E7EB),
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: FontUtility.heading.copyWith(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: _ink,
+                      ),
+                    ),
+                    Text(
+                      hint,
+                      style: FontUtility.body.copyWith(
+                        color: _muted,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                selected
+                    ? Icons.check_box_rounded
+                    : Icons.check_box_outline_blank_rounded,
+                color: selected ? color : const Color(0xFF9CA3AF),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   InputDecoration _fieldDecoration(String placeholder) {
     return InputDecoration(
       hintText: placeholder,
@@ -1150,6 +1232,46 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 28),
+                _section(
+                  accent: const Color(0xFF178A45),
+                  icon: Icons.swap_vert_rounded,
+                  title: context.l10n.storeTradeTitle,
+                  children: [
+                    Text(
+                      context.l10n.storeTradeBody,
+                      style: FontUtility.body.copyWith(
+                        color: _muted,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _tradeModeTile(
+                            label: context.l10n.storeTradeSell,
+                            hint: context.l10n.storeTradeSellHint,
+                            icon: Icons.trending_up_rounded,
+                            color: const Color(0xFF178A45),
+                            selected: _tradeModes.sell,
+                            onTap: () => _setTradeMode(sell: !_tradeModes.sell),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _tradeModeTile(
+                            label: context.l10n.storeTradeBuy,
+                            hint: context.l10n.storeTradeBuyHint,
+                            icon: Icons.trending_down_rounded,
+                            color: const Color(0xFFD32F2F),
+                            selected: _tradeModes.buy,
+                            onTap: () => _setTradeMode(buy: !_tradeModes.buy),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
                 _section(
                   accent: const Color(0xFF6366F1),
                   icon: Icons.mail_rounded,

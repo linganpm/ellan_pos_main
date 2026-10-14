@@ -305,7 +305,13 @@ class OrdersRepository {
       '  (SELECT SUM(p.amount) FROM order_payments p '
       '   WHERE p.orgId = o.orgId AND p.storeId = o.storeId AND p.order_id = o.order_id), '
       '  0'
-      ') AS paid_total '
+      ') AS paid_total, '
+      '(SELECT i.table_id FROM order_items i WHERE i.orgId = o.orgId AND i.storeId = o.storeId '
+      '  AND i.order_id = o.order_id AND COALESCE(i.table_id, \'\') != \'\' ORDER BY i.id LIMIT 1) AS table_id, '
+      '(SELECT i.table_name FROM order_items i WHERE i.orgId = o.orgId AND i.storeId = o.storeId '
+      '  AND i.order_id = o.order_id AND COALESCE(i.table_id, \'\') != \'\' ORDER BY i.id LIMIT 1) AS table_name, '
+      '(SELECT i.floor_name FROM order_items i WHERE i.orgId = o.orgId AND i.storeId = o.storeId '
+      '  AND i.order_id = o.order_id AND COALESCE(i.table_id, \'\') != \'\' ORDER BY i.id LIMIT 1) AS floor_name '
       'FROM orders o WHERE o.orgId = ? AND o.storeId = ? '
       '$pricingClause'
       'ORDER BY o.created_on DESC, o.id DESC',
@@ -599,6 +605,20 @@ class OrdersRepository {
     DatabaseExecutor? executor,
   }) async {
     final dbx = executor ?? db;
+    final previousTables = await dbx.query(
+      'order_items',
+      columns: [
+        'unique_id',
+        'product_variant_id',
+        'table_id',
+        'table_name',
+        'floor_id',
+        'floor_name',
+      ],
+      where:
+          "orgId = ? AND storeId = ? AND order_id = ? AND COALESCE(table_id, '') != ''",
+      whereArgs: [scope.orgId, scope.storeId, orderId],
+    );
     await dbx.delete(
       'order_item_addons',
       where: 'orgId = ? AND storeId = ? AND order_id = ?',
@@ -611,6 +631,7 @@ class OrdersRepository {
     );
     for (final item in items) {
       final itemRow = Map<String, dynamic>.from(item);
+      _keepLocalTable(itemRow, previousTables);
       final addons = (itemRow.remove('addons') as List<dynamic>? ?? const [])
           .whereType<Map>()
           .map((addon) => addon.cast<String, dynamic>())
@@ -632,6 +653,48 @@ class OrdersRepository {
           'order_item_id': itemId,
         }, executor: dbx);
       }
+    }
+  }
+
+  /// Cloud order rows carry no dine-in table; keep the device's assignment
+  /// (same item, else same product, else the order's only table).
+  static void _keepLocalTable(
+    Map<String, dynamic> itemRow,
+    List<Map<String, Object?>> previous,
+  ) {
+    if ('${itemRow['table_id'] ?? ''}'.trim().isNotEmpty || previous.isEmpty) {
+      return;
+    }
+    String text(Object? v) => '${v ?? ''}'.trim();
+    final uniqueId = text(itemRow['unique_id']);
+    final variantId = text(itemRow['product_variant_id']);
+    Map<String, Object?>? match;
+    for (final row in previous) {
+      if (uniqueId.isNotEmpty && text(row['unique_id']) == uniqueId) {
+        match = row;
+        break;
+      }
+    }
+    if (match == null && variantId.isNotEmpty) {
+      for (final row in previous) {
+        if (text(row['product_variant_id']) == variantId) {
+          match = row;
+          break;
+        }
+      }
+    }
+    if (match == null &&
+        previous.map((row) => text(row['table_id'])).toSet().length == 1) {
+      match = previous.first;
+    }
+    if (match == null) return;
+    for (final key in const [
+      'table_id',
+      'table_name',
+      'floor_id',
+      'floor_name',
+    ]) {
+      itemRow[key] = match[key];
     }
   }
 

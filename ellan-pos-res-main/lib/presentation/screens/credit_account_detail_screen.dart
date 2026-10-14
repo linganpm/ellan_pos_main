@@ -186,7 +186,8 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
     int? preferCreditId,
     double? outstandingOverride,
   }) async {
-    final outstanding = outstandingOverride ?? (_accountBalance > 0 ? _accountBalance : 0.0);
+    final outstanding =
+        outstandingOverride ?? (_accountBalance > 0 ? _accountBalance : 0.0);
     if (outstanding <= 0.0001) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.creditsNothingOutstanding)),
@@ -458,8 +459,8 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
 
   bool _isAdvanceRepayment(StoreCreditRepaymentRecord repayment) {
     return repayment.localId.startsWith('customer-advance') ||
-      (repayment.advanceAmount > 0.0001 &&
-        repayment.allocatedAmount <= 0.0001);
+        (repayment.advanceAmount > 0.0001 &&
+            repayment.allocatedAmount <= 0.0001);
   }
 
   @override
@@ -582,7 +583,9 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                         runSpacing: 8,
                         children: [
                           FilledButton.icon(
-                            onPressed: _accountBalance > 0.0001 ? _collect : null,
+                            onPressed: _accountBalance > 0.0001
+                                ? _collect
+                                : null,
                             icon: const Icon(Icons.payments_outlined),
                             label: Text(context.l10n.creditsCollectPayment),
                           ),
@@ -976,21 +979,22 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
   Widget _ledgerRow(StoreCustomerLedgerEntry entry) {
     final isCredit = entry.entryType == StoreCustomerLedgerEntryType.credit;
     final repayment = isCredit
-      ? null
-      : _repayments.where((row) => row.id == entry.entryId).firstOrNull;
-    final isAdvanceRepayment = repayment != null && _isAdvanceRepayment(repayment);
+        ? null
+        : _repayments.where((row) => row.id == entry.entryId).firstOrNull;
+    final isAdvanceRepayment =
+        repayment != null && _isAdvanceRepayment(repayment);
     final title = isCredit
-      ? (entry.orderId == null
-        ? (_isSupplierAccount
-          ? _purchaseCreditLabel
-          : context.l10n.creditsCreditSalePlain)
-        : (_isSupplierAccount
-          ? '$_purchaseCreditLabel · ${context.l10n.commonOrderLabel} ${entry.orderId}'
-          : context.l10n.creditsCreditSaleOrder('${entry.orderId}')))
-      : isAdvanceRepayment
-      ? _advanceLabel
-      : _isSupplierAccount
-      ? _purchaseRepaymentLabel
+        ? (entry.orderId == null
+              ? (_isSupplierAccount
+                    ? _purchaseCreditLabel
+                    : context.l10n.creditsCreditSalePlain)
+              : (_isSupplierAccount
+                    ? '$_purchaseCreditLabel · ${context.l10n.commonOrderLabel} ${entry.orderId}'
+                    : context.l10n.creditsCreditSaleOrder('${entry.orderId}')))
+        : isAdvanceRepayment
+        ? _advanceLabel
+        : _isSupplierAccount
+        ? _purchaseRepaymentLabel
         : context.l10n.creditsRepaymentMode(
             (entry.paymentMode ?? '-').toUpperCase(),
           );

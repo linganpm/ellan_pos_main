@@ -7,6 +7,7 @@ class OrderListModel {
   /// Normalized backend key used for type filters (e.g. PICKUP, DINEIN).
   final String orderTypeKey;
   final String? floorName;
+  final String? tableId;
   final String? tableNumber;
   final String customerName;
   final String? phoneNumber;
@@ -39,6 +40,7 @@ class OrderListModel {
     this.pricingMode = 'selling',
     this.orderTypeKey = '',
     this.floorName,
+    this.tableId,
     this.tableNumber,
     required this.customerName,
     this.phoneNumber,

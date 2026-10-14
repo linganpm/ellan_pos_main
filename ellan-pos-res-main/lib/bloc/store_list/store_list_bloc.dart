@@ -152,6 +152,9 @@ class StoreListCubit extends Cubit<StoreListState> {
             StoreVerificationLoading(
               store: store,
               message: _syncMessage(update),
+              progress: update.totalCount > 0
+                  ? (update.processedCount / update.totalCount).clamp(0.0, 1.0)
+                  : null,
             ),
           );
         },

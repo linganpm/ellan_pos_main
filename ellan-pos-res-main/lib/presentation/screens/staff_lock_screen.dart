@@ -1,516 +1,357 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pos_tablet/bloc/staff_lock/staff_lock_cubit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
+import 'package:pos_tablet/core/device_approval.dart';
+import 'package:pos_tablet/core/di/service_locator.dart';
+import 'package:pos_tablet/core/login_lease_store.dart';
+import 'package:pos_tablet/core/pos_lock_pin.dart';
 import 'package:pos_tablet/core/routes.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pos_tablet/presentation/widgets/customer_support.dart';
+import 'package:pos_tablet/presentation/widgets/pin_pad.dart';
 import '../../core/localization/l10n_context.dart';
 
-/// Fast staff unlock / switch screen for shared POS tablets.
-///
-/// Device lease stays valid; only the operator session changes here.
-class StaffLockScreen extends StatelessWidget {
+const _accent = Color(0xFF4A00E0);
+const _danger = Color(0xFFD92D20);
+const _maxAttempts = 5;
+
+/// Lock screen for a shared tablet: any staff member who signed in here before
+/// picks their name and unlocks with their PIN, fully offline. New staff or a
+/// forgotten PIN go through online Sign in.
+class StaffLockScreen extends StatefulWidget {
   final String? storeId;
   final String? storeNameHint;
 
   const StaffLockScreen({super.key, this.storeId, this.storeNameHint});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => StaffLockCubit(
-        prefs: context.read<SharedPreferences>(),
-        preferredStoreId: storeId,
-        storeNameHint: storeNameHint,
-      ),
-      child: _StaffLockView(storeId: storeId),
-    );
-  }
+  State<StaffLockScreen> createState() => _StaffLockScreenState();
 }
 
-class _StaffLockView extends StatefulWidget {
-  final String? storeId;
+class _StaffLockScreenState extends State<StaffLockScreen> {
+  final PosLockPinStore _pins = PosLockPinStore(getIt<SharedPreferences>());
+  late final List<PosLockPin> _staff = _pins.loadAll();
+  late PosLockPin? _pin = _initialStaff();
+  String _value = '';
+  String? _error;
+  int _failures = 0;
+  bool _busy = false;
 
-  const _StaffLockView({this.storeId});
-
-  @override
-  State<_StaffLockView> createState() => _StaffLockViewState();
-}
-
-class _StaffLockViewState extends State<_StaffLockView> {
-  static const _primary = Color(0xFF4A00E0);
-
-  late final TextEditingController _identifierController;
-  late final TextEditingController _passwordController;
-  late final FocusNode _passwordFocus;
-
-  @override
-  void initState() {
-    super.initState();
-    final state = context.read<StaffLockCubit>().state;
-    _identifierController = TextEditingController(text: state.identifier);
-    _passwordController = TextEditingController();
-    _passwordFocus = FocusNode();
+  String get _storeName {
+    final hint = widget.storeNameHint?.trim() ?? '';
+    if (hint.isNotEmpty) return hint;
+    return getIt<UiStoreController>().staffUnlockStoreName(
+          storeId: widget.storeId,
+        ) ??
+        '';
   }
 
-  @override
-  void dispose() {
-    _identifierController.dispose();
-    _passwordController.dispose();
-    _passwordFocus.dispose();
-    super.dispose();
-  }
-
-  void _onStaffSelected(PosStaffOption staff) {
-    context.read<StaffLockCubit>().selectStaff(staff);
-    _identifierController.text = staff.identifier;
-    _identifierController.selection = TextSelection.collapsed(
-      offset: staff.identifier.length,
-    );
-    _passwordFocus.requestFocus();
-  }
-
-  InputDecoration _fieldDecoration({required String hint, Widget? suffixIcon}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: FontUtility.body.copyWith(
-        color: Colors.black38,
-        fontWeight: FontWeight.w500,
-        fontSize: 16,
-      ),
-      filled: true,
-      fillColor: const Color(0xFFF7F8FB),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD0D5DD), width: 2),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD0D5DD), width: 2),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _primary, width: 2.5),
-      ),
-      suffixIcon: suffixIcon,
+  PosLockPin? _initialStaff() {
+    if (_staff.isEmpty) return null;
+    final last = _pins.lastCustomerId;
+    return _staff.firstWhere(
+      (p) => p.customerId == last,
+      orElse: () => _staff.first,
     );
   }
 
-  Future<void> _showMoreStaff(StaffLockState state) async {
-    final selected = await showModalBottomSheet<PosStaffOption>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  (state.storeName ?? '').trim().isNotEmpty
-                      ? '${context.l10n.commonStaff} · '
-                            '${state.storeName!.trim()}'
-                      : context.l10n.staffLockAllStaff,
-                  style: FontUtility.heading.copyWith(fontSize: 20),
-                ),
-                const SizedBox(height: 12),
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.sizeOf(context).height * 0.5,
-                  ),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: state.staffOptions.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final staff = state.staffOptions[index];
-                      final selected =
-                          state.selectedCustomerId == staff.customerId;
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: selected
-                              ? _primary
-                              : _primary.withValues(alpha: 0.12),
-                          child: Text(
-                            staff.name.isNotEmpty
-                                ? staff.name[0].toUpperCase()
-                                : '?',
-                            style: TextStyle(
-                              color: selected ? Colors.white : _primary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        title: Text(
-                          staff.name,
-                          style: FontUtility.subheading.copyWith(
-                            fontSize: 16,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        subtitle: Text(staff.identifier),
-                        trailing: selected
-                            ? const Icon(Icons.check_rounded, color: _primary)
-                            : null,
-                        onTap: () => Navigator.pop(sheetContext, staff),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
+  void _select(PosLockPin pin) {
+    if (_busy || identical(pin, _pin)) return;
+    setState(() {
+      _pin = pin;
+      _value = '';
+      _error = null;
+      _failures = 0;
+    });
+  }
+
+  void _goToSignIn() {
+    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (_) => false);
+  }
+
+  Future<void> _onChanged(String value) async {
+    setState(() {
+      _value = value;
+      _error = null;
+    });
+    if (value.length < kPosPinLength) return;
+
+    final pin = _pin;
+    if (pin == null || !pin.verify(value)) {
+      _failures++;
+      if (_failures >= _maxAttempts) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.lockTooManyAttempts)),
         );
-      },
-    );
-    if (selected != null && mounted) {
-      _onStaffSelected(selected);
+        _goToSignIn();
+        return;
+      }
+      setState(() {
+        _value = '';
+        _error = context.l10n.lockWrongPin(_maxAttempts - _failures);
+      });
+      return;
     }
+
+    setState(() => _busy = true);
+    final message = await _unlockProblem(pin);
+    if (!mounted) return;
+    if (message == null) {
+      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (_) => false);
+      return;
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+    _goToSignIn();
+  }
+
+  /// Why the PIN alone cannot reopen the session (null when it can).
+  /// Local checks only: lock/unlock must work without network.
+  Future<String?> _unlockProblem(PosLockPin pin) async {
+    final l10n = context.l10n;
+    final controller = getIt<UiStoreController>();
+    try {
+      await controller.ensureDeviceAllowedOffline();
+    } on DeviceAccessDeniedException catch (e) {
+      return e.userMessage;
+    }
+    final lease = await LoginLeaseStore.open();
+    if (lease.isExpired) return l10n.lockLeaseExpired;
+
+    if (!await controller.openSessionForPin(pin)) {
+      return l10n.lockNoStoreAccess(pin.name);
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final pin = _pin;
+    final storeName = _storeName;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F5F9),
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-              child: BlocConsumer<StaffLockCubit, StaffLockState>(
-                listener: (context, state) {
-                  if (state.needsOnlineRenew) {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      AppRoutes.login,
-                      (route) => false,
-                    );
-                    return;
-                  }
-                  if (!state.unlocked) return;
-                  if (state.needsStorePicker) {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      AppRoutes.storeList,
-                      (route) => false,
-                    );
-                    return;
-                  }
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRoutes.home,
-                    (route) => false,
-                  );
-                },
-                builder: (context, state) {
-                  final badges = state.badgeStaff;
-                  return Material(
+        child: Stack(
+          children: [
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
+                  child: Material(
                     color: Colors.white,
                     elevation: 2,
                     shadowColor: Colors.black.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(24),
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(36, 28, 36, 28),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
+                      padding: const EdgeInsets.fromLTRB(32, 32, 32, 20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_staff.length > 1) ...[
                             Text(
-                              context.l10n.staffLockTitle,
-                              textAlign: TextAlign.center,
-                              style: FontUtility.heading.copyWith(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              (state.storeName ?? '').trim().isNotEmpty
-                                  ? state.storeName!.trim()
-                                  : context.l10n.staffLockBranchNotLoaded,
-                              textAlign: TextAlign.center,
-                              style: FontUtility.subheading.copyWith(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: _primary,
-                              ),
-                            ),
-                            if (state.loadingStaff) ...[
-                              const SizedBox(height: 20),
-                              const Center(
-                                child: SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                  ),
-                                ),
-                              ),
-                            ] else if (badges.isNotEmpty) ...[
-                              const SizedBox(height: 20),
-                              Wrap(
-                                spacing: 10,
-                                runSpacing: 10,
-                                alignment: WrapAlignment.center,
-                                children: [
-                                  for (final staff in badges)
-                                    _StaffBadge(
-                                      name: staff.name,
-                                      selected:
-                                          state.selectedCustomerId ==
-                                          staff.customerId,
-                                      onTap: () => _onStaffSelected(staff),
-                                    ),
-                                  if (state.hasMoreStaff)
-                                    _StaffBadge(
-                                      name: context.l10n.staffLockMore,
-                                      selected: false,
-                                      isMore: true,
-                                      onTap: () => _showMoreStaff(state),
-                                    ),
-                                ],
-                              ),
-                            ],
-                            const SizedBox(height: 24),
-                            TextField(
-                              controller: _identifierController,
-                              onChanged: context
-                                  .read<StaffLockCubit>()
-                                  .identifierChanged,
-                              textInputAction: TextInputAction.next,
-                              onSubmitted: (_) => _passwordFocus.requestFocus(),
+                              l10n.lockChooseStaff,
                               style: FontUtility.body.copyWith(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 17,
-                              ),
-                              decoration: _fieldDecoration(
-                                hint: context.l10n.staffLockStaffId,
+                                color: Colors.black54,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const SizedBox(height: 14),
-                            TextField(
-                              controller: _passwordController,
-                              focusNode: _passwordFocus,
-                              obscureText: state.obscurePassword,
-                              onChanged: context
-                                  .read<StaffLockCubit>()
-                                  .passwordChanged,
-                              onSubmitted: (_) =>
-                                  context.read<StaffLockCubit>().unlock(),
-                              style: FontUtility.body.copyWith(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 17,
-                              ),
-                              decoration: _fieldDecoration(
-                                hint: context.l10n.commonPassword,
-                                suffixIcon: IconButton(
-                                  tooltip: state.obscurePassword
-                                      ? context.l10n.signInShowPassword
-                                      : context.l10n.commonHideDetails,
-                                  onPressed: context
-                                      .read<StaffLockCubit>()
-                                      .togglePasswordVisibility,
-                                  icon: Icon(
-                                    state.obscurePassword
-                                        ? Icons.visibility_rounded
-                                        : Icons.visibility_off_rounded,
+                            const SizedBox(height: 12),
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final staff in _staff)
+                                  _StaffChip(
+                                    name: staff.name,
+                                    selected: identical(staff, pin),
+                                    onTap: () => _select(staff),
                                   ),
-                                ),
-                              ),
+                              ],
                             ),
-                            if (state.errorMessage != null) ...[
-                              const SizedBox(height: 12),
-                              Text(
-                                state.errorMessage!,
-                                style: FontUtility.body.copyWith(
-                                  color: Colors.red.shade700,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 22),
+                            const SizedBox(height: 20),
+                          ],
+                          _Avatar(name: pin?.name ?? ''),
+                          const SizedBox(height: 14),
+                          Text(
+                            pin != null ? pin.name : l10n.lockSignedOutTitle,
+                            textAlign: TextAlign.center,
+                            style: FontUtility.heading.copyWith(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF1F2937),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            pin != null
+                                ? (storeName.isNotEmpty
+                                      ? l10n.lockEnterPinAt(storeName)
+                                      : l10n.lockEnterPin)
+                                : l10n.lockSignedOutBody,
+                            textAlign: TextAlign.center,
+                            style: FontUtility.body.copyWith(
+                              color: Colors.black54,
+                              fontSize: 14,
+                            ),
+                          ),
+                          if (pin != null) ...[
+                            const SizedBox(height: 28),
+                            PinPad(
+                              value: _value,
+                              error: _error != null,
+                              enabled: !_busy,
+                              onChanged: _onChanged,
+                            ),
                             SizedBox(
-                              height: 56,
-                              child: FilledButton(
-                                onPressed: state.isLoading
-                                    ? null
-                                    : () => context
-                                          .read<StaffLockCubit>()
-                                          .unlock(),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: _primary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                ),
-                                child: state.isLoading
+                              height: 30,
+                              child: Center(
+                                child: _busy
                                     ? const SizedBox(
-                                        width: 22,
-                                        height: 22,
+                                        width: 20,
+                                        height: 20,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2.5,
-                                          color: Colors.white,
                                         ),
                                       )
                                     : Text(
-                                        context.l10n.staffLockUnlock,
-                                        style: FontUtility.button.copyWith(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w700,
+                                        _error ?? '',
+                                        style: FontUtility.body.copyWith(
+                                          color: _danger,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            TextButton(
-                              onPressed: state.isLoading
-                                  ? null
-                                  : () {
-                                      Navigator.pushNamedAndRemoveUntil(
-                                        context,
-                                        AppRoutes.storeList,
-                                        (route) => false,
-                                        arguments: {'returnToStaffLock': true},
-                                      );
-                                    },
-                              child: Text(
-                                context.l10n.staffLockSwitchStore,
-                                style: FontUtility.body.copyWith(
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: state.isLoading
-                                  ? null
-                                  : () {
-                                      Navigator.pushNamedAndRemoveUntil(
-                                        context,
-                                        AppRoutes.login,
-                                        (route) => false,
-                                      );
-                                    },
-                              child: Text(
-                                context.l10n.staffLockOnlineSignIn,
-                                style: FontUtility.body.copyWith(
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ] else
+                            const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: pin != null
+                                ? OutlinedButton.icon(
+                                    onPressed: _busy ? null : _goToSignIn,
+                                    icon: const Icon(Icons.login_rounded),
+                                    label: Text(l10n.lockSignInInstead),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: _accent,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                    ),
+                                  )
+                                : FilledButton.icon(
+                                    onPressed: _goToSignIn,
+                                    icon: const Icon(Icons.login_rounded),
+                                    label: Text(l10n.lockSignIn),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: _accent,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
             ),
-          ),
+            const Positioned(
+              top: 12,
+              right: 16,
+              child: CustomerSupportButton(filled: true),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _StaffBadge extends StatelessWidget {
+class _StaffChip extends StatelessWidget {
   final String name;
   final bool selected;
-  final bool isMore;
   final VoidCallback onTap;
 
-  const _StaffBadge({
+  const _StaffChip({
     required this.name,
     required this.selected,
     required this.onTap,
-    this.isMore = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final initial = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : '?';
-    return Material(
-      color: selected
-          ? const Color(0xFF4A00E0)
-          : isMore
-          ? Colors.white
-          : const Color(0xFFF3F0FF),
-      borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 44),
-          padding: const EdgeInsets.fromLTRB(6, 6, 14, 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              width: 1.5,
-              color: selected
-                  ? const Color(0xFF4A00E0)
-                  : const Color(0xFF4A00E0).withValues(alpha: 0.28),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: selected
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : const Color(0xFF4A00E0).withValues(alpha: 0.12),
-                child: isMore
-                    ? Icon(
-                        Icons.more_horiz_rounded,
-                        size: 18,
-                        color: selected
-                            ? Colors.white
-                            : const Color(0xFF4A00E0),
-                      )
-                    : Text(
-                        initial,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: selected
-                              ? Colors.white
-                              : const Color(0xFF4A00E0),
-                        ),
-                      ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                name,
-                style: FontUtility.body.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: selected ? Colors.white : const Color(0xFF4A00E0),
-                ),
-              ),
-            ],
+    return ChoiceChip(
+      selected: selected,
+      onSelected: (_) => onTap(),
+      showCheckmark: false,
+      avatar: CircleAvatar(
+        backgroundColor: selected
+            ? Colors.white
+            : _accent.withValues(alpha: 0.1),
+        child: Text(
+          name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase(),
+          style: const TextStyle(
+            color: _accent,
+            fontWeight: FontWeight.w800,
+            fontSize: 12,
           ),
         ),
+      ),
+      label: Text(name),
+      labelStyle: TextStyle(
+        color: selected ? Colors.white : const Color(0xFF1F2937),
+        fontWeight: FontWeight.w600,
+      ),
+      selectedColor: _accent,
+      backgroundColor: const Color(0xFFF3F5F9),
+      side: BorderSide.none,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  final String name;
+
+  const _Avatar({required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = name.trim().isEmpty ? '' : name.trim()[0].toUpperCase();
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        color: _accent.withValues(alpha: 0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: initial.isEmpty
+            ? const Icon(Icons.lock_rounded, color: _accent, size: 32)
+            : Text(
+                initial,
+                style: FontUtility.heading.copyWith(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  color: _accent,
+                ),
+              ),
       ),
     );
   }

@@ -6,7 +6,8 @@ import '../../core/localization/l10n_context.dart';
 
 enum PosToastKind { success, failed }
 
-/// Compact corner toast: title is Success / Failed; details behind an (i) icon.
+/// Compact corner toast: title is Success / Failed. Failure reasons show
+/// immediately; success details stay behind the (i) icon.
 class PosToast {
   PosToast._();
 
@@ -29,7 +30,7 @@ class PosToast {
   static void failed(
     BuildContext context, {
     String? detail,
-    Duration duration = const Duration(seconds: 4),
+    Duration duration = const Duration(seconds: 7),
   }) {
     _show(
       context,
@@ -102,7 +103,7 @@ class _PosToastCard extends StatefulWidget {
 
 class _PosToastCardState extends State<_PosToastCard>
     with SingleTickerProviderStateMixin {
-  bool _expanded = false;
+  late bool _expanded = widget.kind == PosToastKind.failed;
   late final AnimationController _controller;
   late final Animation<Offset> _slide;
   late final Animation<double> _fade;

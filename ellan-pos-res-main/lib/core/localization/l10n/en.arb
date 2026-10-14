@@ -1844,7 +1844,7 @@
   "staffLockTitle": "Staff unlock",
   "staffLockUnlock": "Unlock",
   "staffLogoutConfirmBody": "This locks the register. Another staff member can unlock with their PIN or password.",
-  "staffLogoutConfirmBodyFull": "This unlocks the tablet for the next staff member. Your session ends; orders already saved stay on this device.",
+  "staffLogoutConfirmBodyFull": "You'll be signed out and your PIN is removed from this device. The next person signs in online. Orders already saved stay on this device.",
   "staffLogoutConfirmTitle": "Log out staff?",
   "statusApproved": "Approved",
   "statusCollected": "Collected",
@@ -1897,6 +1897,16 @@
     }
   },
   "storeSelectedSuccess": "{storeName} selected successfully!",
+  "storeSyncTitle": "Setting up {storeName}",
+  "@storeSyncTitle": {
+    "placeholders": {
+      "storeName": {
+        "type": "String"
+      }
+    }
+  },
+  "storeSyncBody": "Downloading catalogue, customers and orders to this device. Keep the app open.",
+  "storeSyncPreparing": "Preparing…",
   "@storeSelectedSuccess": {
     "placeholders": {
       "storeName": {
@@ -2160,5 +2170,97 @@
   "welcomeServerUrl": "Server URL",
   "welcomeServerUrlHint": "e.g. http://192.168.1.10:8000",
   "welcomeSubmit": "Submit",
-  "welcomeUnlockBusiness": "Unlock Your\nBusiness Potential"
+  "welcomeUnlockBusiness": "Unlock Your\nBusiness Potential",
+  "signInSwitchCompany": "Switch company",
+  "signInSwitchCompanyTitle": "Switch company?",
+  "signInSwitchCompanyBody": "Switching company resets this device. Local orders, catalogue, customers, sync history and device settings will be permanently deleted, including any orders not yet synced. Nothing is deleted on the server.",
+  "signInSwitchCompanyAction": "Switch & reset",
+  "supportTitle": "Customer support",
+  "supportSubtitle": "We're here to help with your POS.",
+  "supportEmail": "Email",
+  "supportWhatsapp": "WhatsApp",
+  "supportDeviceId": "Device ID",
+  "supportCompany": "Company",
+  "supportShareHint": "Share these details when you contact support.",
+  "supportNotConfigured": "Support contact details are not set up yet. Please ask your administrator.",
+  "supportCopied": "Copied {value}",
+  "@supportCopied": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "supportEmailAction": "Email",
+  "supportWhatsappAction": "Chat",
+  "homeLock": "Lock screen",
+  "lockEnterPin": "Enter your PIN to unlock",
+  "lockEnterPinAt": "Enter your PIN to unlock {storeName}",
+  "@lockEnterPinAt": {
+    "placeholders": {
+      "storeName": {
+        "type": "String"
+      }
+    }
+  },
+  "lockSignedOutTitle": "Signed out",
+  "lockSignedOutBody": "Sign in online to start using this register.",
+  "lockSignIn": "Sign in",
+  "lockSignInInstead": "Sign in (new staff or forgot PIN)",
+  "lockWrongPin": "Wrong PIN. {remaining} attempts left.",
+  "@lockWrongPin": {
+    "placeholders": {
+      "remaining": {
+        "type": "int"
+      }
+    }
+  },
+  "lockTooManyAttempts": "Too many wrong PINs. Please sign in.",
+  "lockLeaseExpired": "Device login expired. Please sign in online.",
+  "pinCreateTitle": "Create your PIN",
+  "pinConfirmTitle": "Confirm your PIN",
+  "pinCreateBody": "Choose a {length}-digit PIN to unlock this register quickly.",
+  "@pinCreateBody": {
+    "placeholders": {
+      "length": {
+        "type": "int"
+      }
+    }
+  },
+  "pinMismatch": "PINs don't match. Try again.",
+  "lockChooseStaff": "Who's using the register?",
+  "lockNoStoreAccess": "{name} can't use this store. Please sign in.",
+  "@lockNoStoreAccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "storeTradeTitle": "Buy & Sell",
+  "storeTradeBody": "Choose what this store does. You can select both. Saved on this device right away.",
+  "storeTradeSell": "SELL",
+  "storeTradeSellHint": "Sales to customers",
+  "storeTradeBuy": "BUY",
+  "storeTradeBuyHint": "Purchases from suppliers",
+  "storeTradeNeedOne": "Keep at least one of Buy or Sell selected.",
+  "orderListAllTables": "All tables",
+  "orderListTableChip": "Table {name}",
+  "@orderListTableChip": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "orderListNoTables": "No tables yet. Tables appear here once dine-in orders use them.",
+  "orderListPeriodAll": "All time",
+  "orderListPeriodToday": "Today",
+  "orderListPeriodLast24h": "Last 24 hrs",
+  "orderListPeriodYesterday": "Yesterday",
+  "orderListPeriodCustom": "Custom…",
+  "orderListPeriodTooltip": "Filter by date",
+  "dashboardPending": "Pending",
+  "dashboardPendingOrders": "{count, plural, =1{1 order} other{{count} orders}}",
+  "@dashboardPendingOrders": {"placeholders": {"count": {"type": "int"}}}
 }

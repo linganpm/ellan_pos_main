@@ -8,6 +8,9 @@ class OverviewCard extends StatelessWidget {
   final Color color;
   final VoidCallback? onTap;
 
+  /// Small secondary figure (e.g. an order count) pinned to the top-right.
+  final String? badge;
+
   const OverviewCard({
     super.key,
     required this.title,
@@ -15,6 +18,7 @@ class OverviewCard extends StatelessWidget {
     required this.icon,
     required this.color,
     this.onTap,
+    this.badge,
   });
 
   @override
@@ -30,7 +34,7 @@ class OverviewCard extends StatelessWidget {
         final valueSize = compact ? 18.0 : 28.0;
         final spacing = compact ? 2.0 : 8.0;
 
-        return Container(
+        final body = Container(
           padding: EdgeInsets.all(padding),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -93,6 +97,32 @@ class OverviewCard extends StatelessWidget {
               ),
             ],
           ),
+        );
+        final badgeText = badge;
+        if (badgeText == null || badgeText.isEmpty) return body;
+        return Stack(
+          children: [
+            Positioned.fill(child: body),
+            Positioned(
+              top: compact ? 8 : 12,
+              right: compact ? 10 : 14,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  badgeText,
+                  style: FontUtility.body.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
+              ),
+            ),
+          ],
         );
       },
     );

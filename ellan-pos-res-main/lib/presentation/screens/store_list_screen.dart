@@ -29,92 +29,98 @@ class StoreListScreen extends StatelessWidget {
     return BlocProvider(
       create: (context) => StoreListCubit()..loadStores(),
       child: Scaffold(
-        body: Row(
-          children: [
-            Expanded(
-              flex: 1,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(40.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.insights_rounded,
-                          size: 80,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(height: 32),
-                        Text(
-                          context.l10n.appName,
-                          style: FontUtility.heading.copyWith(
-                            color: Colors.white,
-                            fontSize: 42,
-                            height: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(
-                color: Colors.white,
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 48.0,
-                      vertical: 24.0,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          context.l10n.storeListSelectStore,
-                          style: FontUtility.heading.copyWith(
-                            color: const Color(0xFF333333),
-                            fontSize: 36,
-                          ),
-                        ),
-                        if (returnToStaffLock) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            context.l10n.storeListChooseBranchUnlock,
-                            style: FontUtility.body.copyWith(
-                              color: Colors.black54,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 24),
-                        _buildSearchField(),
-                        const SizedBox(height: 16),
-                        Expanded(child: _buildStoreListContent()),
-                        const SizedBox(height: 16),
-                        _buildSubmitButton(),
-                        const SizedBox(height: 8),
-                        _buildExitActions(context),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+        body: Stack(
+          children: [_buildLayout(context), const _StoreSyncProgressOverlay()],
         ),
       ),
+    );
+  }
+
+  Widget _buildLayout(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 1,
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(40.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.insights_rounded,
+                      size: 80,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      context.l10n.appName,
+                      style: FontUtility.heading.copyWith(
+                        color: Colors.white,
+                        fontSize: 42,
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 1,
+          child: Container(
+            color: Colors.white,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 48.0,
+                  vertical: 24.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.l10n.storeListSelectStore,
+                      style: FontUtility.heading.copyWith(
+                        color: const Color(0xFF333333),
+                        fontSize: 36,
+                      ),
+                    ),
+                    if (returnToStaffLock) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        context.l10n.storeListChooseBranchUnlock,
+                        style: FontUtility.body.copyWith(
+                          color: Colors.black54,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    _buildSearchField(),
+                    const SizedBox(height: 16),
+                    Expanded(child: _buildStoreListContent()),
+                    const SizedBox(height: 16),
+                    _buildSubmitButton(),
+                    const SizedBox(height: 8),
+                    _buildExitActions(context),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -598,6 +604,112 @@ class StoreListScreen extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Blocking popup while the selected branch opens and pulls its catalogue.
+class _StoreSyncProgressOverlay extends StatelessWidget {
+  const _StoreSyncProgressOverlay();
+
+  static const _accent = Color(0xFF4A00E0);
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<StoreListCubit, StoreListState>(
+      buildWhen: (prev, next) =>
+          prev is StoreVerificationLoading || next is StoreVerificationLoading,
+      builder: (context, state) {
+        final loading = state is StoreVerificationLoading ? state : null;
+        return IgnorePointer(
+          ignoring: loading == null,
+          child: AnimatedOpacity(
+            opacity: loading == null ? 0 : 1,
+            duration: const Duration(milliseconds: 200),
+            child: loading == null
+                ? const SizedBox.expand()
+                : ColoredBox(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    child: Center(child: _card(context, loading)),
+                  ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _card(BuildContext context, StoreVerificationLoading state) {
+    final message = state.message?.trim() ?? '';
+    return Material(
+      color: Colors.white,
+      elevation: 12,
+      borderRadius: BorderRadius.circular(24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(32, 32, 32, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: _accent.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.cloud_sync_rounded,
+                  color: _accent,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                context.l10n.storeSyncTitle(state.store.storeName),
+                textAlign: TextAlign.center,
+                style: FontUtility.heading.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF1F2937),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                context.l10n.storeSyncBody,
+                textAlign: TextAlign.center,
+                style: FontUtility.body.copyWith(
+                  color: Colors.black54,
+                  fontSize: 14,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: state.progress,
+                  minHeight: 8,
+                  color: _accent,
+                  backgroundColor: _accent.withValues(alpha: 0.12),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                message.isNotEmpty ? message : context.l10n.storeSyncPreparing,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: FontUtility.body.copyWith(
+                  color: const Color(0xFF374151),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -5,7 +5,15 @@ class StoreAuthService {
 
   StoreAuthService._(this._store);
 
-  Future<StoreSession?> login(StoreScope scope, StoreLoginRequest request) => _store._login(scope, request);
+  Future<StoreSession?> login(StoreScope scope, StoreLoginRequest request) =>
+      _store._login(scope, request);
+
+  /// Start a session for [customerId] without a password; the caller must
+  /// have verified the operator already (e.g. a lock-screen PIN).
+  Future<StoreSession?> loginVerifiedCustomer(
+    StoreScope scope,
+    String customerId,
+  ) => _store._loginVerifiedCustomer(scope, customerId);
 
   Future<void> logout() => _store._logout();
 
@@ -17,17 +25,21 @@ class StoreAuthService {
 
   Future<bool> hasRole(String role) => _store._hasStoreRole(role);
 
-  Future<bool> hasOrganisationRole(String role) => _store._hasOrganisationRole(role);
+  Future<bool> hasOrganisationRole(String role) =>
+      _store._hasOrganisationRole(role);
 
   Future<bool> hasStoreRole(String role) => _store._hasStoreRole(role);
 
-  Future<String?> currentOrganisationRole() => _store._getCurrentOrganisationRole();
+  Future<String?> currentOrganisationRole() =>
+      _store._getCurrentOrganisationRole();
 
   Future<String?> currentStoreRole() => _store._getCurrentStoreRoleValue();
 
-  Future<bool> canAccessStore(StoreScope scope) => _store._canCurrentCustomerAccessStore(scope);
+  Future<bool> canAccessStore(StoreScope scope) =>
+      _store._canCurrentCustomerAccessStore(scope);
 
-  Future<StoreRoleAccess?> currentStoreAccess(StoreScope scope) => _store._getCurrentStoreAccess(scope);
+  Future<StoreRoleAccess?> currentStoreAccess(StoreScope scope) =>
+      _store._getCurrentStoreAccess(scope);
 
   Future<void> changePassword({
     required String currentPassword,

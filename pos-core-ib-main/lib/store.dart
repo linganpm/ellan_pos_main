@@ -2797,6 +2797,32 @@ class Store {
     if (customer == null) {
       return null;
     }
+    return _openSessionFor(scope, customer, fallbackEmail: request.email);
+  }
+
+  /// Session for an operator the app already verified (e.g. lock-screen PIN).
+  Future<StoreSession?> _loginVerifiedCustomer(
+    StoreScope scope,
+    String customerId,
+  ) async {
+    _validateScope(scope);
+    final customer = await _customerRepo.getCustomerById(customerId);
+    if (customer == null) return null;
+    final status = '${customer['status'] ?? ''}'.trim().toLowerCase();
+    if (!const {'', 'active', 'approved', '1'}.contains(status)) return null;
+    if ('${customer['orgId'] ?? ''}'.trim() != scope.orgId) return null;
+    return _openSessionFor(
+      scope,
+      customer,
+      fallbackEmail: '${customer['email'] ?? ''}',
+    );
+  }
+
+  Future<StoreSession?> _openSessionFor(
+    StoreScope scope,
+    Map<String, dynamic> customer, {
+    required String fallbackEmail,
+  }) async {
     final customerId = customer['customerId'] as String? ?? '';
     final storeRole = await _customerRepo.getStoreRole(
       orgId: scope.orgId,
@@ -2818,7 +2844,7 @@ class Store {
     }
     final session = StoreSession(
       customerId: customerId,
-      email: customer['email'] as String? ?? request.email,
+      email: customer['email'] as String? ?? fallbackEmail,
       loginAt: DateTime.now().toIso8601String(),
       organisationRole: customer['role'] as String? ?? '',
       storeRole:
@@ -6497,6 +6523,35 @@ class Store {
     return rows.isEmpty ? null : rows.first;
   }
 
+  /// Orders can reference a table the local floor plan does not have yet
+  /// (e.g. before floors/tables sync). Create it on the first floor, or a
+  /// default "Main" floor, so checkout is not blocked.
+  Future<Map<String, dynamic>?> _createMissingTable(
+    StoreScope scope,
+    String tableId,
+  ) async {
+    final floors = await _db.query(
+      'floors',
+      where: 'orgId = ? AND storeId = ?',
+      whereArgs: [scope.orgId, scope.storeId],
+      orderBy: 'active DESC, sorting_order ASC, id ASC',
+      limit: 1,
+    );
+    final floorId = floors.isNotEmpty
+        ? '${floors.first['floor_id']}'
+        : await _saveFloor(
+            scope,
+            const StoreSaveFloorRequest(floorId: 'main', name: 'Main'),
+            skipAuth: true,
+          );
+    await _saveTable(
+      scope,
+      StoreSaveTableRequest(tableId: tableId, floorId: floorId, name: tableId),
+      skipAuth: true,
+    );
+    return _getTableRow(scope, tableId);
+  }
+
   Future<Map<String, String>?> _resolveOrderItemTableAssignment(
     StoreScope scope,
     int orderId,
@@ -6507,7 +6562,9 @@ class Store {
       return null;
     }
 
-    final tableRow = await _getTableRow(scope, normalizedTableId);
+    final tableRow =
+        await _getTableRow(scope, normalizedTableId) ??
+        await _createMissingTable(scope, normalizedTableId);
     if (tableRow == null) {
       throw StoreOrderStateException('Table $normalizedTableId was not found.');
     }

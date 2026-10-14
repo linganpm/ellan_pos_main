@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/currency_format.dart';
@@ -25,10 +26,9 @@ class SalesListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isTamil =
-        Localizations.localeOf(context).languageCode.toLowerCase().startsWith(
-          'ta',
-        );
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
     return OrderListScreen(
       pricingMode: StoreOrderPricingMode.selling,
       title: isTamil ? 'விற்பனை' : 'Sales',
@@ -41,10 +41,9 @@ class PurchasesListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isTamil =
-        Localizations.localeOf(context).languageCode.toLowerCase().startsWith(
-          'ta',
-        );
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
     return OrderListScreen(
       pricingMode: StoreOrderPricingMode.buying,
       title: isTamil ? 'கொள்முதல்' : 'Purchases',
@@ -163,8 +162,6 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
     }
     final status = (widget.initialStatusFilter ?? '').trim();
     if (status.isNotEmpty) parts.add(status);
-    final period = (widget.periodFilter ?? '').trim();
-    if (period.isNotEmpty) parts.add(period);
     return parts.join(' · ');
   }
 
@@ -211,6 +208,7 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildTopFilters(context),
+              _buildTableFilters(context),
               const SizedBox(height: 24),
               Expanded(
                 child: Container(
@@ -404,7 +402,364 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
             );
           },
         ),
+        const SizedBox(width: 12),
+        Expanded(child: _buildStatusCounts(context)),
+        const SizedBox(width: 12),
+        _buildPeriodFilter(context),
       ],
+    );
+  }
+
+  static const _periodCustom = 'Custom';
+  static const _periodAll = '__all__';
+
+  String _periodLabel(BuildContext context, OrderListLoaded state) {
+    final l10n = context.l10n;
+    switch (state.periodFilter) {
+      case null:
+        return l10n.orderListPeriodAll;
+      case 'Today':
+        return l10n.orderListPeriodToday;
+      case 'Last 24 hours':
+        return l10n.orderListPeriodLast24h;
+      case 'Yesterday':
+        return l10n.orderListPeriodYesterday;
+      case _periodCustom:
+        final start = state.periodStart;
+        final end = state.periodEnd?.subtract(const Duration(days: 1));
+        if (start == null || end == null) return l10n.orderListPeriodCustom;
+        final fmt = DateFormat('d MMM');
+        return start == end
+            ? fmt.format(start)
+            : '${fmt.format(start)} – ${fmt.format(end)}';
+      default:
+        return state.periodFilter!;
+    }
+  }
+
+  Future<void> _pickCustomPeriod(
+    BuildContext context,
+    OrderListLoaded state,
+  ) async {
+    final bloc = context.read<OrderListBloc>();
+    final now = DateTime.now();
+    final initialEnd = state.periodEnd?.subtract(const Duration(days: 1));
+    final range = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(now.year, now.month, now.day),
+      initialDateRange:
+          state.periodFilter == _periodCustom &&
+              state.periodStart != null &&
+              initialEnd != null
+          ? DateTimeRange(start: state.periodStart!, end: initialEnd)
+          : null,
+    );
+    if (range == null) return;
+    bloc.add(FilterByPeriod(_periodCustom, start: range.start, end: range.end));
+  }
+
+  Widget _buildPeriodFilter(BuildContext context) {
+    return BlocBuilder<OrderListBloc, OrderListState>(
+      builder: (context, state) {
+        if (state is! OrderListLoaded) return const SizedBox.shrink();
+        final l10n = context.l10n;
+        final active = state.periodFilter != null;
+        const accent = Color(0xFF4A00E0);
+        PopupMenuItem<String> item(String value, String label) {
+          final selected = (state.periodFilter ?? _periodAll) == value;
+          return PopupMenuItem(
+            value: value,
+            child: Row(
+              children: [
+                Expanded(child: Text(label)),
+                if (selected)
+                  const Icon(Icons.check_rounded, size: 18, color: accent),
+              ],
+            ),
+          );
+        }
+
+        return PopupMenuButton<String>(
+          tooltip: l10n.orderListPeriodTooltip,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          onSelected: (value) {
+            final bloc = context.read<OrderListBloc>();
+            if (value == _periodCustom) {
+              _pickCustomPeriod(context, state);
+            } else {
+              bloc.add(FilterByPeriod(value == _periodAll ? null : value));
+            }
+          },
+          itemBuilder: (_) => [
+            item(_periodAll, l10n.orderListPeriodAll),
+            item('Today', l10n.orderListPeriodToday),
+            item('Last 24 hours', l10n.orderListPeriodLast24h),
+            item('Yesterday', l10n.orderListPeriodYesterday),
+            const PopupMenuDivider(),
+            item(_periodCustom, l10n.orderListPeriodCustom),
+          ],
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: active ? accent.withValues(alpha: 0.08) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: active ? accent : Colors.grey.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.calendar_today_rounded,
+                  size: 18,
+                  color: active ? accent : Colors.black54,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _periodLabel(context, state),
+                  style: FontUtility.body.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: active ? accent : Colors.black87,
+                  ),
+                ),
+                const Icon(Icons.arrow_drop_down_rounded),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatusCounts(BuildContext context) {
+    return BlocBuilder<OrderListBloc, OrderListState>(
+      builder: (context, state) {
+        if (state is! OrderListLoaded) return const SizedBox.shrink();
+        final bloc = context.read<OrderListBloc>();
+        final counts = bloc.statusCounts(state);
+        final total = counts.values.fold<int>(0, (a, b) => a + b);
+        final selected = state.selectedStatusFilter?.toLowerCase();
+        bool isSelected(String status) {
+          if (selected == null) return false;
+          final s = status.toLowerCase();
+          return selected.contains('cancel')
+              ? s.contains('cancel')
+              : s == selected;
+        }
+
+        return SizedBox(
+          height: 30,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              shrinkWrap: true,
+              reverse: true,
+              children: [
+                for (final entry in counts.entries.toList().reversed)
+                  _statusCountCard(
+                    label: entry.key,
+                    count: entry.value,
+                    color: _statusColor(entry.key),
+                    selected: isSelected(entry.key),
+                    onTap: () => isSelected(entry.key)
+                        ? bloc.add(ClearStatusFilter())
+                        : bloc.add(FilterByStatus(entry.key)),
+                  ),
+                _statusCountCard(
+                  label: context.l10n.orderListFilterAll,
+                  count: total,
+                  color: const Color(0xFF4A00E0),
+                  selected: selected == null,
+                  onTap: () => bloc.add(ClearStatusFilter()),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Color _statusColor(String status) {
+    final s = status.toLowerCase();
+    if (s.contains('cancel')) return const Color(0xFFD92D20);
+    if (s.contains('complet') || s.contains('closed')) {
+      return const Color(0xFF178A45);
+    }
+    if (s.contains('deliver') || s.contains('served')) {
+      return const Color(0xFF0E9384);
+    }
+    if (s.contains('ready')) return const Color(0xFF2E90FA);
+    if (s.contains('prepar')) return const Color(0xFFF79009);
+    return const Color(0xFF6B7280);
+  }
+
+  Widget _statusCountCard({
+    required String label,
+    required int count,
+    required Color color,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: Material(
+        color: selected ? color : color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(15),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(15),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: selected ? color : color.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$count',
+                  style: FontUtility.body.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: selected ? Colors.white : color,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: FontUtility.body.copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? Colors.white : Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableFilters(BuildContext context) {
+    return BlocBuilder<OrderListBloc, OrderListState>(
+      builder: (context, state) {
+        if (state is! OrderListLoaded) return const SizedBox.shrink();
+        final selectedType = state.selectedTypeFilter;
+        final isDineIn =
+            state.availableOrderTypes.any(
+              (t) => t.key == selectedType && t.isDineIn,
+            ) ||
+            selectedType.replaceAll(RegExp(r'[^A-Za-z]'), '').toUpperCase() ==
+                'DINEIN';
+        if (!isDineIn) return const SizedBox.shrink();
+
+        final l10n = context.l10n;
+        final bloc = context.read<OrderListBloc>();
+        final tables = state.availableTables;
+        return Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: tables.isEmpty
+              ? Text(
+                  l10n.orderListNoTables,
+                  style: FontUtility.body.copyWith(color: Colors.black54),
+                )
+              : SizedBox(
+                  height: 44,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _tableChip(
+                        label: l10n.orderListAllTables,
+                        selected: state.selectedTableFilter == null,
+                        onTap: () => bloc.add(const FilterByTable(null)),
+                      ),
+                      for (final table in tables)
+                        _tableChip(
+                          label:
+                              RegExp(
+                                r'^table\b',
+                                caseSensitive: false,
+                              ).hasMatch(table.label)
+                              ? table.label
+                              : l10n.orderListTableChip(table.label),
+                          count: table.openOrders,
+                          selected: state.selectedTableFilter == table.id,
+                          onTap: () => bloc.add(
+                            FilterByTable(
+                              state.selectedTableFilter == table.id
+                                  ? null
+                                  : table.id,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+        );
+      },
+    );
+  }
+
+  Widget _tableChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+    int count = 0,
+  }) {
+    const accent = Color(0xFF4A00E0);
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        selected: selected,
+        onSelected: (_) => onTap(),
+        showCheckmark: false,
+        avatar: const Icon(Icons.table_restaurant_rounded, size: 18),
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label),
+            if (count > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                decoration: BoxDecoration(
+                  color: selected ? Colors.white : const Color(0xFFF79009),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? accent : Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        labelStyle: FontUtility.body.copyWith(
+          color: selected ? Colors.white : Colors.black87,
+          fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+        ),
+        selectedColor: accent,
+        backgroundColor: Colors.white,
+        side: BorderSide(
+          color: selected ? accent : Colors.grey.withValues(alpha: 0.25),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 

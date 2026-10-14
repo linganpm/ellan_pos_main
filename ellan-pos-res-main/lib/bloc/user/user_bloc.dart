@@ -8,6 +8,7 @@ import 'package:pos_tablet/core/login_lease_store.dart';
 import 'package:pos_tablet/core/utils/user_facing_error.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'user_event.dart';
+import 'package:pos_tablet/core/pos_lock_pin.dart';
 import 'user_state.dart';
 
 /// Marks errors the UI must treat as a hard stop rather than a login prompt.
@@ -91,12 +92,14 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
       final selectedStoreId = prefs.getString('selectedStoreId');
       // Never silent-login the previous staff. Open the store shell (when
-      // possible) then wait on the staff lock screen.
+      // possible) then wait on the lock screen. With saved lock PINs the
+      // session is kept; the lock screen switches staff by PIN.
+      final keepSession = PosLockPinStore(prefs).loadAll().isNotEmpty;
       final restored = await controller.restoreOrganisationLoginFromCache();
       if (restored && selectedStoreId != null && selectedStoreId.isNotEmpty) {
         try {
           await controller.openStore(selectedStoreId);
-          await controller.logout();
+          if (!keepSession) await controller.logout();
         } catch (e, st) {
           // ignore: avoid_print
           print('UserBloc: open store for lock failed: $e\n$st');
@@ -109,7 +112,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
             try {
               await controller.deleteStoreDatabase(selectedStoreId);
               await controller.openStore(selectedStoreId);
-              await controller.logout();
+              if (!keepSession) await controller.logout();
             } catch (e2, st2) {
               // ignore: avoid_print
               print('UserBloc: retry after DB reset also failed: $e2\n$st2');

@@ -5247,7 +5247,7 @@ abstract class AppLocalizations {
   /// No description provided for @staffLogoutConfirmBodyFull.
   ///
   /// In en, this message translates to:
-  /// **'This unlocks the tablet for the next staff member. Your session ends; orders already saved stay on this device.'**
+  /// **'You\'ll be signed out and your PIN is removed from this device. The next person signs in online. Orders already saved stay on this device.'**
   String get staffLogoutConfirmBodyFull;
 
   /// No description provided for @staffLogoutConfirmTitle.
@@ -5477,6 +5477,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{storeName} selected successfully!'**
   String storeSelectedSuccess(String storeName);
+
+  /// No description provided for @storeSyncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Setting up {storeName}'**
+  String storeSyncTitle(String storeName);
+
+  /// No description provided for @storeSyncBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading catalogue, customers and orders to this device. Keep the app open.'**
+  String get storeSyncBody;
+
+  /// No description provided for @storeSyncPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing…'**
+  String get storeSyncPreparing;
 
   /// No description provided for @storeSetupAccess.
   ///
@@ -6377,6 +6395,300 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unlock Your\nBusiness Potential'**
   String get welcomeUnlockBusiness;
+
+  /// No description provided for @signInSwitchCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch company'**
+  String get signInSwitchCompany;
+
+  /// No description provided for @signInSwitchCompanyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch company?'**
+  String get signInSwitchCompanyTitle;
+
+  /// No description provided for @signInSwitchCompanyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Switching company resets this device. Local orders, catalogue, customers, sync history and device settings will be permanently deleted, including any orders not yet synced. Nothing is deleted on the server.'**
+  String get signInSwitchCompanyBody;
+
+  /// No description provided for @signInSwitchCompanyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch & reset'**
+  String get signInSwitchCompanyAction;
+
+  /// No description provided for @supportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer support'**
+  String get supportTitle;
+
+  /// No description provided for @supportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'re here to help with your POS.'**
+  String get supportSubtitle;
+
+  /// No description provided for @supportEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get supportEmail;
+
+  /// No description provided for @supportWhatsapp.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp'**
+  String get supportWhatsapp;
+
+  /// No description provided for @supportDeviceId.
+  ///
+  /// In en, this message translates to:
+  /// **'Device ID'**
+  String get supportDeviceId;
+
+  /// No description provided for @supportCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Company'**
+  String get supportCompany;
+
+  /// No description provided for @supportShareHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Share these details when you contact support.'**
+  String get supportShareHint;
+
+  /// No description provided for @supportNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Support contact details are not set up yet. Please ask your administrator.'**
+  String get supportNotConfigured;
+
+  /// No description provided for @supportCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied {value}'**
+  String supportCopied(String value);
+
+  /// No description provided for @supportEmailAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get supportEmailAction;
+
+  /// No description provided for @supportWhatsappAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get supportWhatsappAction;
+
+  /// No description provided for @homeLock.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock screen'**
+  String get homeLock;
+
+  /// No description provided for @lockEnterPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your PIN to unlock'**
+  String get lockEnterPin;
+
+  /// No description provided for @lockEnterPinAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your PIN to unlock {storeName}'**
+  String lockEnterPinAt(String storeName);
+
+  /// No description provided for @lockSignedOutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed out'**
+  String get lockSignedOutTitle;
+
+  /// No description provided for @lockSignedOutBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in online to start using this register.'**
+  String get lockSignedOutBody;
+
+  /// No description provided for @lockSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get lockSignIn;
+
+  /// No description provided for @lockSignInInstead.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in (new staff or forgot PIN)'**
+  String get lockSignInInstead;
+
+  /// No description provided for @lockWrongPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong PIN. {remaining} attempts left.'**
+  String lockWrongPin(int remaining);
+
+  /// No description provided for @lockTooManyAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many wrong PINs. Please sign in.'**
+  String get lockTooManyAttempts;
+
+  /// No description provided for @lockLeaseExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Device login expired. Please sign in online.'**
+  String get lockLeaseExpired;
+
+  /// No description provided for @pinCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your PIN'**
+  String get pinCreateTitle;
+
+  /// No description provided for @pinConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your PIN'**
+  String get pinConfirmTitle;
+
+  /// No description provided for @pinCreateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a {length}-digit PIN to unlock this register quickly.'**
+  String pinCreateBody(int length);
+
+  /// No description provided for @pinMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'PINs don\'t match. Try again.'**
+  String get pinMismatch;
+
+  /// No description provided for @lockChooseStaff.
+  ///
+  /// In en, this message translates to:
+  /// **'Who\'s using the register?'**
+  String get lockChooseStaff;
+
+  /// No description provided for @lockNoStoreAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} can\'t use this store. Please sign in.'**
+  String lockNoStoreAccess(String name);
+
+  /// No description provided for @storeTradeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy & Sell'**
+  String get storeTradeTitle;
+
+  /// No description provided for @storeTradeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what this store does. You can select both. Saved on this device right away.'**
+  String get storeTradeBody;
+
+  /// No description provided for @storeTradeSell.
+  ///
+  /// In en, this message translates to:
+  /// **'SELL'**
+  String get storeTradeSell;
+
+  /// No description provided for @storeTradeSellHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales to customers'**
+  String get storeTradeSellHint;
+
+  /// No description provided for @storeTradeBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'BUY'**
+  String get storeTradeBuy;
+
+  /// No description provided for @storeTradeBuyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases from suppliers'**
+  String get storeTradeBuyHint;
+
+  /// No description provided for @storeTradeNeedOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep at least one of Buy or Sell selected.'**
+  String get storeTradeNeedOne;
+
+  /// No description provided for @orderListAllTables.
+  ///
+  /// In en, this message translates to:
+  /// **'All tables'**
+  String get orderListAllTables;
+
+  /// No description provided for @orderListTableChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Table {name}'**
+  String orderListTableChip(String name);
+
+  /// No description provided for @orderListNoTables.
+  ///
+  /// In en, this message translates to:
+  /// **'No tables yet. Tables appear here once dine-in orders use them.'**
+  String get orderListNoTables;
+
+  /// No description provided for @orderListPeriodAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get orderListPeriodAll;
+
+  /// No description provided for @orderListPeriodToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get orderListPeriodToday;
+
+  /// No description provided for @orderListPeriodLast24h.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 24 hrs'**
+  String get orderListPeriodLast24h;
+
+  /// No description provided for @orderListPeriodYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get orderListPeriodYesterday;
+
+  /// No description provided for @orderListPeriodCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom…'**
+  String get orderListPeriodCustom;
+
+  /// No description provided for @orderListPeriodTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by date'**
+  String get orderListPeriodTooltip;
+
+  /// No description provided for @dashboardPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get dashboardPending;
+
+  /// No description provided for @dashboardPendingOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 order} other{{count} orders}}'**
+  String dashboardPendingOrders(int count);
 }
 
 class _AppLocalizationsDelegate

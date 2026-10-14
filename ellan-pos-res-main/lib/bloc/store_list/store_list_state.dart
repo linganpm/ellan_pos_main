@@ -91,10 +91,17 @@ class StoreVerificationLoading extends StoreListState {
   /// Progress text for the catalogue pull, e.g. `Syncing product catalogue 40/120`
   final String? message;
 
-  const StoreVerificationLoading({required this.store, this.message});
+  /// 0..1 for the current entity when the server reports a total, else null.
+  final double? progress;
+
+  const StoreVerificationLoading({
+    required this.store,
+    this.message,
+    this.progress,
+  });
 
   @override
-  List<Object?> get props => [store, message];
+  List<Object?> get props => [store, message, progress];
 }
 
 /// State indicating that store verification was successful

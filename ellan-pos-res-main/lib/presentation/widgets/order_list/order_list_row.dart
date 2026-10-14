@@ -196,10 +196,9 @@ class _OrderListRowState extends State<OrderListRow> {
                       ),
                       if (widget.order.isPurchase)
                         Text(
-                          Localizations.localeOf(context)
-                                  .languageCode
-                                  .toLowerCase()
-                                  .startsWith('ta')
+                          Localizations.localeOf(
+                                context,
+                              ).languageCode.toLowerCase().startsWith('ta')
                               ? 'விநியோகஸ்தர்'
                               : 'Supplier',
                           style: _greyStyle.copyWith(

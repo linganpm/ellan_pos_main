@@ -26,10 +26,9 @@ class SalesOrderPaymentsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isTamil =
-        Localizations.localeOf(context).languageCode.toLowerCase().startsWith(
-          'ta',
-        );
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
     return OrderPaymentsScreen(
       orderId: orderId,
       orderLabel: orderLabel,
@@ -53,10 +52,9 @@ class PurchaseOrderPaymentsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isTamil =
-        Localizations.localeOf(context).languageCode.toLowerCase().startsWith(
-          'ta',
-        );
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
     return OrderPaymentsScreen(
       orderId: orderId,
       orderLabel: orderLabel,
@@ -338,10 +336,9 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
   @override
   Widget build(BuildContext context) {
     final titleOrder = widget.orderLabel ?? '#${widget.orderId}';
-    final isTamil =
-        Localizations.localeOf(context).languageCode.toLowerCase().startsWith(
-          'ta',
-        );
+    final isTamil = Localizations.localeOf(
+      context,
+    ).languageCode.toLowerCase().startsWith('ta');
     final defaultTitle = _order?.pricingMode == StoreOrderPricingMode.buying
         ? (isTamil ? 'கொள்முதல் பணப்பரிவர்த்தனைகள்' : 'Purchase payments')
         : (isTamil ? 'விற்பனை பணப்பரிவர்த்தனைகள்' : 'Sale payments');

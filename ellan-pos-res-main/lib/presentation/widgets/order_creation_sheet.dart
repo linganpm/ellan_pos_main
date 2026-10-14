@@ -11,6 +11,7 @@ import '../../core/utils/font_utility.dart';
 import '../../bloc/order_creation/order_creation_bloc.dart';
 import '../../bloc/order_creation/order_creation_event.dart';
 import '../../bloc/order_creation/order_creation_state.dart';
+import 'package:pos_tablet/core/store_trade_modes.dart';
 import '../screens/order_create_screen.dart';
 
 const _kAccent = Color(0xFF4A00E0);
@@ -68,6 +69,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
   List<PosOrderType> _orderTypes = OrderTypesRepository.defaults;
   PosOrderType? _selectedType;
   String _pricingMode = StoreOrderPricingMode.selling;
+  final StoreTradeModes _tradeModes = StoreTradeModes.current();
 
   bool get _isBuying => _pricingMode == StoreOrderPricingMode.buying;
 
@@ -75,7 +77,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
   void initState() {
     super.initState();
     _selectedType = _orderTypes.first;
-    _pricingMode = StoreOrderPricingMode.normalize(widget.initialPricingMode);
+    _pricingMode = _tradeModes.coerce(widget.initialPricingMode);
     _restoreLastOrderType();
     if (widget.initialPricingMode == null) {
       _restoreLastPricingMode();
@@ -87,12 +89,12 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     final saved = prefs.getString(_kLastPricingModeKey);
     if (!mounted) return;
     setState(() {
-      _pricingMode = StoreOrderPricingMode.normalize(saved);
+      _pricingMode = _tradeModes.coerce(saved);
     });
   }
 
   void _selectPricingMode(String mode) {
-    if (widget.lockPricingMode) return;
+    if (widget.lockPricingMode || !_tradeModes.allows(mode)) return;
     final normalized = StoreOrderPricingMode.normalize(mode);
     setState(() => _pricingMode = normalized);
     SharedPreferences.getInstance().then((prefs) {
@@ -452,8 +454,10 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildPricingModeToggle(),
-                          const SizedBox(height: 16),
+                          if (_tradeModes.both) ...[
+                            _buildPricingModeToggle(),
+                            const SizedBox(height: 16),
+                          ],
                           if (!_isBuying) ...[
                             _buildOrderTypeCards(),
                             const SizedBox(height: 20),

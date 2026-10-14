@@ -73,7 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final storeId = controller.store?.scope.storeId;
     final storeName = controller.store?.storeName;
     try {
-      await controller.lockStaff();
+      await controller.signOutStaff();
     } catch (_) {
       // Still return to the lock screen.
     }

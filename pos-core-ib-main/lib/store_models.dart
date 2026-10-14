@@ -987,6 +987,11 @@ class StoreOrderSummary {
   /// Rotating kitchen/serve reference in range 10–99.
   final int? serveNumber;
 
+  /// Dine-in table of the order (from its first item with a table).
+  final String? tableId;
+  final String? tableName;
+  final String? floorName;
+
   const StoreOrderSummary({
     required this.orgId,
     required this.storeId,
@@ -1015,6 +1020,9 @@ class StoreOrderSummary {
     required this.lastImportedAt,
     required this.lastExportedAt,
     this.serveNumber,
+    this.tableId,
+    this.tableName,
+    this.floorName,
   });
 
   double get balanceDue {
@@ -1060,7 +1068,15 @@ class StoreOrderSummary {
       lastImportedAt: row['last_imported_at'] as String?,
       lastExportedAt: row['last_exported_at'] as String?,
       serveNumber: (row['serve_number'] as num?)?.toInt(),
+      tableId: _nonEmptyText(row['table_id']),
+      tableName: _nonEmptyText(row['table_name']),
+      floorName: _nonEmptyText(row['floor_name']),
     );
+  }
+
+  static String? _nonEmptyText(Object? value) {
+    final text = '${value ?? ''}'.trim();
+    return text.isEmpty ? null : text;
   }
 }
 

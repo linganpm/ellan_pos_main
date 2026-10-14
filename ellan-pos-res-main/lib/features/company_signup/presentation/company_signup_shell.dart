@@ -9,6 +9,7 @@ import '../../../core/routes.dart';
 import '../../../core/localization/l10n_context.dart';
 import '../../../core/constants/discovery_constants.dart';
 import '../../../core/utils/font_utility.dart';
+import '../../../presentation/widgets/customer_support.dart';
 import '../cubit/company_signup_cubit.dart';
 import '../cubit/company_signup_state.dart';
 import '../data/signup_api.dart';
@@ -210,66 +211,73 @@ class _SignupViewState extends State<_SignupView> {
                   Positioned(
                     top: 20,
                     right: 24,
-                    child: BlocBuilder<LanguageBloc, LanguageState>(
-                      builder: (context, languageState) {
-                        return PopupMenuButton<Locale>(
-                          tooltip: context.l10n.languageLabel,
-                          initialValue: languageState.locale,
-                          onSelected: (locale) {
-                            context.read<LanguageBloc>().add(
-                              ChangeLanguageEvent(locale),
-                            );
-                          },
-                          itemBuilder: (context) => [
-                            PopupMenuItem(
-                              value: const Locale('en'),
-                              child: Text(context.l10n.languageEnglish),
-                            ),
-                            PopupMenuItem(
-                              value: const Locale('ta'),
-                              child: Text(context.l10n.languageTamil),
-                            ),
-                          ],
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF7F5FF),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(0xFF4A00E0),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.language_rounded,
-                                  color: Color(0xFF4A00E0),
-                                  size: 20,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CustomerSupportButton(),
+                        const SizedBox(width: 4),
+                        BlocBuilder<LanguageBloc, LanguageState>(
+                          builder: (context, languageState) {
+                            return PopupMenuButton<Locale>(
+                              tooltip: context.l10n.languageLabel,
+                              initialValue: languageState.locale,
+                              onSelected: (locale) {
+                                context.read<LanguageBloc>().add(
+                                  ChangeLanguageEvent(locale),
+                                );
+                              },
+                              itemBuilder: (context) => [
+                                PopupMenuItem(
+                                  value: const Locale('en'),
+                                  child: Text(context.l10n.languageEnglish),
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  languageState.locale.languageCode == 'ta'
-                                      ? context.l10n.languageTamil
-                                      : context.l10n.languageEnglish,
-                                  style: FontUtility.body.copyWith(
-                                    color: const Color(0xFF4A00E0),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                const Icon(
-                                  Icons.arrow_drop_down_rounded,
-                                  color: Color(0xFF4A00E0),
+                                PopupMenuItem(
+                                  value: const Locale('ta'),
+                                  child: Text(context.l10n.languageTamil),
                                 ),
                               ],
-                            ),
-                          ),
-                        );
-                      },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF7F5FF),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFF4A00E0),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.language_rounded,
+                                      color: Color(0xFF4A00E0),
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      languageState.locale.languageCode == 'ta'
+                                          ? context.l10n.languageTamil
+                                          : context.l10n.languageEnglish,
+                                      style: FontUtility.body.copyWith(
+                                        color: const Color(0xFF4A00E0),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(
+                                      Icons.arrow_drop_down_rounded,
+                                      color: Color(0xFF4A00E0),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -640,12 +648,16 @@ class _CompanyDetailsFormState extends State<_CompanyDetailsForm> {
         const SizedBox(height: 28),
         Row(
           children: [
-            if (!kIsPosDiscoveryConfiguredByEnv)
-              _iconAction(
-                label: context.l10n.actionBack,
-                icon: Icons.arrow_back_rounded,
-                onPressed: cubit.goBack,
-              ),
+            _iconAction(
+              label: kIsPosDiscoveryConfiguredByEnv
+                  ? context.l10n.signupBackToSignIn
+                  : context.l10n.actionBack,
+              icon: Icons.arrow_back_rounded,
+              onPressed: kIsPosDiscoveryConfiguredByEnv
+                  ? () =>
+                        Navigator.pushReplacementNamed(context, AppRoutes.login)
+                  : cubit.goBack,
+            ),
             const Spacer(),
             Expanded(
               flex: 2,
@@ -658,6 +670,33 @@ class _CompanyDetailsFormState extends State<_CompanyDetailsForm> {
             ),
           ],
         ),
+        // The server/parent step (which carries these links) is skipped
+        // when discovery comes from .env.
+        if (kIsPosDiscoveryConfiguredByEnv) ...[
+          const SizedBox(height: 16),
+          TextButton(
+            onPressed: () =>
+                Navigator.pushReplacementNamed(context, AppRoutes.login),
+            child: Text(
+              context.l10n.signupAlreadyHaveCompany,
+              style: FontUtility.body.copyWith(
+                color: const Color(0xFF4A00E0),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.pushReplacementNamed(context, AppRoutes.joinExisting),
+            child: Text(
+              context.l10n.signupJoinExistingDevice,
+              style: FontUtility.body.copyWith(
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

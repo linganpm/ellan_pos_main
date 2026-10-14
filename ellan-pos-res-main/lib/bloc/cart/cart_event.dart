@@ -14,10 +14,7 @@ class LoadInitialData extends CartEvent {
   final CartDraftSnapshot? draft;
   final String pricingMode;
 
-  const LoadInitialData({
-    this.draft,
-    this.pricingMode = 'selling',
-  });
+  const LoadInitialData({this.draft, this.pricingMode = 'selling'});
 
   @override
   List<Object?> get props => [draft, pricingMode];

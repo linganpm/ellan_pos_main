@@ -13,6 +13,23 @@ class OrderListInitial extends OrderListState {}
 
 class OrderListLoading extends OrderListState {}
 
+class OrderTableOption extends Equatable {
+  final String id;
+  final String label;
+
+  /// Orders on this table that are not completed or cancelled.
+  final int openOrders;
+
+  const OrderTableOption({
+    required this.id,
+    required this.label,
+    this.openOrders = 0,
+  });
+
+  @override
+  List<Object?> get props => [id, label, openOrders];
+}
+
 class OrderListLoaded extends OrderListState {
   final List<OrderListModel> orders;
 
@@ -29,6 +46,14 @@ class OrderListLoaded extends OrderListState {
   final bool hasReachedMax;
   final bool isFetchingMore;
 
+  /// Store tables shown when a dine-in type is selected.
+  final List<OrderTableOption> availableTables;
+  final String? selectedTableFilter;
+
+  /// Active date window (end exclusive) for [periodFilter].
+  final DateTime? periodStart;
+  final DateTime? periodEnd;
+
   const OrderListLoaded({
     required this.orders,
     this.availableOrderTypes = const [],
@@ -38,6 +63,10 @@ class OrderListLoaded extends OrderListState {
     this.searchQuery = '',
     this.hasReachedMax = false,
     this.isFetchingMore = false,
+    this.availableTables = const [],
+    this.selectedTableFilter,
+    this.periodStart,
+    this.periodEnd,
   });
 
   OrderListLoaded copyWith({
@@ -49,16 +78,28 @@ class OrderListLoaded extends OrderListState {
     String? searchQuery,
     bool? hasReachedMax,
     bool? isFetchingMore,
+    List<OrderTableOption>? availableTables,
+    String? selectedTableFilter,
+    bool clearTableFilter = false,
+    DateTime? periodStart,
+    DateTime? periodEnd,
+    bool clearPeriod = false,
   }) {
     return OrderListLoaded(
       orders: orders ?? this.orders,
       availableOrderTypes: availableOrderTypes ?? this.availableOrderTypes,
       selectedTypeFilter: selectedTypeFilter ?? this.selectedTypeFilter,
       selectedStatusFilter: selectedStatusFilter ?? this.selectedStatusFilter,
-      periodFilter: periodFilter ?? this.periodFilter,
+      periodFilter: clearPeriod ? null : (periodFilter ?? this.periodFilter),
       searchQuery: searchQuery ?? this.searchQuery,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
       isFetchingMore: isFetchingMore ?? this.isFetchingMore,
+      availableTables: availableTables ?? this.availableTables,
+      selectedTableFilter: clearTableFilter
+          ? null
+          : (selectedTableFilter ?? this.selectedTableFilter),
+      periodStart: clearPeriod ? null : (periodStart ?? this.periodStart),
+      periodEnd: clearPeriod ? null : (periodEnd ?? this.periodEnd),
     );
   }
 
@@ -72,6 +113,10 @@ class OrderListLoaded extends OrderListState {
     searchQuery,
     hasReachedMax,
     isFetchingMore,
+    availableTables,
+    selectedTableFilter,
+    periodStart,
+    periodEnd,
   ];
 }
 

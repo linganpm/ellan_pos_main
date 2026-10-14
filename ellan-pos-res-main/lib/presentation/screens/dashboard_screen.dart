@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pos_tablet/core/currency_format.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/dashboard/dashboard_cubit.dart';
 import '../../core/controllers/checkout_models.dart';
@@ -344,20 +345,23 @@ class _DashboardView extends StatelessWidget {
         onTap: () => _openOrders(context, periodFilter: periodFilter),
       ),
       _buildOverviewCard(
-        AppLocalizations.of(context)!.dashboardCredits,
-        '${snapshot.creditCount}',
-        Icons.account_balance_wallet_rounded,
-        const Color(0xFF7C4DFF),
-        onTap: () => Navigator.push(
+        _withCurrency(AppLocalizations.of(context)!.dashboardPending),
+        PosCurrency.format(snapshot.pendingAmount, decimals: 0),
+        Icons.hourglass_bottom_rounded,
+        const Color(0xFFF79009),
+        badge: AppLocalizations.of(
           context,
-          MaterialPageRoute(builder: (_) => const CreditsScreen()),
-        ),
+        )!.dashboardPendingOrders(snapshot.pendingCount),
+        onTap: () => _openOrders(context, periodFilter: periodFilter),
       ),
       _buildOverviewCard(
-        AppLocalizations.of(context)!.dashboardCreditAmount,
-        '\$${snapshot.creditOutstandingAmount.toStringAsFixed(0)}',
-        Icons.money_off_csred_rounded,
-        const Color(0xFFFF7043),
+        _withCurrency(AppLocalizations.of(context)!.dashboardCredits),
+        PosCurrency.format(snapshot.creditOutstandingAmount, decimals: 0),
+        Icons.account_balance_wallet_rounded,
+        const Color(0xFF7C4DFF),
+        badge: AppLocalizations.of(
+          context,
+        )!.dashboardPendingOrders(snapshot.creditCount),
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const CreditsScreen()),
@@ -410,6 +414,11 @@ class _DashboardView extends StatelessWidget {
     );
   }
 
+  String _withCurrency(String label) {
+    final symbol = PosCurrency.symbol().trim();
+    return symbol.isEmpty ? label : '$label ($symbol)';
+  }
+
   void _openOrders(
     BuildContext context, {
     required String periodFilter,
@@ -452,6 +461,7 @@ class _DashboardView extends StatelessWidget {
     IconData icon,
     Color color, {
     VoidCallback? onTap,
+    String? badge,
   }) {
     return OverviewCard(
       title: title,
@@ -459,16 +469,16 @@ class _DashboardView extends StatelessWidget {
       icon: icon,
       color: color,
       onTap: onTap,
+      badge: badge,
     );
   }
 
   String _getLocalizedFilter(BuildContext context, String filter) {
     switch (filter) {
       case 'All Time':
-        return Localizations.localeOf(context)
-                .languageCode
-                .toLowerCase()
-                .startsWith('ta')
+        return Localizations.localeOf(
+              context,
+            ).languageCode.toLowerCase().startsWith('ta')
             ? 'முழு காலம்'
             : 'All Time';
       case 'Yesterday':

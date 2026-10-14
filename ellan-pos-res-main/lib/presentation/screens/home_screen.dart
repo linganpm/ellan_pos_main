@@ -5,6 +5,7 @@ import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/currency_format.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/routes.dart';
+import 'package:pos_tablet/core/store_trade_modes.dart';
 import 'package:pos_tablet/presentation/screens/order_create_screen.dart';
 import 'package:pos_tablet/presentation/screens/scheduled_payments_screen.dart';
 import 'package:pos_tablet/presentation/widgets/order_creation_sheet.dart';
@@ -21,6 +22,7 @@ import 'order_list_screen.dart';
 import 'customers_screen.dart';
 import 'catalog_screen.dart';
 import 'credits_screen.dart';
+import 'package:pos_tablet/presentation/widgets/customer_support.dart';
 import 'refunds_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -40,12 +42,25 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  StoreTradeModes _tradeModes = StoreTradeModes.current();
+
+  void _onTradeModesChanged() {
+    if (mounted) setState(() => _tradeModes = StoreTradeModes.current());
+  }
+
+  @override
+  void dispose() {
+    StoreTradeModes.changes.removeListener(_onTradeModesChanged);
+    super.dispose();
+  }
+
   int _scheduledTodayCount = 0;
   int _draftCount = 0;
 
   @override
   void initState() {
     super.initState();
+    StoreTradeModes.changes.addListener(_onTradeModesChanged);
     _loadScheduledToday();
     _loadDraftCount();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -378,48 +393,52 @@ class _HomeScreenState extends State<HomeScreen> {
                                       },
                                     ),
                                   ),
-                                  const SizedBox(width: 20),
-                                  Expanded(
-                                    child: _buildMenuCard(
-                                      context,
-                                      title: 'Sales',
-                                      iconData: Icons.trending_up_rounded,
-                                      color: const Color(0xFF178A45),
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const SalesListScreen(),
-                                          ),
-                                        );
-                                      },
+                                  if (_tradeModes.sell) ...[
+                                    const SizedBox(width: 20),
+                                    Expanded(
+                                      child: _buildMenuCard(
+                                        context,
+                                        title: 'Sales',
+                                        iconData: Icons.trending_up_rounded,
+                                        color: const Color(0xFF178A45),
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const SalesListScreen(),
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 20),
-                                  Expanded(
-                                    child: _buildMenuCard(
-                                      context,
-                                      title:
-                                          Localizations.localeOf(context)
-                                              .languageCode
-                                              .toLowerCase()
-                                              .startsWith('ta')
-                                          ? 'கொள்முதல்'
-                                          : 'Purchases',
-                                      iconData: Icons.trending_down_rounded,
-                                      color: const Color(0xFFD32F2F),
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const PurchasesListScreen(),
-                                          ),
-                                        );
-                                      },
+                                  ],
+                                  if (_tradeModes.buy) ...[
+                                    const SizedBox(width: 20),
+                                    Expanded(
+                                      child: _buildMenuCard(
+                                        context,
+                                        title:
+                                            Localizations.localeOf(context)
+                                                .languageCode
+                                                .toLowerCase()
+                                                .startsWith('ta')
+                                            ? 'கொள்முதல்'
+                                            : 'Purchases',
+                                        iconData: Icons.trending_down_rounded,
+                                        color: const Color(0xFFD32F2F),
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const PurchasesListScreen(),
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -674,6 +693,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: EdgeInsets.only(right: 8),
           child: OrgLocalClockBadge(),
         ),
+        const CustomerSupportButton(),
         FutureBuilder<String>(
           future: getIt<UiStoreController>().resolveStaffDisplayName(),
           builder: (context, snapshot) {
@@ -787,6 +807,22 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
+        IconButton(
+          tooltip: context.l10n.homeLock,
+          onPressed: () {
+            final controller = getIt<UiStoreController>();
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.staffLock,
+              (route) => false,
+              arguments: {
+                'storeId': controller.store?.scope.storeId,
+                'storeName': controller.store?.storeName,
+              },
+            );
+          },
+          icon: const Icon(Icons.lock_rounded, color: Color(0xFF4A00E0)),
+        ),
         TextButton.icon(
           onPressed: () async {
             final confirmed = await showStaffLogoutConfirmDialog(context);
@@ -794,7 +830,7 @@ class _HomeScreenState extends State<HomeScreen> {
             final controller = getIt<UiStoreController>();
             final storeId = controller.store?.scope.storeId;
             final storeName = controller.store?.storeName;
-            await controller.lockStaff();
+            await controller.signOutStaff();
             if (!context.mounted) return;
             Navigator.pushNamedAndRemoveUntil(
               context,

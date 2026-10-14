@@ -2964,7 +2964,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get staffLogoutConfirmBodyFull =>
-      'அடுத்த ஊழியருக்காக டேப்லெட்டைத் திறக்கிறது. உங்கள் அமர்வு முடிகிறது; ஏற்கனவே சேமிக்கப்பட்ட ஆர்டர்கள் இந்தச் சாதனத்தில் இருக்கும்.';
+      'நீங்கள் வெளியேற்றப்படுவீர்கள்; உங்கள் பின் இந்தச் சாதனத்திலிருந்து நீக்கப்படும். அடுத்தவர் ஆன்லைனில் உள்நுழைய வேண்டும். ஏற்கனவே சேமிக்கப்பட்ட ஆர்டர்கள் இந்தச் சாதனத்தில் இருக்கும்.';
 
   @override
   String get staffLogoutConfirmTitle => 'பணியாளரை வெளியேற்றவா?';
@@ -3087,6 +3087,18 @@ class AppLocalizationsTa extends AppLocalizations {
   String storeSelectedSuccess(String storeName) {
     return '$storeName வெற்றிகரமாகத் தேர்ந்தெடுக்கப்பட்டது!';
   }
+
+  @override
+  String storeSyncTitle(String storeName) {
+    return '$storeName அமைக்கப்படுகிறது';
+  }
+
+  @override
+  String get storeSyncBody =>
+      'பட்டியல், வாடிக்கையாளர்கள் மற்றும் ஆர்டர்கள் இந்தச் சாதனத்திற்குப் பதிவிறக்கப்படுகின்றன. பயன்பாட்டைத் திறந்தே வைத்திருங்கள்.';
+
+  @override
+  String get storeSyncPreparing => 'தயாராகிறது…';
 
   @override
   String get storeSetupAccess => 'அணுகல்';
@@ -3599,4 +3611,180 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get welcomeUnlockBusiness => 'உங்கள் வணிக\nதிறனைத் திறக்கவும்';
+
+  @override
+  String get signInSwitchCompany => 'நிறுவனத்தை மாற்று';
+
+  @override
+  String get signInSwitchCompanyTitle => 'நிறுவனத்தை மாற்றவா?';
+
+  @override
+  String get signInSwitchCompanyBody =>
+      'நிறுவனத்தை மாற்றினால் இந்த சாதனம் மீட்டமைக்கப்படும். உள்ளூர் ஆர்டர்கள், பட்டியல், வாடிக்கையாளர்கள், ஒத்திசை வரலாறு மற்றும் சாதன அமைப்புகள் நிரந்தரமாக நீக்கப்படும் — இன்னும் ஒத்திசைக்கப்படாத ஆர்டர்களும் இதில் அடங்கும். சேவையகத்தில் எதுவும் நீக்கப்படாது.';
+
+  @override
+  String get signInSwitchCompanyAction => 'மாற்றி மீட்டமை';
+
+  @override
+  String get supportTitle => 'வாடிக்கையாளர் உதவி';
+
+  @override
+  String get supportSubtitle => 'உங்கள் POS-க்கு உதவ நாங்கள் இருக்கிறோம்.';
+
+  @override
+  String get supportEmail => 'மின்னஞ்சல்';
+
+  @override
+  String get supportWhatsapp => 'வாட்ஸ்அப்';
+
+  @override
+  String get supportDeviceId => 'சாதன ஐடி';
+
+  @override
+  String get supportCompany => 'நிறுவனம்';
+
+  @override
+  String get supportShareHint =>
+      'உதவியைத் தொடர்பு கொள்ளும்போது இந்த விவரங்களைப் பகிருங்கள்.';
+
+  @override
+  String get supportNotConfigured =>
+      'உதவி தொடர்பு விவரங்கள் இன்னும் அமைக்கப்படவில்லை. உங்கள் நிர்வாகியிடம் கேளுங்கள்.';
+
+  @override
+  String supportCopied(String value) {
+    return '$value நகலெடுக்கப்பட்டது';
+  }
+
+  @override
+  String get supportEmailAction => 'மின்னஞ்சல்';
+
+  @override
+  String get supportWhatsappAction => 'அரட்டை';
+
+  @override
+  String get homeLock => 'திரையைப் பூட்டு';
+
+  @override
+  String get lockEnterPin => 'திறக்க உங்கள் பின்னை உள்ளிடுங்கள்';
+
+  @override
+  String lockEnterPinAt(String storeName) {
+    return '$storeName திறக்க உங்கள் பின்னை உள்ளிடுங்கள்';
+  }
+
+  @override
+  String get lockSignedOutTitle => 'வெளியேறிவிட்டீர்கள்';
+
+  @override
+  String get lockSignedOutBody =>
+      'இந்தப் பதிவேட்டைப் பயன்படுத்த ஆன்லைனில் உள்நுழையுங்கள்.';
+
+  @override
+  String get lockSignIn => 'உள்நுழை';
+
+  @override
+  String get lockSignInInstead =>
+      'உள்நுழை (புதிய பணியாளர் அல்லது பின் மறந்தது)';
+
+  @override
+  String lockWrongPin(int remaining) {
+    return 'தவறான பின். இன்னும் $remaining முயற்சிகள்.';
+  }
+
+  @override
+  String get lockTooManyAttempts => 'பல தவறான பின்கள். உள்நுழையுங்கள்.';
+
+  @override
+  String get lockLeaseExpired =>
+      'சாதன உள்நுழைவு காலாவதியானது. ஆன்லைனில் உள்நுழையுங்கள்.';
+
+  @override
+  String get pinCreateTitle => 'உங்கள் பின்னை உருவாக்குங்கள்';
+
+  @override
+  String get pinConfirmTitle => 'உங்கள் பின்னை உறுதிப்படுத்துங்கள்';
+
+  @override
+  String pinCreateBody(int length) {
+    return 'இந்தப் பதிவேட்டை விரைவாகத் திறக்க $length இலக்க பின்னைத் தேர்ந்தெடுங்கள்.';
+  }
+
+  @override
+  String get pinMismatch => 'பின்கள் பொருந்தவில்லை. மீண்டும் முயலுங்கள்.';
+
+  @override
+  String get lockChooseStaff => 'பதிவேட்டைப் பயன்படுத்துபவர் யார்?';
+
+  @override
+  String lockNoStoreAccess(String name) {
+    return '$name இந்தக் கடையைப் பயன்படுத்த முடியாது. உள்நுழையுங்கள்.';
+  }
+
+  @override
+  String get storeTradeTitle => 'வாங்குதல் & விற்பனை';
+
+  @override
+  String get storeTradeBody =>
+      'இந்தக் கடை என்ன செய்கிறது என்பதைத் தேர்ந்தெடுங்கள். இரண்டையும் தேர்ந்தெடுக்கலாம். இந்தச் சாதனத்தில் உடனே சேமிக்கப்படும்.';
+
+  @override
+  String get storeTradeSell => 'விற்பனை';
+
+  @override
+  String get storeTradeSellHint => 'வாடிக்கையாளர்களுக்கு விற்பனை';
+
+  @override
+  String get storeTradeBuy => 'கொள்முதல்';
+
+  @override
+  String get storeTradeBuyHint => 'சப்ளையர்களிடமிருந்து கொள்முதல்';
+
+  @override
+  String get storeTradeNeedOne =>
+      'வாங்குதல் அல்லது விற்பனையில் குறைந்தது ஒன்றைத் தேர்ந்தெடுங்கள்.';
+
+  @override
+  String get orderListAllTables => 'அனைத்து மேசைகள்';
+
+  @override
+  String orderListTableChip(String name) {
+    return 'மேசை $name';
+  }
+
+  @override
+  String get orderListNoTables =>
+      'இன்னும் மேசைகள் இல்லை. டைன்-இன் ஆர்டர்கள் பயன்படுத்தியதும் இங்கே தோன்றும்.';
+
+  @override
+  String get orderListPeriodAll => 'எல்லா நேரமும்';
+
+  @override
+  String get orderListPeriodToday => 'இன்று';
+
+  @override
+  String get orderListPeriodLast24h => 'கடந்த 24 மணி';
+
+  @override
+  String get orderListPeriodYesterday => 'நேற்று';
+
+  @override
+  String get orderListPeriodCustom => 'தனிப்பயன்…';
+
+  @override
+  String get orderListPeriodTooltip => 'தேதி வாரியாக வடிகட்டு';
+
+  @override
+  String get dashboardPending => 'நிலுவை';
+
+  @override
+  String dashboardPendingOrders(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ஆர்டர்கள்',
+      one: '1 ஆர்டர்',
+    );
+    return '$_temp0';
+  }
 }

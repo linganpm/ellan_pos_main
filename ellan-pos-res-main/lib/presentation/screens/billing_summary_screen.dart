@@ -905,7 +905,8 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
           ),
         ),
       );
-    } catch (error) {
+    } catch (error, stack) {
+      debugPrint('Checkout failed: $error\n$stack');
       if (!mounted) return;
       PosToast.failed(
         context,

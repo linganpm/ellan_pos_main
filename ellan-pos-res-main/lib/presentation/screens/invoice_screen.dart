@@ -33,12 +33,11 @@ class InvoiceScreen extends StatelessWidget {
         automaticallyImplyLeading: false,
         title: Text(
           checkoutResult?.pricingMode == 'buying'
-              ? (Localizations.localeOf(context)
-                          .languageCode
-                          .toLowerCase()
-                          .startsWith('ta')
-                      ? 'கொள்முதல் பில்'
-                      : 'Purchase bill')
+              ? (Localizations.localeOf(
+                      context,
+                    ).languageCode.toLowerCase().startsWith('ta')
+                    ? 'கொள்முதல் பில்'
+                    : 'Purchase bill')
               : context.l10n.invoiceTitle,
           style: FontUtility.heading.copyWith(fontSize: 20),
         ),

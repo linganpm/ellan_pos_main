@@ -79,6 +79,12 @@ String normalizeDiscoveryUrl(String raw) {
   var value = raw.trim();
   if (value.isEmpty) return kDefaultDiscoveryUrl;
 
+  // Drop any query/fragment (older builds saved `http://host:8000?/api/...`).
+  final uri = Uri.tryParse(value);
+  if (uri != null && uri.hasScheme && uri.host.isNotEmpty) {
+    value = '${uri.origin}${uri.path}';
+  }
+
   // Strip accidental trailing slashes before appending path segments.
   value = value.replaceAll(RegExp(r'/+$'), '');
 
@@ -96,21 +102,14 @@ String discoveryOrigin(String discoveryOrBase) {
   final raw = discoveryOrBase.trim();
   if (raw.isEmpty) return _fallbackServerOrigin;
   try {
-    final uri = Uri.parse(raw);
-    if (uri.hasScheme && uri.host.isNotEmpty) {
-      return uri
-          .replace(path: '', query: '')
-          .toString()
-          .replaceAll(RegExp(r'/+$'), '');
+    final uri = Uri.tryParse(raw);
+    if (uri != null && uri.hasScheme && uri.host.isNotEmpty) {
+      return uri.origin;
     }
+    return Uri.parse(normalizeDiscoveryUrl(raw)).origin;
   } catch (_) {
-    // Fall through to normalize-based stripping.
+    return _fallbackServerOrigin;
   }
-  final bootstrap = Uri.parse(normalizeDiscoveryUrl(raw));
-  return bootstrap
-      .replace(path: '', query: '')
-      .toString()
-      .replaceAll(RegExp(r'/+$'), '');
 }
 
 /// Activates [url] for every gateway call on this device for the rest of the

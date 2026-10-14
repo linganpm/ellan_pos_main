@@ -519,12 +519,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   accountBalance: true,
                 ),
               ),
-              Expanded(
-                child: _metricTile(
-                  _creditSalesLabel,
-                  _creditTotal,
-                ),
-              ),
+              Expanded(child: _metricTile(_creditSalesLabel, _creditTotal)),
               Expanded(child: _metricTile(context.l10n.creditsRepaid, _repaid)),
               Expanded(
                 child: _metricTile(

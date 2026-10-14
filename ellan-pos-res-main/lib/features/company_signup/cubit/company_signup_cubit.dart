@@ -1,13 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform, kIsWeb;
-
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_orders_offline/store_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/company_device_setup.dart';
 import '../../../core/constants/discovery_constants.dart';
 import '../../../core/controllers/ui_store_controller.dart';
 import '../../../core/device_approval.dart';
@@ -221,7 +218,7 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
     );
 
     try {
-      await _collectAndStoreDeviceInfo();
+      await collectAndStoreDeviceInfo(prefs);
       final deviceId = posDeviceId(prefs);
 
       // Animate first tick while the network call runs.
@@ -244,6 +241,14 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
           'make': posDeviceMake(prefs),
           'model': posDeviceModel(prefs),
         },
+      );
+
+      // A new company must not inherit the previous company's local data or
+      // device settings (sync interval, cash denominations, ...).
+      final controller = getIt<UiStoreController>();
+      await controller.resetAllLocalData(
+        keepSavedServers: false,
+        preserveKeys: kDevicePreservedPrefKeys,
       );
 
       final completed = <String>[];
@@ -302,7 +307,6 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
         deviceApproved: true,
       );
 
-      final controller = getIt<UiStoreController>();
       await controller.bootWithConfig(StoreConfig.fromJson(setupConfig));
       await controller.applyBootstrapPayload(bootstrap);
       await controller.registerDeviceLocally(
@@ -356,52 +360,5 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
       RegExp(r'^(Bad state|StateError|Exception): '),
       '',
     );
-  }
-
-  Future<void> _collectAndStoreDeviceInfo() async {
-    try {
-      final deviceInfo = DeviceInfoPlugin();
-      String make = '';
-      String model = '';
-      String deviceId = '';
-
-      if (kIsWeb) {
-        final info = await deviceInfo.webBrowserInfo;
-        make = info.vendor ?? 'Web';
-        model = info.userAgent ?? 'Browser';
-        deviceId = info.userAgent ?? 'web';
-      } else if (defaultTargetPlatform == TargetPlatform.android) {
-        final info = await deviceInfo.androidInfo;
-        make = info.manufacturer;
-        model = info.model;
-        deviceId = info.id;
-      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-        final info = await deviceInfo.iosInfo;
-        make = info.name;
-        model = info.model;
-        deviceId = info.identifierForVendor ?? '';
-      } else if (defaultTargetPlatform == TargetPlatform.linux) {
-        final info = await deviceInfo.linuxInfo;
-        make = info.name.isNotEmpty ? info.name : 'Linux';
-        model = info.prettyName.isNotEmpty
-            ? info.prettyName
-            : (info.versionId ?? 'Desktop');
-        deviceId = info.machineId ?? '';
-      } else {
-        make = 'unknown';
-        model = 'POS Desktop';
-      }
-
-      if (make.length > 128) make = make.substring(0, 128);
-      if (model.length > 128) model = model.substring(0, 128);
-      if (deviceId.length > 128) deviceId = deviceId.substring(0, 128);
-      await prefs.setString('deviceMake', make);
-      await prefs.setString('deviceModel', model);
-      if (deviceId.isNotEmpty) {
-        await prefs.setString('deviceId', deviceId);
-      }
-    } catch (_) {
-      // Keep existing / default device identity.
-    }
   }
 }

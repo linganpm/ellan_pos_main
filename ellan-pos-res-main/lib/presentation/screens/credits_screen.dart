@@ -308,7 +308,10 @@ class _CreditsScreenState extends State<CreditsScreen> {
           IconButton(
             tooltip: context.l10n.commonOpenCreditAccount,
             onPressed: _openOrAddCreditAccount,
-            icon: const Icon(Icons.person_add_alt_1_rounded, color: Color(0xFF4A00E0)),
+            icon: const Icon(
+              Icons.person_add_alt_1_rounded,
+              color: Color(0xFF4A00E0),
+            ),
           ),
           IconButton(
             tooltip: context.l10n.actionRefresh,
@@ -597,7 +600,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                             '${context.l10n.creditsCreditSoFar} '
                                 '\$${row.totalCreditAmount.toStringAsFixed(2)}',
                             'Advances '
-                              '\$${advances.toStringAsFixed(2)}',
+                                '\$${advances.toStringAsFixed(2)}',
                             '${context.l10n.creditsRepaid} '
                                 '\$${row.totalPaidAmount.toStringAsFixed(2)}',
                             if (pendingDays != null)

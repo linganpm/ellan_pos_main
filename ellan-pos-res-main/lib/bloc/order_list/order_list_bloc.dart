@@ -22,6 +22,11 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
   final String? pricingModeFilter;
   List<OrderListModel> _allOrders = [];
   List<PosOrderType> _orderTypes = OrderTypesRepository.defaults;
+  List<OrderTableOption> _tables = const [];
+  String? _tableFilter;
+  late String? _period = (periodFilter ?? '').trim().isEmpty
+      ? null
+      : periodFilter!.trim();
   DateTime? _periodStart;
   DateTime? _periodEnd;
 
@@ -40,6 +45,8 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
     on<FilterByType>(_onFilterByType);
     on<FilterByStatus>(_onFilterByStatus);
     on<ClearStatusFilter>(_onClearStatusFilter);
+    on<FilterByTable>(_onFilterByTable);
+    on<FilterByPeriod>(_onFilterByPeriod);
     on<SearchOrders>(_onSearchOrders);
     on<RefreshOrders>(_onRefreshOrders);
     on<UpdateOrderStatus>(_onUpdateOrderStatus);
@@ -63,6 +70,55 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
     _allOrders = summaries
         .map((summary) => _toListModel(summary, posCode))
         .toList(growable: false);
+    _tables = await _loadTables();
+    if (_tableFilter != null && !_tables.any((t) => t.id == _tableFilter)) {
+      _tableFilter = null;
+    }
+  }
+
+  /// Floor-plan tables plus any table referenced by an order.
+  Future<List<OrderTableOption>> _loadTables() async {
+    final labels = <String, String>{};
+    final store = _controller.store;
+    if (store != null) {
+      try {
+        final records = await store.tables.listTables(store.scope);
+        for (final table in records) {
+          if (!table.active && !table.occupied) continue;
+          labels[table.tableId] = table.name.trim().isEmpty
+              ? table.tableId
+              : table.name.trim();
+        }
+      } catch (_) {}
+    }
+    final open = <String, int>{};
+    for (final order in _allOrders) {
+      final id = order.tableId;
+      if (id == null) continue;
+      labels.putIfAbsent(id, () => order.tableNumber ?? id);
+      final status = order.orderStatus.toLowerCase();
+      if (!status.contains('complet') &&
+          !status.contains('cancel') &&
+          !status.contains('closed')) {
+        open[id] = (open[id] ?? 0) + 1;
+      }
+    }
+    final options = [
+      for (final entry in labels.entries)
+        OrderTableOption(
+          id: entry.key,
+          label: entry.value,
+          openOrders: open[entry.key] ?? 0,
+        ),
+    ];
+    int? number(String v) => int.tryParse(v.replaceAll(RegExp(r'[^0-9]'), ''));
+    options.sort((a, b) {
+      final na = number(a.label);
+      final nb = number(b.label);
+      if (na != null && nb != null && na != nb) return na.compareTo(nb);
+      return a.label.toLowerCase().compareTo(b.label.toLowerCase());
+    });
+    return List.unmodifiable(options);
   }
 
   OrderListModel _toListModel(StoreOrderSummary summary, String? posCode) {
@@ -92,6 +148,9 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
       posCode: posCode,
       syncedToRemote: summary.exported,
       serveNumber: summary.serveNumber,
+      tableId: summary.tableId,
+      tableNumber: summary.tableName ?? summary.tableId,
+      floorName: summary.floorName,
     );
   }
 
@@ -138,10 +197,12 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
           availableOrderTypes: List.unmodifiable(_orderTypes),
           selectedTypeFilter: typeFilter,
           selectedStatusFilter: statusFilter,
-          periodFilter: (periodFilter ?? '').trim().isEmpty
-              ? null
-              : periodFilter!.trim(),
+          periodFilter: _period,
+          periodStart: _periodStart,
+          periodEnd: _periodEnd,
           hasReachedMax: initialData.length < _pageSize,
+          availableTables: _tables,
+          selectedTableFilter: _tableFilter,
         ),
       );
     } catch (e) {
@@ -150,10 +211,17 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
   }
 
   void _resolvePeriodWindow() {
-    final period = (periodFilter ?? '').trim();
+    final period = (_period ?? '').trim();
     if (period.isEmpty) {
       _periodStart = null;
       _periodEnd = null;
+      return;
+    }
+    if (period == 'Custom') return;
+    if (period == 'Last 24 hours') {
+      final now = DateTime.now();
+      _periodStart = now.subtract(const Duration(hours: 24));
+      _periodEnd = now.add(const Duration(minutes: 1));
       return;
     }
     try {
@@ -209,6 +277,7 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
   ) async {
     if (state is OrderListLoaded) {
       final currentState = state as OrderListLoaded;
+      if (!_isDineInType(event.type)) _tableFilter = null;
       final filteredData = _applyFiltersAndPagination(
         event.type,
         currentState.selectedStatusFilter,
@@ -222,6 +291,8 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
           selectedTypeFilter: event.type,
           hasReachedMax: filteredData.length < _pageSize,
           isFetchingMore: false,
+          selectedTableFilter: _tableFilter,
+          clearTableFilter: _tableFilter == null,
         ),
       );
     }
@@ -272,12 +343,82 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
           availableOrderTypes: currentState.availableOrderTypes,
           selectedTypeFilter: currentState.selectedTypeFilter,
           selectedStatusFilter: null,
-          periodFilter: currentState.periodFilter,
+          periodFilter: _period,
+          periodStart: _periodStart,
+          periodEnd: _periodEnd,
           searchQuery: currentState.searchQuery,
           hasReachedMax: filteredData.length < _pageSize,
+          availableTables: _tables,
+          selectedTableFilter: _tableFilter,
         ),
       );
     }
+  }
+
+  Future<void> _onFilterByTable(
+    FilterByTable event,
+    Emitter<OrderListState> emit,
+  ) async {
+    if (state is! OrderListLoaded) return;
+    final currentState = state as OrderListLoaded;
+    _tableFilter = event.tableId;
+    final filteredData = _applyFiltersAndPagination(
+      currentState.selectedTypeFilter,
+      currentState.selectedStatusFilter,
+      currentState.searchQuery,
+      0,
+    );
+    emit(
+      currentState.copyWith(
+        orders: filteredData,
+        hasReachedMax: filteredData.length < _pageSize,
+        isFetchingMore: false,
+        selectedTableFilter: _tableFilter,
+        clearTableFilter: _tableFilter == null,
+      ),
+    );
+  }
+
+  Future<void> _onFilterByPeriod(
+    FilterByPeriod event,
+    Emitter<OrderListState> emit,
+  ) async {
+    if (state is! OrderListLoaded) return;
+    final currentState = state as OrderListLoaded;
+    _period = event.period;
+    if (event.period == 'Custom' && event.start != null && event.end != null) {
+      final start = event.start!;
+      final end = event.end!;
+      _periodStart = DateTime(start.year, start.month, start.day);
+      _periodEnd = DateTime(end.year, end.month, end.day + 1);
+    } else {
+      _resolvePeriodWindow();
+    }
+    final filteredData = _applyFiltersAndPagination(
+      currentState.selectedTypeFilter,
+      currentState.selectedStatusFilter,
+      currentState.searchQuery,
+      0,
+    );
+    emit(
+      currentState.copyWith(
+        orders: filteredData,
+        hasReachedMax: filteredData.length < _pageSize,
+        isFetchingMore: false,
+        periodFilter: _period,
+        periodStart: _periodStart,
+        periodEnd: _periodEnd,
+        clearPeriod: _period == null,
+      ),
+    );
+  }
+
+  bool _isDineInType(String type) {
+    final wanted = _normalizeTypeToken(type);
+    if (wanted == 'dinein') return true;
+    return _orderTypes.any(
+      (t) => t.isDineIn && _normalizeTypeToken(t.key) == wanted,
+    );
   }
 
   Future<void> _onSearchOrders(
@@ -327,9 +468,13 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
           availableOrderTypes: List.unmodifiable(_orderTypes),
           selectedTypeFilter: currentState.selectedTypeFilter,
           selectedStatusFilter: currentState.selectedStatusFilter,
-          periodFilter: currentState.periodFilter,
+          periodFilter: _period,
+          periodStart: _periodStart,
+          periodEnd: _periodEnd,
           searchQuery: currentState.searchQuery,
           hasReachedMax: refreshedData.length < _pageSize,
+          availableTables: _tables,
+          selectedTableFilter: _tableFilter,
         ),
       );
     } else {
@@ -365,6 +510,7 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
         orderTypeKey: order.orderTypeKey,
         pricingMode: order.pricingMode,
         floorName: order.floorName,
+        tableId: order.tableId,
         tableNumber: order.tableNumber,
         customerName: order.customerName,
         phoneNumber: order.phoneNumber,
@@ -393,6 +539,41 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
     emit(currentState.copyWith(orders: updatedData));
   }
 
+  /// Order count per status label for [state]'s filters, ignoring the
+  /// status filter itself. Ordered by workflow, then by name.
+  Map<String, int> statusCounts(OrderListLoaded state) {
+    final counts = <String, int>{};
+    for (final order in _filter(
+      state.selectedTypeFilter,
+      null,
+      state.searchQuery,
+    )) {
+      counts[order.orderStatus] = (counts[order.orderStatus] ?? 0) + 1;
+    }
+    int rank(String status) {
+      final s = status.toLowerCase();
+      const order = [
+        'pending',
+        'preparing',
+        'ready',
+        'served',
+        'deliver',
+        'complet',
+        'closed',
+        'cancel',
+      ];
+      final i = order.indexWhere(s.contains);
+      return i < 0 ? order.length : i;
+    }
+
+    final keys = counts.keys.toList()
+      ..sort((a, b) {
+        final r = rank(a).compareTo(rank(b));
+        return r != 0 ? r : a.compareTo(b);
+      });
+    return {for (final k in keys) k: counts[k]!};
+  }
+
   List<OrderListModel> _applyFiltersAndPagination(
     String typeFilter,
     String? statusFilter,
@@ -400,6 +581,18 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
     int skip, {
     int limit = _pageSize,
   }) {
+    return _filter(
+      typeFilter,
+      statusFilter,
+      searchQuery,
+    ).skip(skip).take(limit).toList();
+  }
+
+  List<OrderListModel> _filter(
+    String typeFilter,
+    String? statusFilter,
+    String searchQuery,
+  ) {
     var filtered = _allOrders;
 
     final customerFilter = (customerIdFilter ?? '').trim();
@@ -437,6 +630,11 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
           .toList();
     }
 
+    final tableFilter = _tableFilter;
+    if (tableFilter != null && _isDineInType(typeFilter)) {
+      filtered = filtered.where((o) => o.tableId == tableFilter).toList();
+    }
+
     if (statusFilter != null && statusFilter.isNotEmpty) {
       final wantedStatus = statusFilter.toLowerCase();
       filtered = filtered.where((o) {
@@ -461,7 +659,7 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
           .toList();
     }
 
-    return filtered.skip(skip).take(limit).toList();
+    return filtered;
   }
 
   String _normalizeCustomerId(String value) {

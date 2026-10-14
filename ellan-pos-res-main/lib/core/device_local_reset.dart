@@ -18,7 +18,12 @@ class DeviceLocalResetService {
   /// Destructive full wipe. Caller must stop auto-sync and close any open Store first.
   Future<DeviceLocalResetResult> resetAllLocalData({
     bool keepSavedServers = false,
+    Set<String> preserveKeys = const {},
   }) async {
+    final preserved = <String, Object>{
+      for (final key in preserveKeys)
+        if (prefs.get(key) case final Object value) key: value,
+    };
     final keptServers = keepSavedServers ? _snapshotServerEntries() : null;
     final keptActiveServer = keepSavedServers
         ? prefs.getString('posActiveServerUrl')
@@ -40,6 +45,22 @@ class DeviceLocalResetService {
       }
       if (keptActiveOrg != null && keptActiveOrg.trim().isNotEmpty) {
         await prefs.setString('posActiveOrgInstanceId', keptActiveOrg);
+      }
+    }
+
+    for (final entry in preserved.entries) {
+      final value = entry.value;
+      switch (value) {
+        case String v:
+          await prefs.setString(entry.key, v);
+        case bool v:
+          await prefs.setBool(entry.key, v);
+        case int v:
+          await prefs.setInt(entry.key, v);
+        case double v:
+          await prefs.setDouble(entry.key, v);
+        case List<String> v:
+          await prefs.setStringList(entry.key, v);
       }
     }
 

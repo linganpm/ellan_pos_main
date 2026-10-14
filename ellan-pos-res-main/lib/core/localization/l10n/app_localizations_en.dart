@@ -2920,7 +2920,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get staffLogoutConfirmBodyFull =>
-      'This unlocks the tablet for the next staff member. Your session ends; orders already saved stay on this device.';
+      'You\'ll be signed out and your PIN is removed from this device. The next person signs in online. Orders already saved stay on this device.';
 
   @override
   String get staffLogoutConfirmTitle => 'Log out staff?';
@@ -3042,6 +3042,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String storeSelectedSuccess(String storeName) {
     return '$storeName selected successfully!';
   }
+
+  @override
+  String storeSyncTitle(String storeName) {
+    return 'Setting up $storeName';
+  }
+
+  @override
+  String get storeSyncBody =>
+      'Downloading catalogue, customers and orders to this device. Keep the app open.';
+
+  @override
+  String get storeSyncPreparing => 'Preparing…';
 
   @override
   String get storeSetupAccess => 'Access';
@@ -3546,4 +3558,177 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcomeUnlockBusiness => 'Unlock Your\nBusiness Potential';
+
+  @override
+  String get signInSwitchCompany => 'Switch company';
+
+  @override
+  String get signInSwitchCompanyTitle => 'Switch company?';
+
+  @override
+  String get signInSwitchCompanyBody =>
+      'Switching company resets this device. Local orders, catalogue, customers, sync history and device settings will be permanently deleted, including any orders not yet synced. Nothing is deleted on the server.';
+
+  @override
+  String get signInSwitchCompanyAction => 'Switch & reset';
+
+  @override
+  String get supportTitle => 'Customer support';
+
+  @override
+  String get supportSubtitle => 'We\'re here to help with your POS.';
+
+  @override
+  String get supportEmail => 'Email';
+
+  @override
+  String get supportWhatsapp => 'WhatsApp';
+
+  @override
+  String get supportDeviceId => 'Device ID';
+
+  @override
+  String get supportCompany => 'Company';
+
+  @override
+  String get supportShareHint =>
+      'Share these details when you contact support.';
+
+  @override
+  String get supportNotConfigured =>
+      'Support contact details are not set up yet. Please ask your administrator.';
+
+  @override
+  String supportCopied(String value) {
+    return 'Copied $value';
+  }
+
+  @override
+  String get supportEmailAction => 'Email';
+
+  @override
+  String get supportWhatsappAction => 'Chat';
+
+  @override
+  String get homeLock => 'Lock screen';
+
+  @override
+  String get lockEnterPin => 'Enter your PIN to unlock';
+
+  @override
+  String lockEnterPinAt(String storeName) {
+    return 'Enter your PIN to unlock $storeName';
+  }
+
+  @override
+  String get lockSignedOutTitle => 'Signed out';
+
+  @override
+  String get lockSignedOutBody =>
+      'Sign in online to start using this register.';
+
+  @override
+  String get lockSignIn => 'Sign in';
+
+  @override
+  String get lockSignInInstead => 'Sign in (new staff or forgot PIN)';
+
+  @override
+  String lockWrongPin(int remaining) {
+    return 'Wrong PIN. $remaining attempts left.';
+  }
+
+  @override
+  String get lockTooManyAttempts => 'Too many wrong PINs. Please sign in.';
+
+  @override
+  String get lockLeaseExpired => 'Device login expired. Please sign in online.';
+
+  @override
+  String get pinCreateTitle => 'Create your PIN';
+
+  @override
+  String get pinConfirmTitle => 'Confirm your PIN';
+
+  @override
+  String pinCreateBody(int length) {
+    return 'Choose a $length-digit PIN to unlock this register quickly.';
+  }
+
+  @override
+  String get pinMismatch => 'PINs don\'t match. Try again.';
+
+  @override
+  String get lockChooseStaff => 'Who\'s using the register?';
+
+  @override
+  String lockNoStoreAccess(String name) {
+    return '$name can\'t use this store. Please sign in.';
+  }
+
+  @override
+  String get storeTradeTitle => 'Buy & Sell';
+
+  @override
+  String get storeTradeBody =>
+      'Choose what this store does. You can select both. Saved on this device right away.';
+
+  @override
+  String get storeTradeSell => 'SELL';
+
+  @override
+  String get storeTradeSellHint => 'Sales to customers';
+
+  @override
+  String get storeTradeBuy => 'BUY';
+
+  @override
+  String get storeTradeBuyHint => 'Purchases from suppliers';
+
+  @override
+  String get storeTradeNeedOne => 'Keep at least one of Buy or Sell selected.';
+
+  @override
+  String get orderListAllTables => 'All tables';
+
+  @override
+  String orderListTableChip(String name) {
+    return 'Table $name';
+  }
+
+  @override
+  String get orderListNoTables =>
+      'No tables yet. Tables appear here once dine-in orders use them.';
+
+  @override
+  String get orderListPeriodAll => 'All time';
+
+  @override
+  String get orderListPeriodToday => 'Today';
+
+  @override
+  String get orderListPeriodLast24h => 'Last 24 hrs';
+
+  @override
+  String get orderListPeriodYesterday => 'Yesterday';
+
+  @override
+  String get orderListPeriodCustom => 'Custom…';
+
+  @override
+  String get orderListPeriodTooltip => 'Filter by date';
+
+  @override
+  String get dashboardPending => 'Pending';
+
+  @override
+  String dashboardPendingOrders(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count orders',
+      one: '1 order',
+    );
+    return '$_temp0';
+  }
 }

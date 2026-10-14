@@ -31,6 +31,16 @@ class FilterByStatus extends OrderListEvent {
 
 class ClearStatusFilter extends OrderListEvent {}
 
+/// Dine-in table filter; null shows every table.
+class FilterByTable extends OrderListEvent {
+  final String? tableId;
+
+  const FilterByTable(this.tableId);
+
+  @override
+  List<Object?> get props => [tableId];
+}
+
 class SearchOrders extends OrderListEvent {
   final String query;
 
@@ -41,6 +51,19 @@ class SearchOrders extends OrderListEvent {
 }
 
 class RefreshOrders extends OrderListEvent {}
+
+/// Date window: null for all time, `Today`, `Last 24 hours`, `Yesterday`,
+/// or `Custom` with an inclusive [start]..[end] day range.
+class FilterByPeriod extends OrderListEvent {
+  final String? period;
+  final DateTime? start;
+  final DateTime? end;
+
+  const FilterByPeriod(this.period, {this.start, this.end});
+
+  @override
+  List<Object?> get props => [period, start, end];
+}
 
 class UpdateOrderStatus extends OrderListEvent {
   final String orderId;

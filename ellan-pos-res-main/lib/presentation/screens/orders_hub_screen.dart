@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/store_trade_modes.dart';
 import '../../core/utils/font_utility.dart';
 import 'order_list_screen.dart';
 
@@ -8,6 +9,7 @@ class OrdersHubScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final modes = StoreTradeModes.current();
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
@@ -25,35 +27,37 @@ class OrdersHubScreen extends StatelessWidget {
             padding: const EdgeInsets.all(32),
             child: Row(
               children: [
-                Expanded(
-                  child: _OrderFlowCard(
-                    title: 'Sales',
-                    subtitle: 'Customer sales orders',
-                    icon: Icons.trending_up_rounded,
-                    color: const Color(0xFF178A45),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const SalesListScreen(),
+                if (modes.sell)
+                  Expanded(
+                    child: _OrderFlowCard(
+                      title: 'Sales',
+                      subtitle: 'Customer sales orders',
+                      icon: Icons.trending_up_rounded,
+                      color: const Color(0xFF178A45),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SalesListScreen(),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 28),
-                Expanded(
-                  child: _OrderFlowCard(
-                    title: 'Purchases',
-                    subtitle: 'கொள்முதல் · Supplier buy orders',
-                    icon: Icons.trending_down_rounded,
-                    color: const Color(0xFFD32F2F),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const PurchasesListScreen(),
+                if (modes.both) const SizedBox(width: 28),
+                if (modes.buy)
+                  Expanded(
+                    child: _OrderFlowCard(
+                      title: 'Purchases',
+                      subtitle: 'கொள்முதல் · Supplier buy orders',
+                      icon: Icons.trending_down_rounded,
+                      color: const Color(0xFFD32F2F),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PurchasesListScreen(),
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

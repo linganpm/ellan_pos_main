@@ -27,6 +27,7 @@ import '../order_types_repository.dart';
 import '../device_approval.dart';
 import '../org_timezone.dart';
 import '../pos_checkout_meta.dart';
+import '../pos_lock_pin.dart';
 import '../pos_report_mailer_defaults.dart';
 
 export 'checkout_models.dart';
@@ -47,6 +48,8 @@ class UiStoreController {
   Store? _store;
   Timer? _deviceAutoSyncTimer;
   bool _deviceAutoSyncInProgress = false;
+  Future<void>? _syncInFlight;
+  bool _deviceSyncBlocked = false;
 
   /// True after an auto-sync (or last sync) failure; cleared on success.
   final ValueNotifier<bool> autoSyncFailed = ValueNotifier(false);
@@ -214,6 +217,56 @@ class UiStoreController {
     await prefs.remove('userLoggedIn');
   }
 
+  /// Logout: forget this staff member's lock PIN and end the store session.
+  /// Other staff PINs stay so they can still unlock offline.
+  Future<void> signOutStaff() async {
+    final prefs = await SharedPreferences.getInstance();
+    final session = await _store?.auth.currentSession();
+    if (session != null) {
+      final pins = PosLockPinStore(prefs);
+      for (final pin in pins.loadAll()) {
+        if (_sameStaffId(pin.customerId, session.customerId) ||
+            pin.email.toLowerCase() == session.email.toLowerCase()) {
+          await pins.remove(pin.customerId);
+        }
+      }
+    }
+    await lockStaff();
+  }
+
+  /// Offline staff switch after a verified lock-screen PIN: keeps the open
+  /// session when it already belongs to [pin], otherwise opens one for them.
+  /// False when that staff member cannot use the open store.
+  Future<bool> openSessionForPin(PosLockPin pin) async {
+    final store = _store;
+    if (store == null) return false;
+    final current = await store.auth.currentSession();
+    if (current != null && _sameStaffId(current.customerId, pin.customerId)) {
+      return true;
+    }
+    try {
+      await store.auth.logout();
+    } catch (_) {}
+    final session = await store.auth.loginVerifiedCustomer(
+      store.scope,
+      pin.customerId,
+    );
+    if (session == null) return false;
+    await PosLockPinStore(
+      await SharedPreferences.getInstance(),
+    ).markLast(pin.customerId);
+    return true;
+  }
+
+  static bool _sameStaffId(String a, String b) {
+    String norm(String v) {
+      final t = v.trim();
+      return t.startsWith('user_') ? t.substring(5) : t;
+    }
+
+    return norm(a).isNotEmpty && norm(a) == norm(b);
+  }
+
   /// Staff unlock while the device lease is valid (local).
   ///
   /// Prefer a fast in-store session switch when the store is already open;
@@ -230,6 +283,12 @@ class UiStoreController {
         ok: false,
         message: 'Enter staff ID and password.',
       );
+    }
+
+    try {
+      await ensureDeviceAllowed();
+    } on DeviceAccessDeniedException catch (e) {
+      return StaffUnlockResult(ok: false, message: e.userMessage);
     }
 
     final lease = await LoginLeaseStore.open();
@@ -2977,6 +3036,8 @@ class UiStoreController {
     }
     var cancelled = 0;
     var totalSales = 0.0;
+    var pendingAmount = 0.0;
+    var pendingCount = 0;
     final bucketTotals = <int, double>{};
     final bucketCounts = <int, int>{};
     for (final order in inRange) {
@@ -2988,6 +3049,12 @@ class UiStoreController {
 
       final amount = order.finalValue != 0 ? order.finalValue : order.total;
       totalSales += amount;
+
+      final refunded = order.paymentStatus.trim().toLowerCase() == 'refunded';
+      if (!status.contains('cancel') && !refunded && order.balanceDue > 0) {
+        pendingAmount += order.balanceDue;
+        pendingCount++;
+      }
 
       final created =
           OrgTimezone.tryParseWallClock(order.createdOn, tzName) ?? range.start;
@@ -3337,6 +3404,8 @@ class UiStoreController {
       cancelledCount: cancelled,
       totalOrders: inRange.length,
       totalSales: totalSales,
+      pendingAmount: double.parse(pendingAmount.toStringAsFixed(2)),
+      pendingCount: pendingCount,
       cashShare: share(cash),
       cardShare: share(card),
       onlineShare: share(online),
@@ -3475,6 +3544,23 @@ class UiStoreController {
   Future<StoreSyncBatchResult> syncFromRemote({
     void Function(StoreSyncProgressUpdate update)? onProgress,
   }) async {
+    // Concurrent imports into the same SQLite store fail mid-way (e.g. the
+    // auto-sync kicked off by [openStore] racing the first catalogue sync).
+    final previous = _syncInFlight;
+    final done = Completer<void>();
+    _syncInFlight = done.future;
+    try {
+      if (previous != null) await previous;
+      return await _syncFromRemoteNow(onProgress: onProgress);
+    } finally {
+      done.complete();
+      if (identical(_syncInFlight, done.future)) _syncInFlight = null;
+    }
+  }
+
+  Future<StoreSyncBatchResult> _syncFromRemoteNow({
+    void Function(StoreSyncProgressUpdate update)? onProgress,
+  }) async {
     try {
       final store = _requireStore();
       // Ensure local tables/columns exist before any sync SQL runs.
@@ -3495,10 +3581,17 @@ class UiStoreController {
           await setup.persistCachedConfig(repairedJson);
         }
       } catch (_) {}
-      // Refresh login lease length from device registration (ops can change it).
+      // Also refreshes the login lease length (ops can change it).
       try {
-        await refreshLoginLeaseFromServer();
-      } catch (_) {}
+        await ensureDeviceAllowed();
+      } on DeviceAccessDeniedException {
+        _deviceSyncBlocked = true;
+        rethrow;
+      }
+      if (_deviceSyncBlocked) {
+        _deviceSyncBlocked = false;
+        if (_deviceAutoSyncTimer == null) unawaited(applyDeviceAutoSync());
+      }
 
       // Push local drifts before download so LWW cannot wipe them.
       final customerUpload = await store.sync.exportCustomers(
@@ -3652,8 +3745,42 @@ class UiStoreController {
     return store.lastSuccessfulSyncAt();
   }
 
+  /// Throws [DeviceAccessDeniedException] unless the organisation has this
+  /// device approved. Asks the gateway when reachable; offline it trusts the
+  /// last status the gateway reported.
+  Future<void> ensureDeviceAllowed({
+    Duration timeout = const Duration(seconds: 6),
+  }) async {
+    DeviceApproval? approval;
+    try {
+      approval = await refreshLoginLeaseFromServer().timeout(timeout);
+    } catch (_) {}
+
+    if (approval != null) {
+      if (approval.approved) return;
+      stopDeviceAutoSync();
+      throw DeviceAccessDeniedException(approval.status);
+    }
+
+    await ensureDeviceAllowedOffline();
+  }
+
+  /// Device check from the last known status only; never touches the network.
+  Future<void> ensureDeviceAllowedOffline() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cached = (prefs.getString(DeviceApprovalService.statusKey) ?? '')
+        .trim()
+        .toLowerCase();
+    if (cached.isNotEmpty && cached != 'active' && cached != 'unknown') {
+      stopDeviceAutoSync();
+      throw DeviceAccessDeniedException(cached);
+    }
+  }
+
   /// Pulls `login_lease_minutes` from the gateway device status endpoint.
-  Future<void> refreshLoginLeaseFromServer() async {
+  ///
+  /// Returns the approval so callers can stop work for suspended devices.
+  Future<DeviceApproval?> refreshLoginLeaseFromServer() async {
     final prefs = await SharedPreferences.getInstance();
     final orgRef =
         prefs.getString('orgCode') ??
@@ -3661,7 +3788,7 @@ class UiStoreController {
         _organisation?.orgCode ??
         _organisation?.orgId ??
         '';
-    if (orgRef.trim().isEmpty) return;
+    if (orgRef.trim().isEmpty) return null;
 
     final deviceId = posDeviceId(prefs);
     final approval = await DeviceApprovalService(
@@ -3672,6 +3799,7 @@ class UiStoreController {
       final leaseStore = await LoginLeaseStore.open();
       await leaseStore.setLeaseMinutes(lease);
     }
+    return approval;
   }
 
   /// Snapshot used by Device Settings (POS code, hardware id, sync prefs).
@@ -3735,7 +3863,9 @@ class UiStoreController {
   }
 
   Future<void> _runDeviceAutoSync() async {
-    if (_deviceAutoSyncInProgress || _store == null) return;
+    if (_deviceAutoSyncInProgress || _syncInFlight != null || _store == null) {
+      return;
+    }
     final reachable = await NetworkReachability.canReachGateway();
     if (!reachable) return;
     _deviceAutoSyncInProgress = true;
@@ -3759,6 +3889,7 @@ class UiStoreController {
   /// Use for from-scratch device testing. Does not call the remote revoke API.
   Future<DeviceLocalResetResult> resetAllLocalData({
     bool keepSavedServers = true,
+    Set<String> preserveKeys = const {},
   }) async {
     stopDeviceAutoSync();
     try {
@@ -3772,9 +3903,10 @@ class UiStoreController {
     _deviceRegistration = null;
 
     final prefs = await SharedPreferences.getInstance();
-    return DeviceLocalResetService(
-      prefs,
-    ).resetAllLocalData(keepSavedServers: keepSavedServers);
+    return DeviceLocalResetService(prefs).resetAllLocalData(
+      keepSavedServers: keepSavedServers,
+      preserveKeys: preserveKeys,
+    );
   }
 
   void stopDeviceAutoSync() {
