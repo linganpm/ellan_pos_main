@@ -588,11 +588,11 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
   }
 
   Future<void> _showMiscItemDialog(BuildContext context) async {
-    final nameController = TextEditingController(text: context.l10n.orderMisc);
-    final priceController = TextEditingController();
-    final added = await showDialog<bool>(
+    final result = await showDialog<Map<String, Object>>(
       context: context,
       builder: (dialogContext) {
+        final nameController = TextEditingController(text: context.l10n.orderMisc);
+        final priceController = TextEditingController();
         return AlertDialog(
           title: Text(context.l10n.orderCreateAddMiscItem),
           content: SizedBox(
@@ -639,7 +639,10 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                   );
                   return;
                 }
-                Navigator.pop(dialogContext, true);
+                Navigator.pop(dialogContext, {
+                  'name': nameController.text,
+                  'price': price,
+                });
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4A00E0),
@@ -651,11 +654,11 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
         );
       },
     );
-    final name = nameController.text.trim();
-    final price = double.tryParse(priceController.text.trim()) ?? 0;
-    nameController.dispose();
-    priceController.dispose();
-    if (added != true || !context.mounted || price <= 0) return;
+    if (result == null || !context.mounted) return;
+
+    final name = (result['name'] as String?)?.trim() ?? '';
+    final price = ((result['price'] as num?) ?? 0).toDouble();
+    if (price <= 0) return;
 
     final product = Product(
       id: 'misc-${DateTime.now().microsecondsSinceEpoch}',
@@ -703,10 +706,11 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
       unitShort: unitShort,
       baseQty: base > 0 ? base : 1,
     );
-    final controller = TextEditingController(text: formatSellQty(base));
+
     final qty = await showDialog<double>(
       context: context,
       builder: (dialogContext) {
+        final controller = TextEditingController(text: formatSellQty(base));
         return StatefulBuilder(
           builder: (context, setDialogState) {
             final entered = double.tryParse(controller.text.trim()) ?? 0;
@@ -785,7 +789,6 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
         );
       },
     );
-    controller.dispose();
     if (qty == null || !context.mounted) return;
     context.read<CartBloc>().add(
       AddProductToCart(productModel, quantity: qty, addons: addons),
