@@ -3724,6 +3724,22 @@ class AppLocalizationsTa extends AppLocalizations {
   String get homeLock => 'திரையைப் பூட்டு';
 
   @override
+  String get homeTables => 'மேசைகள்';
+
+  @override
+  String get tablesAvailable => 'காலியாக உள்ளது';
+
+  @override
+  String get tablesOrderTotal => 'இதுவரை ஆர்டர் மொத்தம்';
+
+  @override
+  String get tablesLoadFailed => 'மேசைகளை ஏற்ற முடியவில்லை.';
+
+  @override
+  String get tablesLocalHint =>
+      'மேசை நிலையும் மொத்தமும் இந்தச் சாதனத்தில் சேமித்த ஆர்டர்களைக் காட்டும். புதுப்பித்துப் பார்க்கவும்.';
+
+  @override
   String get actionLock => 'பூட்டு';
 
   @override

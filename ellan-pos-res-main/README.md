@@ -60,6 +60,13 @@ app with the updated local core package; the SQLite cache migration is automatic
 
 ## Dine-in table availability
 
+When the store's cached order types enable Dine-In and selling is enabled,
+the home dashboard includes **Tables**. Its phone/tablet grid shows active tables
+on active floors, available/booked status, open order numbers/status and their
+combined current order total (including KOT orders). Completed/cancelled orders
+are excluded. Refresh reloads the device's saved orders; other offline devices'
+unsynced orders and unsaved checkout edits are not included.
+
 The order picker reads active floors and tables from the local store database
 instead of displaying a fixed floor plan. Booked tables are greyed out and cannot
 be selected. Availability is checked again before opening an order; use Refresh

@@ -11,16 +11,22 @@ import 'package:pos_tablet/core/pos_theme.dart';
 import 'package:pos_tablet/core/routes.dart';
 import 'package:pos_tablet/data/models/order_list_model.dart';
 import 'package:pos_tablet/presentation/screens/home_screen.dart';
+import 'package:pos_tablet/presentation/screens/tables_screen.dart';
 import 'package:pos_tablet/presentation/screens/order_list_screen.dart';
 import 'package:pos_tablet/presentation/widgets/order_list/order_list_row.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ResponsiveController extends UiStoreController {
+  List<PosOrderType> types = OrderTypesRepository.defaults;
+
+  @override
+  Future<List<StoreTableRecord>> loadDineInTables() async => [];
+
   @override
   Future<List<StoreOrderSummary>> loadOrders({String? pricingMode}) async => [];
 
   @override
-  Future<List<PosOrderType>> loadOrderTypes() async => OrderTypesRepository.defaults;
+  Future<List<PosOrderType>> loadOrderTypes() async => types;
 
   @override
   Future<String> resolveStaffDisplayName() async => 'Operator';
@@ -122,6 +128,25 @@ void main() {
       expect(destination?.name, AppRoutes.staffLock);
       expect(destination?.arguments, {'storeId': null, 'storeName': null});
       expect(find.text('Staff unlock'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    }
+  });
+
+  testWidgets('Tables dashboard option follows dine-in setting and opens grid', (
+    tester,
+  ) async {
+    for (final size in [const Size(360, 800), const Size(1024, 768)]) {
+      controller.types = const [PosOrderType(key: 'PICKUP', label: 'Pickup')];
+      await mount(tester, size, const HomeScreen());
+      expect(find.text('Tables'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      controller.types = OrderTypesRepository.defaults;
+      await mount(tester, size, const HomeScreen());
+      expect(find.text('Tables'), findsOneWidget);
+      await tester.tap(find.text('Tables'));
+      await tester.pumpAndSettle();
+      expect(find.byType(TablesScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     }
   });

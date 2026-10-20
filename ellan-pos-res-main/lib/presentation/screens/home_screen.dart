@@ -24,6 +24,8 @@ import 'catalog_screen.dart';
 import 'credits_screen.dart';
 import 'package:pos_tablet/presentation/widgets/customer_support.dart';
 import 'refunds_screen.dart';
+import 'tables_screen.dart';
+import '../../core/order_list_route_observer.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool openNewOrderSheet;
@@ -41,8 +43,41 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
   StoreTradeModes _tradeModes = StoreTradeModes.current();
+  bool _dineInEnabled = false;
+  Object? _orderTypesError;
+  PageRoute<dynamic>? _route;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute<dynamic> && route != _route) {
+      orderListRouteObserver.unsubscribe(this);
+      _route = route;
+      orderListRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void didPopNext() {
+    _loadOrderTypes();
+  }
+
+  Future<void> _loadOrderTypes() async {
+    try {
+      final types = await getIt<UiStoreController>().loadOrderTypes();
+      if (!mounted) return;
+      setState(() {
+        _dineInEnabled = types.any((type) => type.isDineIn);
+        _orderTypesError = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _orderTypesError = error);
+    }
+  }
 
   void _onTradeModesChanged() {
     if (mounted) setState(() => _tradeModes = StoreTradeModes.current());
@@ -50,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    orderListRouteObserver.unsubscribe(this);
     StoreTradeModes.changes.removeListener(_onTradeModesChanged);
     super.dispose();
   }
@@ -60,6 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _loadOrderTypes();
     StoreTradeModes.changes.addListener(_onTradeModesChanged);
     _loadScheduledToday();
     _loadDraftCount();
@@ -604,7 +641,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 20),
-                                  const Expanded(child: SizedBox.shrink()),
+                                  Expanded(child: _buildTablesOption(context)),
                                 ],
                               ),
                             ),
@@ -728,6 +765,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 12),
+          _buildTablesOption(context, compact: true),
           if (_scheduledTodayCount > 0)
             Card(
               child: ListTile(
@@ -772,6 +810,45 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTablesOption(BuildContext context, {bool compact = false}) {
+    if (!_tradeModes.sell) return const SizedBox.shrink();
+    return Builder(
+      builder: (context) {
+        if (_orderTypesError != null) {
+          return TextButton(
+            onPressed: _loadOrderTypes,
+            child: Text('${context.l10n.tablesLoadFailed}\n${context.l10n.actionRetry}'),
+          );
+        }
+        if (!_dineInEnabled) {
+          return const SizedBox.shrink();
+        }
+        void openTables() => Navigator.push(
+          context,
+          MaterialPageRoute<void>(builder: (_) => const TablesScreen()),
+        );
+        if (compact) {
+          return Card(
+            child: ListTile(
+              minVerticalPadding: 16,
+              leading: const Icon(Icons.table_restaurant_rounded, color: Color(0xFF00897B)),
+              title: Text(context.l10n.homeTables),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: openTables,
+            ),
+          );
+        }
+        return _buildMenuCard(
+          context,
+          title: context.l10n.homeTables,
+          iconData: Icons.table_restaurant_rounded,
+          color: const Color(0xFF00897B),
+          onTap: openTables,
+        );
+      },
     );
   }
 

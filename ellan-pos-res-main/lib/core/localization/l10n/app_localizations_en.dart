@@ -3670,6 +3670,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeLock => 'Lock screen';
 
   @override
+  String get homeTables => 'Tables';
+
+  @override
+  String get tablesAvailable => 'Available';
+
+  @override
+  String get tablesOrderTotal => 'Order total so far';
+
+  @override
+  String get tablesLoadFailed => 'Could not load tables.';
+
+  @override
+  String get tablesLocalHint =>
+      'Table status and totals reflect orders saved on this device. Refresh for updates.';
+
+  @override
   String get actionLock => 'Lock';
 
   @override

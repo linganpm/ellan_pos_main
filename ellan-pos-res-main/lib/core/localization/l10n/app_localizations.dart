@@ -6582,6 +6582,36 @@ abstract class AppLocalizations {
   /// **'Lock screen'**
   String get homeLock;
 
+  /// No description provided for @homeTables.
+  ///
+  /// In en, this message translates to:
+  /// **'Tables'**
+  String get homeTables;
+
+  /// No description provided for @tablesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get tablesAvailable;
+
+  /// No description provided for @tablesOrderTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Order total so far'**
+  String get tablesOrderTotal;
+
+  /// No description provided for @tablesLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load tables.'**
+  String get tablesLoadFailed;
+
+  /// No description provided for @tablesLocalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Table status and totals reflect orders saved on this device. Refresh for updates.'**
+  String get tablesLocalHint;
+
   /// No description provided for @actionLock.
   ///
   /// In en, this message translates to:
