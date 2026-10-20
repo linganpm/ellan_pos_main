@@ -651,8 +651,19 @@ class StoreOfferType {
   static const String flat = 'flat';
   static const String buyNGetM = 'buy_n_get_m';
   static const String totalOffer = 'total_offer';
+  /// `buyQuantity` units (default 1) sell for `flatValue` in total.
+  static const String fixedPrice = 'fixed_price';
+  /// Buy `buyQuantity`, get the next `getQuantity` at `percentageValue`% off.
+  static const String buyNGetMDiscount = 'buy_n_get_m_discount';
 
-  static const Set<String> supported = {percentage, flat, buyNGetM, totalOffer};
+  static const Set<String> supported = {
+    percentage,
+    flat,
+    buyNGetM,
+    totalOffer,
+    fixedPrice,
+    buyNGetMDiscount,
+  };
 
   static String normalize(dynamic rawValue) {
     final normalized = (rawValue as String? ?? '').trim().toLowerCase();
@@ -665,6 +676,12 @@ class StoreOfferType {
     if (normalized == buyNGetM || normalized == 'buy_n_get_m') {
       return buyNGetM;
     }
+    if (normalized == fixedPrice) {
+      return fixedPrice;
+    }
+    if (normalized == buyNGetMDiscount) {
+      return buyNGetMDiscount;
+    }
     return percentage;
   }
 
@@ -676,7 +693,8 @@ class StoreOfferType {
     throw ArgumentError.value(
       rawValue,
       'offerType',
-      'Unsupported offer type. Use percentage, flat, buy_n_get_m, or total_offer.',
+      'Unsupported offer type. Use percentage, flat, buy_n_get_m, '
+          'buy_n_get_m_discount, fixed_price, or total_offer.',
     );
   }
 }
@@ -1031,6 +1049,12 @@ class StoreOrderSummary {
   }
 
   factory StoreOrderSummary.fromRow(Map<String, dynamic> row) {
+    final paid = (row['paid_total'] as num?)?.toDouble() ?? 0;
+    final credit = (row['credit_total'] as num?)?.toDouble() ?? 0;
+    final total =
+        (row['final_value'] as num?)?.toDouble() ??
+        (row['total'] as num?)?.toDouble() ??
+        0;
     return StoreOrderSummary(
       orgId: row['orgId'] as String? ?? '',
       storeId: row['storeId'] as String? ?? '',
@@ -1045,7 +1069,12 @@ class StoreOrderSummary {
       customerEmail: row['customer_email'] as String? ?? '',
       statusName: row['status_name'] as String? ?? '',
       orderType: row['order_type'] as String? ?? '',
-      paymentStatus: row['payment_status'] as String? ?? '',
+      paymentStatus: StoreOrderPaymentMode.receivedStatus(
+        paid,
+        total,
+        credit,
+        row['payment_status'] as String? ?? '',
+      ),
       createdOn: row['created_on'] as String?,
       createdBy: row['created_by'] as String? ?? '',
       itemCount: (row['item_count'] as num?)?.toInt() ?? 0,
@@ -1081,6 +1110,20 @@ class StoreOrderSummary {
 }
 
 class StoreOrderDetails {
+  final double creditRepaidAmount;
+
+  double get paidTotal => payments.fold<double>(
+    creditRepaidAmount,
+    (sum, payment) => sum + payment.receivedAmount,
+  );
+
+  double get creditTotal => payments
+      .where((payment) => payment.isCredit)
+      .fold<double>(0, (sum, payment) => sum + payment.refundableAmount);
+
+  double get balanceDue => ((finalValue > 0 ? finalValue : total) - paidTotal)
+      .clamp(0, double.infinity)
+      .toDouble();
   final String orgId;
   final String storeId;
   final int id;
@@ -1115,6 +1158,7 @@ class StoreOrderDetails {
   final int? serveNumber;
 
   const StoreOrderDetails({
+    this.creditRepaidAmount = 0,
     required this.orgId,
     required this.storeId,
     required this.id,
@@ -1305,6 +1349,26 @@ class StoreOrderPaymentMode {
   static const String credit = 'credit';
 
   static const Set<String> supported = {cash, card, online, credit};
+
+  static bool isCredit(String mode) =>
+      const {
+        'credit',
+        'pay_later',
+        'pay later',
+      }.contains(mode.trim().toLowerCase());
+
+  static String receivedStatus(
+    double paid,
+    double total,
+    double creditAmount,
+    String original,
+  ) {
+    if (creditAmount <= 0.0001 || original.toLowerCase().contains('refund')) {
+      return original;
+    }
+    if (paid + 0.0001 >= total) return 'Paid';
+    return paid <= 0.0001 ? 'Unpaid' : 'Partial';
+  }
 }
 
 class StoreWalletRecord {
@@ -1400,6 +1464,9 @@ class StoreOrderStatus {
 }
 
 class StoreOrderPaymentRecord {
+  bool get isCredit => StoreOrderPaymentMode.isCredit(paymentMode);
+
+  double get receivedAmount => isCredit ? 0 : refundableAmount;
   final int id;
   final String orgId;
   final String storeId;
@@ -2249,6 +2316,7 @@ class StoreProductCategoryRecord {
 }
 
 class StoreProductVariantRecord {
+  final String imagePath;
   final String orgId;
   final String storeId;
   final String localId;
@@ -2270,8 +2338,10 @@ class StoreProductVariantRecord {
   final String? sellUnitLabel;
   final double? sellUnitBaseQty;
   final String? taxLabel;
+  final bool active;
 
   const StoreProductVariantRecord({
+    this.imagePath = '',
     required this.orgId,
     required this.storeId,
     required this.localId,
@@ -2293,11 +2363,15 @@ class StoreProductVariantRecord {
     this.sellUnitLabel,
     this.sellUnitBaseQty,
     this.taxLabel,
+    this.active = true,
   });
 
   factory StoreProductVariantRecord.fromRow(Map<String, dynamic> row) {
     final categoryLocalId = row['categoryLocalId'] as String? ?? '';
     return StoreProductVariantRecord(
+      imagePath: (row['product_variant_logo'] as String? ?? '').trim().isEmpty
+          ? ''
+          : row['local_image_path'] as String? ?? '',
       orgId: row['orgId'] as String? ?? '',
       storeId: row['storeId'] as String? ?? '',
       localId: row['localId'] as String? ?? '',
@@ -2321,6 +2395,7 @@ class StoreProductVariantRecord {
       sellUnitLabel: row['sell_unit_label'] as String?,
       sellUnitBaseQty: _doubleFromMap(row, 'sell_unit_base_qty'),
       taxLabel: (row['tax_label'] as String?)?.trim(),
+      active: ((row['active'] as num?)?.toInt() ?? 1) != 0,
     );
   }
 }

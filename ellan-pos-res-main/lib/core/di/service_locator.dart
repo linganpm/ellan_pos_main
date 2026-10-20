@@ -1,6 +1,8 @@
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pos_orders_offline/store.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
+import 'package:pos_tablet/core/org_timezone.dart';
 import 'package:pos_tablet/features/store/data/repositories/store_repository_impl.dart';
 import 'package:pos_tablet/features/store/domain/usecases/initialize_store.dart';
 import 'package:pos_tablet/features/store/presentation/bloc/store_bloc.dart';
@@ -20,6 +22,12 @@ Future<void> initServiceLocator({required SharedPreferences prefs}) async {
   if (!getIt.isRegistered<UiStoreController>()) {
     getIt.registerLazySingleton<UiStoreController>(() => UiStoreController());
   }
+
+  // Printed receipts show order time in the org timezone, like the screens.
+  Store.receiptTimestampFormatter = (raw) => OrgTimezone.formatDateTime(
+    raw,
+    getIt<UiStoreController>().orgTimezoneName,
+  );
 
   // Repository that wraps UiStoreController functionality
   if (!getIt.isRegistered<StoreRepositoryImpl>()) {

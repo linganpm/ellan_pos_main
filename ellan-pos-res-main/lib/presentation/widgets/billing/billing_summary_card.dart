@@ -98,8 +98,11 @@ class BillingSummaryCard extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Divider(thickness: 1.5),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
               Text(
                 context.l10n.commonNetTotal,

@@ -4,6 +4,7 @@ import '../../core/constants/discovery_constants.dart';
 import '../../core/localization/l10n_context.dart';
 import '../../core/routes.dart';
 import '../../core/utils/font_utility.dart';
+import '../widgets/pos_brand_logo.dart';
 
 /// First-run chooser: sign in to an existing company, or create a new one.
 class AuthEntryScreen extends StatelessWidget {
@@ -32,11 +33,7 @@ class AuthEntryScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      Icons.point_of_sale_rounded,
-                      size: 72,
-                      color: Colors.white,
-                    ),
+                    const PosBrandLogo(size: 72),
                     const SizedBox(height: 28),
                     Text(
                       l10n.authEntryBrand,

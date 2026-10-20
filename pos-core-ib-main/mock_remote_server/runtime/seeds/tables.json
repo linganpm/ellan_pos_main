@@ -10,7 +10,7 @@
       "name": "Ground Floor",
       "sorting_order": 1,
       "active": 1,
-      "id": 1
+      "id": 2
     },
     {
       "remote_id": "first",
@@ -20,10 +20,10 @@
       "name": "First Floor",
       "sorting_order": 2,
       "active": 1,
-      "id": 2
+      "id": 3
     },
     {
-      "id": 3,
+      "id": 1,
       "orgId": "org_001",
       "storeId": "store_001",
       "floor_id": "patio",
@@ -44,7 +44,7 @@
       "capacity": 4,
       "sorting_order": 1,
       "active": 1,
-      "id": 1
+      "id": 2
     },
     {
       "remote_id": "f1",
@@ -56,10 +56,10 @@
       "capacity": 6,
       "sorting_order": 1,
       "active": 1,
-      "id": 2
+      "id": 3
     },
     {
-      "id": 3,
+      "id": 1,
       "orgId": "org_001",
       "storeId": "store_001",
       "table_id": "p1",

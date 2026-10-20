@@ -10,6 +10,7 @@ class PosCatalogCategory {
 
 /// A sellable product variant (package) from the store's synced catalogue.
 class PosCatalogProduct {
+  final String imagePath;
   final String id;
 
   /// On-device SQLite local id (`pv_…`); order lines often store this even after
@@ -41,6 +42,7 @@ class PosCatalogProduct {
   final int? sellUnitCode;
 
   const PosCatalogProduct({
+    this.imagePath = '',
     required this.id,
     this.localId = '',
     required this.name,
@@ -58,6 +60,18 @@ class PosCatalogProduct {
     this.sellUnitBaseQty,
     this.sellUnitCode,
   });
+
+  String get checkoutName {
+    final product = productName.trim();
+    final variant = packageName.trim().isNotEmpty
+        ? packageName.trim()
+        : name.trim();
+    if (product.isEmpty) return variant;
+    if (variant.isEmpty || product.toLowerCase() == variant.toLowerCase()) {
+      return product;
+    }
+    return '$product ($variant)';
+  }
 
   bool get hasSellUnit =>
       sellUnitCode != null &&

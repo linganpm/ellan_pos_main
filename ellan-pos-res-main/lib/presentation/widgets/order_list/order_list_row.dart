@@ -15,6 +15,9 @@ class OrderListRow extends StatefulWidget {
   final VoidCallback onPayNowTap;
   final VoidCallback? onRowTap;
 
+  /// Shown only for unpaid orders without products (or drafts).
+  final VoidCallback? onDeleteTap;
+
   const OrderListRow({
     super.key,
     required this.order,
@@ -24,6 +27,7 @@ class OrderListRow extends StatefulWidget {
     required this.onUpdateTap,
     required this.onPayNowTap,
     this.onRowTap,
+    this.onDeleteTap,
   });
 
   @override
@@ -87,6 +91,85 @@ class _OrderListRowState extends State<OrderListRow> {
   @override
   Widget build(BuildContext context) {
     final timeFormatter = DateFormat('MMM dd, hh:mm a');
+
+    if (MediaQuery.sizeOf(context).width < 900) {
+      return Card(
+        child: InkWell(
+          onTap: widget.onRowTap ?? widget.onInfoTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: [
+                    Text('#${widget.order.orderId}', style: _boldBlack),
+                    Text(PosCurrency.format(widget.order.totalAmount), style: _boldBlack),
+                    Tooltip(
+                      message: widget.order.syncedToRemote
+                          ? context.l10n.orderSyncedRemote
+                          : context.l10n.orderNotSyncedRemote,
+                      child: Icon(
+                        widget.order.syncedToRemote
+                            ? Icons.cloud_done_rounded
+                            : Icons.cloud_upload_outlined,
+                        size: 20,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(widget.order.customerName),
+                Text(_orderTypeTooltip, style: _greyStyle),
+                Text(timeFormatter.format(widget.order.timestamp), style: _greyStyle),
+                if (widget.order.posCode?.isNotEmpty ?? false)
+                  Text(context.l10n.orderListPosCode(widget.order.posCode!), style: _greyStyle),
+                if (widget.order.serveNumber != null)
+                  Text(context.l10n.orderListServeNumber('${widget.order.serveNumber}'), style: _greyStyle),
+                if (widget.order.balanceDue > 0.0001)
+                  Text(context.l10n.commonBal(PosCurrency.format(widget.order.balanceDue))),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    OrderStatusBadge(status: widget.order.orderStatus),
+                    OrderStatusBadge(status: widget.order.paymentStatus, isPaymentStatus: true),
+                    if (_needsPayment)
+                      IconButton(
+                        tooltip: context.l10n.commonPayments,
+                        onPressed: widget.onPayNowTap,
+                        icon: const Icon(Icons.payment_rounded),
+                      ),
+                    IconButton(
+                      tooltip: context.l10n.actionPrint,
+                      onPressed: widget.onPrintTap,
+                      icon: const Icon(Icons.print_rounded),
+                    ),
+                    IconButton(
+                      tooltip: context.l10n.actionUpdate,
+                      onPressed: widget.onUpdateTap,
+                      icon: const Icon(Icons.edit_rounded),
+                    ),
+                    if (widget.onDeleteTap != null)
+                      IconButton(
+                        key: ValueKey('order-row-delete-${widget.order.orderId}'),
+                        tooltip: context.l10n.orderDeleteOrder,
+                        onPressed: widget.onDeleteTap,
+                        icon: const Icon(Icons.delete_outline_rounded),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -319,6 +402,16 @@ class _OrderListRowState extends State<OrderListRow> {
                             onTap: widget.onUpdateTap,
                             color: Colors.orange.shade700,
                           ),
+                          if (widget.onDeleteTap != null)
+                            _buildActionButton(
+                              key: ValueKey(
+                                'order-row-delete-${widget.order.orderId}',
+                              ),
+                              icon: Icons.delete_outline_rounded,
+                              tooltip: context.l10n.orderDeleteOrder,
+                              onTap: widget.onDeleteTap!,
+                              color: const Color(0xFFFF512F),
+                            ),
                         ],
                       ),
                     ),
@@ -333,6 +426,7 @@ class _OrderListRowState extends State<OrderListRow> {
   }
 
   Widget _buildActionButton({
+    Key? key,
     required IconData icon,
     required String tooltip,
     required VoidCallback onTap,
@@ -341,6 +435,7 @@ class _OrderListRowState extends State<OrderListRow> {
     return Tooltip(
       message: tooltip,
       child: InkWell(
+        key: key,
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Padding(

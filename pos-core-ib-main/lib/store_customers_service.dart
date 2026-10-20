@@ -76,6 +76,25 @@ class StoreCustomersService {
     );
   }
 
+  /// Offline fallback for [recordDirectoryCustomer] when the gateway cannot
+  /// assign a backend user id. The provisional id is swapped for
+  /// ``user_{id}`` once the customer export succeeds.
+  Future<String?> recordOfflineDirectoryCustomer({
+    required StoreScope scope,
+    required String name,
+    required String phone,
+    String? email,
+    String role = 'retail_customer',
+  }) {
+    return _store._recordOfflineDirectoryCustomer(
+      scope: scope,
+      name: name,
+      phone: phone,
+      email: email,
+      role: role,
+    );
+  }
+
   Future<List<StoreCustomerRecord>> searchRecords({
     required StoreScope scope,
     String? nameQuery,

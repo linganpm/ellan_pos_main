@@ -610,7 +610,6 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       autofocus: true,
                       decoration: InputDecoration(
                         hintText: 'RESET',
-                        border: OutlineInputBorder(),
                       ),
                       onChanged: (_) => setDialogState(() {}),
                     ),

@@ -8,14 +8,14 @@
 #     pos-core-ib-main/        ← local pos_orders_offline package
 #
 # Usage:
-#   ./run.sh              # web browser at http://127.0.0.1:8080 (default)
-#   ./run.sh web          # same as default
-#   ./run.sh linux        # Linux desktop (needs working OpenGL/GPU drivers)
-#   ./run.sh linux development  # Linux desktop using ellan-pos-res-main/.env.development
-#   ./run.sh android      # Android emulator/device (default: Pixel_Tablet)
-#   ./run.sh android Pixel_7
-#   ./run.sh studio       # open Android Studio on the Flutter app
-#   ./run.sh web 9090     # custom web port
+#   ./run.sh                       # tablet profile, web browser at :8080 (default)
+#   ./run.sh --mobile              # mobile profile, web browser at :8080
+#   ./run.sh web 9090 --mobile     # mobile profile, custom web port
+#   ./run.sh linux                 # Linux desktop (tablet profile by default)
+#   ./run.sh linux development     # Linux desktop using .env.development
+#   ./run.sh android               # Android emulator/device
+#   ./run.sh android Pixel_7 --mobile
+#   ./run.sh studio                # open Android Studio on the Flutter app
 #
 set -euo pipefail
 
@@ -23,9 +23,25 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP="$ROOT/ellan-pos-res-main"
 CORE="$ROOT/pos-core-ib-main"
 
-TARGET="${1:-web}"
-PORT="${2:-8080}"
+LAYOUT="tablet"
+ARGS=()
+for arg in "$@"; do
+  if [[ "$arg" == "--mobile" ]]; then
+    LAYOUT="mobile"
+  else
+    ARGS+=("$arg")
+  fi
+done
+
+if [[ "${ARGS[0]:-}" == "--help" || "${ARGS[0]:-}" == "-h" ]]; then
+  sed -n '1,20p' "$0"
+  exit 0
+fi
+
+TARGET="${ARGS[0]:-web}"
+PORT="${ARGS[1]:-8080}"
 HOST="${WEB_HOST:-127.0.0.1}"
+LAYOUT_ARGS=(--dart-define="APP_LAYOUT=$LAYOUT")
 
 if [[ ! -d "$APP" ]]; then
   echo "error: Flutter app not found at $APP" >&2
@@ -64,7 +80,7 @@ case "$TARGET" in
     echo "Serving POS at http://${HOST}:${PORT}"
     echo "  app:  $APP"
     echo "  core: $CORE"
-    exec flutter run -d web-server --web-hostname "$HOST" --web-port "$PORT"
+    exec flutter run -d web-server --web-hostname "$HOST" --web-port "$PORT" "${LAYOUT_ARGS[@]}"
     ;;
   linux|desktop)
     [[ -d linux ]] || flutter create --platforms=linux .
@@ -87,8 +103,8 @@ case "$TARGET" in
       echo "Using Mesa software GL fallback..."
     fi
     ENV_ARGS=()
-    if [[ -n "${2:-}" ]]; then
-      ENV_FILE=".env.$2"
+    if [[ -n "${ARGS[1]:-}" ]]; then
+      ENV_FILE=".env.${ARGS[1]}"
       if [[ ! -f "$APP/$ENV_FILE" ]]; then
         echo "error: $APP/$ENV_FILE not found" >&2
         exit 1
@@ -99,11 +115,11 @@ case "$TARGET" in
     echo "  app:  $APP"
     echo "  core: $CORE"
     echo "  env:  ${ENV_FILE:-.env}"
-    exec flutter run -d linux "${ENV_ARGS[@]}"
+    exec flutter run -d linux "${ENV_ARGS[@]}" "${LAYOUT_ARGS[@]}"
     ;;
   android|emulator)
     [[ -f android/gradlew ]] || flutter create --platforms=android .
-    AVD="${2:-Pixel_Tablet}"
+    AVD="${ARGS[1]:-Pixel_Tablet}"
     # If no Android device is connected, launch the preferred emulator.
     if ! flutter devices --machine 2>/dev/null | grep -q '"platformType":"android"'; then
       echo "No Android device found — launching emulator: $AVD"
@@ -118,13 +134,13 @@ case "$TARGET" in
     echo "Launching POS on Android..."
     echo "  app:  $APP"
     echo "  core: $CORE"
-    exec flutter run -d android
+    exec flutter run -d android "${LAYOUT_ARGS[@]}"
     ;;
   studio|android-studio)
     exec "$ROOT/open-studio.sh"
     ;;
   *)
-    echo "Usage: $0 [web|linux|android|studio] [port|avd]" >&2
+    echo "Usage: $0 [web|linux|android|studio] [port|avd|environment] [--mobile]" >&2
     exit 1
     ;;
 esac

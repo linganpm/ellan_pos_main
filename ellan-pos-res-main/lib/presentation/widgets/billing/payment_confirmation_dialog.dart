@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/font_utility.dart';
 import '../../../core/localization/l10n_context.dart';
+import 'package:pos_tablet/core/currency_format.dart';
 
 class PaymentConfirmationDialog extends StatelessWidget {
   final String paymentMethod;
@@ -84,7 +85,7 @@ class PaymentConfirmationDialog extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        '\$${amount.toStringAsFixed(2)}',
+                        PosCurrency.format(amount),
                         style: FontUtility.heading.copyWith(
                           fontSize: 32,
                           color: const Color(0xFF4A00E0),

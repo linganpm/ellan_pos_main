@@ -1119,6 +1119,19 @@ class AppLocalizationsTa extends AppLocalizations {
   String get companySettingsSaved => 'நிறுவன அமைப்புகள் சேமிக்கப்பட்டன.';
 
   @override
+  String get companySettingsSavedOffline =>
+      'இந்தச் சாதனத்தில் சேமிக்கப்பட்டது. மீண்டும் ஆன்லைனில் வந்ததும் நிறுவன விவரங்கள் ஒத்திசைக்கப்படும்.';
+
+  @override
+  String get companySettingsPendingSync =>
+      'இன்னும் ஒத்திசைக்கப்படவில்லை — மாற்றங்கள் இந்தச் சாதனத்தில் சேமிக்கப்பட்டுள்ளன, அடுத்த ஒத்திசைவில் பதிவேற்றப்படும்.';
+
+  @override
+  String companySettingsSavedNotSynced(String reason) {
+    return 'இந்தச் சாதனத்தில் சேமிக்கப்பட்டது, ஆனால் சேவையகம் புதுப்பிப்பை நிராகரித்தது: $reason';
+  }
+
+  @override
   String get companySettingsTitle => 'நிறுவன அமைப்புகள்';
 
   @override
@@ -1774,6 +1787,20 @@ class AppLocalizationsTa extends AppLocalizations {
   String get dineInFloorFirst => 'முதல் தளம்';
 
   @override
+  String get dineInBooked => 'முன்பதிவு செய்யப்பட்டது';
+
+  @override
+  String get dineInTableUnavailable =>
+      'இந்த மேஜை தற்போது கிடைக்கவில்லை. வேறு மேஜையைத் தேர்ந்தெடுக்கவும்.';
+
+  @override
+  String get dineInNoTables =>
+      'மேஜைகள் அமைக்கப்படவில்லை. கடையின் தளங்களையும் மேஜைகளையும் ஒத்திசைக்கவும் அல்லது அமைக்கவும்.';
+
+  @override
+  String get dineInRefreshTables => 'மேஜை கிடைப்பைப் புதுப்பிக்கவும்';
+
+  @override
   String get dineInFloorSecond => 'இரண்டாவது தளம்';
 
   @override
@@ -2309,6 +2336,29 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get orderDraftSaved =>
       'வண்டி வரைவு சேமிக்கப்பட்டது. முகப்பு → சேமிக்கப்பட்ட வரைவுகள் வழியாகத் திறக்கவும்.';
+
+  @override
+  String get orderDeleteOrder => 'ஆர்டரை நீக்கு';
+
+  @override
+  String get orderDeleteOrderQuestion => 'ஆர்டரை நீக்கவா?';
+
+  @override
+  String get orderDeleteOrderBody =>
+      'இது ஆர்டரிலிருந்து அனைத்து பொருட்களையும் நீக்கி, சேமித்த வரைவை அழித்து, மேசையை விடுவிக்கும். ஏற்கனவே சமையலறைக்கு அனுப்பப்பட்டவை ரத்து எனப் பதிவு செய்யப்படும்.';
+
+  @override
+  String get orderDeletedTableFreed =>
+      'ஆர்டர் நீக்கப்பட்டது. மேசை காலியாக உள்ளது.';
+
+  @override
+  String get orderCancelledTableFreed =>
+      'ஆர்டர் ஏற்கனவே சமையலறைக்கு அனுப்பப்பட்டது அல்லது ஒத்திசைக்கப்பட்டது, எனவே ரத்து செய்யப்பட்டது. மேசை காலியாக உள்ளது.';
+
+  @override
+  String errorCouldNotDeleteOrder(String error) {
+    return 'ஆர்டரை நீக்க முடியவில்லை: $error';
+  }
 
   @override
   String get orderGoToPayments => 'கட்டணங்களுக்குச் செல்';
@@ -3195,6 +3245,14 @@ class AppLocalizationsTa extends AppLocalizations {
       'ஆஃப்லைனில் நீக்கப்பட்டது. tombstone ஏற்றுமதிக்கு ஒத்திசையுங்கள்.';
 
   @override
+  String get storeSetupPackageMarkedActive =>
+      'தொகுப்பு செயலில் உள்ளது, பில்லிங்கில் கிடைக்கும். நிர்வாக பேனலைப் புதுப்பிக்க ஒத்திசைக்கவும்.';
+
+  @override
+  String get storeSetupPackageMarkedInactive =>
+      'தொகுப்பு செயலற்றது, பில்லிங்கில் மறைக்கப்பட்டது. நிர்வாக பேனலைப் புதுப்பிக்க ஒத்திசைக்கவும்.';
+
+  @override
   String get storeSetupEditAddonGroup => 'துணைப்பொருள் குழுவைத் திருத்து';
 
   @override
@@ -3664,6 +3722,9 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get homeLock => 'திரையைப் பூட்டு';
+
+  @override
+  String get actionLock => 'பூட்டு';
 
   @override
   String get lockEnterPin => 'திறக்க உங்கள் பின்னை உள்ளிடுங்கள்';

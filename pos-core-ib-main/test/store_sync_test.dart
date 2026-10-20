@@ -1298,17 +1298,34 @@ void main() {
   test(
     'Store sync imports products and keeps imported variants exported',
     () async {
-      final productJson = await File(
+      final productData = jsonDecode(await File(
         'fixtures/product_data.json',
-      ).readAsString();
+      ).readAsString()) as Map<String, dynamic>;
+      for (final category in productData['data'] as List) {
+        for (final variant in category['product_variants'] as List? ?? []) {
+          variant['product_variant_logo'] = '/product-image.png';
+        }
+      }
+      productData['updated_on'] = '2026-03-01T12:00:00Z';
+      var productJson = jsonEncode(productData);
+      final seenSince = <String?>[];
+      final imageBytes = base64Decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1cAAAAASUVORK5CYII=',
+      );
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       addTearDown(server.close);
+      var imageStatus = HttpStatus.ok;
 
       server.listen((request) async {
         if (request.uri.path == '/products/import') {
+          seenSince.add(request.uri.queryParameters['since']);
           request.response
             ..statusCode = HttpStatus.ok
             ..write(productJson);
+        } else if (request.uri.path == '/product-image.png') {
+          request.response.statusCode = imageStatus;
+          request.response.headers.set('content-type', 'image/png');
+          if (imageStatus == HttpStatus.ok) request.response.add(imageBytes);
         } else {
           request.response.statusCode = HttpStatus.notFound;
         }
@@ -1375,8 +1392,18 @@ void main() {
         },
       });
 
-      final store = await Store.createForTest(
-        productJson: null,
+      final temp = await Directory.systemTemp.createTemp('pos-sync-images-');
+      addTearDown(() => temp.delete(recursive: true));
+      final metadata = config.testStore!;
+      final store = await Store.openPersistent(
+        orgId: metadata.orgId, orgName: metadata.orgName, orgCode: metadata.orgCode,
+        storeId: metadata.storeId, serviceInstanceId: metadata.serviceInstanceId,
+        storeName: metadata.storeName, logo: metadata.logo, uniqueId: metadata.uniqueId,
+        contactEmail: metadata.contactEmail, phone: metadata.phone,
+        contactPerson: metadata.contactPerson, status: metadata.status,
+        serviceVariantType: metadata.serviceVariantType,
+        customerJson: config.assetPaths.customers,
+        databasePath: temp.path,
         config: config,
       );
       addTearDown(store.close);
@@ -1400,6 +1427,8 @@ void main() {
       expect(variants.first.exported, true);
       expect(variants.first.lastImportedAt, isNotNull);
       expect(variants.first.lastExportedAt, isNull);
+      expect(variants.first.imagePath, startsWith(temp.path));
+      expect(await File(variants.first.imagePath).readAsBytes(), imageBytes);
 
       final history = await store.sync.history(store.scope);
       expect(history.isNotEmpty, true);
@@ -1407,6 +1436,22 @@ void main() {
       expect(history.first.direction, 'import');
       expect(history.first.successCount, greaterThan(0));
       expect(history.first.failureCount, 0);
+
+      imageStatus = HttpStatus.forbidden;
+      productData['updated_on'] = '2026-03-02T12:00:00Z';
+      productJson = jsonEncode(productData);
+      final progress = <StoreSyncProgressUpdate>[];
+      await expectLater(store.sync.importProducts(store.scope, onProgress: progress.add),
+        throwsStateError);
+      expect(progress.last.stage, StoreSyncProgressStage.failed);
+      expect(progress.any((p) => p.stage == StoreSyncProgressStage.completed), isFalse);
+      final failedHistory = await store.sync.history(store.scope);
+      expect(failedHistory.first.failureCount, 1);
+      expect(failedHistory.first.message, contains('Previous images are kept'));
+      expect(await File(variants.first.imagePath).readAsBytes(), imageBytes);
+      imageStatus = HttpStatus.ok;
+      await store.sync.importProducts(store.scope);
+      expect(seenSince, [null, '2026-03-01T12:00:00Z', '2026-03-01T12:00:00Z']);
 
       expect(store.sync.autoSyncEnabled, true);
       expect(store.sync.startAutoSync(store.scope), true);

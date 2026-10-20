@@ -9,6 +9,59 @@ Dart package for offline orders management with API and SQLite integration.
 - Repository pattern for fetching and caching orders
 - Example usage
 
+## Offline product images
+
+Product sync resolves the server's variant image (or product-image fallback) and
+downloads it beside the persistent SQLite database in `product_images/`. Catalogue
+records expose `StoreProductVariantRecord.imagePath` for local rendering. Do not
+use the remote `product_variant_logo` to render offline catalogue tiles.
+
+Images survive app restarts and expired S3 signatures. Sync revalidates saved
+images using ETag/Last-Modified, downloads changed or missing files, and publishes
+files atomically before updating SQLite. Image downloads are limited to 20 MB
+each with a 30-second connection/body timeout. A failed image download preserves
+the previous local image and catalogue data, records a failed product-sync attempt,
+and leaves the product watermark unchanged so the next sync can retry. Signed URLs
+are not included in the failure message. Image removal clears the local reference.
+Schema version 52 adds cache metadata without changing existing catalogue rows.
+
+## Credit accounting
+
+Order summaries and `StoreOrderDetails.paidTotal` exclude credit tenders and
+include non-deleted credit repayment allocations for that order. Refunds reduce
+received amounts. Credit sales remain finalized (Closed), but payment status is
+Unpaid or Partial until money is received; outstanding credit is not a paid sale.
+The settlement-coverage total used by order closing intentionally includes credit.
+
+## Discarding orders
+
+`store.orders.discard(scope, orderId)` removes an unpaid order that is not
+Closed or Completed. Local-only orders that were never sent to the kitchen are
+hard-deleted (`true`). Orders already sent to the kitchen or synced are marked
+Cancelled (`false`), and sent quantities are logged as kitchen cancellations.
+Orders with payment rows are rejected. Table occupancy ignores Closed, Completed
+and Cancelled orders.
+
+## Offline customers
+
+`store.customers.recordOfflineDirectoryCustomer` stores a customer under a
+provisional `local_cust_…` id (or reuses an existing customer with the same
+phone or email). After `exportCustomers` sends the whole snapshot, the gateway
+`results` (`localCustomerId → customerId`) are applied: the customer, store
+roles, orders, payments, credits, repayments, schedules and credit account
+move to the backend `user_{id}`. Credits are a full snapshot on every sync, so
+any credit the gateway skipped (it needs `user_{id}`) is sent again once
+remapped.
+
+## Sync timestamps
+
+Local rows store naive device-local times, but the gateway treats naive values
+as UTC. Before each export batch is posted, `normalizeSyncPayloadTimestamps`
+(`lib/sync_timestamps.dart`) rewrites naive instant fields (`created_on`,
+`updated_on`, `kitchen_sent_at`, `paid_on`, …) to UTC `…Z`. Zoned values and
+date-only values are sent unchanged. Hosts can set
+`Store.receiptTimestampFormatter` to print receipt times in the org timezone.
+
 ## Usage
 ```dart
 import 'package:pos_orders_offline/pos_orders_offline.dart';
@@ -98,7 +151,11 @@ For a runnable end-to-end sample that seeds local orders and prints dashboard ou
 
 For offers, see [example/order_offers_example.dart](example/order_offers_example.dart) for a seeded-offer flow and [example/offers_feature_example.dart](example/offers_feature_example.dart) for a broader demonstration of percentage, flat, and buy-N-get-M offers. The offer engine now also supports a bill-level `total_offer` type with `targetType: bill`: when the gross bill reaches `minimumBillAmount`, the configured percentage is applied to the current bill total. Orders persist three amount fields in SQLite for this flow: gross `total_value`, applied offer discount `offer_applied_value`, and payable `final_value`.
 
+Two more product offer types match the backend benefit types. `fixed_price` sells each bundle of `buyQuantity` units (default 1) for `flatValue` in total. `buy_n_get_m_discount` takes `percentageValue`% off the cheapest `getQuantity` units for every `buyQuantity` bought. The offer sync is a full snapshot. Invalid offers are skipped without failing the batch. After a successful import, synced server offers missing from the snapshot (expired, disabled or removed upstream) are soft-deleted locally without being exported. They come back if a later sync includes them again. Local-only offers and pending local deletions are left untouched.
+
 For receipt printing, see [example/order_receipt_print_example.dart](example/order_receipt_print_example.dart). A store instance can now discover printers with `store.listAvailablePrinters()`, send incremental kitchen tickets with `store.sendToKitchen(printerId, orderId, ...)`, inspect separate KOT cancellations with `store.orders.listKitchenCancellations(store.scope, orderId)`, and print a customer receipt with `store.print(printerId, orderId, templateType: ..., copies: ...)`. The built-in template types are `customer` and `kitchen`. Kitchen sends are quantity-aware and incremental: after each successful kitchen print, the sent quantity is tracked per order item, so the next kitchen send prints only the unsent quantity delta. If a previously sent quantity is reduced or removed, the cancellation is tracked separately in the KOT cancellation list. Orders can also assign tables per order item through `StoreAddOrderItemRequest(tableId: ...)`: define floors and tables with `store.tables.saveFloor(...)` and `store.tables.saveTable(...)`, list availability with `store.tables.listTables(...)` or `store.tables.listAvailableTables(...)`, and rely on open-order occupancy checks to block the same table from being attached to another order until the original order is closed. Kitchen receipts automatically include the assigned table labels for the printed items. The default adapter is simulated, so the same call returns a successful print result and the rendered receipt text without requiring hardware. During development, the simulated adapter also exposes a built-in `console-printer-01` printer that writes the rendered receipt directly to stdout for quick testing. If you want to send the same receipt to a real Linux printer queue, pass `StoreSystemPrinterAdapter()` and the package will spool it through `lp -d <printerId>`.
+
+Company details can be edited offline. `store.saveCompanyProfileLocal(..., profilePendingSync: true)` updates the `store_info` row and marks it pending, and `store.loadCompanyProfile()` exposes `profile_pending_sync`. While that flag (or `logo_pending_sync`) is set, store directory refreshes keep the local profile fields (and logo) instead of overwriting them. The app pushes the edit and clears the flags once the gateway accepts it.
 
 Floors and tables now also support local seed import/export. Use `store.tables.importFromJsonFile(...)`, `store.tables.importFromData(...)`, `store.tables.exportToJsonFile(...)`, or `store.tables.exportToJsonData(...)` with a payload shaped like `{ "floors": [...], "tables": [...] }`. For local test/example bootstrapping, `Store.createForTest(...)`, `Store.createInMemory(...)`, `Store.openPersistent(...)`, and `Store.openAccessibleStore(...)` also accept an optional `tableJson` path that seeds floors and tables during store initialization.
 For end-to-end examples, see [example/table_management_example.dart](example/table_management_example.dart) for occupancy and KOT behavior, [example/table_ui_integration_example.dart](example/table_ui_integration_example.dart) for a frontend-friendly grouped-by-floor table picker payload, and [example/table_seed_example.dart](example/table_seed_example.dart) for exporting floors/tables to a seed file and importing them into a fresh store.

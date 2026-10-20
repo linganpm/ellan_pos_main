@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/adaptive_checkout_panels.dart';
 import 'package:pos_tablet/core/sell_unit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_orders_offline/store_models.dart';
@@ -38,6 +39,9 @@ class OrderCreateScreenArgs {
   final String? customerUniqueId;
   final String? floor;
   final String? table;
+  final String? tableId;
+
+  String? get resolvedTableId => tableId ?? table;
 
   /// When restoring a saved cart draft.
   final String? draftId;
@@ -56,6 +60,7 @@ class OrderCreateScreenArgs {
     this.customerUniqueId,
     this.floor,
     this.table,
+    this.tableId,
     this.draftId,
     this.draftSnapshot,
     this.openOrderId,
@@ -72,6 +77,7 @@ class OrderCreateScreenArgs {
       customerUniqueId: customerUniqueId,
       floor: floor,
       table: table,
+      tableId: tableId,
       draftId: draftId,
       draftSnapshot: draftSnapshot,
       openOrderId: openOrderId,
@@ -169,7 +175,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
         customerPhone: args.phone,
         customerEmail: args.email,
         customerUniqueId: args.customerUniqueId,
-        tableId: args.table,
+        tableId: args.resolvedTableId,
         tipsAmount: snapshotTips,
         serviceTaxAmount: state.serviceTaxValue,
         discountAmount: state.discountValue,
@@ -177,7 +183,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
       );
       if (!mounted) return;
       setState(() => _openOrderId = result.orderId);
-      // Persist restoreable draft before clearing the active basket.
+      // Keep the open order recoverable if the user leaves before billing.
       final draft = await CartDraftStore.save(
         existingId: _draftId,
         args: CartDraftArgs(
@@ -190,6 +196,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
           customerUniqueId: args.customerUniqueId,
           floor: args.floor,
           table: args.table,
+          tableId: args.tableId,
           openOrderId: result.orderId,
         ),
         items: [
@@ -251,6 +258,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
           customerUniqueId: args.customerUniqueId,
           floor: args.floor,
           table: args.table,
+          tableId: args.tableId,
           openOrderId: _openOrderId,
         ),
         items: state.cartItems,
@@ -275,12 +283,22 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
     }
   }
 
-  Future<void> _deleteDraft(BuildContext context, CartState state) async {
+  /// Deletes the whole order: cart, saved cart draft and any open SQLite order
+  /// (freeing its table). A fresh, untouched order is simply dismissed.
+  Future<void> _deleteOrder(BuildContext context, CartState state) async {
+    final navigator = Navigator.of(context);
+    final draftId = _draftId;
+    final openOrderId = _openOrderId;
+    final hasDraft = draftId != null && draftId.isNotEmpty;
+    if (state.cartItems.isEmpty && !hasDraft && openOrderId == null) {
+      navigator.pop();
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(context.l10n.orderDeleteDraftQuestion),
-        content: Text(context.l10n.orderCreateDeleteDraftBody),
+        title: Text(context.l10n.orderDeleteOrderQuestion),
+        content: Text(context.l10n.orderDeleteOrderBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -296,17 +314,42 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
-    final id = _draftId;
-    if (id != null && id.isNotEmpty) {
-      await CartDraftStore.delete(id);
+    if (confirmed != true || !mounted || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final cartBloc = context.read<CartBloc>();
+    final l10n = context.l10n;
+    var deleted = true;
+    try {
+      if (openOrderId != null) {
+        deleted = await getIt<UiStoreController>().discardOrder(openOrderId);
+      }
+      if (hasDraft) {
+        await CartDraftStore.delete(draftId);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.errorCouldNotDeleteOrder(error.toString())),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+      return;
     }
     if (!mounted) return;
-    context.read<CartBloc>().add(ClearCart());
-    setState(() => _draftId = null);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.l10n.orderDraftDeleted)));
+    cartBloc.add(ClearCart());
+    setState(() {
+      _draftId = null;
+      _openOrderId = null;
+    });
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          deleted ? l10n.orderDeletedTableFreed : l10n.orderCancelledTableFreed,
+        ),
+      ),
+    );
+    navigator.pop();
   }
 
   @override
@@ -399,10 +442,11 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                 BlocBuilder<CartBloc, CartState>(
                   builder: (context, state) {
                     return IconButton(
-                      tooltip: context.l10n.orderDeleteDraft,
-                      onPressed: state.cartItems.isEmpty && _draftId == null
+                      key: const ValueKey('order-create-delete'),
+                      tooltip: context.l10n.orderDeleteOrder,
+                      onPressed: _kotBusy
                           ? null
-                          : () => _deleteDraft(context, state),
+                          : () => _deleteOrder(context, state),
                       icon: const Icon(
                         Icons.delete_outline_rounded,
                         color: Color(0xFFFF512F),
@@ -421,15 +465,13 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
               ),
             ),
             body: SafeArea(
-              child: Row(
-                children: [
-                  Expanded(flex: 65, child: _buildLeftPanel()),
-                  Container(
-                    width: 1,
-                    color: Colors.grey.withValues(alpha: 0.2),
-                  ),
-                  Expanded(flex: 35, child: _buildRightPanel()),
-                ],
+              child: AdaptiveCheckoutPanels(
+                primaryLabel: context.l10n.commonItem,
+                secondaryLabel: context.l10n.commonOrderLabel,
+                primaryFlex: 65,
+                secondaryFlex: 35,
+                primary: _buildLeftPanel(),
+                secondary: _buildRightPanel(),
               ),
             ),
           );
@@ -450,7 +492,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
           children: [
             // Categories List
             Container(
-              height: 44,
+              height: 64,
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
               child: Row(
                 children: [
@@ -497,12 +539,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                   final layout = _ProductGridLayout.fromConstraints(
                     constraints,
                   );
-                  return _buildCenteredProductGrid(
-                    context,
-                    state,
-                    layout,
-                    constraints,
-                  );
+                  return _buildProductGrid(context, state, layout);
                 },
               ),
             ),
@@ -512,15 +549,17 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
     );
   }
 
-  Widget _buildCenteredProductGrid(
+  Widget _buildProductGrid(
     BuildContext context,
     CartState state,
     _ProductGridLayout layout,
-    BoxConstraints constraints,
   ) {
-    final productCount = state.filteredProducts.length;
-    final tileWidth = layout.compact ? 116.0 : 146.0;
-    final tileHeight = tileWidth / layout.childAspectRatio;
+    final products = state.filteredProducts;
+    final productCount = products.length;
+    final inCart = <String, double>{};
+    for (final item in state.cartItems) {
+      inCart[item.product.id] = (inCart[item.product.id] ?? 0) + item.quantity;
+    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
@@ -553,34 +592,31 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                     ),
                   ),
                 )
-              : SingleChildScrollView(
-                  padding: EdgeInsets.all(layout.spacing),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: (constraints.maxHeight - (layout.spacing * 2))
-                          .clamp(0, double.infinity),
-                    ),
-                    child: Center(
-                      child: Wrap(
-                        alignment: WrapAlignment.center,
-                        runAlignment: WrapAlignment.center,
-                        spacing: layout.spacing,
-                        runSpacing: layout.spacing,
-                        children: [
-                          for (final product in state.filteredProducts)
-                            SizedBox(
-                              width: tileWidth,
-                              height: tileHeight,
-                              child: ProductItemCard(
-                                product: product,
-                                onTap: () => _onProductTap(context, product),
-                                compact: layout.compact,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
+              : GridView.builder(
+                  key: PageStorageKey('grid-${state.selectedCategoryId}'),
+                  padding: EdgeInsets.all(layout.padding),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: layout.crossAxisCount,
+                    mainAxisSpacing: layout.spacing,
+                    crossAxisSpacing: layout.spacing,
+                    childAspectRatio: layout.childAspectRatio,
                   ),
+                  itemCount: productCount,
+                  itemBuilder: (context, index) {
+                    final product = products[index];
+                    return _StaggeredTileIn(
+                      key: ValueKey(
+                        '${state.selectedCategoryId}-${product.id}',
+                      ),
+                      index: index,
+                      child: ProductItemCard(
+                        product: product,
+                        onTap: () => _onProductTap(context, product),
+                        compact: layout.compact,
+                        cartQuantity: inCart[product.id] ?? 0,
+                      ),
+                    );
+                  },
                 ),
         ),
       ),
@@ -677,7 +713,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
             name: '${product.name}',
             description: '',
             price: (product.price as num?)?.toDouble() ?? 0,
-            imageUrl: '',
+            imageUrl: '${product.imagePath}',
             categoryId: '${product.categoryId}',
             sellUnitCode: product.sellUnitCode as int?,
             sellUnitShort: product.sellUnitShort?.toString(),
@@ -746,7 +782,6 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                       labelText: context.l10n.orderCreateQuantityUnit(
                         unitShort,
                       ),
-                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -1017,8 +1052,10 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
               Expanded(
                 flex: 11,
                 child: CheckoutFooterButtons(
-                  hasItems:
-                      state.cartItems.isNotEmpty && !state.isHistoryTabActive,
+                  hasItems: state.cartItems.isNotEmpty && !_kotBusy,
+                  canSendKot: state.cartItems.any(
+                    (item) => item.pendingKotQuantity > 0.0001,
+                  ),
                   onKOT: () => _sendKot(context, state),
                   onBill: () {
                     final billArgs = OrderCreateScreenArgs(
@@ -1031,6 +1068,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                       customerUniqueId: args.customerUniqueId,
                       floor: args.floor,
                       table: args.table,
+                      tableId: args.tableId,
                       draftId: _draftId,
                       openOrderId: _openOrderId,
                     );
@@ -1179,6 +1217,34 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
 }
 
 /// Evenly places product tiles for the current panel size (~30 visible).
+/// Fades and lifts tiles in one after another when a category opens.
+class _StaggeredTileIn extends StatelessWidget {
+  final int index;
+  final Widget child;
+
+  const _StaggeredTileIn({super.key, required this.index, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    const baseMs = 240;
+    final delayMs = index.clamp(0, 14) * 28;
+    final totalMs = baseMs + delayMs;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: totalMs),
+      curve: Interval(delayMs / totalMs, 1, curve: Curves.easeOutCubic),
+      builder: (context, value, child) => Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset(0, (1 - value) * 14),
+          child: Transform.scale(scale: 0.96 + value * 0.04, child: child),
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
 class _ProductGridLayout {
   final int crossAxisCount;
   final double spacing;
@@ -1221,7 +1287,7 @@ class _ProductGridLayout {
     final height = (rawHeight - 4 - padding).clamp(1.0, rawHeight);
 
     // Start from a comfortable tile width, then clamp column count.
-    var cols = (width / 124).round().clamp(4, 8);
+    var cols = (width / 124).round().clamp(1, 8);
 
     double tileWidthFor(int columnCount, double gap) =>
         (width - (columnCount - 1) * gap) / columnCount;
@@ -1233,7 +1299,7 @@ class _ProductGridLayout {
       cols += 1;
       tileW = tileWidthFor(cols, gap);
     }
-    while (tileW < minTile && cols > 4) {
+    while (tileW < minTile && cols > 1) {
       cols -= 1;
       tileW = tileWidthFor(cols, gap);
     }

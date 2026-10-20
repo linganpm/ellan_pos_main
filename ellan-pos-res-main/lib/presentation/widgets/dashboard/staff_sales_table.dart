@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/controllers/checkout_models.dart';
 import '../../../core/utils/font_utility.dart';
 import '../../../core/localization/l10n_context.dart';
+import 'package:pos_tablet/core/currency_format.dart';
 
 class StaffSalesTable extends StatelessWidget {
   final String title;
@@ -13,13 +14,15 @@ class StaffSalesTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currency = NumberFormat.currency(symbol: '\$');
+    final currency = NumberFormat.currency(symbol: PosCurrency.symbol());
     final empty = rows.isEmpty;
+    final colors = Theme.of(context).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surfaceContainerLowest,
+        border: Border.all(color: colors.outlineVariant),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -34,8 +37,12 @@ class StaffSalesTable extends StatelessWidget {
         children: [
           Text(title, style: FontUtility.heading.copyWith(fontSize: 20)),
           const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -87,7 +94,7 @@ class StaffSalesTable extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(color: Colors.black12, height: 1),
+          const SizedBox(height: 8),
           Expanded(
             child: empty
                 ? Center(
@@ -103,14 +110,15 @@ class StaffSalesTable extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     itemCount: rows.length,
                     separatorBuilder: (context, index) =>
-                        const Divider(color: Colors.black12),
+                        Divider(color: colors.outlineVariant, height: 1),
                     itemBuilder: (context, index) {
                       final row = rows[index];
                       final initial = row.staffName.trim().isNotEmpty
                           ? row.staffName.trim().substring(0, 1).toUpperCase()
                           : '?';
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      return Container(
+                        color: index.isOdd ? colors.surfaceContainerLow : null,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                         child: Row(
                           children: [
                             Expanded(

@@ -16,12 +16,13 @@ class BillingItemsTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final rowPad = dense ? 10.0 : 14.0;
     final fontSize = dense ? 14.0 : 16.0;
+    final colors = Theme.of(context).colorScheme;
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        color: colors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -33,11 +34,11 @@ class BillingItemsTable extends StatelessWidget {
               vertical: dense ? 8 : 12,
             ),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: colors.surfaceContainerHigh,
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
+                top: Radius.circular(16),
               ),
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+              border: Border(bottom: BorderSide(color: colors.outlineVariant)),
             ),
             child: Row(
               children: [
@@ -47,7 +48,7 @@ class BillingItemsTable extends StatelessWidget {
                     context.l10n.commonQty,
                     style: FontUtility.subheading.copyWith(
                       fontSize: 13,
-                      color: Colors.grey.shade700,
+                      color: colors.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -57,7 +58,7 @@ class BillingItemsTable extends StatelessWidget {
                     context.l10n.commonItem,
                     style: FontUtility.subheading.copyWith(
                       fontSize: 13,
-                      color: Colors.grey.shade700,
+                      color: colors.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -68,7 +69,7 @@ class BillingItemsTable extends StatelessWidget {
                     textAlign: TextAlign.right,
                     style: FontUtility.subheading.copyWith(
                       fontSize: 13,
-                      color: Colors.grey.shade700,
+                      color: colors.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -79,11 +80,14 @@ class BillingItemsTable extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: items.length,
-            separatorBuilder: (context, index) =>
-                Divider(height: 1, color: Colors.grey.shade100),
+            separatorBuilder: (context, index) => Divider(
+              height: 1,
+              color: colors.outlineVariant.withValues(alpha: 0.5),
+            ),
             itemBuilder: (context, index) {
               final item = items[index];
-              return Padding(
+              return Container(
+                color: index.isOdd ? colors.surfaceContainerLow : null,
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: rowPad),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,

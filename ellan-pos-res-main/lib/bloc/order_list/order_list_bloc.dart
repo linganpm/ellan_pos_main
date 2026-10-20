@@ -4,6 +4,7 @@ import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/device_setup_store.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/order_types_repository.dart';
+import 'package:pos_tablet/core/org_timezone.dart';
 import 'package:pos_tablet/presentation/widgets/order_list/order_status_badge.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'order_list_event.dart';
@@ -135,7 +136,9 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
       phoneNumber: summary.mobile.isEmpty ? null : summary.mobile,
       email: summary.customerEmail.isEmpty ? null : summary.customerEmail,
       customerUniqueId: summary.customerUniqueId,
-      timestamp: DateTime.tryParse(summary.createdOn ?? '') ?? DateTime.now(),
+      timestamp:
+          OrgTimezone.tryParseWallClock(summary.createdOn, _orgTimezoneName) ??
+          OrgTimezone.nowWallClock(_orgTimezoneName),
       orderStatus: formatOrderStatusLabel(
         summary.statusName.isEmpty ? 'Completed' : summary.statusName,
       ),
@@ -210,6 +213,14 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
     }
   }
 
+  String? get _orgTimezoneName {
+    try {
+      return _controller.orgTimezoneName;
+    } catch (_) {
+      return null;
+    }
+  }
+
   void _resolvePeriodWindow() {
     final period = (_period ?? '').trim();
     if (period.isEmpty) {
@@ -219,7 +230,7 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
     }
     if (period == 'Custom') return;
     if (period == 'Last 24 hours') {
-      final now = DateTime.now();
+      final now = OrgTimezone.nowWallClock(_orgTimezoneName);
       _periodStart = now.subtract(const Duration(hours: 24));
       _periodEnd = now.add(const Duration(minutes: 1));
       return;
@@ -453,30 +464,35 @@ class OrderListBloc extends Bloc<OrderListEvent, OrderListState> {
       final currentState = state as OrderListLoaded;
       emit(OrderListLoading());
 
-      await _loadOrdersFromDb();
-      _resolvePeriodWindow();
-      final refreshedData = _applyFiltersAndPagination(
-        currentState.selectedTypeFilter,
-        currentState.selectedStatusFilter,
-        currentState.searchQuery,
-        0,
-      );
+      try {
+        await _loadOrdersFromDb();
+        _resolvePeriodWindow();
+        final refreshedData = _applyFiltersAndPagination(
+          currentState.selectedTypeFilter,
+          currentState.selectedStatusFilter,
+          currentState.searchQuery,
+          0,
+        );
 
-      emit(
-        OrderListLoaded(
-          orders: refreshedData,
-          availableOrderTypes: List.unmodifiable(_orderTypes),
-          selectedTypeFilter: currentState.selectedTypeFilter,
-          selectedStatusFilter: currentState.selectedStatusFilter,
-          periodFilter: _period,
-          periodStart: _periodStart,
-          periodEnd: _periodEnd,
-          searchQuery: currentState.searchQuery,
-          hasReachedMax: refreshedData.length < _pageSize,
-          availableTables: _tables,
-          selectedTableFilter: _tableFilter,
-        ),
-      );
+        emit(
+          OrderListLoaded(
+            orders: refreshedData,
+            availableOrderTypes: List.unmodifiable(_orderTypes),
+            selectedTypeFilter: currentState.selectedTypeFilter,
+            selectedStatusFilter: currentState.selectedStatusFilter,
+            periodFilter: _period,
+            periodStart: _periodStart,
+            periodEnd: _periodEnd,
+            searchQuery: currentState.searchQuery,
+            hasReachedMax: refreshedData.length < _pageSize,
+            availableTables: _tables,
+            selectedTableFilter: _tableFilter,
+          ),
+        );
+      } catch (error, stackTrace) {
+        addError(error, stackTrace);
+        emit(const OrderListError('Failed to refresh orders.'));
+      }
     } else {
       add(FetchInitialOrders());
     }

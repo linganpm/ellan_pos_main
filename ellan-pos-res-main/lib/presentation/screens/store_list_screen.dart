@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/pos_brand_logo.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
@@ -56,11 +57,7 @@ class StoreListScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      Icons.insights_rounded,
-                      size: 80,
-                      color: Colors.white,
-                    ),
+                    const PosBrandLogo(size: 80),
                     const SizedBox(height: 32),
                     Text(
                       context.l10n.appName,

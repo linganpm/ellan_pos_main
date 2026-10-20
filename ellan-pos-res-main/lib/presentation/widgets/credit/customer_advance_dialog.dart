@@ -65,6 +65,7 @@ class _CustomerAdvanceDialogState extends State<CustomerAdvanceDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      icon: const Icon(Icons.add_card_rounded),
       title: Text(context.l10n.customerAdvanceAdd),
       content: SizedBox(
         width: 430,
@@ -105,7 +106,6 @@ class _CustomerAdvanceDialogState extends State<CustomerAdvanceDialog> {
                 decoration: InputDecoration(
                   labelText: context.l10n.commonAmount,
                   prefixText: '${PosCurrency.symbol()} ',
-                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -113,7 +113,6 @@ class _CustomerAdvanceDialogState extends State<CustomerAdvanceDialog> {
                 initialValue: _paymentMode,
                 decoration: InputDecoration(
                   labelText: context.l10n.commonPaymentMode,
-                  border: const OutlineInputBorder(),
                 ),
                 items: [
                   DropdownMenuItem(
@@ -138,7 +137,6 @@ class _CustomerAdvanceDialogState extends State<CustomerAdvanceDialog> {
                 controller: _referenceController,
                 decoration: InputDecoration(
                   labelText: context.l10n.commonReferenceOptional,
-                  border: const OutlineInputBorder(),
                 ),
               ),
             ],

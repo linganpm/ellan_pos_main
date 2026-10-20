@@ -168,7 +168,6 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                     initialValue: _paymentMode,
                     decoration: InputDecoration(
                       labelText: context.l10n.commonPaymentMode,
-                      border: OutlineInputBorder(),
                     ),
                     items: [
                       for (final option in widget.modeOptions)
@@ -270,7 +269,6 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                   controller: _referenceController,
                   decoration: InputDecoration(
                     labelText: context.l10n.commonReferenceOptional,
-                    border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 20),

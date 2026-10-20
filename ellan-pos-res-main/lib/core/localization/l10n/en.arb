@@ -634,6 +634,16 @@
   "companySavedOnDevice": "Saved on this device · syncs with Save",
   "companySettingsNameRegAddress": "Name, registration, address, tax, phone, email, identifier",
   "companySettingsSaved": "Company settings saved.",
+  "companySettingsSavedOffline": "Saved on this device. Company details will sync when you're back online.",
+  "companySettingsPendingSync": "Not synced yet — changes are saved on this device and will upload on the next sync.",
+  "companySettingsSavedNotSynced": "Saved on this device, but the server rejected the update: {reason}",
+  "@companySettingsSavedNotSynced": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "companySettingsTitle": "Company settings",
   "companyStaffsListHint": "List staff and add new accounts for this store",
   "companyStaffsTitle": "Staff",
@@ -1012,6 +1022,10 @@
   "deviceTypeResetToConfirm": "Type RESET to confirm",
   "deviceValidUntil": "Valid until",
   "dineInFloorFirst": "First Floor",
+  "dineInBooked": "Booked",
+  "dineInTableUnavailable": "This table is no longer available. Please select another table.",
+  "dineInNoTables": "No tables configured. Sync or configure the store's floors and tables.",
+  "dineInRefreshTables": "Refresh table availability",
   "dineInFloorSecond": "Second Floor",
   "dineInTable": "Table {number}",
   "@dineInTable": {
@@ -1436,6 +1450,19 @@
   "orderDetailsViewPayments": "View payments",
   "orderDraftDeleted": "Draft deleted.",
   "orderDraftSaved": "Cart draft saved. Open it from Home → Saved drafts.",
+  "orderDeleteOrder": "Delete order",
+  "orderDeleteOrderQuestion": "Delete order?",
+  "orderDeleteOrderBody": "This removes all products from the order, deletes its saved draft and frees the table. Items already sent to the kitchen are logged as cancelled.",
+  "orderDeletedTableFreed": "Order deleted. Table is free.",
+  "orderCancelledTableFreed": "Order was already sent to the kitchen or synced, so it was cancelled. Table is free.",
+  "errorCouldNotDeleteOrder": "Could not delete order: {error}",
+  "@errorCouldNotDeleteOrder": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "orderGoToPayments": "Go to payments",
   "orderHistoryId": "{id} · Order #{orderId}",
   "@orderHistoryId": {
@@ -1949,6 +1976,8 @@
   "storeSetupDeletePackage": "Delete package?",
   "storeSetupDeletedOffline": "Deleted offline. Sync to export.",
   "storeSetupDeletedTombstone": "Deleted offline. Sync to export tombstone.",
+  "storeSetupPackageMarkedActive": "Package is active and available for billing. Sync to update the admin panel.",
+  "storeSetupPackageMarkedInactive": "Package is inactive and hidden from billing. Sync to update the admin panel.",
   "storeSetupEditAddonGroup": "Edit add-on group",
   "storeSetupEditOffer": "Edit offer",
   "storeSetupEditPackage": "Edit package",
@@ -2194,6 +2223,7 @@
   "supportEmailAction": "Email",
   "supportWhatsappAction": "Chat",
   "homeLock": "Lock screen",
+  "actionLock": "Lock",
   "lockEnterPin": "Enter your PIN to unlock",
   "lockEnterPinAt": "Enter your PIN to unlock {storeName}",
   "@lockEnterPinAt": {

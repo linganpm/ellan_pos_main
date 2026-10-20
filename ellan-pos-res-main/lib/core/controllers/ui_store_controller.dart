@@ -16,6 +16,8 @@ import 'checkout_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/discovery_constants.dart';
+import '../cart_draft_store.dart';
+import '../company_profile_sync.dart';
 import '../currency_format.dart';
 import '../device_local_reset.dart';
 import '../device_settings_store.dart';
@@ -1109,6 +1111,22 @@ class UiStoreController {
     return store.orders.getServeNumberMaximum(store.scope);
   }
 
+  Future<List<StoreTableRecord>> loadDineInTables() async {
+    final store = _requireStore();
+    final floors = await store.tables.listFloors(store.scope);
+    final activeFloors = floors
+        .where((floor) => floor.active)
+        .map((floor) => floor.floorId)
+        .toSet();
+    final tables = await store.tables.listTables(
+      store.scope,
+      includeInactive: false,
+    );
+    return tables
+        .where((table) => activeFloors.contains(table.floorId))
+        .toList();
+  }
+
   Future<void> updateServeNumberMaximum(int maximum) {
     final store = _requireStore();
     return store.orders.setServeNumberMaximum(store.scope, maximum);
@@ -1536,15 +1554,15 @@ class UiStoreController {
       throw StateError('Order $orderId has no payable amount.');
     }
 
-    var totalPaid = 0.0;
+    var totalCovered = 0.0;
     if (reusedExistingOrder) {
       final existingPayments = await store.orders.listPayments(
         store.scope,
         orderId,
       );
-      totalPaid = existingPayments.fold<double>(
+      totalCovered = existingPayments.fold<double>(
         0,
-        (sum, payment) => sum + payment.amount,
+        (sum, payment) => sum + payment.refundableAmount,
       );
     }
     final modeLabels = <String>[];
@@ -1564,7 +1582,7 @@ class UiStoreController {
               'pos-$paymentMode-$orderId-${DateTime.now().millisecondsSinceEpoch}',
         ),
       );
-      totalPaid += line.amount;
+      totalCovered += line.amount;
       modeLabels.add(paymentMode);
 
       if (isCredit) {
@@ -1596,9 +1614,9 @@ class UiStoreController {
       }
     }
 
-    totalPaid = double.parse(totalPaid.toStringAsFixed(2));
+    totalCovered = double.parse(totalCovered.toStringAsFixed(2));
     var balance = double.parse(
-      (amountDue - totalPaid).clamp(0, amountDue).toStringAsFixed(2),
+      (amountDue - totalCovered).clamp(0, amountDue).toStringAsFixed(2),
     );
 
     if (isBuying && balance > 0.0001) {
@@ -1631,32 +1649,36 @@ class UiStoreController {
               'pos-credit-auto-$orderId-${DateTime.now().millisecondsSinceEpoch}',
         ),
       );
-      totalPaid = double.parse((totalPaid + balance).toStringAsFixed(2));
+      totalCovered = double.parse((totalCovered + balance).toStringAsFixed(2));
       modeLabels.add(StoreOrderPaymentMode.credit);
       balance = double.parse(
-        (amountDue - totalPaid).clamp(0, amountDue).toStringAsFixed(2),
+        (amountDue - totalCovered).clamp(0, amountDue).toStringAsFixed(2),
       );
     }
 
-    final paymentStatus = totalPaid <= 0.0001
+    final settledOrder = await store.orders.getById(store.scope, orderId);
+    if (settledOrder == null) throw StateError('Order $orderId was not found.');
+    final received = settledOrder.paidTotal;
+    final outstanding = settledOrder.balanceDue;
+    final paymentStatus = received <= 0.0001
         ? 'Unpaid'
-        : (balance <= 0.0001 ? 'Paid' : 'Partial');
+        : (outstanding <= 0.0001 ? 'Paid' : 'Partial');
     await store.orders.updatePaymentStatus(store.scope, orderId, paymentStatus);
 
     String statusName = 'Pending';
-    if (isBuying || (balance <= 0.0001 && totalPaid > 0)) {
+    if (isBuying || (balance <= 0.0001 && totalCovered > 0)) {
       await store.orders.close(store.scope, orderId);
       statusName = 'Closed';
     }
 
     return CheckoutCompletionResult(
       orderId: orderId,
-      totalPaid: totalPaid,
+      totalPaid: received,
       paymentMode: modeLabels.isEmpty ? 'none' : modeLabels.join('+'),
       statusName: statusName,
       restaurantName: store.storeName,
       paymentStatus: paymentStatus,
-      balanceDue: balance,
+      balanceDue: outstanding,
       pricingMode: resolvedPricingMode,
       customerName: (customerName ?? '').trim(),
       customerId: (resolvedCustomerId ?? '').trim(),
@@ -1692,7 +1714,7 @@ class UiStoreController {
     final orderTotal = order.finalValue > 0 ? order.finalValue : order.total;
     final alreadyPaid = order.payments.fold<double>(
       0,
-      (sum, payment) => sum + payment.amount,
+      (sum, payment) => sum + payment.refundableAmount,
     );
     final remaining = double.parse(
       (orderTotal - alreadyPaid).clamp(0, orderTotal).toStringAsFixed(2),
@@ -1763,7 +1785,9 @@ class UiStoreController {
       );
     }
 
-    final paidTotal = double.parse((alreadyPaid + amount).toStringAsFixed(2));
+    final settledOrder = await store.orders.getById(store.scope, orderId);
+    if (settledOrder == null) throw StateError('Order $orderId was not found.');
+    final paidTotal = settledOrder.paidTotal;
     final balance = double.parse(
       (orderTotal - paidTotal).clamp(0, orderTotal).toStringAsFixed(2),
     );
@@ -1772,12 +1796,8 @@ class UiStoreController {
         : (balance <= 0.0001 ? 'Paid' : 'Partial');
     await store.orders.updatePaymentStatus(store.scope, orderId, paymentStatus);
 
-    if (balance <= 0.0001) {
-      try {
-        await store.orders.close(store.scope, orderId);
-      } catch (_) {
-        // Already closed or status gate — payment status still updated.
-      }
+    if (alreadyPaid + amount + 0.0001 >= orderTotal) {
+      await store.orders.close(store.scope, orderId);
     }
 
     return (
@@ -2322,6 +2342,17 @@ class UiStoreController {
     return store.orders.deleteDraft(store.scope, orderId);
   }
 
+  /// Deletes (or cancels, when already sent to kitchen/server) an unpaid open
+  /// order and drops any saved cart draft pointing at it. Frees its table.
+  Future<bool> discardOrder(int orderId) async {
+    final store = _requireStore();
+    final existing = await store.orders.getById(store.scope, orderId);
+    final deleted =
+        existing == null || await store.orders.discard(store.scope, orderId);
+    await CartDraftStore.deleteForOrder(orderId);
+    return deleted;
+  }
+
   Future<void> promoteDraftToPending(int orderId) async {
     final store = _requireStore();
     final details = await store.orders.getById(store.scope, orderId);
@@ -2460,7 +2491,11 @@ class UiStoreController {
 
   Future<List<StoreProductVariantRecord>> loadProductVariants(int categoryId) {
     final store = _requireStore();
-    return store.products.listVariantsByCategory(store.scope, categoryId);
+    return store.products.listVariantsByCategory(
+      store.scope,
+      categoryId,
+      activeOnly: true,
+    );
   }
 
   Future<List<StoreProductAddonGroupRecord>> loadAddonGroupsForVariant(
@@ -2523,6 +2558,18 @@ class UiStoreController {
         final get = offer.getQuantity ?? 0;
         if (buy <= 0 || get <= 0) return offer.name.trim();
         return 'B$buy G$get';
+      case StoreOfferType.buyNGetMDiscount:
+        final buy = offer.buyQuantity ?? 0;
+        final get = offer.getQuantity ?? 0;
+        final pct = offer.percentageValue ?? 0;
+        if (buy <= 0 || get <= 0 || pct <= 0) return offer.name.trim();
+        return 'B$buy G$get -${pct == pct.roundToDouble() ? pct.toInt() : pct}%';
+      case StoreOfferType.fixedPrice:
+        final price = offer.flatValue;
+        if (price == null || price < 0) return offer.name.trim();
+        final qty = offer.buyQuantity ?? 1;
+        final formatted = PosCurrency.format(price, decimals: price == price.roundToDouble() ? 0 : 2);
+        return qty > 1 ? '$qty for $formatted' : '@$formatted';
       default:
         return offer.name.trim();
     }
@@ -2550,6 +2597,7 @@ class UiStoreController {
           ? variant.uniqueId!
           : (variant.variantId?.toString() ?? variant.localId);
       return PosCatalogProduct(
+        imagePath: variant.imagePath,
         id: id,
         localId: variant.localId,
         name: packageName.isNotEmpty
@@ -2578,11 +2626,13 @@ class UiStoreController {
         variants = await store.products.listVariantsByCategoryLocalId(
           scope,
           category.localId,
+          activeOnly: true,
         );
       } else {
         variants = await store.products.listVariantsByCategory(
           scope,
           category.categoryId,
+          activeOnly: true,
         );
       }
       if (variants.isEmpty) continue;
@@ -2605,7 +2655,11 @@ class UiStoreController {
 
     // Catch packages whose categoryLocalId did not resolve via categoryId.
     if (products.isEmpty || categoryRows.isNotEmpty) {
-      final all = await store.products.searchDetails(scope: scope, limit: 5000);
+      final all = await store.products.searchDetails(
+        scope: scope,
+        limit: 5000,
+        activeOnly: true,
+      );
       for (final variant in all) {
         final id = variant.uniqueId?.isNotEmpty == true
             ? variant.uniqueId!
@@ -2721,6 +2775,62 @@ class UiStoreController {
 
   /// Creates (or reuses) a directory party via the gateway and stores them
   /// locally under the backend user id (``user_{id}``).
+  /// Gateway refs for `/api/pos/store/profile`. The gateway only resolves
+  /// numeric service-instance ids, so those are preferred.
+  Map<String, String> companyProfileRefs() {
+    final store = _requireStore();
+    final login = _organisationLogin;
+    final orgInstance = (login?.serviceInstanceId ?? '').trim().isNotEmpty
+        ? login!.serviceInstanceId!.trim()
+        : (login?.organisation.orgId.trim() ?? store.orgId);
+    final remote = (store.storeRemoteId ?? '').trim();
+    final numeric = RegExp(r'^\d+$');
+    final storeSi = store.serviceInstanceId > 0
+        ? '${store.serviceInstanceId}'
+        : (numeric.hasMatch(remote)
+              ? remote
+              : (numeric.hasMatch(store.scope.storeId)
+                    ? store.scope.storeId
+                    : (remote.isNotEmpty ? remote : store.uniqueId)));
+    return {
+      'org_instance_id': orgInstance,
+      'orgId': orgInstance,
+      'store_service_instance': storeSi,
+      'storeId': storeSi,
+    };
+  }
+
+  /// How long the company profile push waits before staying queued offline.
+  @visibleForTesting
+  static Duration companyProfilePushTimeout = const Duration(seconds: 8);
+
+  /// Pushes company details saved on this device (`profile_pending_sync`).
+  /// Returns true when nothing is pending or the gateway accepted them, and
+  /// false when offline/not signed in (the edit stays queued for the next
+  /// sync). Throws [StateError] with the gateway message when it rejects them.
+  Future<bool> pushPendingCompanyProfile() {
+    final store = _requireStore();
+    return CompanyProfileSync(
+      loadProfile: store.loadCompanyProfile,
+      markSynced: (fields) => store.saveCompanyProfileLocal(
+        storeName: fields['storeName'],
+        contactEmail: fields['contactEmail'],
+        phone: fields['phone'],
+        address: fields['address'],
+        registrationNumber: fields['registration_number'],
+        taxNumber: fields['tax_number'],
+        identifier: fields['identifier'],
+        logoPendingSync: false,
+        profilePendingSync: false,
+      ),
+      timeout: companyProfilePushTimeout,
+    ).push(
+      origin: discoveryOrigin(kDiscoveryUrl),
+      token: _organisationLogin?.accessToken,
+      refs: companyProfileRefs(),
+    );
+  }
+
   Future<StoreCustomer?> createDirectoryCustomer({
     required String name,
     required String phone,
@@ -2732,20 +2842,35 @@ class UiStoreController {
         ? 'retail_customer'
         : customerGroup.trim().toLowerCase();
     final uri = Uri.parse(kDiscoveryUrl).replace(path: '/api/pos/customers');
-    final response = await http.post(
-      uri,
-      headers: const {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'orgId': store.orgId,
-        'orgCode': store.orgCode,
-        'storeId': store.storeId,
-        'name': name.trim(),
-        'phone': phone.trim(),
-        if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
-        'customer_group': resolvedGroup,
-      }),
-    );
-    final body = jsonDecode(response.body);
+    final Object? body;
+    try {
+      final response = await http
+          .post(
+            uri,
+            headers: const {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'orgId': store.orgId,
+              'orgCode': store.orgCode,
+              'storeId': store.storeId,
+              'name': name.trim(),
+              'phone': phone.trim(),
+              if (email != null && email.trim().isNotEmpty)
+                'email': email.trim(),
+              'customer_group': resolvedGroup,
+            }),
+          )
+          .timeout(customerCreateTimeout);
+      body = jsonDecode(response.body);
+    } on Object catch (error) {
+      if (!isGatewayUnreachable(error)) rethrow;
+      return _createOfflineDirectoryCustomer(
+        store: store,
+        name: name,
+        phone: phone,
+        email: email,
+        customerGroup: resolvedGroup,
+      );
+    }
     if (body is! Map || body['ok'] != true) {
       final message = body is Map
           ? (body['message']?.toString() ?? 'Customer create failed')
@@ -2769,6 +2894,47 @@ class UiStoreController {
       uniqueId: customerId,
       role: resolvedGroup,
     );
+    return store.customers.getById(customerId);
+  }
+
+  /// How long customer creation waits for the gateway before saving offline.
+  @visibleForTesting
+  static Duration customerCreateTimeout = const Duration(seconds: 8);
+
+  @visibleForTesting
+  static bool isGatewayUnreachable(Object error) =>
+      error is SocketException ||
+      error is TimeoutException ||
+      error is HandshakeException ||
+      error is http.ClientException ||
+      // HTML error page from a proxy / captive portal instead of JSON.
+      error is FormatException;
+
+  /// Saves the customer locally under a provisional id; the next customer
+  /// sync swaps it for the backend ``user_{id}`` and updates their orders
+  /// and credit rows.
+  Future<StoreCustomer?> _createOfflineDirectoryCustomer({
+    required Store store,
+    required String name,
+    required String phone,
+    String? email,
+    required String customerGroup,
+  }) async {
+    if (!const ['retail_customer', 'business_customer'].contains(
+      customerGroup,
+    )) {
+      throw StateError(
+        'You are offline. Suppliers can only be added when connected.',
+      );
+    }
+    final customerId = await store.customers.recordOfflineDirectoryCustomer(
+      scope: store.scope,
+      name: name,
+      phone: phone,
+      email: email,
+      role: customerGroup,
+    );
+    if (customerId == null || customerId.isEmpty) return null;
     return store.customers.getById(customerId);
   }
 
@@ -3454,6 +3620,8 @@ class UiStoreController {
   }
 
   /// IANA timezone for the open store (org/store config), if known.
+  String? get orgTimezoneName => _orgTimezoneName;
+
   String? get _orgTimezoneName {
     try {
       final prefs = getIt<SharedPreferences>();
@@ -3611,6 +3779,12 @@ class UiStoreController {
         store.scope,
         onProgress: onProgress,
       );
+      // Company details saved offline; a rejection must not fail the sync.
+      try {
+        await pushPendingCompanyProfile();
+      } catch (error) {
+        debugPrint('Company profile push failed: $error');
+      }
 
       final download = await store.sync.importConfiguredCatalogue(
         store.scope,

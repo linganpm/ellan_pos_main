@@ -34,6 +34,13 @@ class CustomerRepository {
     return int.tryParse(raw) != null;
   }
 
+  /// Prefix for customers captured offline before the gateway assigned a
+  /// backend user id. Replaced by ``user_{id}`` after customer export.
+  static const String provisionalCustomerIdPrefix = 'local_cust_';
+
+  static bool isProvisionalCustomerId(String? value) =>
+      (value ?? '').trim().startsWith(provisionalCustomerIdPrefix);
+
   static String normalizeUserCustomerId(String value) {
     final raw = value.trim();
     if (raw.startsWith('user_')) return raw;
@@ -233,6 +240,110 @@ class CustomerRepository {
     return customerId;
   }
 
+  /// Records a customer while offline under a provisional id. Reuses an
+  /// existing directory customer with the same phone/email when present.
+  Future<String> upsertOfflineDirectoryCustomer({
+    required StoreScope scope,
+    required String name,
+    required String phone,
+    String? email,
+    String role = 'retail_customer',
+  }) async {
+    final trimmedName = name.trim();
+    final trimmedPhone = phone.trim();
+    final trimmedEmail = email?.trim() ?? '';
+    final existing = await findDirectoryCustomer(
+      scope: scope,
+      phone: trimmedPhone,
+      email: trimmedEmail,
+    );
+    if (existing != null) {
+      final id = existing['customerId'] as String;
+      await _ensureStoreRole(scope, id, role);
+      return id;
+    }
+    final customerId =
+        '$provisionalCustomerIdPrefix${DateTime.now().microsecondsSinceEpoch}';
+    await db.insert('customers', {
+      'customerId': customerId,
+      'remote_id': null,
+      'orgId': scope.orgId,
+      'storeId': scope.storeId,
+      'name': trimmedName,
+      'email': trimmedEmail,
+      'phone': trimmedPhone,
+      'country': '',
+      'status': 'active',
+      'role': role,
+      'password': '',
+    });
+    await _ensureStoreRole(scope, customerId, role);
+    return customerId;
+  }
+
+  /// Replaces a provisional customer id with the backend ``user_{id}`` and
+  /// moves orders, payments and credit rows onto it. Returns true on change.
+  Future<bool> adoptBackendCustomerId({
+    required StoreScope scope,
+    required String localId,
+    required String backendId,
+  }) async {
+    final oldId = localId.trim();
+    if (!isProvisionalCustomerId(oldId) || !isUserCustomerId(backendId)) {
+      return false;
+    }
+    final newId = normalizeUserCustomerId(backendId);
+    final oldRows = await db.query(
+      'customers',
+      where: 'customerId = ?',
+      whereArgs: [oldId],
+      limit: 1,
+    );
+    if (oldRows.isEmpty) return false;
+    await db.transaction((txn) async {
+      final target = await txn.query(
+        'customers',
+        where: 'customerId = ?',
+        whereArgs: [newId],
+        limit: 1,
+      );
+      if (target.isEmpty) {
+        await txn.update(
+          'customers',
+          {'customerId': newId, 'remote_id': newId},
+          where: 'customerId = ?',
+          whereArgs: [oldId],
+        );
+      } else {
+        await txn.delete(
+          'customers',
+          where: 'customerId = ?',
+          whereArgs: [oldId],
+        );
+      }
+      final roles = await txn.query(
+        'store_roles',
+        where: 'orgId = ? AND customerId = ?',
+        whereArgs: [scope.orgId, oldId],
+      );
+      await txn.delete(
+        'store_roles',
+        where: 'orgId = ? AND customerId = ?',
+        whereArgs: [scope.orgId, oldId],
+      );
+      for (final role in roles) {
+        await txn.insert('store_roles', {
+          ...role,
+          'remote_id':
+              '${role['orgId']}:${role['storeId']}:$newId:${role['role']}',
+          'customerId': newId,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+    await _remapCustomerReferences(scope: scope, oldId: oldId, newId: newId);
+    return true;
+  }
+
   Future<void> _ensureStoreRole(
     StoreScope scope,
     String customerId,
@@ -303,7 +414,7 @@ class CustomerRepository {
       whereArgs: [scope.orgId, scope.storeId, oldId],
     );
     for (final table in const ['order_payments', 'credits',
-        'credit_repayments']) {
+        'credit_repayments', 'credit_scheduled_repayments']) {
       await db.update(
         table,
         {'customerId': newId},
@@ -311,6 +422,19 @@ class CustomerRepository {
         whereArgs: [scope.orgId, scope.storeId, oldId],
       );
     }
+    // One credit account per customer: keep the existing one if present.
+    await db.update(
+      'credit_accounts',
+      {'customerId': newId},
+      where: 'orgId = ? AND storeId = ? AND customerId = ?',
+      whereArgs: [scope.orgId, scope.storeId, oldId],
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+    await db.delete(
+      'credit_accounts',
+      where: 'orgId = ? AND storeId = ? AND customerId = ?',
+      whereArgs: [scope.orgId, scope.storeId, oldId],
+    );
   }
 
   static Future<CustomerRepository> createInMemory() async {

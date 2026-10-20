@@ -9,6 +9,7 @@ import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/screens/order_details_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/localization/l10n_context.dart';
+import 'package:pos_tablet/core/currency_format.dart';
 
 /// Lists local order refunds for the open store.
 class RefundsScreen extends StatefulWidget {
@@ -28,7 +29,7 @@ class _RefundsScreenState extends State<RefundsScreen> {
   String? _error;
   List<StoreOrderRefundRecord> _refunds = const [];
 
-  final _currency = NumberFormat.currency(symbol: '\$');
+  final _currency = NumberFormat.currency(symbol: PosCurrency.symbol());
   final _time = DateFormat('dd MMM yyyy · hh:mm a');
 
   @override

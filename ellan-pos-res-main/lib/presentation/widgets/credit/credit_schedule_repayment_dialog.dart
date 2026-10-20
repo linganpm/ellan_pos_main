@@ -102,6 +102,8 @@ class _CreditScheduleRepaymentDialogState
         ? context.l10n.commonCustomer
         : widget.customerName;
     return AlertDialog(
+      scrollable: true,
+      icon: const Icon(Icons.event_available_rounded),
       title: Text(context.l10n.creditsScheduleRepayment),
       content: SizedBox(
         width: 420,
@@ -122,7 +124,6 @@ class _CreditScheduleRepaymentDialogState
               ],
               decoration: InputDecoration(
                 labelText: context.l10n.commonAmount,
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
@@ -132,7 +133,6 @@ class _CreditScheduleRepaymentDialogState
               child: InputDecorator(
                 decoration: InputDecoration(
                   labelText: context.l10n.commonDueDate,
-                  border: OutlineInputBorder(),
                   suffixIcon: Icon(Icons.calendar_today_rounded),
                 ),
                 child: Text(_dueDateLabel, style: FontUtility.body),

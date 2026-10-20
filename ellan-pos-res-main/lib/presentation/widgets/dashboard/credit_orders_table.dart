@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/localization/l10n_context.dart';
 import '../../../core/utils/font_utility.dart';
+import 'package:pos_tablet/core/currency_format.dart';
 
 class CreditOrder {
   final String customerName;
@@ -21,10 +22,12 @@ class CreditOrdersTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surfaceContainerLowest,
+        border: Border.all(color: colors.outlineVariant),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -47,12 +50,13 @@ class CreditOrdersTable extends StatelessWidget {
               padding: EdgeInsets.zero,
               itemCount: orders.length,
               separatorBuilder: (context, index) =>
-                  const Divider(color: Colors.black12),
+                  Divider(color: colors.outlineVariant, height: 1),
               itemBuilder: (context, index) {
                 final order = orders[index];
                 final isHighCredit = order.amount > 100;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                return Container(
+                  color: index.isOdd ? colors.surfaceContainerLow : null,
+                  padding: const EdgeInsets.all(12),
                   child: Row(
                     children: [
                       CircleAvatar(
@@ -89,7 +93,7 @@ class CreditOrdersTable extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '\$${order.amount.toStringAsFixed(2)}',
+                        PosCurrency.format(order.amount),
                         style: FontUtility.body.copyWith(
                           fontWeight: FontWeight.bold,
                           color: isHighCredit

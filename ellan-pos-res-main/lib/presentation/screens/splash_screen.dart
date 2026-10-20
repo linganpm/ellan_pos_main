@@ -7,6 +7,7 @@ import '../../core/routes.dart';
 import '../../core/utils/font_utility.dart';
 import '../../core/utils/user_facing_error.dart';
 import '../../core/localization/l10n_context.dart';
+import '../widgets/pos_brand_logo.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -140,43 +141,27 @@ class _SplashScreenState extends State<SplashScreen>
           child: Center(
             child: FadeTransition(
               opacity: _fadeAnimation,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    height: 120,
-                    width: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.1),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 20,
-                          spreadRadius: 5,
-                        ),
-                      ],
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const PosBrandLogo(size: 180),
+                    const SizedBox(height: 32),
+                    Text(
+                      context.l10n.authEntryBrand,
+                      style: FontUtility.heading.copyWith(
+                        color: Colors.white,
+                        fontSize: 48,
+                        letterSpacing: 2,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.point_of_sale_rounded,
-                      size: 60,
-                      color: Colors.white,
+                    const SizedBox(height: 48),
+                    const CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
                     ),
-                  ),
-                  const SizedBox(height: 32),
-                  Text(
-                    context.l10n.authEntryBrand,
-                    style: FontUtility.heading.copyWith(
-                      color: Colors.white,
-                      fontSize: 48,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  const SizedBox(height: 48),
-                  const CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

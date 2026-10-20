@@ -15,6 +15,7 @@ class CartDraftArgs {
   final String? customerUniqueId;
   final String? floor;
   final String? table;
+  final String? tableId;
   final int? openOrderId;
 
   const CartDraftArgs({
@@ -27,6 +28,7 @@ class CartDraftArgs {
     this.customerUniqueId,
     this.floor,
     this.table,
+    this.tableId,
     this.openOrderId,
   });
 
@@ -40,6 +42,7 @@ class CartDraftArgs {
     'customerUniqueId': customerUniqueId,
     'floor': floor,
     'table': table,
+    'tableId': tableId,
     'openOrderId': openOrderId,
   };
 
@@ -54,6 +57,7 @@ class CartDraftArgs {
       customerUniqueId: json['customerUniqueId'] as String?,
       floor: json['floor'] as String?,
       table: json['table'] as String?,
+      tableId: json['tableId'] as String?,
       openOrderId: (json['openOrderId'] as num?)?.toInt(),
     );
   }
@@ -103,6 +107,8 @@ class CartDraft {
           'product': {
             'id': item.product.id,
             'name': item.product.name,
+            'productName': item.product.productName,
+            'variantName': item.product.variantName,
             'description': item.product.description,
             'price': item.product.price,
             'imageUrl': item.product.imageUrl,
@@ -164,6 +170,8 @@ class CartDraft {
               product: Product(
                 id: '${(row['product'] as Map?)?['id'] ?? ''}',
                 name: '${(row['product'] as Map?)?['name'] ?? ''}',
+                productName: '${(row['product'] as Map?)?['productName'] ?? ''}',
+                variantName: '${(row['product'] as Map?)?['variantName'] ?? ''}',
                 description:
                     '${(row['product'] as Map?)?['description'] ?? ''}',
                 price:
@@ -295,8 +303,17 @@ class CartDraftStore {
   static Future<void> delete(String id) async {
     final trimmed = id.trim();
     if (trimmed.isEmpty) return;
+    await _removeWhere((row) => row.id == trimmed);
+  }
+
+  static Future<void> deleteForOrder(int orderId) {
+    return _removeWhere((row) => row.args.openOrderId == orderId);
+  }
+
+  static Future<void> _removeWhere(bool Function(CartDraft row) test) async {
     final current = await list();
-    final next = current.where((row) => row.id != trimmed).toList();
+    final next = current.where((row) => !test(row)).toList();
+    if (next.length == current.length) return;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
       _key,

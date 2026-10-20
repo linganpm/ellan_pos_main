@@ -3,18 +3,21 @@ import '../../core/utils/font_utility.dart';
 
 class CheckoutFooterButtons extends StatelessWidget {
   final bool hasItems;
+  final bool canSendKot;
   final VoidCallback onKOT;
   final VoidCallback onBill;
 
   const CheckoutFooterButtons({
     super.key,
     required this.hasItems,
+    this.canSendKot = true,
     required this.onKOT,
     required this.onBill,
   });
 
   @override
   Widget build(BuildContext context) {
+    final kotEnabled = hasItems && canSendKot;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
@@ -33,16 +36,16 @@ class CheckoutFooterButtons extends StatelessWidget {
           Expanded(
             flex: 1,
             child: ElevatedButton(
-              onPressed: hasItems ? onKOT : null,
+              onPressed: kotEnabled ? onKOT : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF4A00E0),
                 disabledBackgroundColor: Colors.grey.shade100,
                 disabledForegroundColor: Colors.grey.shade400,
-                elevation: hasItems ? 2 : 0,
+                elevation: kotEnabled ? 2 : 0,
                 shadowColor: Colors.black.withOpacity(0.1),
                 side: BorderSide(
-                  color: hasItems
+                  color: kotEnabled
                       ? const Color(0xFF4A00E0).withOpacity(0.5)
                       : Colors.transparent,
                   width: 1.5,
@@ -55,7 +58,7 @@ class CheckoutFooterButtons extends StatelessWidget {
                 'KOT',
                 style: FontUtility.heading.copyWith(
                   fontSize: 18,
-                  color: hasItems
+                  color: kotEnabled
                       ? const Color(0xFF4A00E0)
                       : Colors.grey.shade400,
                 ),

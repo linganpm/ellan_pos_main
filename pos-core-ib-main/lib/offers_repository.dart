@@ -18,43 +18,80 @@ class OffersRepository {
     await importOffersFromJsonData(data, scope: scope);
   }
 
-  Future<void> importOffersFromJsonData(
+  /// Imports server offers and returns the `unique_id`s seen in [data].
+  /// Invalid offers are skipped so one bad record cannot block the rest.
+  Future<List<String>> importOffersFromJsonData(
     Map<String, dynamic> data, {
     required StoreScope scope,
   }) async {
     final rawOffers = data['data'];
+    final importedUniqueIds = <String>[];
     if (rawOffers is! List) {
-      return;
+      return importedUniqueIds;
     }
     for (final rawOffer in rawOffers.whereType<Map>()) {
       final offer = rawOffer.cast<String, dynamic>();
-      await saveOffer(
-        scope,
-        StoreSaveOfferRequest(
-          localId: offer['local_id'] as String? ?? offer['localId'] as String?,
-          uniqueId: offer['unique_id'] as String? ?? offer['uniqueId'] as String?,
-          name: offer['name'] as String? ?? '',
-          targetType: offer['target_type'] as String? ?? offer['targetType'] as String? ?? StoreOfferTargetType.product,
-          offerType: offer['offer_type'] as String? ?? offer['offerType'] as String? ?? StoreOfferType.percentage,
-          targetIds: ((offer['target_ids'] as List<dynamic>?)
-                      ?? (offer['targetIds'] as List<dynamic>?)
-                      ?? (offer['targets'] as List<dynamic>?)
-                      ?? const <dynamic>[])
-              .map((value) => '$value')
-              .toList(growable: false),
-          percentageValue: _parseDouble(offer['percentage_value'] ?? offer['percentageValue']),
-          flatValue: _parseDouble(offer['flat_value'] ?? offer['flatValue']),
-              minimumBillAmount: _parseDouble(offer['minimum_bill_amount'] ?? offer['minimumBillAmount']),
-          buyQuantity: _parseInt(offer['buy_quantity'] ?? offer['buyQuantity']),
-          getQuantity: _parseInt(offer['get_quantity'] ?? offer['getQuantity']),
-          active: (offer['active'] is bool)
-              ? offer['active'] as bool
-              : ((offer['active'] as num?)?.toInt() ?? 1) == 1,
-          createdOn: offer['created_on'] as String? ?? offer['createdOn'] as String?,
-          updatedOn: offer['updated_on'] as String? ?? offer['updatedOn'] as String?,
-        ),
-      );
+      final uniqueId = (offer['unique_id'] ?? offer['uniqueId'])?.toString().trim();
+      if (uniqueId != null && uniqueId.isNotEmpty) {
+        importedUniqueIds.add(uniqueId);
+      }
+      try {
+        await saveOffer(
+          scope,
+          StoreSaveOfferRequest(
+            localId: offer['local_id'] as String? ?? offer['localId'] as String?,
+            uniqueId: uniqueId,
+            name: offer['name'] as String? ?? '',
+            targetType: offer['target_type'] as String? ?? offer['targetType'] as String? ?? StoreOfferTargetType.product,
+            offerType: offer['offer_type'] as String? ?? offer['offerType'] as String? ?? StoreOfferType.percentage,
+            targetIds: ((offer['target_ids'] as List<dynamic>?)
+                        ?? (offer['targetIds'] as List<dynamic>?)
+                        ?? (offer['targets'] as List<dynamic>?)
+                        ?? const <dynamic>[])
+                .map((value) => '$value')
+                .toList(growable: false),
+            percentageValue: _parseDouble(offer['percentage_value'] ?? offer['percentageValue']),
+            flatValue: _parseDouble(offer['flat_value'] ?? offer['flatValue']),
+            minimumBillAmount: _parseDouble(offer['minimum_bill_amount'] ?? offer['minimumBillAmount']),
+            buyQuantity: _parseInt(offer['buy_quantity'] ?? offer['buyQuantity']),
+            getQuantity: _parseInt(offer['get_quantity'] ?? offer['getQuantity']),
+            active: (offer['active'] is bool)
+                ? offer['active'] as bool
+                : ((offer['active'] as num?)?.toInt() ?? 1) == 1,
+            createdOn: offer['created_on'] as String? ?? offer['createdOn'] as String?,
+            updatedOn: offer['updated_on'] as String? ?? offer['updatedOn'] as String?,
+          ),
+        );
+      } on ArgumentError {
+        continue;
+      }
+      if (uniqueId != null && uniqueId.isNotEmpty) {
+        // Revive a server offer previously pruned (not a pending local delete).
+        await db.update(
+          'offers',
+          {'deleted': 0},
+          where: 'orgId = ? AND storeId = ? AND unique_id = ? AND COALESCE(exported, 1) = 1',
+          whereArgs: [scope.orgId, scope.storeId, uniqueId],
+        );
+      }
     }
+    return importedUniqueIds;
+  }
+
+  /// Soft-deletes synced server offers missing from a complete server
+  /// snapshot (expired, disabled or removed upstream). Local-only offers and
+  /// pending local deletions are untouched, and nothing is exported.
+  Future<int> pruneServerOffersNotIn(StoreScope scope, Iterable<String> serverUniqueIds) async {
+    final keep = serverUniqueIds.map((value) => value.trim()).where((value) => value.isNotEmpty).toSet();
+    final placeholders = List.filled(keep.length, '?').join(', ');
+    return db.update(
+      'offers',
+      {'deleted': 1, 'active': 0},
+      where: "orgId = ? AND storeId = ? AND COALESCE(unique_id, '') <> '' "
+          'AND COALESCE(exported, 1) = 1 AND COALESCE(deleted, 0) = 0'
+          '${keep.isEmpty ? '' : ' AND unique_id NOT IN ($placeholders)'}',
+      whereArgs: [scope.orgId, scope.storeId, ...keep],
+    );
   }
 
   Future<String> saveOffer(StoreScope scope, StoreSaveOfferRequest request) async {
@@ -254,6 +291,20 @@ class OffersRepository {
       final getQuantity = request.getQuantity ?? 0;
       if (buyQuantity <= 0 || getQuantity <= 0) {
         throw ArgumentError('Buy N get M offers require positive buyQuantity and getQuantity values.');
+      }
+    }
+    if (offerType == StoreOfferType.buyNGetMDiscount) {
+      final buyQuantity = request.buyQuantity ?? 0;
+      final getQuantity = request.getQuantity ?? 0;
+      final value = request.percentageValue ?? 0;
+      if (buyQuantity <= 0 || getQuantity <= 0 || value <= 0 || value > 100) {
+        throw ArgumentError('Buy N get M at discount offers require positive quantities and a percentage between 0 and 100.');
+      }
+    }
+    if (offerType == StoreOfferType.fixedPrice) {
+      final price = request.flatValue;
+      if (price == null || price < 0 || (request.buyQuantity ?? 1) <= 0) {
+        throw ArgumentError.value(request.flatValue, 'flatValue', 'Fixed price offers require a price of zero or more.');
       }
     }
   }

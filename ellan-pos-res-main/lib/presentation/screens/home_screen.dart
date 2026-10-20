@@ -10,7 +10,7 @@ import 'package:pos_tablet/presentation/screens/order_create_screen.dart';
 import 'package:pos_tablet/presentation/screens/scheduled_payments_screen.dart';
 import 'package:pos_tablet/presentation/widgets/order_creation_sheet.dart';
 import 'package:pos_tablet/presentation/widgets/org_local_clock_badge.dart';
-import 'package:pos_tablet/presentation/widgets/staff_logout_confirm_dialog.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 import '../../bloc/cart/cart_event.dart';
 import '../../core/localization/l10n/app_localizations.dart';
 import '../../core/localization/l10n_context.dart';
@@ -206,9 +206,28 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-                        trailing: const Icon(
-                          Icons.chevron_right_rounded,
-                          color: Colors.black45,
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              key: ValueKey('saved-draft-delete-${draft.id}'),
+                              tooltip: context.l10n.orderDeleteOrder,
+                              icon: const Icon(
+                                Icons.delete_outline_rounded,
+                                color: Color(0xFFFF512F),
+                              ),
+                              onPressed: () async {
+                                final removed = await _discardSavedDraft(draft);
+                                if (removed && sheetContext.mounted) {
+                                  Navigator.pop(sheetContext);
+                                }
+                              },
+                            ),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: Colors.black45,
+                            ),
+                          ],
                         ),
                         onTap: () {
                           Navigator.pop(sheetContext);
@@ -227,6 +246,53 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) await _loadDraftCount();
   }
 
+  Future<bool> _discardSavedDraft(CartDraft draft) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.orderDeleteOrderQuestion),
+        content: Text(context.l10n.orderDeleteOrderBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(context.l10n.actionKeep),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF512F),
+            ),
+            child: Text(context.l10n.actionDelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return false;
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    var deleted = true;
+    try {
+      final orderId = draft.args.openOrderId;
+      if (orderId != null) {
+        deleted = await getIt<UiStoreController>().discardOrder(orderId);
+      }
+      await CartDraftStore.delete(draft.id);
+    } catch (error) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.errorCouldNotDeleteOrder('$error'))),
+      );
+      return false;
+    }
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          deleted ? l10n.orderDeletedTableFreed : l10n.orderCancelledTableFreed,
+        ),
+      ),
+    );
+    return true;
+  }
+
   Future<void> _restoreDraft(CartDraft draft) async {
     final args = OrderCreateScreenArgs(
       orderType: draft.args.orderType,
@@ -238,6 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
       customerUniqueId: draft.args.customerUniqueId,
       floor: draft.args.floor,
       table: draft.args.table,
+      tableId: draft.args.tableId,
       draftId: draft.id,
       openOrderId: draft.args.openOrderId,
       draftSnapshot: CartDraftSnapshot(
@@ -293,7 +360,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFEEF1F6),
       appBar: _buildAppBar(context),
-      body: SafeArea(
+      body: MediaQuery.sizeOf(context).width < 900
+          ? _buildCompactMenu(context)
+          : SafeArea(
         child: Padding(
           // Outer margins around the home dashboard card.
           padding: const EdgeInsets.fromLTRB(28, 20, 28, 24),
@@ -513,32 +582,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       title: context.l10n.homeCompany,
                                       iconData: Icons.apartment_rounded,
                                       color: const Color(0xFF1B5E20),
-                                      onTap: () async {
-                                        final store =
-                                            getIt<UiStoreController>().store;
-                                        if (store == null) return;
-                                        final ok = await store.auth
-                                            .hasStoreRole('admin');
-                                        if (!context.mounted) return;
-                                        if (!ok) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                context
-                                                    .l10n
-                                                    .homeStoreAdminRequiredCompany,
-                                              ),
-                                            ),
-                                          );
-                                          return;
-                                        }
-                                        Navigator.pushNamed(
-                                          context,
-                                          AppRoutes.company,
-                                        );
-                                      },
+                                      onTap: () => _openCompany(context),
                                     ),
                                   ),
                                   const SizedBox(width: 20),
@@ -646,7 +690,95 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _openCompany(BuildContext context) async {
+    final store = getIt<UiStoreController>().store;
+    if (store == null) return;
+    final allowed = await store.auth.hasStoreRole('admin');
+    if (!context.mounted) return;
+    if (!allowed) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(context.l10n.homeStoreAdminRequiredCompany),
+      ));
+      return;
+    }
+    Navigator.pushNamed(context, AppRoutes.company);
+  }
+
+  Widget _buildCompactMenu(BuildContext context) {
+    final destinations = <({String label, IconData icon, Widget page})>[
+      (label: context.l10n.homePosDashboard, icon: Icons.dashboard_rounded, page: const DashboardScreen()),
+      if (_tradeModes.sell)
+        (label: context.l10n.storeTradeSell, icon: Icons.trending_up_rounded, page: const SalesListScreen()),
+      if (_tradeModes.buy)
+        (label: context.l10n.storeTradeBuy, icon: Icons.trending_down_rounded, page: const PurchasesListScreen()),
+      (label: context.l10n.homeCatalogs, icon: Icons.inventory_2_outlined, page: const CatalogScreen()),
+      (label: context.l10n.homeCredits, icon: Icons.account_balance_wallet_outlined, page: const CreditsScreen()),
+      (label: context.l10n.homeRefunds, icon: Icons.assignment_return_outlined, page: const RefundsScreen()),
+      (label: context.l10n.homeCustomers, icon: Icons.people_outline, page: const CustomersScreen()),
+    ];
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 112),
+        children: [
+          const SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: OrgLocalClockBadge(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (_scheduledTodayCount > 0)
+            Card(
+              child: ListTile(
+                minVerticalPadding: 16,
+                leading: const Icon(Icons.event_available_rounded),
+                title: Text('$_scheduledTodayCount · ${context.l10n.creditsTodayScheduled}'),
+                onTap: () async {
+                  await Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => const ScheduledPaymentsScreen(todayOnly: true),
+                  ));
+                  if (mounted) await _loadScheduledToday();
+                },
+              ),
+            ),
+          for (final destination in destinations)
+            Card(
+              child: ListTile(
+                minVerticalPadding: 16,
+                leading: Icon(destination.icon, color: Theme.of(context).colorScheme.primary),
+                title: Text(destination.label),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => destination.page,
+                )),
+              ),
+            ),
+          Card(
+            child: ListTile(
+              minVerticalPadding: 16,
+              leading: const Icon(Icons.apartment_rounded),
+              title: Text(context.l10n.homeCompany),
+              onTap: () => _openCompany(context),
+            ),
+          ),
+          Card(
+            child: ListTile(
+              minVerticalPadding: 16,
+              leading: const Icon(Icons.drafts_outlined),
+              title: Text('${context.l10n.homeSavedDrafts} ($_draftCount)'),
+              onTap: _openDraftsSheet,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final compact = width < 900;
+    final veryCompact = width < 600;
     final store = context.read<UiStoreController>().store;
     final storeName = store?.storeName.trim();
     final title = (storeName != null && storeName.isNotEmpty)
@@ -657,44 +789,117 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       elevation: 0,
       centerTitle: false,
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF4A00E0).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.storefront_rounded,
-              color: Color(0xFF4A00E0),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Flexible(
-            child: Text(
+      title: veryCompact
+          ? Text(
               title,
-              style: FontUtility.heading.copyWith(fontSize: 22),
+              style: FontUtility.heading.copyWith(fontSize: 18),
               overflow: TextOverflow.ellipsis,
+            )
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const PosBrandLogo(size: 40),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(
+                    title,
+                    style: FontUtility.heading.copyWith(
+                      fontSize: compact ? 18 : 22,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
       leading: IconButton(
-        icon: const Icon(Icons.menu_rounded, color: Colors.black87),
+        icon: veryCompact
+            ? const PosBrandLogo(size: 40)
+            : const Icon(Icons.menu_rounded, color: Colors.black87),
         onPressed: () {
           // TODO: Open drawer
         },
         tooltip: context.l10n.homeMenu,
       ),
       actions: [
-        const Padding(
-          padding: EdgeInsets.only(right: 8),
-          child: OrgLocalClockBadge(),
-        ),
-        const CustomerSupportButton(),
-        FutureBuilder<String>(
+        if (compact)
+          PopupMenuButton<String>(
+            tooltip: context.l10n.homeMenu,
+            onSelected: (value) async {
+              if (value == 'sync') {
+                Navigator.pushNamed(context, AppRoutes.sync);
+                return;
+              }
+              if (value == 'setup') {
+                final store = getIt<UiStoreController>().store;
+                if (store == null) return;
+                final ok = await store.auth.hasStoreRole('admin');
+                if (!context.mounted) return;
+                if (!ok) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(context.l10n.homeStoreAdminRequiredSetup),
+                    ),
+                  );
+                  return;
+                }
+                Navigator.pushNamed(context, AppRoutes.storeSetup);
+                return;
+              }
+              if (value == 'settings') {
+                Navigator.pushNamed(context, AppRoutes.deviceSettings);
+                return;
+              }
+              if (value == 'profile') {
+                Navigator.pushNamed(context, AppRoutes.profile);
+                return;
+              }
+              if (value == 'language-en') {
+                context.read<LanguageBloc>().add(
+                  ChangeLanguageEvent(const Locale('en')),
+                );
+                return;
+              }
+              if (value == 'language-ta') {
+                context.read<LanguageBloc>().add(
+                  ChangeLanguageEvent(const Locale('ta')),
+                );
+                return;
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'sync',
+                child: Text(context.l10n.syncTitle),
+              ),
+              PopupMenuItem(
+                value: 'setup',
+                child: Text(context.l10n.homeStoreSetup),
+              ),
+              PopupMenuItem(
+                value: 'settings',
+                child: Text(context.l10n.homeDeviceSettings),
+              ),
+              PopupMenuItem(
+                value: 'profile',
+                child: Text(context.l10n.profileMyProfile),
+              ),
+              PopupMenuItem(
+                value: 'language-en',
+                child: Text(context.l10n.languageEnglish),
+              ),
+              PopupMenuItem(
+                value: 'language-ta',
+                child: Text(context.l10n.languageTamil),
+              ),
+            ],
+          ),
+        if (!compact) ...[
+          const Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: OrgLocalClockBadge(),
+          ),
+          if (!veryCompact) const CustomerSupportButton(),
+          FutureBuilder<String>(
           future: getIt<UiStoreController>().resolveStaffDisplayName(),
           builder: (context, snapshot) {
             final name = (snapshot.data ?? '').trim();
@@ -741,8 +946,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             );
           },
-        ),
-        IconButton(
+          ),
+          IconButton(
           tooltip: context.l10n.homeStoreSetup,
           onPressed: () async {
             final store = getIt<UiStoreController>().store;
@@ -760,8 +965,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.pushNamed(context, AppRoutes.storeSetup);
           },
           icon: const Icon(Icons.storefront_rounded, color: Color(0xFF4A00E0)),
-        ),
-        Padding(
+          ),
+          Padding(
           padding: const EdgeInsets.only(right: 4),
           child: ValueListenableBuilder<bool>(
             valueListenable: getIt<UiStoreController>().autoSyncFailed,
@@ -806,56 +1011,15 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
-        ),
-        IconButton(
-          tooltip: context.l10n.homeLock,
-          onPressed: () {
-            final controller = getIt<UiStoreController>();
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              AppRoutes.staffLock,
-              (route) => false,
-              arguments: {
-                'storeId': controller.store?.scope.storeId,
-                'storeName': controller.store?.storeName,
-              },
-            );
-          },
-          icon: const Icon(Icons.lock_rounded, color: Color(0xFF4A00E0)),
-        ),
-        TextButton.icon(
-          onPressed: () async {
-            final confirmed = await showStaffLogoutConfirmDialog(context);
-            if (!confirmed || !context.mounted) return;
-            final controller = getIt<UiStoreController>();
-            final storeId = controller.store?.scope.storeId;
-            final storeName = controller.store?.storeName;
-            await controller.signOutStaff();
-            if (!context.mounted) return;
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              AppRoutes.staffLock,
-              (route) => false,
-              arguments: {'storeId': storeId, 'storeName': storeName},
-            );
-          },
-          icon: const Icon(Icons.logout_rounded, color: Color(0xFFFF512F)),
-          label: Text(
-            context.l10n.actionLogout,
-            style: FontUtility.button.copyWith(
-              color: const Color(0xFFFF512F),
-              fontWeight: FontWeight.w600,
-            ),
           ),
-        ),
-        IconButton(
+          IconButton(
           tooltip: context.l10n.homeDeviceSettings,
           onPressed: () {
             Navigator.pushNamed(context, AppRoutes.deviceSettings);
           },
           icon: const Icon(Icons.settings_rounded, color: Colors.black87),
-        ),
-        PopupMenuButton<Locale>(
+          ),
+          PopupMenuButton<Locale>(
           tooltip: context.l10n.languageLabel,
           onSelected: (Locale locale) {
             context.read<LanguageBloc>().add(ChangeLanguageEvent(locale));
@@ -871,9 +1035,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Text(context.l10n.languageTamil),
             ),
           ],
-        ),
-        const SizedBox(width: 16),
-        Padding(
+          ),
+          const SizedBox(width: 16),
+          Padding(
           padding: const EdgeInsets.only(right: 24.0),
           child: Tooltip(
             message: context.l10n.profileMyProfile,
@@ -893,6 +1057,26 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          ),
+        ],
+        TextButton(
+          style: TextButton.styleFrom(
+            minimumSize: const Size(64, 48),
+            foregroundColor: const Color(0xFF4A00E0),
+          ),
+          onPressed: () {
+            final controller = getIt<UiStoreController>();
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.staffLock,
+              (route) => false,
+              arguments: {
+                'storeId': controller.store?.scope.storeId,
+                'storeName': controller.store?.storeName,
+              },
+            );
+          },
+          child: Text(context.l10n.actionLock),
         ),
       ],
       bottom: PreferredSize(

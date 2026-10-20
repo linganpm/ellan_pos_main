@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
+import 'package:pos_tablet/core/utils/user_facing_error.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 
 const _kAccent = Color(0xFF4A00E0);
@@ -99,24 +100,9 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
     Widget? suffixIcon,
   }) {
     return InputDecoration(
-      hintText: hint,
-      filled: true,
-      fillColor: const Color(0xFFF7F8FB),
+      labelText: hint,
       prefixIcon: prefixIcon,
       suffixIcon: suffixIcon,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _kAccent, width: 1.5),
-      ),
     );
   }
 
@@ -158,7 +144,7 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
       if (!mounted) return;
       setState(() {
         _searching = false;
-        _searchError = error.toString();
+        _searchError = userFacingError(error);
         _searchHits = const [];
       });
     }
@@ -254,7 +240,7 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
         if (!mounted) return;
         setState(() {
           _saving = false;
-          _formError = error.toString();
+          _formError = userFacingError(error);
         });
       }
       return;

@@ -263,6 +263,14 @@ class InvoiceScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
+                            if ((checkoutResult?.balanceDue ?? 0) > 0.0001) ...[
+                              const SizedBox(height: 12),
+                              _buildSummaryRow(
+                                context.l10n.commonRemaining,
+                                PosCurrency.format(checkoutResult!.balanceDue),
+                                bold: true,
+                              ),
+                            ],
                             const SizedBox(height: 24),
                             Row(
                               children: [

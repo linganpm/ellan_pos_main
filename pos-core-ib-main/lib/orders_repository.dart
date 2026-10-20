@@ -277,8 +277,11 @@ class OrdersRepository {
   Future<List<Map<String, dynamic>>> listOrders(
     StoreScope scope, {
     String? pricingMode,
+    int? orderId,
   }) async {
     final args = <Object?>[scope.orgId, scope.storeId];
+    final orderClause = orderId == null ? '' : 'AND o.order_id = ? ';
+    if (orderId != null) args.add(orderId);
     var pricingClause = '';
     final normalizedPricing = (pricingMode ?? '').trim();
     if (normalizedPricing.isNotEmpty) {
@@ -302,10 +305,17 @@ class OrdersRepository {
       ') AS customer_email, '
       '(SELECT COUNT(*) FROM order_items i WHERE i.orgId = o.orgId AND i.storeId = o.storeId AND i.order_id = o.order_id) AS item_count, '
       'COALESCE('
-      '  (SELECT SUM(p.amount) FROM order_payments p '
-      '   WHERE p.orgId = o.orgId AND p.storeId = o.storeId AND p.order_id = o.order_id), '
+      '  (SELECT SUM(p.amount - COALESCE((SELECT SUM(r.amount) FROM order_refunds r '
+      '      WHERE r.payment_id = p.id AND r.orgId = p.orgId AND r.storeId = p.storeId), 0)) '
+      '   FROM order_payments p '
+      '   WHERE p.orgId = o.orgId AND p.storeId = o.storeId AND p.order_id = o.order_id '
+      "     AND LOWER(TRIM(p.payment_mode)) NOT IN ('credit', 'pay_later', 'pay later')), "
       '  0'
-      ') AS paid_total, '
+      ') + $_creditRepaidSql AS paid_total, '
+      '$_creditRepaidSql AS credit_repaid_amount, '
+      'COALESCE((SELECT SUM(p.amount) FROM order_payments p '
+      '   WHERE p.orgId = o.orgId AND p.storeId = o.storeId AND p.order_id = o.order_id '
+      "     AND LOWER(TRIM(p.payment_mode)) IN ('credit', 'pay_later', 'pay later')), 0) AS credit_total, "
       '(SELECT i.table_id FROM order_items i WHERE i.orgId = o.orgId AND i.storeId = o.storeId '
       '  AND i.order_id = o.order_id AND COALESCE(i.table_id, \'\') != \'\' ORDER BY i.id LIMIT 1) AS table_id, '
       '(SELECT i.table_name FROM order_items i WHERE i.orgId = o.orgId AND i.storeId = o.storeId '
@@ -313,11 +323,21 @@ class OrdersRepository {
       '(SELECT i.floor_name FROM order_items i WHERE i.orgId = o.orgId AND i.storeId = o.storeId '
       '  AND i.order_id = o.order_id AND COALESCE(i.table_id, \'\') != \'\' ORDER BY i.id LIMIT 1) AS floor_name '
       'FROM orders o WHERE o.orgId = ? AND o.storeId = ? '
+      '$orderClause'
       '$pricingClause'
       'ORDER BY o.created_on DESC, o.id DESC',
       args,
     );
   }
+
+  static const _creditRepaidSql = '''
+    COALESCE((SELECT SUM(a.allocated_amount)
+      FROM credit_repayment_allocations a
+      INNER JOIN credit_repayments r ON r.id = a.repayment_id
+      INNER JOIN credits c ON c.id = a.credit_id
+      WHERE c.orgId = o.orgId AND c.storeId = o.storeId AND c.order_id = o.order_id
+        AND r.orgId = o.orgId AND r.storeId = o.storeId AND r.deleted_on IS NULL), 0)
+  ''';
 
   Future<int> addOrder(StoreScope scope, Map<String, dynamic> order) async {
     return _upsertOrder(scope, {
@@ -867,6 +887,8 @@ class OrdersRepository {
     return (rows.first['total'] as num?)?.toDouble() ?? 0;
   }
 
+  // Settlement coverage includes credit tenders so finalized credit sales can close.
+  // Use summary paid_total for actual receipts, including allocated repayments.
   Future<double> getOrderPaymentsTotal(StoreScope scope, int orderId) async {
     final rows = await db.rawQuery(
       '''
@@ -968,6 +990,20 @@ class OrdersRepository {
     if (!StoreOrderStatus.isDraft(status)) {
       throw StateError('Only Draft orders can be deleted.');
     }
+    await purgeOrder(scope, orderId);
+  }
+
+  Future<int> countOrderPayments(StoreScope scope, int orderId) async {
+    final rows = await db.rawQuery(
+      'SELECT COUNT(*) AS total FROM order_payments '
+      'WHERE orgId = ? AND storeId = ? AND order_id = ?',
+      [scope.orgId, scope.storeId, orderId],
+    );
+    return (rows.first['total'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Hard-delete an order and every local row that belongs to it.
+  Future<void> purgeOrder(StoreScope scope, int orderId) async {
     final items = await getOrderItems(scope, orderId);
     await db.transaction((txn) async {
       for (final item in items) {

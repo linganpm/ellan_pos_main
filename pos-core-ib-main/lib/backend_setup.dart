@@ -9,7 +9,7 @@ import 'store_models.dart';
 /// Call [setupDatabase] with a dbName to initialize and get the database instance.
 
 class BackendSetup {
-  static const int schemaVersion = 51;
+  static const int schemaVersion = 54;
 
   /// Public method to create all tables for testing or custom DB setups.
   static Future<void> createTablesForTest(Database db) async {
@@ -134,6 +134,7 @@ class BackendSetup {
         tax_number TEXT,
         identifier TEXT,
         logo_pending_sync INTEGER DEFAULT 0,
+        profile_pending_sync INTEGER DEFAULT 0,
         FOREIGN KEY(orgId) REFERENCES organisation(orgId)
       )
     ''');
@@ -529,6 +530,10 @@ class BackendSetup {
         product_variant_description TEXT,
         product_variant_quantity INTEGER,
         product_variant_logo TEXT,
+        local_image_path TEXT,
+        image_cache_source TEXT,
+        image_etag TEXT,
+        image_last_modified TEXT,
         sell_price TEXT,
         buy_price TEXT,
         mrp_price TEXT,
@@ -543,6 +548,7 @@ class BackendSetup {
         review_count INTEGER,
         tax_label TEXT,
         master_unique_id TEXT,
+        active INTEGER NOT NULL DEFAULT 1,
         exported INTEGER NOT NULL DEFAULT 0,
         last_imported_at TEXT,
         last_exported_at TEXT,
@@ -1831,6 +1837,15 @@ class BackendSetup {
     if (oldVersion < 51) {
       await _upgradeToV51(db);
     }
+    if (oldVersion < 52) {
+      await _upgradeToV52(db);
+    }
+    if (oldVersion < 53) {
+      await _upgradeToV53(db);
+    }
+    if (oldVersion < 54) {
+      await _upgradeToV54(db);
+    }
   }
 
   /// Idempotent repairs for tables/columns that sync and store-setup need.
@@ -1840,6 +1855,37 @@ class BackendSetup {
     await _upgradeToV49(db);
     await _upgradeToV50(db);
     await _upgradeToV51(db);
+    await _upgradeToV52(db);
+    await _upgradeToV53(db);
+    await _upgradeToV54(db);
+  }
+
+  /// Packages can be switched inactive (hidden from billing) without deleting.
+  static Future<void> _upgradeToV54(Database db) async {
+    await _addColumnIfMissing(
+      db,
+      'product_variants',
+      'active',
+      'INTEGER NOT NULL DEFAULT 1',
+    );
+  }
+
+  /// Company profile edits saved offline wait for the next push.
+  static Future<void> _upgradeToV53(Database db) async {
+    await _ensureCompanyProfileColumns(db);
+    await _addColumnIfMissing(db, 'store_info', 'logo_pending_sync', 'INTEGER DEFAULT 0');
+    await _addColumnIfMissing(db, 'store_info', 'profile_pending_sync', 'INTEGER DEFAULT 0');
+  }
+
+  static Future<void> _upgradeToV52(Database db) async {
+    for (final column in [
+      'local_image_path',
+      'image_cache_source',
+      'image_etag',
+      'image_last_modified',
+    ]) {
+      await _addColumnIfMissing(db, 'product_variants', column, 'TEXT');
+    }
   }
 
   static Future<void> _upgradeToV49(Database db) async {

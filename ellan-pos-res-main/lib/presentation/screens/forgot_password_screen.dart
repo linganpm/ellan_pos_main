@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/pos_brand_logo.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/localization/l10n/app_localizations.dart';
 import '../../core/utils/font_utility.dart';
@@ -33,11 +34,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          Icons.insights_rounded,
-                          size: 80,
-                          color: Colors.white,
-                        ),
+                        const PosBrandLogo(size: 80),
                         const SizedBox(height: 32),
                         Text(
                           AppLocalizations.of(context)!.appName,

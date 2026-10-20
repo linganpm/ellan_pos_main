@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../../../presentation/widgets/adaptive_form_row.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -49,6 +50,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
   String _uniqueId = '';
   String? _logoPath;
   bool _logoPendingSync = false;
+  bool _profilePendingSync = false;
   List<StoreWalletRecord> _localWallets = const [];
   List<Map<String, dynamic>> _variants = const [];
   Set<int> _linkedVariantIds = {};
@@ -79,29 +81,8 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
     return token.isEmpty ? null : token;
   }
 
-  Map<String, String> _storeRefs() {
-    final controller = context.read<UiStoreController>();
-    final store = controller.store!;
-    final login = controller.organisationLogin;
-    final orgInstance = (login?.serviceInstanceId ?? '').trim().isNotEmpty
-        ? login!.serviceInstanceId!.trim()
-        : (login?.organisation.orgId.trim() ?? store.orgId);
-    // Prefer numeric SI ids — gateway _resolve_pos_store requires digits.
-    final remote = (store.storeRemoteId ?? '').trim();
-    final storeSi = store.serviceInstanceId > 0
-        ? '${store.serviceInstanceId}'
-        : (RegExp(r'^\d+$').hasMatch(remote)
-              ? remote
-              : (RegExp(r'^\d+$').hasMatch(store.scope.storeId)
-                    ? store.scope.storeId
-                    : (remote.isNotEmpty ? remote : store.uniqueId)));
-    return {
-      'org_instance_id': orgInstance,
-      'orgId': orgInstance,
-      'store_service_instance': storeSi,
-      'storeId': storeSi,
-    };
-  }
+  Map<String, String> _storeRefs() =>
+      context.read<UiStoreController>().companyProfileRefs();
 
   Future<void> _load() async {
     setState(() {
@@ -130,6 +111,8 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
       _logoPath = (logo.isNotEmpty && logo != 'logo.png') ? logo : null;
       _logoPendingSync =
           ((profile['logo_pending_sync'] as num?)?.toInt() ?? 0) == 1;
+      _profilePendingSync =
+          ((profile['profile_pending_sync'] as num?)?.toInt() ?? 0) == 1;
       final remote = '${profile['storeRemoteId'] ?? ''}'.trim();
       _siLabel = remote.isNotEmpty
           ? remote
@@ -674,7 +657,6 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
               controller: ctrl,
               decoration: InputDecoration(
                 hintText: '/path/to/logo.png',
-                border: OutlineInputBorder(),
               ),
               autofocus: true,
             ),
@@ -708,13 +690,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
   Future<void> _save() async {
     final controller = context.read<UiStoreController>();
     final store = controller.store;
-    final login = controller.organisationLogin;
-    final token = login?.accessToken?.trim() ?? '';
     if (store == null) return;
-    if (token.isEmpty) {
-      setState(() => _error = context.l10n.errorSignInOnlineFirst);
-      return;
-    }
 
     setState(() {
       _saving = true;
@@ -722,72 +698,40 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
     });
 
     try {
-      final origin = discoveryOrigin(kDiscoveryUrl);
-      final refs = _storeRefs();
-      final response = await http.post(
-        Uri.parse('$origin/api/pos/store/profile'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          ...refs,
-          'store_name': _name.text.trim(),
-          'email': _email.text.trim(),
-          'phone': _phone.text.trim(),
-          'address': _address.text.trim(),
-          'identifier': _identifier.text.trim(),
-          'registration_number': _registration.text.trim(),
-          'tax_number': _tax.text.trim(),
-        }),
-      );
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        String message = context.l10n.errorCouldNotSaveCompanySettings;
-        try {
-          final body = jsonDecode(response.body);
-          if (body is Map && body['message'] != null) {
-            message = '${body['message']}';
-          }
-        } catch (_) {}
-        throw StateError(message);
-      }
-
-      Map<String, dynamic>? remoteStore;
-      try {
-        final body = jsonDecode(response.body);
-        if (body is Map && body['store'] is Map) {
-          remoteStore = Map<String, dynamic>.from(body['store'] as Map);
-        }
-      } catch (_) {}
-
+      // Save on the device first so edits work offline; the push below (or
+      // the next sync) sends them to the backend.
       await store.saveCompanyProfileLocal(
-        storeName:
-            '${remoteStore?['storeName'] ?? remoteStore?['store_name'] ?? _name.text.trim()}',
-        contactEmail:
-            '${remoteStore?['contactEmail'] ?? remoteStore?['contact_email'] ?? _email.text.trim()}',
-        phone: '${remoteStore?['phone'] ?? _phone.text.trim()}',
-        address:
-            '${remoteStore?['address'] ?? remoteStore?['location'] ?? _address.text.trim()}',
-        registrationNumber:
-            '${remoteStore?['registration_number'] ?? remoteStore?['company_registration_number'] ?? _registration.text.trim()}',
-        taxNumber:
-            '${remoteStore?['tax_number'] ?? remoteStore?['company_tax_number'] ?? _tax.text.trim()}',
-        identifier: '${remoteStore?['identifier'] ?? _identifier.text.trim()}',
+        storeName: _name.text.trim(),
+        contactEmail: _email.text.trim(),
+        phone: _phone.text.trim(),
+        address: _address.text.trim(),
+        registrationNumber: _registration.text.trim(),
+        taxNumber: _tax.text.trim(),
+        identifier: _identifier.text.trim(),
         logo: _logoPath,
-        logoPendingSync: false,
+        profilePendingSync: true,
       );
+      final synced = await controller.pushPendingCompanyProfile();
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.companySettingsSaved)),
+        SnackBar(
+          content: Text(
+            synced
+                ? context.l10n.companySettingsSaved
+                : context.l10n.companySettingsSavedOffline,
+          ),
+        ),
       );
       await _load();
     } catch (e) {
       if (!mounted) return;
       setState(
-        () => _error = userFacingError(
-          e,
-          fallback: context.l10n.errorCouldNotSaveCompanySettings,
+        () => _error = context.l10n.companySettingsSavedNotSynced(
+          userFacingError(
+            e,
+            fallback: context.l10n.errorCouldNotSaveCompanySettings,
+          ),
         ),
       );
     } finally {
@@ -978,7 +922,12 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: _primary))
           : ListView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+              padding: EdgeInsets.fromLTRB(
+                MediaQuery.sizeOf(context).width < 600 ? 12 : 24,
+                20,
+                MediaQuery.sizeOf(context).width < 600 ? 12 : 24,
+                40,
+              ),
               children: [
                 if (_error != null) ...[
                   Container(
@@ -1045,56 +994,59 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                   icon: Icons.image_rounded,
                   title: context.l10n.companyLogo,
                   children: [
-                    Row(
+                    AdaptiveFormRow(
+                      minChildWidth: 180,
                       children: [
-                        Container(
-                          width: 96,
-                          height: 96,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFDF2F8),
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: const Color(0xFFFBCFE8)),
-                            image:
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            width: 96,
+                            height: 96,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFDF2F8),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: const Color(0xFFFBCFE8),
+                              ),
+                              image:
+                                  (_logoPath != null &&
+                                      File(_logoPath!).existsSync())
+                                  ? DecorationImage(
+                                      image: FileImage(File(_logoPath!)),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                            child:
                                 (_logoPath != null &&
                                     File(_logoPath!).existsSync())
-                                ? DecorationImage(
-                                    image: FileImage(File(_logoPath!)),
-                                    fit: BoxFit.cover,
-                                  )
-                                : null,
+                                ? null
+                                : const Icon(
+                                    Icons.storefront_rounded,
+                                    color: Color(0xFFDB2777),
+                                    size: 36,
+                                  ),
                           ),
-                          child:
-                              (_logoPath != null &&
-                                  File(_logoPath!).existsSync())
-                              ? null
-                              : const Icon(
-                                  Icons.storefront_rounded,
-                                  color: Color(0xFFDB2777),
-                                  size: 36,
-                                ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _logoPendingSync
-                                    ? context.l10n.companySavedOnDevice
-                                    : context.l10n.companyBranchLogo,
-                                style: FontUtility.body.copyWith(
-                                  color: _muted,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _logoPendingSync
+                                  ? context.l10n.companySavedOnDevice
+                                  : context.l10n.companyBranchLogo,
+                              style: FontUtility.body.copyWith(
+                                color: _muted,
+                                fontWeight: FontWeight.w600,
                               ),
-                              const SizedBox(height: 10),
-                              FilledButton.tonalIcon(
-                                onPressed: _pickLogo,
-                                icon: const Icon(Icons.upload_rounded),
-                                label: Text(context.l10n.companyUploadLogo),
-                              ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 10),
+                            FilledButton.tonalIcon(
+                              onPressed: _pickLogo,
+                              icon: const Icon(Icons.upload_rounded),
+                              label: Text(context.l10n.companyUploadLogo),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -1231,6 +1183,28 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                           ),
                   ),
                 ),
+                if (_profilePendingSync) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.cloud_off_rounded,
+                        size: 18,
+                        color: Color(0xFFB45309),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          context.l10n.companySettingsPendingSync,
+                          style: FontUtility.body.copyWith(
+                            color: const Color(0xFFB45309),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 28),
                 _section(
                   accent: const Color(0xFF178A45),
@@ -1245,28 +1219,23 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Row(
+                    AdaptiveFormRow(
                       children: [
-                        Expanded(
-                          child: _tradeModeTile(
+                        _tradeModeTile(
                             label: context.l10n.storeTradeSell,
                             hint: context.l10n.storeTradeSellHint,
                             icon: Icons.trending_up_rounded,
                             color: const Color(0xFF178A45),
                             selected: _tradeModes.sell,
                             onTap: () => _setTradeMode(sell: !_tradeModes.sell),
-                          ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _tradeModeTile(
+                        _tradeModeTile(
                             label: context.l10n.storeTradeBuy,
                             hint: context.l10n.storeTradeBuyHint,
                             icon: Icons.trending_down_rounded,
                             color: const Color(0xFFD32F2F),
                             selected: _tradeModes.buy,
                             onTap: () => _setTradeMode(buy: !_tradeModes.buy),
-                          ),
                         ),
                       ],
                     ),

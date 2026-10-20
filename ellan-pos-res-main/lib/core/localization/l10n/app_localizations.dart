@@ -2094,6 +2094,24 @@ abstract class AppLocalizations {
   /// **'Company settings saved.'**
   String get companySettingsSaved;
 
+  /// No description provided for @companySettingsSavedOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device. Company details will sync when you\'re back online.'**
+  String get companySettingsSavedOffline;
+
+  /// No description provided for @companySettingsPendingSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced yet — changes are saved on this device and will upload on the next sync.'**
+  String get companySettingsPendingSync;
+
+  /// No description provided for @companySettingsSavedNotSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device, but the server rejected the update: {reason}'**
+  String companySettingsSavedNotSynced(String reason);
+
   /// No description provided for @companySettingsTitle.
   ///
   /// In en, this message translates to:
@@ -3246,6 +3264,30 @@ abstract class AppLocalizations {
   /// **'First Floor'**
   String get dineInFloorFirst;
 
+  /// No description provided for @dineInBooked.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked'**
+  String get dineInBooked;
+
+  /// No description provided for @dineInTableUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This table is no longer available. Please select another table.'**
+  String get dineInTableUnavailable;
+
+  /// No description provided for @dineInNoTables.
+  ///
+  /// In en, this message translates to:
+  /// **'No tables configured. Sync or configure the store\'s floors and tables.'**
+  String get dineInNoTables;
+
+  /// No description provided for @dineInRefreshTables.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh table availability'**
+  String get dineInRefreshTables;
+
   /// No description provided for @dineInFloorSecond.
   ///
   /// In en, this message translates to:
@@ -4103,6 +4145,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cart draft saved. Open it from Home → Saved drafts.'**
   String get orderDraftSaved;
+
+  /// No description provided for @orderDeleteOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete order'**
+  String get orderDeleteOrder;
+
+  /// No description provided for @orderDeleteOrderQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete order?'**
+  String get orderDeleteOrderQuestion;
+
+  /// No description provided for @orderDeleteOrderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes all products from the order, deletes its saved draft and frees the table. Items already sent to the kitchen are logged as cancelled.'**
+  String get orderDeleteOrderBody;
+
+  /// No description provided for @orderDeletedTableFreed.
+  ///
+  /// In en, this message translates to:
+  /// **'Order deleted. Table is free.'**
+  String get orderDeletedTableFreed;
+
+  /// No description provided for @orderCancelledTableFreed.
+  ///
+  /// In en, this message translates to:
+  /// **'Order was already sent to the kitchen or synced, so it was cancelled. Table is free.'**
+  String get orderCancelledTableFreed;
+
+  /// No description provided for @errorCouldNotDeleteOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete order: {error}'**
+  String errorCouldNotDeleteOrder(String error);
 
   /// No description provided for @orderGoToPayments.
   ///
@@ -5664,6 +5742,18 @@ abstract class AppLocalizations {
   /// **'Deleted offline. Sync to export tombstone.'**
   String get storeSetupDeletedTombstone;
 
+  /// No description provided for @storeSetupPackageMarkedActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Package is active and available for billing. Sync to update the admin panel.'**
+  String get storeSetupPackageMarkedActive;
+
+  /// No description provided for @storeSetupPackageMarkedInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Package is inactive and hidden from billing. Sync to update the admin panel.'**
+  String get storeSetupPackageMarkedInactive;
+
   /// No description provided for @storeSetupEditAddonGroup.
   ///
   /// In en, this message translates to:
@@ -6491,6 +6581,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Lock screen'**
   String get homeLock;
+
+  /// No description provided for @actionLock.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock'**
+  String get actionLock;
 
   /// No description provided for @lockEnterPin.
   ///

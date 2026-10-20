@@ -61,29 +61,32 @@ class ProductDataImporter {
           ?? (cat['local_id'] as String?)
           ?? (cat['localId'] as String?)
           ?? 'cat_${categoryRemoteId ?? uuid.v4()}';
-      await db.insert(
-        'categories',
-        {
-          'orgId': scope.orgId,
-          'storeId': scope.storeId,
-          'localId': categoryLocalId,
-          'unique_id': categoryUniqueId,
-          'master_unique_id': masterUniqueId,
-          'categoryId': categoryRemoteId,
-          'name': cat['name'],
-          'slug': cat['slug'],
-          'logo': cat['logo'],
-          'sorting_order': cat['sorting_order'],
-          'description': cat['description'],
-          'parent_id': cat['parent_id'],
-          'short_code': cat['short_code'],
-          'depth': cat['depth'],
-          'path': cat['path'],
-            'id': cat['id'],
-          'deleted': 0,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      // A pending local rename/delete wins until Sync exports it.
+      if (!_hasPendingLocalChange(existingCategory)) {
+        await db.insert(
+          'categories',
+          {
+            'orgId': scope.orgId,
+            'storeId': scope.storeId,
+            'localId': categoryLocalId,
+            'unique_id': categoryUniqueId,
+            'master_unique_id': masterUniqueId,
+            'categoryId': categoryRemoteId,
+            'name': cat['name'],
+            'slug': cat['slug'],
+            'logo': cat['logo'],
+            'sorting_order': cat['sorting_order'],
+            'description': cat['description'],
+            'parent_id': cat['parent_id'],
+            'short_code': cat['short_code'],
+            'depth': cat['depth'],
+            'path': cat['path'],
+              'id': cat['id'],
+            'deleted': 0,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
       if (categoryUniqueId != null && categoryUniqueId.isNotEmpty) {
         seenCategoryUniqueIds.add(categoryUniqueId);
       }
@@ -111,6 +114,15 @@ class ProductDataImporter {
               ?? (variant['local_id'] as String?)
               ?? (variant['localId'] as String?)
               ?? 'var_${variantRemoteId ?? uuid.v4()}';
+          // Keep pending local edits/deletes (incl. product row and add-ons):
+          // import runs before export, so overwriting here would drop the
+          // tombstone and the server would never receive it.
+          if (_hasPendingLocalChange(existingVariant)) {
+            if (variantUniqueId != null && variantUniqueId.isNotEmpty) {
+              seenVariantUniqueIds.add(variantUniqueId);
+            }
+            continue;
+          }
           final sellUnit = _extractDirectSellUnit(variant) ??
               _extractSellUnit(variant['proportions']);
           await db.insert(
@@ -129,6 +141,10 @@ class ProductDataImporter {
               'product_variant_description': variant['product_variant_description'],
               'product_variant_quantity': variant['product_variant_quantity'],
               'product_variant_logo': variant['product_variant_logo'],
+              'local_image_path': existingVariant['local_image_path'],
+              'image_cache_source': existingVariant['image_cache_source'],
+              'image_etag': existingVariant['image_etag'],
+              'image_last_modified': existingVariant['image_last_modified'],
               'sell_price': variant['sell_price'],
               'buy_price': variant['buy_price'],
               'mrp_price': variant['mrp_price'],
@@ -141,6 +157,7 @@ class ProductDataImporter {
               'review_value_data': variant['review_value_data'],
               'review_max_value_data': variant['review_max_value_data'],
               'review_count': variant['review_count'],
+              'active': _activeFlag(variant['active']),
               'exported': markAsExported ? 1 : 0,
               'last_imported_at': importedAt,
               'last_exported_at': null,
@@ -433,6 +450,20 @@ class ProductDataImporter {
       if (byMaster.isNotEmpty) return byMaster.first;
     }
     return const <String, Object?>{};
+  }
+
+  /// Server `active` (bool/int/string); missing means active for older feeds.
+  int _activeFlag(dynamic raw) {
+    if (raw == null) return 1;
+    if (raw is bool) return raw ? 1 : 0;
+    if (raw is num) return raw == 0 ? 0 : 1;
+    final text = '$raw'.trim().toLowerCase();
+    return const {'0', 'false', 'no'}.contains(text) ? 0 : 1;
+  }
+
+  bool _hasPendingLocalChange(Map<String, Object?> existing) {
+    if (existing.isEmpty) return false;
+    return ((existing['exported'] as num?)?.toInt() ?? 1) == 0;
   }
 
   String? _normalizedUniqueId(dynamic value) {

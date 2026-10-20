@@ -66,6 +66,10 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
   bool _saving = false;
   String? _formError;
   String? _searchError;
+  List<StoreTableRecord> _tables = const [];
+  bool _loadingTables = false;
+  bool _checkingTable = false;
+  String? _tablesError;
   List<PosOrderType> _orderTypes = OrderTypesRepository.defaults;
   PosOrderType? _selectedType;
   String _pricingMode = StoreOrderPricingMode.selling;
@@ -79,8 +83,31 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     _selectedType = _orderTypes.first;
     _pricingMode = _tradeModes.coerce(widget.initialPricingMode);
     _restoreLastOrderType();
+    _loadTables();
     if (widget.initialPricingMode == null) {
       _restoreLastPricingMode();
+    }
+  }
+
+  Future<void> _loadTables() async {
+    if (_loadingTables || _checkingTable) return;
+    setState(() {
+      _loadingTables = true;
+      _tablesError = null;
+    });
+    try {
+      final tables = await getIt<UiStoreController>().loadDineInTables();
+      if (!mounted) return;
+      setState(() {
+        _tables = tables;
+        _loadingTables = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _tablesError = error.toString();
+        _loadingTables = false;
+      });
     }
   }
 
@@ -94,7 +121,9 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
   }
 
   void _selectPricingMode(String mode) {
-    if (widget.lockPricingMode || !_tradeModes.allows(mode)) return;
+    if (_checkingTable || widget.lockPricingMode || !_tradeModes.allows(mode)) {
+      return;
+    }
     final normalized = StoreOrderPricingMode.normalize(mode);
     setState(() => _pricingMode = normalized);
     SharedPreferences.getInstance().then((prefs) {
@@ -132,6 +161,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
   }
 
   void _selectType(PosOrderType type) {
+    if (_checkingTable) return;
     setState(() => _selectedType = type);
     context.read<OrderCreationBloc>().add(
       SelectOrderType(type.isDineIn ? OrderType.dineIn : OrderType.pickup),
@@ -139,6 +169,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     SharedPreferences.getInstance().then((prefs) {
       prefs.setString(_kLastOrderTypeKey, type.key);
     });
+    if (type.isDineIn) _loadTables();
   }
 
   @override
@@ -156,29 +187,9 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     Widget? suffixIcon,
   }) {
     return InputDecoration(
-      hintText: hint,
-      hintStyle: FontUtility.body.copyWith(
-        color: Colors.black38,
-        fontWeight: FontWeight.w500,
-        fontSize: 17,
-      ),
+      labelText: hint,
       prefixIcon: prefixIcon,
       suffixIcon: suffixIcon,
-      filled: true,
-      fillColor: const Color(0xFFF7F8FB),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD0D5DD), width: 3),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD0D5DD), width: 3),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _kAccent, width: 3.5),
-      ),
     );
   }
 
@@ -381,32 +392,51 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
 
   Future<void> _openDineInOrder(
     OrderCreationState state,
-    String tableNumber,
+    StoreTableRecord table,
   ) async {
-    final ready = await _ensureCustomerReady(state);
-    if (!ready || !mounted) return;
-    final latest = context.read<OrderCreationBloc>().state;
-    final navigator = Navigator.of(context, rootNavigator: true);
-    final l10n = AppLocalizations.of(context)!;
-    final args = OrderCreateScreenArgs(
-      orderType: _selectedType?.label.isNotEmpty == true
-          ? _selectedType!.label
-          : 'DineIn',
-      orderTypeKey: _selectedType?.key,
-      pricingMode: _pricingMode,
-      name: _resolvedCustomerName(latest),
-      phone: latest.pickupPhone,
-      email: latest.pickupEmail,
-      customerUniqueId: latest.customerUniqueId,
-      floor: latest.selectedFloor == 'first'
-          ? l10n.dineInFloorFirst
-          : l10n.dineInFloorSecond,
-      table: l10n.dineInTable(tableNumber),
-    );
-    navigator.pop();
-    await navigator.push(
-      MaterialPageRoute(builder: (_) => SalesOrderScreen(args: args)),
-    );
+    if (_saving || _checkingTable || table.occupied || !table.active) return;
+    setState(() {
+      _checkingTable = true;
+      _tablesError = null;
+      _formError = null;
+    });
+    try {
+      final ready = await _ensureCustomerReady(state);
+      if (!ready || !mounted) return;
+      final tables = await getIt<UiStoreController>().loadDineInTables();
+      if (!mounted) return;
+      setState(() => _tables = tables);
+      final matches = tables.where((row) => row.tableId == table.tableId);
+      if (matches.isEmpty || matches.first.occupied || !matches.first.active) {
+        setState(() => _formError = context.l10n.dineInTableUnavailable);
+        return;
+      }
+      table = matches.first;
+      final latest = context.read<OrderCreationBloc>().state;
+      final navigator = Navigator.of(context, rootNavigator: true);
+      final args = OrderCreateScreenArgs(
+        orderType: _selectedType?.label.isNotEmpty == true
+            ? _selectedType!.label
+            : 'DineIn',
+        orderTypeKey: _selectedType?.key,
+        pricingMode: _pricingMode,
+        name: _resolvedCustomerName(latest),
+        phone: latest.pickupPhone,
+        email: latest.pickupEmail,
+        customerUniqueId: latest.customerUniqueId,
+        floor: table.floorName,
+        table: table.name,
+        tableId: table.tableId,
+      );
+      navigator.pop();
+      await navigator.push(
+        MaterialPageRoute(builder: (_) => SalesOrderScreen(args: args)),
+      );
+    } catch (error) {
+      if (mounted) setState(() => _tablesError = error.toString());
+    } finally {
+      if (mounted) setState(() => _checkingTable = false);
+    }
   }
 
   @override
@@ -826,10 +856,27 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
   }
 
   Widget _buildDineInFlow(BuildContext context, OrderCreationState state) {
+    final floors = <String, String>{
+      for (final table in _tables) table.floorId: table.floorName,
+    };
+    final floorId = floors.containsKey(state.selectedFloor)
+        ? state.selectedFloor
+        : floors.keys.firstOrNull;
+    final tables = _tables.where((table) => table.floorId == floorId).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_formError != null && _creatingCustomer) ...[
+        if (_loadingTables || _checkingTable) const LinearProgressIndicator(),
+        if (_tablesError != null) ...[
+          Text(_tablesError!, style: TextStyle(color: Colors.red.shade700)),
+          TextButton(
+            onPressed: _loadTables,
+            child: Text(context.l10n.actionRetry),
+          ),
+        ],
+        if (!_loadingTables && _tablesError == null && _tables.isEmpty)
+          Text(context.l10n.dineInNoTables),
+        if (_formError != null) ...[
           Text(
             _formError!,
             style: FontUtility.body.copyWith(
@@ -847,31 +894,27 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0xFFD0D5DD)),
           ),
-          child: Row(
+          child: Wrap(
             children: [
-              Expanded(
-                child: _buildFloorButton(
+              for (final floor in floors.entries)
+                _buildFloorButton(
                   context,
-                  title: AppLocalizations.of(context)!.dineInFloorFirst,
-                  isSelected: state.selectedFloor == 'first',
+                  title: floor.value,
+                  isSelected: floorId == floor.key,
                   onTap: () {
+                    if (_checkingTable) return;
                     context.read<OrderCreationBloc>().add(
-                      const SelectDineInFloor('first'),
+                      SelectDineInFloor(floor.key),
                     );
+                    _loadTables();
                   },
                 ),
-              ),
-              Expanded(
-                child: _buildFloorButton(
-                  context,
-                  title: AppLocalizations.of(context)!.dineInFloorSecond,
-                  isSelected: state.selectedFloor == 'second',
-                  onTap: () {
-                    context.read<OrderCreationBloc>().add(
-                      const SelectDineInFloor('second'),
-                    );
-                  },
-                ),
+              IconButton(
+                tooltip: context.l10n.dineInRefreshTables,
+                onPressed: _loadingTables || _checkingTable
+                    ? null
+                    : _loadTables,
+                icon: const Icon(Icons.refresh),
               ),
             ],
           ),
@@ -880,50 +923,80 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 5,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: MediaQuery.sizeOf(context).width < 600 ? 3 : 5,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
             childAspectRatio: 1.0,
           ),
-          itemCount: 10,
+          itemCount: tables.length,
           itemBuilder: (context, index) {
-            final tableNumber = '${index + 1}';
-            final isSelected = state.selectedTable == tableNumber;
+            final table = tables[index];
+            final isSelected = state.selectedTable == table.tableId;
+            final enabled =
+                !_saving &&
+                !_loadingTables &&
+                !_checkingTable &&
+                _tablesError == null &&
+                table.active &&
+                !table.occupied;
 
-            return GestureDetector(
-              onTap: _saving
-                  ? null
-                  : () => _openDineInOrder(state, tableNumber),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                decoration: BoxDecoration(
-                  color: isSelected ? _kAccent : const Color(0xFFF7F8FB),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isSelected ? _kAccent : const Color(0xFFD0D5DD),
-                    width: 2,
+            return Semantics(
+              enabled: enabled,
+              button: true,
+              child: InkWell(
+                key: ValueKey('dine-in-table-${table.tableId}'),
+                onTap: enabled ? () => _openDineInOrder(state, table) : null,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    color: !enabled
+                        ? Colors.grey.shade200
+                        : isSelected
+                        ? _kAccent
+                        : const Color(0xFFF7F8FB),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isSelected ? _kAccent : const Color(0xFFD0D5DD),
+                      width: 2,
+                    ),
                   ),
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.table_restaurant_rounded,
-                        color: isSelected ? Colors.white : _kAccent,
-                        size: 26,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        tableNumber,
-                        style: FontUtility.subheading.copyWith(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: isSelected ? Colors.white : Colors.black87,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.table_restaurant_rounded,
+                          color: !enabled
+                              ? Colors.grey
+                              : isSelected
+                              ? Colors.white
+                              : _kAccent,
+                          size: 26,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          table.name,
+                          style: FontUtility.subheading.copyWith(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: !enabled
+                                ? Colors.grey
+                                : isSelected
+                                ? Colors.white
+                                : Colors.black87,
+                          ),
+                        ),
+                        if (table.occupied)
+                          Text(
+                            context.l10n.dineInBooked,
+                            style: FontUtility.body.copyWith(
+                              fontSize: 11,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -943,7 +1016,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
               ? _kAccent.withValues(alpha: 0.1)
@@ -951,6 +1024,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
+          widthFactor: 1,
           child: Text(
             title,
             style: FontUtility.body.copyWith(

@@ -662,8 +662,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             title: context.l10n.orderNumber(order.orderId),
             subtitle:
                 '${order.orderType.isEmpty ? context.l10n.commonOrderLabel : order.orderType} · ${order.paymentStatus}',
-            trailing:
-                '\$${(order.finalValue != 0 ? order.finalValue : order.total).toStringAsFixed(2)}',
+            trailing: PosCurrency.format(
+              order.finalValue != 0 ? order.finalValue : order.total,
+            ),
             onTap: () => _openOrder(order),
             actionLabel: context.l10n.commonPay,
             onAction: () => _openOrderPayments(order),
@@ -684,9 +685,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           _historyTile(
             title: context.l10n.creditsCreditNumber(credit.id.toString()),
             subtitle: context.l10n.creditsOutstandingAmount(
-              '\$${credit.outstandingAmount.toStringAsFixed(2)}',
+              PosCurrency.format(credit.outstandingAmount),
             ),
-            trailing: '\$${credit.amount.toStringAsFixed(2)}',
+            trailing: PosCurrency.format(credit.amount),
             onTap: _openCreditAccount,
           ),
           const SizedBox(height: 8),
@@ -709,7 +710,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 ? context.l10n.commonPaymentNumber(payment.id.toString())
                 : payment.paymentMode.toUpperCase(),
             subtitle: payment.createdOn,
-            trailing: '\$${payment.totalAmount.toStringAsFixed(2)}',
+            trailing: PosCurrency.format(payment.totalAmount),
             onTap: _openCreditAccount,
           ),
           const SizedBox(height: 8),

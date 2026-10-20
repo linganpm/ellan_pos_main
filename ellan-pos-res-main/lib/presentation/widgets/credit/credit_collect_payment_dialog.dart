@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/core/currency_format.dart';
 
 class CreditCollectPaymentResult {
   final double amount;
@@ -65,7 +66,7 @@ class _CreditCollectPaymentDialogState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Amount cannot exceed outstanding (\$${widget.outstanding.toStringAsFixed(2)}).',
+            'Amount cannot exceed outstanding (${PosCurrency.format(widget.outstanding)}).',
           ),
         ),
       );
@@ -88,6 +89,8 @@ class _CreditCollectPaymentDialogState
         ? context.l10n.commonCustomer
         : widget.customerName;
     return AlertDialog(
+      scrollable: true,
+      icon: const Icon(Icons.account_balance_wallet_outlined),
       title: Text(context.l10n.creditsCollectPayment),
       content: SizedBox(
         width: 420,
@@ -98,7 +101,7 @@ class _CreditCollectPaymentDialogState
             Text(name, style: FontUtility.subheading),
             const SizedBox(height: 4),
             Text(
-              'Outstanding \$${widget.outstanding.toStringAsFixed(2)}',
+              'Outstanding ${PosCurrency.format(widget.outstanding)}',
               style: FontUtility.body.copyWith(color: Colors.black54),
             ),
             const SizedBox(height: 16),
@@ -112,7 +115,6 @@ class _CreditCollectPaymentDialogState
               ],
               decoration: InputDecoration(
                 labelText: context.l10n.commonAmount,
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
@@ -120,7 +122,6 @@ class _CreditCollectPaymentDialogState
               initialValue: _paymentMode,
               decoration: InputDecoration(
                 labelText: context.l10n.commonPaymentMode,
-                border: OutlineInputBorder(),
               ),
               items: [
                 DropdownMenuItem(
@@ -146,7 +147,6 @@ class _CreditCollectPaymentDialogState
               controller: _referenceController,
               decoration: InputDecoration(
                 labelText: context.l10n.commonReferenceOptional,
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 8),

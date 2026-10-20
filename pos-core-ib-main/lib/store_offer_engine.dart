@@ -218,7 +218,43 @@ class StoreOfferEngine {
           unitDiscounts: unitDiscounts,
           totalDiscount: unitDiscounts.values.fold<double>(0, (total, value) => total + value),
         );
+      case StoreOfferType.fixedPrice:
+        final fixedPrice = offer.flatValue;
+        final bundleSize = offer.buyQuantity ?? 1;
+        if (fixedPrice == null || fixedPrice < 0 || bundleSize <= 0 || eligibleIndexes.length < bundleSize) {
+          return null;
+        }
+        // Bundle the most expensive units first so the customer gets the best deal.
+        final sortedByPriceDesc = eligibleIndexes.toList(growable: false)
+          ..sort((left, right) => units[right].unitPrice.compareTo(units[left].unitPrice));
+        final consumedIndexes = <int>[];
+        final unitDiscounts = <int, double>{};
+        for (var start = 0; start + bundleSize <= sortedByPriceDesc.length; start += bundleSize) {
+          final bundle = sortedByPriceDesc.sublist(start, start + bundleSize);
+          final bundleTotal = bundle.fold<double>(0, (total, index) => total + units[index].unitPrice);
+          final discount = bundleTotal - fixedPrice;
+          if (discount <= 0) {
+            continue;
+          }
+          consumedIndexes.addAll(bundle);
+          unitDiscounts.addAll(_allocateProportionalDiscount(bundle, units, discount));
+        }
+        if (unitDiscounts.isEmpty) {
+          return null;
+        }
+        return _OfferCandidate(
+          offer: offer,
+          consumedUnitIndexes: consumedIndexes,
+          unitDiscounts: unitDiscounts,
+          totalDiscount: unitDiscounts.values.fold<double>(0, (total, value) => total + value),
+        );
       case StoreOfferType.buyNGetM:
+      case StoreOfferType.buyNGetMDiscount:
+        final isDiscounted = offer.offerType == StoreOfferType.buyNGetMDiscount;
+        final getPercentage = isDiscounted ? (offer.percentageValue ?? 0) : 100.0;
+        if (getPercentage <= 0 || getPercentage > 100) {
+          return null;
+        }
         final buyQuantity = offer.buyQuantity ?? 0;
         final getQuantity = offer.getQuantity ?? 0;
         final groupSize = buyQuantity + getQuantity;
@@ -239,7 +275,7 @@ class StoreOfferEngine {
           return null;
         }
         final unitDiscounts = <int, double>{
-          for (final index in freeIndexes) index: units[index].unitPrice,
+          for (final index in freeIndexes) index: units[index].unitPrice * getPercentage / 100,
         };
         return _OfferCandidate(
           offer: offer,

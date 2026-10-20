@@ -4,6 +4,8 @@ import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import '../widgets/product_image.dart';
+import 'package:pos_tablet/core/currency_format.dart';
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
@@ -361,16 +363,31 @@ class _CatalogScreenState extends State<CatalogScreen>
       case StoreOfferType.flat:
         final flat = offer.flatValue ?? 0;
         if (flat <= 0) return offer.name;
-        return '-\$${flat.toStringAsFixed(flat == flat.roundToDouble() ? 0 : 2)}';
+        return '-${PosCurrency.format(flat, decimals: flat == flat.roundToDouble() ? 0 : 2)}';
       case StoreOfferType.buyNGetM:
         final buy = offer.buyQuantity ?? 0;
         final get = offer.getQuantity ?? 0;
         if (buy <= 0 || get <= 0) return offer.name;
         return 'Buy $buy Get $get';
+      case StoreOfferType.buyNGetMDiscount:
+        final buy = offer.buyQuantity ?? 0;
+        final get = offer.getQuantity ?? 0;
+        final pct = offer.percentageValue ?? 0;
+        if (buy <= 0 || get <= 0 || pct <= 0) return offer.name;
+        return 'Buy $buy Get $get at -${pct == pct.roundToDouble() ? pct.toInt() : pct}%';
+      case StoreOfferType.fixedPrice:
+        final price = offer.flatValue;
+        if (price == null || price < 0) return offer.name;
+        final qty = offer.buyQuantity ?? 1;
+        final formatted = PosCurrency.format(
+          price,
+          decimals: price == price.roundToDouble() ? 0 : 2,
+        );
+        return qty > 1 ? '$qty for $formatted' : 'Now $formatted';
       case StoreOfferType.totalOffer:
         final min = offer.minimumBillAmount;
         if (min != null && min > 0) {
-          return 'Bill ≥ \$${min.toStringAsFixed(2)}';
+          return 'Bill ≥ ${PosCurrency.format(min)}';
         }
         return context.l10n.catalogBillOffer;
       default:
@@ -483,10 +500,11 @@ class _PackageRow extends StatelessWidget {
                   color: const Color(0xFF4A00E0).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
-                  Icons.inventory_2_outlined,
-                  color: Color(0xFF4A00E0),
-                  size: 22,
+                child: ProductImage(
+                  source: product.imagePath,
+                  width: 42,
+                  height: 42,
+                  iconSize: 22,
                 ),
               ),
               const SizedBox(width: 12),
@@ -527,7 +545,7 @@ class _PackageRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '\$${product.price.toStringAsFixed(2)}',
+                    PosCurrency.format(product.price),
                     style: FontUtility.heading.copyWith(
                       fontSize: 18,
                       color: const Color(0xFF4A00E0),
@@ -537,7 +555,7 @@ class _PackageRow extends StatelessWidget {
                       product.mrpPrice! > product.price)
                     Text(
                       context.l10n.catalogMrpPrice(
-                        '\$${product.mrpPrice!.toStringAsFixed(2)}',
+                        PosCurrency.format(product.mrpPrice!),
                       ),
                       style: FontUtility.body.copyWith(
                         fontSize: 11,
@@ -652,12 +670,12 @@ class _PackageDetailSheet extends StatelessWidget {
           children: [
             _detailStat(
               context.l10n.catalogSell,
-              '\$${product.price.toStringAsFixed(2)}',
+              PosCurrency.format(product.price),
             ),
             if (product.mrpPrice != null)
-              _detailStat('MRP', '\$${product.mrpPrice!.toStringAsFixed(2)}'),
+              _detailStat('MRP', PosCurrency.format(product.mrpPrice!)),
             if (product.buyPrice != null)
-              _detailStat('Buy', '\$${product.buyPrice!.toStringAsFixed(2)}'),
+              _detailStat('Buy', PosCurrency.format(product.buyPrice!)),
             if (product.hasSellUnit)
               _detailStat(context.l10n.catalogUnit, product.sellUnitDetail),
             if (product.categoryName.isNotEmpty)
@@ -721,7 +739,7 @@ class _PackageDetailSheet extends StatelessWidget {
                             ),
                             Text(
                               item.sellPrice > 0
-                                  ? '+\$${item.sellPrice.toStringAsFixed(2)}'
+                                  ? '+${PosCurrency.format(item.sellPrice)}'
                                   : 'Included',
                               style: FontUtility.body.copyWith(
                                 fontSize: 13,

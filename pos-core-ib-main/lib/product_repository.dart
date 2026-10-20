@@ -8,6 +8,8 @@ class ProductRepository {
   final Database db;
   ProductRepository(this.db);
 
+  static const _activeVariantClause = 'COALESCE(active, 1) = 1';
+
   Future<Map<String, dynamic>?> getProductVariantById(StoreScope scope, String productVariantId) async {
     final rows = await db.query(
       'product_variants',
@@ -76,8 +78,14 @@ class ProductRepository {
     String? query,
     int? limit,
     int? offset,
+    bool activeOnly = false,
   }) {
-    final whereClauses = <String>['orgId = ?', 'storeId = ?', 'deleted = 0'];
+    final whereClauses = <String>[
+      'orgId = ?',
+      'storeId = ?',
+      'deleted = 0',
+      if (activeOnly) _activeVariantClause,
+    ];
     final whereArgs = <Object?>[scope.orgId, scope.storeId];
     if (query != null && query.isNotEmpty) {
       whereClauses.add('(product_name LIKE ? OR product_variant_name LIKE ? OR barcode LIKE ?)');
@@ -95,7 +103,11 @@ class ProductRepository {
     );
   }
 
-  Future<List<Map<String, dynamic>>> getProductVariantsByCategory(StoreScope scope, int categoryId) async {
+  Future<List<Map<String, dynamic>>> getProductVariantsByCategory(
+    StoreScope scope,
+    int categoryId, {
+    bool activeOnly = false,
+  }) async {
     // Resolve the category's actual localId — imports may keep a non
     // `cat_<remoteId>` local key, so querying only `cat_$categoryId` misses rows.
     final categoryRows = await db.query(
@@ -127,7 +139,8 @@ class ProductRepository {
     return db.query(
       'product_variants',
       where:
-          'orgId = ? AND storeId = ? AND deleted = 0 AND categoryLocalId IN ($placeholders)',
+          'orgId = ? AND storeId = ? AND deleted = 0 AND categoryLocalId IN ($placeholders)'
+          '${activeOnly ? ' AND $_activeVariantClause' : ''}',
       whereArgs: [scope.orgId, scope.storeId, ...keys],
       orderBy:
           'product_name COLLATE NOCASE ASC, product_variant_name COLLATE NOCASE ASC',
@@ -136,13 +149,15 @@ class ProductRepository {
 
   Future<List<Map<String, dynamic>>> getProductVariantsByCategoryLocalId(
     StoreScope scope,
-    String categoryLocalId,
-  ) async {
+    String categoryLocalId, {
+    bool activeOnly = false,
+  }) async {
     final key = categoryLocalId.trim();
     if (key.isEmpty) return const [];
     return db.query(
       'product_variants',
-      where: 'orgId = ? AND storeId = ? AND categoryLocalId = ? AND deleted = 0',
+      where: 'orgId = ? AND storeId = ? AND categoryLocalId = ? AND deleted = 0'
+          '${activeOnly ? ' AND $_activeVariantClause' : ''}',
       whereArgs: [scope.orgId, scope.storeId, key],
       orderBy:
           'product_name COLLATE NOCASE ASC, product_variant_name COLLATE NOCASE ASC',
@@ -1168,6 +1183,22 @@ class ProductRepository {
   }
 
   /// Soft-delete a sellable package; marks pending export so Sync tombstones server.
+  /// Inactive packages stay in the catalogue but are hidden from billing.
+  Future<void> setVariantActive(
+    StoreScope scope,
+    String variantLocalId, {
+    required bool active,
+  }) async {
+    final id = variantLocalId.trim();
+    if (id.isEmpty) return;
+    await db.update(
+      'product_variants',
+      {'active': active ? 1 : 0, 'exported': 0, 'last_exported_at': null},
+      where: 'orgId = ? AND storeId = ? AND localId = ? AND deleted = 0',
+      whereArgs: [scope.orgId, scope.storeId, id],
+    );
+  }
+
   Future<void> softDeleteVariant(StoreScope scope, String variantLocalId) async {
     final id = variantLocalId.trim();
     if (id.isEmpty) return;

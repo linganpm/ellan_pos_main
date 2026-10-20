@@ -12,11 +12,13 @@ import 'orders_repository.dart';
 import 'product_repository.dart';
 import 'customer_repository.dart';
 import 'product_data_importer.dart';
+import 'product_image_cache.dart';
 import 'store_offer_engine.dart';
 import 'store_config.dart';
 import 'store_exceptions.dart';
 import 'store_models.dart';
 import 'sync_diagnostics_log.dart';
+import 'sync_timestamps.dart';
 
 part 'store_auth_service.dart';
 part 'store_orders_service.dart';
@@ -31,6 +33,9 @@ part 'store_sync_service.dart';
 part 'store_dashboard_service.dart';
 
 class Store {
+  /// Optional host hook to render receipt timestamps in the org timezone.
+  static String Function(String rawValue)? receiptTimestampFormatter;
+
   static const int _localOrderIdPrefix = 55;
   static const int _localOrderIdRandomDigits = 8;
   static const Map<String, int> _rolePriority = {
@@ -110,6 +115,8 @@ class Store {
       'identifier': row['identifier'] ?? '',
       'logo': row['logo'] ?? logo,
       'logo_pending_sync': (row['logo_pending_sync'] as num?)?.toInt() ?? 0,
+      'profile_pending_sync':
+          (row['profile_pending_sync'] as num?)?.toInt() ?? 0,
       'uniqueId': uniqueId,
       'serviceInstanceId': serviceInstanceId,
       'storeRemoteId': storeRemoteId,
@@ -128,6 +135,7 @@ class Store {
     String? identifier,
     String? logo,
     bool? logoPendingSync,
+    bool? profilePendingSync,
   }) async {
     await _requireRole('admin');
     final patch = <String, Object?>{};
@@ -144,6 +152,9 @@ class Store {
     if (logoPendingSync != null) {
       patch['logo_pending_sync'] = logoPendingSync ? 1 : 0;
     }
+    if (profilePendingSync != null) {
+      patch['profile_pending_sync'] = profilePendingSync ? 1 : 0;
+    }
     if (patch.isEmpty) return;
     await _db.update(
       _storeInfoTable,
@@ -157,6 +168,11 @@ class Store {
   Future<void> setCompanyLogoLocal(String absolutePath) async {
     await saveCompanyProfileLocal(logo: absolutePath, logoPendingSync: true);
   }
+
+  /// Applies a store directory refresh (as login/bootstrap does) to this
+  /// store's `store_info` row.
+  Future<void> applyStoreDirectoryEntryForTest(StoreDirectoryEntry entry) =>
+      _saveStoreDirectoryEntry(_db, entry);
 
   Future<List<Map<String, dynamic>>> listReportSubscribers() async {
     await _requireRole('member');
@@ -1051,7 +1067,7 @@ class Store {
       orgId: entry.orgId,
       storeId: entry.storeId,
     );
-    await db.insert(_storeInfoTable, {
+    final row = <String, Object?>{
       'uniqueId': entry.uniqueId.isNotEmpty
           ? entry.uniqueId
           : (existing?['uniqueId'] as String? ?? entry.storeId),
@@ -1078,7 +1094,36 @@ class Store {
       'identifier': entry.identifier.isNotEmpty
           ? entry.identifier
           : (existing?['identifier'] as String? ?? ''),
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    };
+    if (existing != null) {
+      // A directory refresh must not overwrite company edits (or a picked
+      // logo) that were saved offline and have not been pushed yet.
+      for (final flag in const ['logo_pending_sync', 'profile_pending_sync']) {
+        if (existing.containsKey(flag)) row[flag] = existing[flag];
+      }
+      if ((existing['profile_pending_sync'] as num?)?.toInt() == 1) {
+        for (final column in const [
+          'storeName',
+          'contactEmail',
+          'phone',
+          'address',
+          'registration_number',
+          'tax_number',
+          'identifier',
+        ]) {
+          if (existing[column] != null) row[column] = existing[column];
+        }
+      }
+      if ((existing['logo_pending_sync'] as num?)?.toInt() == 1 &&
+          existing['logo'] != null) {
+        row['logo'] = existing['logo'];
+      }
+    }
+    await db.insert(
+      _storeInfoTable,
+      row,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   static Future<void> _saveOrganisation(Database db, Store store) {
@@ -2182,10 +2227,12 @@ class Store {
     int? limit,
     String? cursor,
     String? since,
+    Map<String, String> extraQuery = const {},
   }) {
     final uri = Uri.parse(rawUrl);
     final queryParameters = <String, String>{
       ...uri.queryParameters,
+      ...extraQuery,
       'orgId': orgId,
     };
     if (storeId != null && storeId.isNotEmpty) {
@@ -3194,10 +3241,16 @@ class Store {
       return null;
     }
     final payments = await _getOrderPaymentRecords(scope, orderId);
+    final accounting = (await _ordersRepo.listOrders(
+      scope,
+      orderId: orderId,
+    )).single;
     final pricingSnapshot = await _buildOrderPricingSnapshot(scope, orderId);
     final itemDetails =
         (pricingSnapshot['items'] as List<StoreOrderItemDetails>? ?? const []);
     return StoreOrderDetails(
+      creditRepaidAmount:
+          (accounting['credit_repaid_amount'] as num?)?.toDouble() ?? 0,
       orgId: row['orgId'] as String? ?? '',
       storeId: row['storeId'] as String? ?? '',
       id: (row['id'] as num?)?.toInt() ?? 0,
@@ -3229,7 +3282,7 @@ class Store {
       serviceInstance: (row['service_instance'] as num?)?.toInt() ?? 0,
       createdBy: row['created_by'] as String? ?? '',
       createdOn: row['created_on'] as String? ?? '',
-      paymentStatus: row['payment_status'] as String? ?? '',
+      paymentStatus: StoreOrderSummary.fromRow(accounting).paymentStatus,
       orderType: StoreOrderType.normalize(row['order_type'] as String? ?? ''),
       pricingMode: StoreOrderPricingMode.normalize(row['pricing_mode']),
       subtotal: (pricingSnapshot['subtotal'] as num?)?.toDouble() ?? 0,
@@ -3447,6 +3500,66 @@ class Store {
     _validateScope(scope);
     await _requireRole('member');
     await _ordersRepo.deleteDraftOrder(scope, orderId);
+  }
+
+  /// Discards an unpaid, unclosed order and frees its table.
+  ///
+  /// Orders that never reached the kitchen or the server are hard-deleted
+  /// (returns true). Otherwise the order is kept as Cancelled for audit/sync,
+  /// with kitchen cancellations logged for any sent quantity (returns false).
+  Future<bool> _discardOrder(StoreScope scope, int orderId) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    final order = await _ordersRepo.getOrderById(scope, orderId);
+    if (order == null) {
+      throw StoreOrderStateException('Order $orderId was not found.');
+    }
+    final status = '${order['status_name'] ?? ''}'.trim();
+    if (StoreOrderStatus.isCompleted(status)) {
+      throw StoreOrderStateException(
+        'Order $orderId is $status and cannot be deleted.',
+      );
+    }
+    if (await _ordersRepo.countOrderPayments(scope, orderId) > 0) {
+      throw StoreOrderStateException(
+        'Order $orderId has payments. Refund it from Payments, then cancel.',
+      );
+    }
+
+    final reachedServer =
+        !StoreOrderStatus.isSyncExcluded(status) &&
+        (((order['exported'] as num?)?.toInt() ?? 0) == 1 ||
+            order['last_exported_at'] != null ||
+            order['last_imported_at'] != null ||
+            order['remote_id'] != null);
+    final items = await _ordersRepo.getOrderItems(scope, orderId);
+    final sentToKitchen =
+        items.any(
+          (item) => ((item['kitchen_sent_quantity'] as num?) ?? 0) > 0,
+        ) ||
+        (await _ordersRepo.getKitchenCancellations(scope, orderId)).isNotEmpty;
+
+    if (!reachedServer && !sentToKitchen) {
+      await _ordersRepo.purgeOrder(scope, orderId);
+      return true;
+    }
+
+    for (final item in items) {
+      await _trackKitchenCancellationIfNeeded(
+        scope,
+        item,
+        nextQuantity: 0,
+        note: 'Order deleted before billing',
+      );
+    }
+    if (!StoreOrderStatus.isCancelled(status)) {
+      await _ordersRepo.updateOrderStatus(
+        scope,
+        orderId,
+        StoreOrderStatus.cancelled,
+      );
+    }
+    return false;
   }
 
   Future<List<StoreKitchenCancellationRecord>> _getKitchenCancellationRecords(
@@ -4495,6 +4608,7 @@ class Store {
     String? query,
     int? limit,
     int? offset,
+    bool activeOnly = false,
   }) async {
     _validateScope(scope);
     await _requireRole('member');
@@ -4503,6 +4617,7 @@ class Store {
       query: query,
       limit: limit,
       offset: offset,
+      activeOnly: activeOnly,
     );
   }
 
@@ -4511,12 +4626,14 @@ class Store {
     String? query,
     int? limit,
     int? offset,
+    bool activeOnly = false,
   }) async {
     final rows = await _searchProductVariants(
       scope: scope,
       query: query,
       limit: limit,
       offset: offset,
+      activeOnly: activeOnly,
     );
     return rows.map(StoreProductVariantRecord.fromRow).toList();
   }
@@ -4932,31 +5049,43 @@ class Store {
 
   Future<List<Map<String, dynamic>>> _getProductVariantsByCategory(
     StoreScope scope,
-    int categoryId,
-  ) async {
+    int categoryId, {
+    bool activeOnly = false,
+  }) async {
     _validateScope(scope);
     await _requireRole('member');
-    return _productRepo.getProductVariantsByCategory(scope, categoryId);
+    return _productRepo.getProductVariantsByCategory(
+      scope,
+      categoryId,
+      activeOnly: activeOnly,
+    );
   }
 
   Future<List<StoreProductVariantRecord>> _getProductVariantRecordsByCategory(
     StoreScope scope,
-    int categoryId,
-  ) async {
-    final rows = await _getProductVariantsByCategory(scope, categoryId);
+    int categoryId, {
+    bool activeOnly = false,
+  }) async {
+    final rows = await _getProductVariantsByCategory(
+      scope,
+      categoryId,
+      activeOnly: activeOnly,
+    );
     return rows.map(StoreProductVariantRecord.fromRow).toList();
   }
 
   Future<List<StoreProductVariantRecord>>
   _getProductVariantRecordsByCategoryLocalId(
     StoreScope scope,
-    String categoryLocalId,
-  ) async {
+    String categoryLocalId, {
+    bool activeOnly = false,
+  }) async {
     _validateScope(scope);
     await _requireRole('member');
     final rows = await _productRepo.getProductVariantsByCategoryLocalId(
       scope,
       categoryLocalId,
+      activeOnly: activeOnly,
     );
     return rows.map(StoreProductVariantRecord.fromRow).toList();
   }
@@ -5173,6 +5302,16 @@ class Store {
       taxLabel: taxLabel,
       description: description,
     );
+  }
+
+  Future<void> _setVariantActive({
+    required StoreScope scope,
+    required String variantLocalId,
+    required bool active,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('admin');
+    await _productRepo.setVariantActive(scope, variantLocalId, active: active);
   }
 
   Future<void> _softDeleteVariant({
@@ -5528,6 +5667,52 @@ class Store {
       uniqueId: uniqueId,
       role: role,
     );
+  }
+
+  Future<String?> _recordOfflineDirectoryCustomer({
+    required StoreScope scope,
+    required String name,
+    required String phone,
+    String? email,
+    String role = 'retail_customer',
+  }) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    final trimmedName = name.trim();
+    final trimmedPhone = phone.trim();
+    if (trimmedName.isEmpty || trimmedPhone.isEmpty) {
+      return null;
+    }
+    return _customerRepo.upsertOfflineDirectoryCustomer(
+      scope: scope,
+      name: trimmedName,
+      phone: trimmedPhone,
+      email: email,
+      role: role,
+    );
+  }
+
+  /// Applies the gateway's ``localCustomerId → customerId`` results.
+  Future<int> _adoptExportedCustomerIds(
+    StoreScope scope,
+    Map<String, dynamic>? responseJson,
+  ) async {
+    final results = responseJson?['results'];
+    if (results is! List) return 0;
+    var adopted = 0;
+    for (final raw in results) {
+      if (raw is! Map) continue;
+      final localId = '${raw['localCustomerId'] ?? ''}';
+      final backendId = '${raw['customerId'] ?? ''}';
+      if (await _customerRepo.adoptBackendCustomerId(
+        scope: scope,
+        localId: localId,
+        backendId: backendId,
+      )) {
+        adopted++;
+      }
+    }
+    return adopted;
   }
 
   Future<List<Map<String, dynamic>>> _searchCustomers({
@@ -6489,6 +6674,8 @@ class Store {
           AND oi.storeId = ?
           AND COALESCE(oi.table_id, '') != ''
           AND LOWER(TRIM(COALESCE(o.status_name, ''))) != 'closed'
+          AND LOWER(COALESCE(o.status_name, '')) NOT LIKE '%complet%'
+          AND LOWER(COALESCE(o.status_name, '')) NOT LIKE '%cancel%'
         GROUP BY oi.table_id
       ) occ ON occ.table_id = t.table_id
       WHERE ${whereClauses.join(' AND ')}

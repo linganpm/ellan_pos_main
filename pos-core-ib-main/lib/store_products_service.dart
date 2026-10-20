@@ -15,15 +15,29 @@ class StoreProductsService {
     return _store._listProductCategories(scope);
   }
 
-  Future<List<StoreProductVariantRecord>> listVariantsByCategory(StoreScope scope, int categoryId) {
-    return _store._getProductVariantRecordsByCategory(scope, categoryId);
+  /// [activeOnly] hides packages switched inactive (use for billing lists).
+  Future<List<StoreProductVariantRecord>> listVariantsByCategory(
+    StoreScope scope,
+    int categoryId, {
+    bool activeOnly = false,
+  }) {
+    return _store._getProductVariantRecordsByCategory(
+      scope,
+      categoryId,
+      activeOnly: activeOnly,
+    );
   }
 
   Future<List<StoreProductVariantRecord>> listVariantsByCategoryLocalId(
     StoreScope scope,
-    String categoryLocalId,
-  ) {
-    return _store._getProductVariantRecordsByCategoryLocalId(scope, categoryLocalId);
+    String categoryLocalId, {
+    bool activeOnly = false,
+  }) {
+    return _store._getProductVariantRecordsByCategoryLocalId(
+      scope,
+      categoryLocalId,
+      activeOnly: activeOnly,
+    );
   }
 
   Future<List<StoreProductVariantRecord>> searchDetails({
@@ -31,12 +45,14 @@ class StoreProductsService {
     String? query,
     int? limit,
     int? offset,
+    bool activeOnly = false,
   }) {
     return _store._searchProductVariantRecords(
       scope: scope,
       query: query,
       limit: limit,
       offset: offset,
+      activeOnly: activeOnly,
     );
   }
 
@@ -133,6 +149,19 @@ class StoreProductsService {
       unitQty: unitQty,
       taxLabel: taxLabel,
       description: description,
+    );
+  }
+
+  /// Marks a package active/inactive locally; Sync pushes it to the backend.
+  Future<void> setVariantActive({
+    required StoreScope scope,
+    required String variantLocalId,
+    required bool active,
+  }) {
+    return _store._setVariantActive(
+      scope: scope,
+      variantLocalId: variantLocalId,
+      active: active,
     );
   }
 

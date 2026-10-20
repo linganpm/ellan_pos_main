@@ -7,6 +7,7 @@ import 'package:pos_tablet/core/currency_format.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/order_types_repository.dart';
+import 'package:pos_tablet/core/order_list_route_observer.dart';
 import 'package:pos_tablet/core/pos_checkout_meta.dart';
 import 'package:pos_tablet/presentation/widgets/order_creation_sheet.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
@@ -116,12 +117,14 @@ class _OrderListScreenContent extends StatefulWidget {
       _OrderListScreenContentState();
 }
 
-class _OrderListScreenContentState extends State<_OrderListScreenContent> {
+class _OrderListScreenContentState extends State<_OrderListScreenContent>
+    with RouteAware {
   static const _clearStatusFilter = '__clear_status__';
 
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
+  PageRoute<dynamic>? _subscribedRoute;
 
   @override
   void initState() {
@@ -130,7 +133,28 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    final pageRoute = route is PageRoute<dynamic> ? route : null;
+    if (pageRoute == _subscribedRoute) return;
+    if (_subscribedRoute != null) {
+      orderListRouteObserver.unsubscribe(this);
+    }
+    _subscribedRoute = pageRoute;
+    if (pageRoute != null) {
+      orderListRouteObserver.subscribe(this, pageRoute);
+    }
+  }
+
+  @override
+  void didPopNext() {
+    if (mounted) context.read<OrderListBloc>().add(RefreshOrders());
+  }
+
+  @override
   void dispose() {
+    orderListRouteObserver.unsubscribe(this);
     _scrollController.dispose();
     _searchController.dispose();
     _debounce?.cancel();
@@ -189,21 +213,23 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
             },
             tooltip: AppLocalizations.of(context)!.orderListRefreshButton,
           ),
-          IconButton(
-            tooltip: AppLocalizations.of(context)!.homeCreateOrder,
-            onPressed: () => showOrderCreationBottomSheet(
-              context,
-              initialPricingMode: widget.pricingMode,
-              lockPricingMode: (widget.pricingMode ?? '').trim().isNotEmpty,
-            ),
-            icon: const Icon(Icons.add_rounded, color: Color(0xFF4A00E0)),
-          ),
           const SizedBox(width: 8),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => showOrderCreationBottomSheet(
+          context,
+          initialPricingMode: widget.pricingMode,
+          lockPricingMode: (widget.pricingMode ?? '').trim().isNotEmpty,
+        ),
+        icon: const Icon(Icons.add_rounded),
+        label: Text(context.l10n.homeCreateOrder),
+      ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(
+            MediaQuery.sizeOf(context).width < 900 ? 12 : 24,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -225,7 +251,8 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
                   ),
                   child: Column(
                     children: [
-                      _buildTableHeader(context),
+                      if (MediaQuery.sizeOf(context).width >= 900)
+                        _buildTableHeader(context),
                       Expanded(child: _buildOrderList()),
                     ],
                   ),
@@ -239,169 +266,174 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
   }
 
   Widget _buildTopFilters(BuildContext context) {
-    return Row(
-      children: [
-        // Order Type Segmented Control (synced types)
-        BlocBuilder<OrderListBloc, OrderListState>(
-          builder: (context, state) {
-            String selectedType = 'All';
-            List<PosOrderType> types = OrderTypesRepository.defaults;
-            if (state is OrderListLoaded) {
-              selectedType = state.selectedTypeFilter;
-              if (state.availableOrderTypes.isNotEmpty) {
-                types = state.availableOrderTypes;
-              }
-            }
+    final compact = MediaQuery.sizeOf(context).width < 1100;
+    final typeFilter = BlocBuilder<OrderListBloc, OrderListState>(
+      builder: (context, state) {
+        String selectedType = 'All';
+        List<PosOrderType> types = OrderTypesRepository.defaults;
+        if (state is OrderListLoaded) {
+          selectedType = state.selectedTypeFilter;
+          if (state.availableOrderTypes.isNotEmpty) {
+            types = state.availableOrderTypes;
+          }
+        }
 
-            final segments = <Widget>[
-              _buildSegment(
-                AppLocalizations.of(context)!.orderListFilterAll,
-                'All',
-                selectedType == 'All',
-              ),
-            ];
-            for (final type in types) {
-              segments.add(
-                Container(width: 1, color: Colors.grey.withValues(alpha: 0.2)),
-              );
-              segments.add(
-                _buildSegment(type.label, type.key, selectedType == type.key),
-              );
-            }
+        final segments = <Widget>[
+          _buildSegment(
+            AppLocalizations.of(context)!.orderListFilterAll,
+            'All',
+            selectedType == 'All',
+          ),
+        ];
+        for (final type in types) {
+          segments.add(
+            Container(width: 1, color: Colors.grey.withValues(alpha: 0.2)),
+          );
+          segments.add(
+            _buildSegment(type.label, type.key, selectedType == type.key),
+          );
+        }
 
-            return Flexible(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.grey.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: segments,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(width: 16),
-        // Search
-        SizedBox(
-          width: 300,
-          child: TextField(
-            controller: _searchController,
-            onChanged: _onSearchChanged,
-            decoration: InputDecoration(
-              hintText: AppLocalizations.of(context)!.orderListSearchHint,
-              hintStyle: FontUtility.body.copyWith(color: Colors.black38),
-              prefixIcon: const Icon(
-                Icons.search_rounded,
-                color: Colors.black45,
-              ),
-              suffixIcon: IconButton(
-                tooltip: context.l10n.commonClear,
-                icon: const Icon(
-                  Icons.clear_rounded,
-                  color: Colors.black45,
-                  size: 20,
-                ),
-                onPressed: () {
-                  _searchController.clear();
-                  _onSearchChanged('');
-                },
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 0,
-                horizontal: 16,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Colors.grey.withValues(alpha: 0.2),
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Colors.grey.withValues(alpha: 0.2),
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF4A00E0)),
-              ),
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Container(
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
             ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: segments),
+          ),
+        );
+      },
+    );
+    final search = SizedBox(
+      width: compact ? null : 300,
+      child: TextField(
+        controller: _searchController,
+        onChanged: _onSearchChanged,
+        decoration: InputDecoration(
+          hintText: AppLocalizations.of(context)!.orderListSearchHint,
+          hintStyle: FontUtility.body.copyWith(color: Colors.black38),
+          prefixIcon: const Icon(Icons.search_rounded, color: Colors.black45),
+          suffixIcon: IconButton(
+            tooltip: context.l10n.commonClear,
+            icon: const Icon(
+              Icons.clear_rounded,
+              color: Colors.black45,
+              size: 20,
+            ),
+            onPressed: () {
+              _searchController.clear();
+              _onSearchChanged('');
+            },
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 0,
+            horizontal: 16,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF4A00E0)),
           ),
         ),
-        const SizedBox(width: 16),
-        // Filter Button
-        BlocBuilder<OrderListBloc, OrderListState>(
-          builder: (context, state) {
-            String? statusFilter;
-            if (state is OrderListLoaded) {
-              statusFilter = state.selectedStatusFilter;
-            }
+      ),
+    );
+    final statusFilter = BlocBuilder<OrderListBloc, OrderListState>(
+      builder: (context, state) {
+        String? statusFilter;
+        if (state is OrderListLoaded) {
+          statusFilter = state.selectedStatusFilter;
+        }
 
-            return PopupMenuButton<String>(
-              tooltip: AppLocalizations.of(context)!.orderListFilterButton,
-              onSelected: (value) {
-                if (value == _clearStatusFilter) {
-                  context.read<OrderListBloc>().add(ClearStatusFilter());
-                } else {
-                  context.read<OrderListBloc>().add(FilterByStatus(value));
-                }
-              },
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              icon: Icon(
-                Icons.filter_list_rounded,
-                color: statusFilter != null
-                    ? const Color(0xFF4A00E0)
-                    : Colors.black87,
-              ),
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: _clearStatusFilter,
-                  child: Text(context.l10n.orderListClearFilter),
-                ),
-                const PopupMenuDivider(),
-                PopupMenuItem(
-                  value: 'Order Pending',
-                  child: Text(context.l10n.statusOrderPending),
-                ),
-                PopupMenuItem(
-                  value: 'Order Preparing',
-                  child: Text(context.l10n.statusOrderPreparing),
-                ),
-                PopupMenuItem(
-                  value: 'Ready To Serve',
-                  child: Text(context.l10n.orderReadyToServe),
-                ),
-                PopupMenuItem(
-                  value: 'Completed',
-                  child: Text(context.l10n.orderCompleted),
-                ),
-                PopupMenuItem(
-                  value: 'Cancelled',
-                  child: Text(context.l10n.dashboardMetricCancelled),
-                ),
-                PopupMenuItem(
-                  value: 'Order Delivered',
-                  child: Text(context.l10n.orderDeliveredStatus),
-                ),
-              ],
-            );
+        return PopupMenuButton<String>(
+          tooltip: AppLocalizations.of(context)!.orderListFilterButton,
+          onSelected: (value) {
+            if (value == _clearStatusFilter) {
+              context.read<OrderListBloc>().add(ClearStatusFilter());
+            } else {
+              context.read<OrderListBloc>().add(FilterByStatus(value));
+            }
           },
-        ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          icon: Icon(
+            Icons.filter_list_rounded,
+            color: statusFilter != null
+                ? const Color(0xFF4A00E0)
+                : Colors.black87,
+          ),
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: _clearStatusFilter,
+              child: Text(context.l10n.orderListClearFilter),
+            ),
+            const PopupMenuDivider(),
+            PopupMenuItem(
+              value: 'Order Pending',
+              child: Text(context.l10n.statusOrderPending),
+            ),
+            PopupMenuItem(
+              value: 'Order Preparing',
+              child: Text(context.l10n.statusOrderPreparing),
+            ),
+            PopupMenuItem(
+              value: 'Ready To Serve',
+              child: Text(context.l10n.orderReadyToServe),
+            ),
+            PopupMenuItem(
+              value: 'Completed',
+              child: Text(context.l10n.orderCompleted),
+            ),
+            PopupMenuItem(
+              value: 'Cancelled',
+              child: Text(context.l10n.dashboardMetricCancelled),
+            ),
+            PopupMenuItem(
+              value: 'Order Delivered',
+              child: Text(context.l10n.orderDeliveredStatus),
+            ),
+          ],
+        );
+      },
+    );
+    if (compact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          typeFilter,
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: search),
+              statusFilter,
+              _buildPeriodFilter(context),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildStatusCounts(context),
+        ],
+      );
+    }
+    return Row(
+      children: [
+        Flexible(child: typeFilter),
+        const SizedBox(width: 16),
+        search,
+        const SizedBox(width: 16),
+        statusFilter,
         const SizedBox(width: 12),
         Expanded(child: _buildStatusCounts(context)),
         const SizedBox(width: 12),
@@ -788,14 +820,13 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
 
   Widget _buildTableHeader(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.05),
+        color: colors.surfaceContainerHigh,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
-        ),
+        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
       ),
       child: Row(
         children: [
@@ -885,6 +916,7 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
 
           return ListView.builder(
             controller: _scrollController,
+            padding: const EdgeInsets.only(bottom: 96),
             itemCount: state.orders.length + (state.isFetchingMore ? 1 : 0),
             itemBuilder: (context, index) {
               if (index >= state.orders.length) {
@@ -964,6 +996,9 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
                   );
                 },
                 onPayNowTap: openPayments,
+                onDeleteTap: order.canDiscard
+                    ? () => _confirmDiscardOrder(context, order.orderId)
+                    : null,
               );
             },
           );
@@ -971,6 +1006,57 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
         return const SizedBox();
       },
     );
+  }
+
+  Future<void> _confirmDiscardOrder(
+    BuildContext context,
+    String rawOrderId,
+  ) async {
+    final orderId = int.tryParse(rawOrderId);
+    if (orderId == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.orderDeleteOrderQuestion),
+        content: Text(context.l10n.orderDeleteOrderBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(context.l10n.actionKeep),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF512F),
+            ),
+            child: Text(context.l10n.actionDelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final bloc = context.read<OrderListBloc>();
+    final l10n = context.l10n;
+    try {
+      final deleted = await getIt<UiStoreController>().discardOrder(orderId);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            deleted
+                ? l10n.orderDeletedTableFreed
+                : l10n.orderCancelledTableFreed,
+          ),
+        ),
+      );
+      bloc.add(RefreshOrders());
+    } catch (error) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.errorCouldNotDeleteOrder(error.toString())),
+        ),
+      );
+    }
   }
 
   Future<void> _showPrintDialog(BuildContext context, String orderId) async {
@@ -986,10 +1072,7 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent> {
       return;
     }
     final meta = PosCheckoutMeta.parse(order.createdBy);
-    final paid = order.payments.fold<double>(
-      0,
-      (sum, payment) => sum + payment.amount,
-    );
+    final paid = order.paidTotal;
     final paymentLabel = order.payments
         .map((payment) => payment.paymentMode)
         .where((mode) => mode.trim().isNotEmpty)

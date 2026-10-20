@@ -159,4 +159,10 @@ class StoreOrdersService {
   Future<void> deleteDraft(StoreScope scope, int orderId) {
     return _store._deleteDraftOrder(scope, orderId);
   }
+
+  /// Deletes an unpaid open order, or cancels it when it already reached the
+  /// kitchen/server. Returns true when the order row was removed.
+  Future<bool> discard(StoreScope scope, int orderId) {
+    return _store._discardOrder(scope, orderId);
+  }
 }

@@ -546,6 +546,27 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
     await _refreshSellCatalogue();
   }
 
+  Future<void> _setActive(StoreProductVariantRecord variant, bool active) async {
+    final store = context.read<UiStoreController>().store!;
+    await store.products.setVariantActive(
+      scope: store.scope,
+      variantLocalId: variant.localId,
+      active: active,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          active
+              ? context.l10n.storeSetupPackageMarkedActive
+              : context.l10n.storeSetupPackageMarkedInactive,
+        ),
+      ),
+    );
+    await _reload();
+    await _refreshSellCatalogue();
+  }
+
   Future<void> _delete(StoreProductVariantRecord variant) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -711,12 +732,30 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (!v.active) ...[
+                        StoreSetupUi.statusChip(
+                          context.l10n.commonInactive,
+                          pending: false,
+                          accent: StoreSetupUi.muted,
+                        ),
+                        const SizedBox(width: 6),
+                      ],
                       StoreSetupUi.statusChip(
                         pending
                             ? context.l10n.commonPending
                             : context.l10n.commonSynced,
                         pending: pending,
                         accent: _accent,
+                      ),
+                      Tooltip(
+                        message: v.active
+                            ? context.l10n.commonActive
+                            : context.l10n.commonInactive,
+                        child: Switch.adaptive(
+                          value: v.active,
+                          activeTrackColor: _accent,
+                          onChanged: (value) => _setActive(v, value),
+                        ),
                       ),
                       StoreSetupUi.iconAction(
                         label: context.l10n.actionDelete,

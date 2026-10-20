@@ -827,6 +827,13 @@ String _receiptRow(String left, String right, int width) {
 String _formatMoney(double value) => value.toStringAsFixed(2);
 
 String _formatReceiptTimestamp(String rawValue) {
+  final hostFormatter = Store.receiptTimestampFormatter;
+  if (hostFormatter != null) {
+    try {
+      final formatted = hostFormatter(rawValue);
+      if (formatted.trim().isNotEmpty) return formatted;
+    } catch (_) {}
+  }
   final parsed = DateTime.tryParse(rawValue);
   if (parsed == null) {
     return rawValue;

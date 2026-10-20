@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../core/controllers/checkout_models.dart';
 import '../../../core/localization/l10n_context.dart';
 import '../../../core/utils/font_utility.dart';
+import 'package:pos_tablet/core/currency_format.dart';
 
 class SalesChart extends StatelessWidget {
   final String filterSelected;
@@ -126,7 +127,7 @@ class SalesChart extends StatelessWidget {
                             return [
                               LineTooltipItem(
                                 '${point.label}\n'
-                                '\$${point.amount.toStringAsFixed(2)}\n'
+                                '${PosCurrency.format(point.amount)}\n'
                                 '${point.count} · '
                                 '${context.l10n.dashboardMetricOrders}',
                                 const TextStyle(
@@ -176,7 +177,7 @@ class SalesChart extends StatelessWidget {
                             getTitlesWidget: (double value, TitleMeta meta) {
                               if (value == 0) return const SizedBox();
                               return Text(
-                                '\$${value.toInt()}',
+                                PosCurrency.format(value, decimals: 0),
                                 style: const TextStyle(
                                   color: Colors.black54,
                                   fontSize: 12,

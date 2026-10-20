@@ -112,7 +112,6 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
                       controller: nameCtrl,
                       decoration: InputDecoration(
                         hintText: context.l10n.commonName,
-                        border: OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -121,7 +120,6 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         hintText: context.l10n.commonEmail,
-                        border: OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -129,7 +127,6 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
                       value: notificationType,
                       decoration: InputDecoration(
                         labelText: context.l10n.companyChannel,
-                        border: OutlineInputBorder(),
                       ),
                       items: [
                         DropdownMenuItem(
@@ -163,7 +160,6 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
                       value: cadence,
                       decoration: InputDecoration(
                         labelText: context.l10n.companyPeriodicity,
-                        border: OutlineInputBorder(),
                       ),
                       items: [
                         DropdownMenuItem(

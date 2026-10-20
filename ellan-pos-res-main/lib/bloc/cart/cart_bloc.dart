@@ -3,6 +3,7 @@ import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/controllers/checkout_models.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
+import 'package:pos_tablet/core/org_timezone.dart';
 import 'cart_event.dart';
 import 'cart_state.dart';
 import '../../data/models/product_model.dart';
@@ -64,14 +65,18 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         for (final product in catalogue.products)
           Product(
             id: product.id,
-            name: product.name,
+            name: product.checkoutName,
+            productName: product.productName.trim(),
+            variantName: product.packageName.trim().isNotEmpty
+                ? product.packageName.trim()
+                : product.name.trim(),
             description: '',
             price: isBuying
                 ? (product.buyPrice != null && product.buyPrice! > 0
                       ? product.buyPrice!
                       : product.price)
                 : product.price,
-            imageUrl: '',
+            imageUrl: product.imagePath,
             categoryId: product.categoryId.toString(),
             offerTag: isBuying ? null : offerTags[product.id],
             sellUnitCode: product.sellUnitCode,
@@ -206,6 +211,14 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     emit(state.copyWith(isHistoryTabActive: event.isHistoryActive));
   }
 
+  String? _orgTimezoneName() {
+    try {
+      return getIt<UiStoreController>().orgTimezoneName;
+    } catch (_) {
+      return null;
+    }
+  }
+
   void _onMarkCartKotSent(MarkCartKotSent event, Emitter<CartState> emit) {
     if (state.cartItems.isEmpty) return;
     final updated = [
@@ -221,9 +234,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       kotBatch: batch,
       items: List.from(updated),
       totalAmount: state.netTotal,
-      timestamp: DateTime.now(),
+      timestamp: OrgTimezone.nowWallClock(_orgTimezoneName()),
     );
-    // Keep sessions for this open order only; clear the active basket.
+    // KOT sends kitchen instructions; the same basket is still due for billing.
     final priorForOrder = event.orderId == null
         ? const <OrderHistoryModel>[]
         : state.orderHistory
@@ -231,20 +244,14 @@ class CartBloc extends Bloc<CartEvent, CartState> {
               .toList(growable: false);
     emit(
       state.copyWith(
-        cartItems: const [],
-        discounts: const [],
-        offerAppliedAmount: 0,
-        offerLabels: const [],
-        serviceTaxPercentage: 0,
-        tipsAmount: 0,
-        clearPaymentMethod: true,
+        cartItems: updated,
         isHistoryTabActive: true,
         orderHistory: [history, ...priorForOrder],
       ),
     );
   }
 
-  /// Legacy event — clear cart into history.
+  /// Legacy event for marking the current basket as sent to kitchen.
   void _onSendToKOT(SendToKOT event, Emitter<CartState> emit) {
     _onMarkCartKotSent(const MarkCartKotSent(), emit);
   }

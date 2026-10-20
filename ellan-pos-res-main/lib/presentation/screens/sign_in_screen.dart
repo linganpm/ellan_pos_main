@@ -14,6 +14,7 @@ import 'forgot_password_screen.dart';
 import 'package:pos_tablet/presentation/widgets/customer_support.dart';
 import 'package:pos_tablet/presentation/widgets/pin_pad.dart';
 import '../../core/routes.dart';
+import '../widgets/pos_brand_logo.dart';
 
 class SignInScreen extends StatelessWidget {
   const SignInScreen({
@@ -549,6 +550,8 @@ class _SignInFormState extends State<_SignInForm> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Center(child: PosBrandLogo(size: 112)),
+              const SizedBox(height: 16),
               Text(
                 AppLocalizations.of(context)!.signInWelcome,
                 textAlign: TextAlign.center,
@@ -688,8 +691,9 @@ class _SignInFormState extends State<_SignInForm> {
                 ),
               ),
               const SizedBox(height: 18),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
                     context.l10n.signInNewCompany,

@@ -78,8 +78,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(context.l10n.orderDeleteDraft),
-        content: Text(context.l10n.orderDeleteDraftConfirm),
+        title: Text(context.l10n.orderDeleteOrderQuestion),
+        content: Text(context.l10n.orderDeleteOrderBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -97,19 +97,39 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     );
     if (confirmed != true || !mounted) return;
     try {
-      await getIt<UiStoreController>().deleteDraftOrder(widget.orderId);
+      final deleted = await getIt<UiStoreController>().discardOrder(
+        widget.orderId,
+      );
       if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            deleted
+                ? context.l10n.orderDeletedTableFreed
+                : context.l10n.orderCancelledTableFreed,
+          ),
+        ),
+      );
       Navigator.pop(context, true);
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            context.l10n.errorCouldNotDeleteDraft(error.toString()),
+            context.l10n.errorCouldNotDeleteOrder(error.toString()),
           ),
         ),
       );
     }
+  }
+
+  bool get _canDiscard {
+    final order = _order;
+    if (order == null) return false;
+    if (StoreOrderStatus.canDelete(order.statusName)) return true;
+    return StoreOrderStatus.canCancel(order.statusName) &&
+        order.items.isEmpty &&
+        order.payments.isEmpty;
   }
 
   Future<void> _cancelOrder() async {
@@ -235,7 +255,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          if (_order != null && StoreOrderStatus.canDelete(_order!.statusName))
+          if (_canDiscard)
             IconButton(
               tooltip: context.l10n.actionDelete,
               onPressed: _loading ? null : _deleteDraft,
@@ -304,10 +324,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     }
 
     final order = _order!;
-    final paidTotal = order.payments.fold<double>(
-      0,
-      (sum, payment) => sum + (payment.amount - payment.refundedAmount),
-    );
+    final paidTotal = order.paidTotal;
     final createdLabel = _formatTime(order.createdOn);
 
     return ListView(

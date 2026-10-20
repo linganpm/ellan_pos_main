@@ -3,6 +3,7 @@ import 'package:pos_tablet/core/currency_format.dart';
 import 'package:pos_tablet/core/sell_unit.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/data/models/cart_item_model.dart';
+import 'product_image.dart';
 
 class CartItemTile extends StatelessWidget {
   final CartItem cartItem;
@@ -63,21 +64,11 @@ class CartItemTile extends StatelessWidget {
           if (hasImage) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                cartItem.product.imageUrl,
+              child: ProductImage(
+                source: cartItem.product.imageUrl,
                 width: 36,
                 height: 36,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: 36,
-                  height: 36,
-                  color: Colors.grey.shade100,
-                  child: const Icon(
-                    Icons.fastfood,
-                    size: 16,
-                    color: Colors.grey,
-                  ),
-                ),
+                iconSize: 16,
               ),
             ),
             const SizedBox(width: 8),

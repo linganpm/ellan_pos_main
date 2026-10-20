@@ -8,6 +8,7 @@ import 'package:pos_tablet/presentation/screens/scheduled_payments_screen.dart';
 import 'package:pos_tablet/presentation/widgets/credit/credit_collect_payment_dialog.dart';
 import 'package:pos_tablet/presentation/widgets/customer_select_sheet.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/core/currency_format.dart';
 
 enum _CreditSortMode { highest, longPending }
 
@@ -216,7 +217,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
         SnackBar(
           content: Text(
             context.l10n.creditsCollectedVia(
-              '\$${result.amount.toStringAsFixed(2)}',
+              PosCurrency.format(result.amount),
               result.paymentMode,
             ),
           ),
@@ -365,7 +366,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                         Expanded(
                           child: _summaryChip(
                             context.l10n.commonBalanceDue,
-                            '\$${outstanding.toStringAsFixed(2)}',
+                            PosCurrency.format(outstanding),
                             outstanding > 0.0001
                                 ? const Color(0xFFFF512F)
                                 : outstanding < -0.0001
@@ -377,7 +378,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                         Expanded(
                           child: _summaryChip(
                             '30+',
-                            '\$${aging30.toStringAsFixed(2)}',
+                            PosCurrency.format(aging30),
                             const Color(0xFFFF8A00),
                           ),
                         ),
@@ -385,7 +386,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                         Expanded(
                           child: _summaryChip(
                             '60+',
-                            '\$${aging60.toStringAsFixed(2)}',
+                            PosCurrency.format(aging60),
                             const Color(0xFFE65100),
                           ),
                         ),
@@ -393,7 +394,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                         Expanded(
                           child: _summaryChip(
                             '90+',
-                            '\$${aging90.toStringAsFixed(2)}',
+                            PosCurrency.format(aging90),
                             const Color(0xFFB71C1C),
                           ),
                         ),
@@ -597,12 +598,9 @@ class _CreditsScreenState extends State<CreditsScreen> {
                         Text(
                           [
                             '${row.creditCount} ${context.l10n.creditsCreditSales}',
-                            '${context.l10n.creditsCreditSoFar} '
-                                '\$${row.totalCreditAmount.toStringAsFixed(2)}',
-                            'Advances '
-                                '\$${advances.toStringAsFixed(2)}',
-                            '${context.l10n.creditsRepaid} '
-                                '\$${row.totalPaidAmount.toStringAsFixed(2)}',
+                            '${context.l10n.creditsCreditSoFar} ${PosCurrency.format(row.totalCreditAmount)}',
+                            'Advances ${PosCurrency.format(advances)}',
+                            '${context.l10n.creditsRepaid} ${PosCurrency.format(row.totalPaidAmount)}',
                             if (pendingDays != null)
                               '${context.l10n.commonPending}: ${pendingDays}d',
                           ].join(' · '),
@@ -618,7 +616,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '\$${netBalance.toStringAsFixed(2)}',
+                        PosCurrency.format(netBalance),
                         style: FontUtility.heading.copyWith(
                           fontSize: 18,
                           color: netBalance > 0.0001

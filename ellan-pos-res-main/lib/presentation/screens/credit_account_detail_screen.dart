@@ -4,6 +4,7 @@ import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/currency_format.dart';
 import 'package:pos_tablet/core/device_setup_store.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
+import 'package:pos_tablet/core/org_timezone.dart';
 import 'package:pos_tablet/core/utils/customer_identity.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/widgets/credit/credit_collect_payment_dialog.dart';
@@ -218,7 +219,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
         SnackBar(
           content: Text(
             context.l10n.creditsCollectedVia(
-              '\$${result.amount.toStringAsFixed(2)}',
+              PosCurrency.format(result.amount),
               result.paymentMode,
             ),
           ),
@@ -295,7 +296,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
         SnackBar(
           content: Text(
             context.l10n.creditsScheduledFor(
-              '\$${result.amount.toStringAsFixed(2)}',
+              PosCurrency.format(result.amount),
               result.dueDateIso,
             ),
           ),
@@ -322,7 +323,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
           title: Text(context.l10n.creditsCancelScheduleTitle),
           content: Text(
             context.l10n.creditsCancelScheduleBody(
-              '\$${schedule.amount.toStringAsFixed(2)}',
+              PosCurrency.format(schedule.amount),
               schedule.dueDate,
             ),
           ),
@@ -379,7 +380,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
         SnackBar(
           content: Text(
             context.l10n.creditsCollectedScheduled(
-              '\$${result.amount.toStringAsFixed(2)}',
+              PosCurrency.format(result.amount),
             ),
           ),
           backgroundColor: Colors.green.shade700,
@@ -405,7 +406,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
           title: Text(context.l10n.creditsVoidRepaymentTitle),
           content: Text(
             context.l10n.creditsVoidRepaymentBody(
-              '\$${repayment.totalAmount.toStringAsFixed(2)}',
+              PosCurrency.format(repayment.totalAmount),
               _shortDate(repayment.paidOn),
             ),
           ),
@@ -445,10 +446,21 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
     }
   }
 
+  String? get _orgTimezoneName {
+    try {
+      return getIt<UiStoreController>().orgTimezoneName;
+    } catch (_) {
+      return null;
+    }
+  }
+
   String _shortDate(String? raw) {
     final value = (raw ?? '').trim();
     if (value.isEmpty) return '-';
-    final parsed = DateTime.tryParse(value);
+    // Date-only values (due dates) are calendar days; instants use org time.
+    final parsed = value.length > 10
+        ? OrgTimezone.tryParseWallClock(value, _orgTimezoneName)
+        : DateTime.tryParse(value);
     if (parsed == null) {
       return value.length >= 10 ? value.substring(0, 10) : value;
     }
@@ -551,7 +563,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                             _isSupplierAccount
                                 ? _purchaseCreditLabel
                                 : context.l10n.creditsCreditSoFar,
-                            '\$${_creditSoFar.toStringAsFixed(2)}',
+                            PosCurrency.format(_creditSoFar),
                             const Color(0xFF4A00E0),
                           ),
                         ),
@@ -559,7 +571,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                         Expanded(
                           child: _metricCard(
                             context.l10n.creditsRepaid,
-                            '\$${_repaid.toStringAsFixed(2)}',
+                            PosCurrency.format(_repaid),
                             Colors.green.shade700,
                           ),
                         ),
@@ -567,7 +579,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                         Expanded(
                           child: _metricCard(
                             'Advances',
-                            '\$${_totalAdvances.toStringAsFixed(2)}',
+                            PosCurrency.format(_totalAdvances),
                             Colors.teal.shade700,
                           ),
                         ),
@@ -789,15 +801,15 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                       const SizedBox(height: 4),
                       Text(
                         context.l10n.creditsMaxAmount(
-                          '\$${limit.toStringAsFixed(2)}',
+                          PosCurrency.format(limit),
                         ),
                         style: FontUtility.heading.copyWith(fontSize: 18),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         context.l10n.creditsUsedAvailable(
-                          '\$${used.toStringAsFixed(2)}',
-                          '\$${remaining.toStringAsFixed(2)}',
+                          PosCurrency.format(used),
+                          PosCurrency.format(remaining),
                         ),
                         style: FontUtility.body.copyWith(
                           fontSize: 12,
@@ -832,7 +844,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
               _settingChip(
                 context.l10n.creditsLimit,
                 hasLimit
-                    ? '\$${limit.toStringAsFixed(2)}'
+                    ? PosCurrency.format(limit)
                     : context.l10n.creditsNotSet,
               ),
               _settingChip(
@@ -945,7 +957,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '\$${schedule.amount.toStringAsFixed(2)}',
+                  PosCurrency.format(schedule.amount),
                   style: FontUtility.subheading.copyWith(fontSize: 14),
                 ),
                 const SizedBox(height: 2),
@@ -1029,7 +1041,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
             ),
           ),
           Text(
-            '$amountPrefix\$${entry.amount.toStringAsFixed(2)}',
+            '$amountPrefix${PosCurrency.format(entry.amount)}',
             style: FontUtility.heading.copyWith(
               fontSize: 15,
               color: amountColor,
@@ -1072,7 +1084,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                 if (_isSupplierAccount && credit.paidAmount > 0.0001) ...[
                   const SizedBox(height: 2),
                   Text(
-                    '${_advanceLabel} ${context.l10n.commonOfAmount('\$${credit.paidAmount.toStringAsFixed(2)}')} ${_appliedLabel.toLowerCase()}',
+                    '${_advanceLabel} ${context.l10n.commonOfAmount(PosCurrency.format(credit.paidAmount))} ${_appliedLabel.toLowerCase()}',
                     style: FontUtility.body.copyWith(
                       fontSize: 12,
                       color: Colors.teal.shade700,
@@ -1086,7 +1098,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '\$${credit.outstandingAmount.toStringAsFixed(2)}',
+                PosCurrency.format(credit.outstandingAmount),
                 style: FontUtility.heading.copyWith(
                   fontSize: 15,
                   color: credit.settled
@@ -1095,9 +1107,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
                 ),
               ),
               Text(
-                context.l10n.commonOfAmount(
-                  '\$${credit.amount.toStringAsFixed(2)}',
-                ),
+                context.l10n.commonOfAmount(PosCurrency.format(credit.amount)),
                 style: FontUtility.body.copyWith(
                   fontSize: 12,
                   color: Colors.black45,
@@ -1141,7 +1151,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
             ),
           ),
           Text(
-            '\$${inst.outstandingAmount.toStringAsFixed(2)}',
+            PosCurrency.format(inst.outstandingAmount),
             style: FontUtility.heading.copyWith(fontSize: 14),
           ),
         ],
@@ -1161,7 +1171,7 @@ class _CreditAccountDetailScreenState extends State<CreditAccountDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '\$${repayment.totalAmount.toStringAsFixed(2)} · ${isAdvance ? _advanceLabel : repayment.paymentMode.toUpperCase()}',
+                  '${PosCurrency.format(repayment.totalAmount)} · ${isAdvance ? _advanceLabel : repayment.paymentMode.toUpperCase()}',
                   style: FontUtility.subheading.copyWith(
                     fontSize: 14,
                     decoration: voided ? TextDecoration.lineThrough : null,

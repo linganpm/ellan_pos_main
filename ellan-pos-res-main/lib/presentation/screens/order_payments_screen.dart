@@ -159,10 +159,7 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
     return order.finalValue > 0 ? order.finalValue : order.total;
   }
 
-  double get _paidTotal => _payments.fold<double>(
-    0,
-    (sum, payment) => sum + (payment.amount - payment.refundedAmount),
-  );
+  double get _paidTotal => _order?.paidTotal ?? 0;
 
   double get _remaining {
     final remaining = _orderTotal - _paidTotal;
@@ -203,7 +200,6 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
               ),
               decoration: InputDecoration(
                 labelText: context.l10n.orderPaymentsRefundAmount,
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
@@ -211,7 +207,6 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
               controller: reasonController,
               decoration: InputDecoration(
                 labelText: context.l10n.orderPaymentsReasonOptional,
-                border: OutlineInputBorder(),
               ),
             ),
           ],

@@ -5,9 +5,9 @@
       "customerId": "cust_001",
       "orgId": "org_001",
       "storeId": "store_001",
-      "role": "admin",
+      "role": "member",
       "access_enabled": 1,
-      "id": 11
+      "id": 1
     },
     {
       "remote_id": "org_001:store_002:cust_001:member",
@@ -24,7 +24,7 @@
       "storeId": "store_001",
       "role": "admin",
       "access_enabled": 1,
-      "id": 12
+      "id": 3
     },
     {
       "remote_id": "org_001:store_002:cust_003:admin",

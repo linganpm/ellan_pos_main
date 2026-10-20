@@ -339,7 +339,7 @@ class _DashboardView extends StatelessWidget {
       ),
       _buildOverviewCard(
         AppLocalizations.of(context)!.dashboardMetricTotalSales,
-        '\$${snapshot.totalSales.toStringAsFixed(0)}',
+        PosCurrency.format(snapshot.totalSales, decimals: 0),
         Icons.attach_money_rounded,
         const Color(0xFFFF9A9E),
         onTap: () => _openOrders(context, periodFilter: periodFilter),
@@ -369,7 +369,7 @@ class _DashboardView extends StatelessWidget {
       ),
       _buildOverviewCard(
         AppLocalizations.of(context)!.dashboardRepayments,
-        '\$${snapshot.repaymentsAmount.toStringAsFixed(0)}',
+        PosCurrency.format(snapshot.repaymentsAmount, decimals: 0),
         Icons.payments_rounded,
         const Color(0xFF26A69A),
         onTap: () => Navigator.push(
@@ -379,7 +379,7 @@ class _DashboardView extends StatelessWidget {
       ),
       _buildOverviewCard(
         AppLocalizations.of(context)!.dashboardRefunds,
-        '${snapshot.refundsCount} · \$${snapshot.refundsAmount.toStringAsFixed(0)}',
+        '${snapshot.refundsCount} · ${PosCurrency.format(snapshot.refundsAmount, decimals: 0)}',
         Icons.undo_rounded,
         const Color(0xFFE53935),
         onTap: () => Navigator.push(

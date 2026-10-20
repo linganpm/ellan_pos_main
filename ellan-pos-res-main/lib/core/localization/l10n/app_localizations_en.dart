@@ -1109,6 +1109,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get companySettingsSaved => 'Company settings saved.';
 
   @override
+  String get companySettingsSavedOffline =>
+      'Saved on this device. Company details will sync when you\'re back online.';
+
+  @override
+  String get companySettingsPendingSync =>
+      'Not synced yet — changes are saved on this device and will upload on the next sync.';
+
+  @override
+  String companySettingsSavedNotSynced(String reason) {
+    return 'Saved on this device, but the server rejected the update: $reason';
+  }
+
+  @override
   String get companySettingsTitle => 'Company settings';
 
   @override
@@ -1745,6 +1758,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dineInFloorFirst => 'First Floor';
 
   @override
+  String get dineInBooked => 'Booked';
+
+  @override
+  String get dineInTableUnavailable =>
+      'This table is no longer available. Please select another table.';
+
+  @override
+  String get dineInNoTables =>
+      'No tables configured. Sync or configure the store\'s floors and tables.';
+
+  @override
+  String get dineInRefreshTables => 'Refresh table availability';
+
+  @override
   String get dineInFloorSecond => 'Second Floor';
 
   @override
@@ -2270,6 +2297,28 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get orderDraftSaved =>
       'Cart draft saved. Open it from Home → Saved drafts.';
+
+  @override
+  String get orderDeleteOrder => 'Delete order';
+
+  @override
+  String get orderDeleteOrderQuestion => 'Delete order?';
+
+  @override
+  String get orderDeleteOrderBody =>
+      'This removes all products from the order, deletes its saved draft and frees the table. Items already sent to the kitchen are logged as cancelled.';
+
+  @override
+  String get orderDeletedTableFreed => 'Order deleted. Table is free.';
+
+  @override
+  String get orderCancelledTableFreed =>
+      'Order was already sent to the kitchen or synced, so it was cancelled. Table is free.';
+
+  @override
+  String errorCouldNotDeleteOrder(String error) {
+    return 'Could not delete order: $error';
+  }
 
   @override
   String get orderGoToPayments => 'Go to payments';
@@ -3148,6 +3197,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Deleted offline. Sync to export tombstone.';
 
   @override
+  String get storeSetupPackageMarkedActive =>
+      'Package is active and available for billing. Sync to update the admin panel.';
+
+  @override
+  String get storeSetupPackageMarkedInactive =>
+      'Package is inactive and hidden from billing. Sync to update the admin panel.';
+
+  @override
   String get storeSetupEditAddonGroup => 'Edit add-on group';
 
   @override
@@ -3611,6 +3668,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeLock => 'Lock screen';
+
+  @override
+  String get actionLock => 'Lock';
 
   @override
   String get lockEnterPin => 'Enter your PIN to unlock';

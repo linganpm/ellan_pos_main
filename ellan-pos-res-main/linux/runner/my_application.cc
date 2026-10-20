@@ -54,6 +54,20 @@ static void my_application_activate(GApplication* application) {
 
   gtk_window_set_default_size(window, 1280, 720);
 
+  g_autoptr(GError) icon_error = nullptr;
+  g_autofree gchar* executable =
+      g_file_read_link("/proc/self/exe", &icon_error);
+  if (executable != nullptr) {
+    g_autofree gchar* bundle_dir = g_path_get_dirname(executable);
+    g_autofree gchar* icon_path = g_build_filename(
+        bundle_dir, "data", "flutter_assets", "assets", "branding",
+        "ellan_pos.png", nullptr);
+    gtk_window_set_icon_from_file(window, icon_path, &icon_error);
+  }
+  if (icon_error != nullptr) {
+    g_warning("Failed to load EllanPOS window icon: %s", icon_error->message);
+  }
+
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
       project, self->dart_entrypoint_arguments);

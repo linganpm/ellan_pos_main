@@ -69,6 +69,18 @@ class OrderListModel {
 
   bool get isPurchase => pricingMode == 'buying';
 
+  /// Unpaid open order with no products (or a local draft) can be deleted.
+  bool get canDiscard {
+    final status = orderStatus.trim().toLowerCase();
+    if (status.contains('draft')) return true;
+    if (status == 'closed' ||
+        status.contains('complet') ||
+        status.contains('cancel')) {
+      return false;
+    }
+    return itemCount == 0 && paidTotal <= 0.0001;
+  }
+
   String get formattedTableInfo {
     if (isDineIn && floorName != null && tableNumber != null) {
       return '$floorName - Table $tableNumber';

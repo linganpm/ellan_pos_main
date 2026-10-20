@@ -3,13 +3,13 @@
     {
       "orgId": "org_001",
       "deviceId": "inactive-device-001",
-      "make": "Linux",
+      "make": "Seeder",
       "model": "Blocked Unit",
       "lat": 0.0,
       "lan": 0.0,
       "status": "inactive",
       "registered_at": "2024-01-01T00:00:00Z",
-      "updated_at": "2026-03-30T17:28:15.108433+00:00",
+      "updated_at": "2026-10-20T10:08:37.527558+00:00",
       "message": "Device is inactive."
     },
     {
@@ -45,7 +45,7 @@
       "lan": 79.8612,
       "status": "active",
       "registered_at": "2026-03-30T01:32:16.034788+00:00",
-      "updated_at": "2026-03-30T17:28:10.861432+00:00",
+      "updated_at": "2026-10-20T10:08:37.514680+00:00",
       "message": "Device registration active."
     },
     {
@@ -69,7 +69,7 @@
       "lan": 103.8198,
       "status": "pending",
       "registered_at": "2024-01-01T00:00:00Z",
-      "updated_at": "2026-03-30T17:28:10.874194+00:00",
+      "updated_at": "2026-10-20T10:08:37.536306+00:00",
       "message": "Device is pending."
     },
     {

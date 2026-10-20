@@ -154,6 +154,7 @@ class StoreSyncService {
     StoreSyncEndpointConfig config, {
     String? cursor,
     String? since,
+    Map<String, String> extraQuery = const {},
   }) async {
     final deviceId = await _store.registeredDeviceId;
     final response = await http.get(
@@ -165,6 +166,7 @@ class StoreSyncService {
         limit: config.importBatchSize,
         cursor: cursor,
         since: since,
+        extraQuery: extraQuery,
       ),
       headers: {
         if (deviceId != null && deviceId.isNotEmpty) 'X-Pos-Device-Id': deviceId,
@@ -199,6 +201,8 @@ class StoreSyncService {
     required void Function(StoreSyncProgressUpdate update)? onProgress,
     String? since,
     void Function(Map<String, dynamic> payload)? onPayload,
+    Future<void> Function()? afterImport,
+    Map<String, String> extraQuery = const {},
   }) async {
     if (!config.canImport) {
       final result = StoreSyncOperationResult(
@@ -246,6 +250,7 @@ class StoreSyncService {
         config,
         cursor: cursor,
         since: since,
+        extraQuery: extraQuery,
       );
       batchIndex += 1;
       totalCount = batch.totalCount >= processedCount
@@ -279,6 +284,7 @@ class StoreSyncService {
       }
     }
 
+    await afterImport?.call();
     final result = StoreSyncOperationResult(
       entity: entity,
       direction: 'import',
@@ -432,7 +438,7 @@ class StoreSyncService {
         final response = await http.post(
           Uri.parse(resolvedExportUrl),
           headers: exportHeaders,
-          body: jsonEncode(payload),
+          body: jsonEncode(normalizeSyncPayloadTimestamps(payload)),
         );
         if (response.statusCode < 200 || response.statusCode >= 300) {
           throw StateError(
@@ -763,11 +769,28 @@ class StoreSyncService {
         config: config,
         since: since,
         skipMessage: 'Products import URL is not configured.',
+        // Inactive packages arrive with active=0 instead of being dropped
+        // (dropped rows are treated as deleted on the device).
+        extraQuery: const {'includeInactive': '1'},
         startMessage: since == null
             ? 'Fetching products from remote server.'
             : 'Fetching product drifts since $since.',
         completeMessage: (processedCount) =>
-            'Imported $processedCount product variants.',
+            'Imported $processedCount product variants and saved images for offline use.',
+        afterImport: () async {
+          _emitProgress(
+            onProgress,
+            _progressUpdate(
+              entity: 'products',
+              direction: 'import',
+              stage: StoreSyncProgressStage.running,
+              message: 'Downloading product images for offline use.',
+            ),
+          );
+          await ProductImageCache(
+            _store._db,
+          ).sync(scope, Uri.parse(config.importUrl));
+        },
         onPayload: (payload) {
           final timestamp = _readLatestTimestamp(payload);
           if (timestamp != null) {
@@ -806,6 +829,7 @@ class StoreSyncService {
   }) async {
     return _runOperation('offers', 'import', (startedAt) async {
       final config = _store._config.sync.offers;
+      final serverOfferIds = <String>[];
       return _importInBatches(
         entity: 'offers',
         startedAt: startedAt,
@@ -818,11 +842,18 @@ class StoreSyncService {
         importBatch: (payload) async {
           final count =
               (payload['data'] as List<dynamic>? ?? const []).length;
-          await _store._offersRepo.importOffersFromJsonData(
-            payload,
-            scope: scope,
+          serverOfferIds.addAll(
+            await _store._offersRepo.importOffersFromJsonData(
+              payload,
+              scope: scope,
+            ),
           );
           return count;
+        },
+        // Offers are a full snapshot of what is currently applicable, so
+        // anything missing (expired/disabled/removed upstream) is retired.
+        afterImport: () async {
+          await _store._offersRepo.pruneServerOffersNotIn(scope, serverOfferIds);
         },
         onProgress: onProgress,
       );
@@ -1064,48 +1095,60 @@ class StoreSyncService {
         );
       }
 
-      return _exportSnapshotInChunks(
-        entity: 'customers',
-        startedAt: startedAt,
-        exportUrl: config.exportUrl,
-        exportToken: config.exportToken,
-        sections: [
-          _StoreSyncExportSection(
-            payloadKey: 'data',
-            count: () => _store._countCustomerExportRows(scope),
-            loadBatch: (limit, offset) => _store._listCustomerExportRows(
-              scope,
-              limit: limit,
-              offset: offset,
+      final adoptResponses = <Map<String, dynamic>>[];
+      try {
+        return await _exportSnapshotInChunks(
+          entity: 'customers',
+          startedAt: startedAt,
+          exportUrl: config.exportUrl,
+          exportToken: config.exportToken,
+          sections: [
+            _StoreSyncExportSection(
+              payloadKey: 'data',
+              count: () => _store._countCustomerExportRows(scope),
+              loadBatch: (limit, offset) => _store._listCustomerExportRows(
+                scope,
+                limit: limit,
+                offset: offset,
+              ),
             ),
-          ),
-          _StoreSyncExportSection(
-            payloadKey: 'store_roles',
-            count: () => _store._countStoreRoleExportRows(scope),
-            loadBatch: (limit, offset) => _store._listStoreRoleExportRows(
-              scope,
-              limit: limit,
-              offset: offset,
+            _StoreSyncExportSection(
+              payloadKey: 'store_roles',
+              count: () => _store._countStoreRoleExportRows(scope),
+              loadBatch: (limit, offset) => _store._listStoreRoleExportRows(
+                scope,
+                limit: limit,
+                offset: offset,
+              ),
             ),
-          ),
-          _StoreSyncExportSection(
-            payloadKey: 'org_roles',
-            count: () => _store._countOrganisationRoleExportRows(scope),
-            loadBatch: (limit, offset) =>
-                _store._listOrganisationRoleExportRows(
-                  scope,
-                  limit: limit,
-                  offset: offset,
-                ),
-          ),
-        ],
-        emptyMessage: 'No customers or roles to export.',
-        successMessage: (sectionTotals) =>
-            'Exported ${sectionTotals['data'] ?? 0} customers, ${sectionTotals['store_roles'] ?? 0} store roles, and ${sectionTotals['org_roles'] ?? 0} organisation roles.',
-        onBatchSucceeded: (_, [__]) async {},
-        onProgress: onProgress,
-        batchSize: batchSize,
-      );
+            _StoreSyncExportSection(
+              payloadKey: 'org_roles',
+              count: () => _store._countOrganisationRoleExportRows(scope),
+              loadBatch: (limit, offset) =>
+                  _store._listOrganisationRoleExportRows(
+                    scope,
+                    limit: limit,
+                    offset: offset,
+                  ),
+            ),
+          ],
+          emptyMessage: 'No customers or roles to export.',
+          successMessage: (sectionTotals) =>
+              'Exported ${sectionTotals['data'] ?? 0} customers, ${sectionTotals['store_roles'] ?? 0} store roles, and ${sectionTotals['org_roles'] ?? 0} organisation roles.',
+          onBatchSucceeded: (_, [responseJson]) async {
+            if (responseJson != null) adoptResponses.add(responseJson);
+          },
+          onProgress: onProgress,
+          batchSize: batchSize,
+        );
+      } finally {
+        // Offline-captured customers take their backend user id only after
+        // the whole snapshot is sent (renaming mid-export would shift paging),
+        // and before credits export (the gateway needs user_{id} on credits).
+        for (final response in adoptResponses) {
+          await _store._adoptExportedCustomerIds(scope, response);
+        }
+      }
     }, onProgress: onProgress);
   }
 

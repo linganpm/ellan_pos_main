@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/adaptive_checkout_panels.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_orders_offline/store_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -479,6 +480,8 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
+              scrollable: true,
+              icon: const Icon(Icons.account_balance_wallet_outlined),
               title: Text(
                 _isBuying
                     ? '$resolvedPaymentLabel · Supplier payable'
@@ -674,6 +677,41 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
     final cartBloc = context.read<CartBloc>();
     final controller = context.read<UiStoreController>();
     try {
+      final openOrderId = widget.orderArgs.openOrderId;
+      if (openOrderId != null) {
+        // Already persisted by KOT: keep it recoverable instead of cloning it.
+        final args = widget.orderArgs;
+        await CartDraftStore.save(
+          existingId: args.draftId,
+          args: CartDraftArgs(
+            orderType: args.orderType,
+            orderTypeKey: args.orderTypeKey,
+            pricingMode: args.pricingMode,
+            name: _customerName ?? args.name,
+            phone: _customerPhone ?? args.phone,
+            email: _customerEmail ?? args.email,
+            customerUniqueId: _customerUniqueId ?? args.customerUniqueId,
+            floor: args.floor,
+            table: args.table,
+            tableId: args.tableId,
+            openOrderId: openOrderId,
+          ),
+          items: state.cartItems,
+          discounts: state.discounts,
+          serviceTaxPercentage: state.serviceTaxPercentage,
+          tipsAmount: state.tipsAmount,
+          deliveryCharge: state.deliveryCharge,
+          netTotal: state.netTotal,
+        );
+        if (!mounted) return;
+        cartBloc.add(ClearCart());
+        PosToast.success(
+          context,
+          detail: context.l10n.billingDraftSaved(openOrderId),
+        );
+        navigator.popUntil((route) => route.isFirst);
+        return;
+      }
       final orderId = await controller.saveDraftFromCart(
         items: state.cartItems
             .map(
@@ -701,7 +739,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
         customerEmail: _customerEmail ?? widget.orderArgs.email,
         customerUniqueId:
             _customerUniqueId ?? widget.orderArgs.customerUniqueId,
-        tableId: widget.orderArgs.table,
+        tableId: widget.orderArgs.resolvedTableId,
         tipsAmount: state.tipsAmount,
         serviceTaxAmount: state.serviceTaxValue,
         discountAmount: state.discountValue,
@@ -866,7 +904,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
             _customerUniqueId ??
             widget.orderArgs.customerUniqueId,
         creditCustomerId: creditCustomerId,
-        tableId: widget.orderArgs.table,
+        tableId: widget.orderArgs.resolvedTableId,
         tipsAmount: state.tipsAmount,
         serviceTaxAmount: state.serviceTaxValue,
         discountAmount: state.discountValue,
@@ -1082,6 +1120,33 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       creditDueInDays = value.dueInDays;
       creditInstallmentCount = value.installmentCount;
       creditInstallmentCadence = value.installmentCadence;
+
+      final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
+      final setupStore = DeviceSetupStore(prefs);
+      final limitCheck = await _creditLimitAllows(
+        amountDue: remaining,
+        customerUniqueId: _customerUniqueId,
+        setupStore: setupStore,
+      );
+      if (!mounted || !limitCheck) return;
+
+      // Credit sale should attach the full remaining as credit directly.
+      // Do not open the Add Payment form for credit mode.
+      setState(() {
+        _tenders.add(
+          _TenderLine(
+            paymentMethod: paymentMethod,
+            paymentLabel: paymentLabel,
+            amount: double.parse(remaining.toStringAsFixed(2)),
+            creditDueInDays: creditDueInDays,
+            creditInstallmentCount: creditInstallmentCount,
+            creditInstallmentCadence: creditInstallmentCadence,
+          ),
+        );
+        _tenderAmountController.clear();
+      });
+      return;
     }
 
     if (!mounted) return;
@@ -1097,18 +1162,6 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       ),
     );
     if (!mounted || added == null) return;
-
-    if (isCredit) {
-      final prefs = await SharedPreferences.getInstance();
-      if (!mounted) return;
-      final setupStore = DeviceSetupStore(prefs);
-      final limitCheck = await _creditLimitAllows(
-        amountDue: added.amount,
-        customerUniqueId: _customerUniqueId,
-        setupStore: setupStore,
-      );
-      if (!mounted || !limitCheck) return;
-    }
 
     setState(() {
       _tenders.add(
@@ -1161,23 +1214,16 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
               }
 
               return SafeArea(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      flex: 48,
-                      child: Container(
+                child: AdaptiveCheckoutPanels(
+                  primaryLabel: context.l10n.commonItem,
+                  secondaryLabel: context.l10n.commonPayments,
+                  primaryFlex: 48,
+                  secondaryFlex: 52,
+                  primary: Container(
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                         child: _buildProductsColumn(state),
                       ),
-                    ),
-                    Container(
-                      width: 1,
-                      color: Colors.grey.withValues(alpha: 0.2),
-                    ),
-                    Expanded(
-                      flex: 52,
-                      child: Container(
+                  secondary: Container(
                         color: Colors.white,
                         padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
                         child: Column(
@@ -1188,9 +1234,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                             Expanded(child: _buildRightPanel(context, state)),
                           ],
                         ),
-                      ),
                     ),
-                  ],
                 ),
               );
             },
