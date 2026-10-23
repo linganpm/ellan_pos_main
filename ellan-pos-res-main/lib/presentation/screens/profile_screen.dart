@@ -10,6 +10,7 @@ import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/widgets/staff_logout_confirm_dialog.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 /// Read-only profile / account screen for the signed-in POS operator.
 ///
@@ -93,9 +94,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           context.l10n.profileMyProfile,
           style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),

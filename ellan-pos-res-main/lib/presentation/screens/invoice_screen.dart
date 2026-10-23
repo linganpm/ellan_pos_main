@@ -10,6 +10,7 @@ import '../../bloc/cart/cart_state.dart';
 import '../../bloc/cart/cart_event.dart';
 import '../widgets/receipt_preview_dialog.dart';
 import 'home_screen.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 class InvoiceScreen extends StatelessWidget {
   final CheckoutCompletionResult? checkoutResult;
@@ -31,7 +32,8 @@ class InvoiceScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           checkoutResult?.pricingMode == 'buying'
               ? (Localizations.localeOf(
                       context,
@@ -40,6 +42,7 @@ class InvoiceScreen extends StatelessWidget {
                     : 'Purchase bill')
               : context.l10n.invoiceTitle,
           style: FontUtility.heading.copyWith(fontSize: 20),
+        ),
         ),
         centerTitle: false,
         actions: [
@@ -204,7 +207,9 @@ class InvoiceScreen extends StatelessWidget {
                               for (final discount in state.discounts) ...[
                                 const SizedBox(height: 8),
                                 _buildSummaryRow(
-                                  '${discount.title} (${discount.percentage.toStringAsFixed(0)}%)',
+                                  discount.rateLabel(
+                                    PosCurrency.format(discount.flatAmount),
+                                  ),
                                   '-${PosCurrency.format(state.amountForDiscount(discount))}',
                                   color: Colors.green.shade700,
                                 ),

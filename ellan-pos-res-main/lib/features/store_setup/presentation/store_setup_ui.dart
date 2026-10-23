@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import '../../../core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 /// Shared chrome for offline store-setup catalogue screens.
 class StoreSetupUi {
@@ -30,18 +32,9 @@ class StoreSetupUi {
       filled: true,
       fillColor: const Color(0xFFF8FAFC),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: accent, width: 1.6),
-      ),
+      border: PosFields.border,
+      enabledBorder: PosFields.border,
+      focusedBorder: PosFields.border,
     );
   }
 
@@ -54,7 +47,8 @@ class StoreSetupUi {
       backgroundColor: Colors.white,
       foregroundColor: ink,
       elevation: 0,
-      title: Row(
+      title: PosBrandTitle(
+        child: Row(
         children: [
           Container(
             width: 10,
@@ -62,11 +56,15 @@ class StoreSetupUi {
             decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
           ),
           const SizedBox(width: 10),
-          Text(
-            title,
-            style: FontUtility.heading.copyWith(fontSize: 22, color: ink),
+          Flexible(
+            child: Text(
+              title,
+              overflow: TextOverflow.ellipsis,
+              style: FontUtility.heading.copyWith(fontSize: 22, color: ink),
+            ),
           ),
         ],
+      ),
       ),
       actions: actions,
     );

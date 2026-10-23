@@ -33,17 +33,11 @@ class BillingSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE6E8EE)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -71,7 +65,7 @@ class BillingSummaryCard extends StatelessWidget {
           for (final discount in discounts) ...[
             const SizedBox(height: 12),
             _buildRow(
-              '${discount.title} (${discount.percentage.toStringAsFixed(0)}%)',
+              discount.rateLabel(PosCurrency.format(discount.flatAmount)),
               '-${PosCurrency.format(discountAmounts[discount.id] ?? 0)}',
               color: Colors.green.shade700,
             ),
@@ -98,33 +92,34 @@ class BillingSummaryCard extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Divider(thickness: 1.5),
           ),
-          Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 12,
-            runSpacing: 8,
+          Row(
             children: [
-              Text(
-                context.l10n.commonNetTotal,
-                style: FontUtility.heading.copyWith(
-                  fontSize: 24,
-                  color: Colors.black87,
+              Flexible(
+                child: Text(
+                  context.l10n.commonNetTotal,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: FontUtility.heading.copyWith(
+                    fontSize: 18,
+                    color: Colors.black87,
+                  ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4A00E0).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  PosCurrency.format(netTotal),
-                  style: FontUtility.heading.copyWith(
-                    fontSize: 28,
-                    color: const Color(0xFF4A00E0),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      PosCurrency.format(netTotal),
+                      style: FontUtility.heading.copyWith(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1F2933),
+                      ),
+                    ),
                   ),
                 ),
               ),

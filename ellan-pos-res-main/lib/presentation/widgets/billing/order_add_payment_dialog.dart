@@ -4,6 +4,7 @@ import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/currency_format.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 class OrderAddPaymentResult {
   final double amount;
@@ -164,7 +165,7 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                 ),
                 const SizedBox(height: 20),
                 if (widget.showModePicker && widget.modeOptions.isNotEmpty) ...[
-                  DropdownButtonFormField<String>(
+                  RubberPush(child: DropdownButtonFormField<String>(
                     initialValue: _paymentMode,
                     decoration: InputDecoration(
                       labelText: context.l10n.commonPaymentMode,
@@ -187,7 +188,7 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                         _paymentLabel = match.label;
                       });
                     },
-                  ),
+                  )),
                   const SizedBox(height: 16),
                 ] else
                   Text(
@@ -207,7 +208,7 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextField(
+                RubberPush(child: TextField(
                   controller: _amountController,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
@@ -231,13 +232,11 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                       horizontal: 20,
                       vertical: 22,
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                    border: PosFields.border,
                     filled: true,
                     fillColor: const Color(0xFFF7F8FB),
                   ),
-                ),
+                )),
                 const SizedBox(height: 14),
                 Wrap(
                   spacing: 8,
@@ -265,12 +264,12 @@ class _OrderAddPaymentDialogState extends State<OrderAddPaymentDialog> {
                   ],
                 ),
                 const SizedBox(height: 14),
-                TextField(
+                RubberPush(child: TextField(
                   controller: _referenceController,
                   decoration: InputDecoration(
                     labelText: context.l10n.commonReferenceOptional,
                   ),
-                ),
+                )),
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,

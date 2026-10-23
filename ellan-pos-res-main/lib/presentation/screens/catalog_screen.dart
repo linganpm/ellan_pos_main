@@ -6,6 +6,9 @@ import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 import '../widgets/product_image.dart';
 import 'package:pos_tablet/core/currency_format.dart';
+import 'package:pos_tablet/presentation/widgets/pos_home_button.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
@@ -97,9 +100,11 @@ class _CatalogScreenState extends State<CatalogScreen>
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           context.l10n.commonCatalogs,
           style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
         ),
         leading: IconButton(
           tooltip: context.l10n.actionBack,
@@ -107,6 +112,7 @@ class _CatalogScreenState extends State<CatalogScreen>
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          const PosHomeButton(),
           IconButton(
             tooltip: context.l10n.catalogRefreshLocal,
             onPressed: _load,
@@ -226,20 +232,17 @@ class _CatalogScreenState extends State<CatalogScreen>
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: TextField(
+                child: RubberPush(child: TextField(
                   onChanged: (value) => setState(() => _query = value),
                   decoration: InputDecoration(
                     hintText: context.l10n.catalogSearchExtended,
                     prefixIcon: const Icon(Icons.search_rounded),
                     filled: true,
                     fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
+                    border: PosFields.border,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
-                ),
+                )),
               ),
               Expanded(
                 child: products.isEmpty

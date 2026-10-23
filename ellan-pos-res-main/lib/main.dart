@@ -23,6 +23,7 @@ import 'core/order_list_route_observer.dart';
 import 'features/store/presentation/bloc/store_bloc.dart';
 import 'core/controllers/ui_store_controller.dart';
 import 'presentation/widgets/app_layout_viewport.dart';
+import 'presentation/widgets/gateway_status_label.dart';
 
 import 'main_io_stub.dart' if (dart.library.io) 'main_io.dart' as io_support;
 
@@ -99,8 +100,22 @@ class PosTabletApp extends StatelessWidget {
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               theme: PosTheme.light(),
               navigatorObservers: [orderListRouteObserver],
-              builder: (context, child) =>
-                  AppLayoutViewport(child: child ?? const SizedBox.shrink()),
+              builder: (context, child) {
+                final top = MediaQuery.paddingOf(context).top;
+                return Stack(
+                  children: [
+                    AppLayoutViewport(child: child ?? const SizedBox.shrink()),
+                    Positioned(
+                      top: top + 6,
+                      left: 0,
+                      right: 0,
+                      child: const IgnorePointer(
+                        child: Center(child: GatewayStatusLabel()),
+                      ),
+                    ),
+                  ],
+                );
+              },
               // Register named routes for navigation across the app. The splash
               // screen remains the initial entry point (home) and can navigate
               // using the named routes defined in AppRoutes.

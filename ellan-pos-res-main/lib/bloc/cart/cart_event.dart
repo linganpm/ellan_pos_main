@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import '../../data/models/product_model.dart';
 import '../../data/models/cart_item_model.dart';
 import '../../data/models/cart_discount_line.dart';
+import '../../data/models/order_history_model.dart';
 
 abstract class CartEvent extends Equatable {
   const CartEvent();
@@ -27,6 +28,7 @@ class CartDraftSnapshot {
   final double serviceTaxPercentage;
   final double tipsAmount;
   final double deliveryCharge;
+  final List<OrderHistoryModel> orderHistory;
 
   const CartDraftSnapshot({
     required this.items,
@@ -34,6 +36,7 @@ class CartDraftSnapshot {
     this.serviceTaxPercentage = 0,
     this.tipsAmount = 0,
     this.deliveryCharge = 0,
+    this.orderHistory = const [],
   });
 }
 
@@ -107,12 +110,14 @@ class SendToKOT extends CartEvent {}
 
 class ApplyDiscount extends CartEvent {
   final double percentage;
+  final double flatAmount;
   final String title;
   final String? targetLineSignature;
   final String? targetItemName;
 
   const ApplyDiscount(
     this.percentage, {
+    this.flatAmount = 0,
     this.title = 'Discount',
     this.targetLineSignature,
     this.targetItemName,
@@ -121,6 +126,7 @@ class ApplyDiscount extends CartEvent {
   @override
   List<Object?> get props => [
     percentage,
+    flatAmount,
     title,
     targetLineSignature,
     targetItemName,

@@ -12,6 +12,7 @@ import 'package:pos_tablet/presentation/screens/order_list_screen.dart';
 import 'package:pos_tablet/presentation/screens/order_payments_screen.dart';
 import 'package:pos_tablet/presentation/widgets/credit/customer_advance_dialog.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 /// Directory customer profile: identity, credit balance, and history shortcuts.
 class CustomerProfileScreen extends StatefulWidget {
@@ -323,9 +324,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           context.l10n.customerProfileTitle,
           style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
         ),
         leading: IconButton(
           tooltip: context.l10n.actionBack,

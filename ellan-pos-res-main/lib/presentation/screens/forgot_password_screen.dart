@@ -5,6 +5,7 @@ import '../../core/localization/l10n/app_localizations.dart';
 import '../../core/utils/font_utility.dart';
 import '../../bloc/forgot_password/forgot_password_cubit.dart';
 import '../../bloc/forgot_password/forgot_password_state.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({super.key});
@@ -165,7 +166,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                                     color: const Color(0xFFF4F6F8),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: TextField(
+                                  child: RubberPush(child: TextField(
                                     onChanged: (value) => context
                                         .read<ForgotPasswordCubit>()
                                         .identifierChanged(value),
@@ -181,24 +182,12 @@ class ForgotPasswordScreen extends StatelessWidget {
                                             horizontal: 20,
                                             vertical: 20,
                                           ),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(
-                                          color: Color(0xFF4A00E0),
-                                          width: 2,
-                                        ),
-                                      ),
+                                      border: PosFields.border,
+                                      enabledBorder: PosFields.border,
+                                      focusedBorder: PosFields.border,
                                     ),
                                     style: FontUtility.body,
-                                  ),
+                                  )),
                                 ),
                                 const SizedBox(height: 32),
                                 Container(

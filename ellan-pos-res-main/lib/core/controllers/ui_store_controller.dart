@@ -52,6 +52,8 @@ class UiStoreController {
   bool _deviceAutoSyncInProgress = false;
   Future<void>? _syncInFlight;
   bool _deviceSyncBlocked = false;
+  bool _salesPushQueued = false;
+  Future<void>? _salesPushFlight;
 
   /// True after an auto-sync (or last sync) failure; cleared on success.
   final ValueNotifier<bool> autoSyncFailed = ValueNotifier(false);
@@ -1711,6 +1713,7 @@ class UiStoreController {
       statusName = 'Closed';
     }
 
+    _scheduleSalesPush();
     return CheckoutCompletionResult(
       orderId: orderId,
       totalPaid: received,
@@ -1840,6 +1843,7 @@ class UiStoreController {
       await store.orders.close(store.scope, orderId);
     }
 
+    _scheduleSalesPush();
     return (
       paidTotal: paidTotal,
       balance: balance,
@@ -1882,9 +1886,9 @@ class UiStoreController {
     return normalized;
   }
 
-  Future<int> createWalkInOrder() {
+  Future<int> createWalkInOrder() async {
     final store = _requireStore();
-    return store.orders.create(
+    final orderId = await store.orders.create(
       store.scope,
       StoreCreateOrderRequest(
         restaurantName: store.storeName,
@@ -1906,6 +1910,8 @@ class UiStoreController {
         ],
       ),
     );
+    _scheduleSalesPush();
+    return orderId;
   }
 
   Future<void> addOrderPayment(int orderId) {
@@ -1917,9 +1923,10 @@ class UiStoreController {
     ).then((_) {});
   }
 
-  Future<void> closeOrder(int orderId) {
+  Future<void> closeOrder(int orderId) async {
     final store = _requireStore();
-    return store.orders.close(store.scope, orderId);
+    await store.orders.close(store.scope, orderId);
+    _scheduleSalesPush();
   }
 
   /// Saves the cart as a local-only Draft order (no payments, not exported).
@@ -2370,6 +2377,7 @@ class UiStoreController {
       printerId = printers.first.id;
     }
     final printResult = await store.sendToKitchen(printerId, orderId);
+    _scheduleSalesPush();
     return KotSendResult(
       orderId: orderId,
       batchNumber: printResult.kitchenBatchNumber ?? 1,
@@ -2390,6 +2398,7 @@ class UiStoreController {
     final deleted =
         existing == null || await store.orders.discard(store.scope, orderId);
     await CartDraftStore.deleteForOrder(orderId);
+    if (existing != null) _scheduleSalesPush();
     return deleted;
   }
 
@@ -2407,11 +2416,13 @@ class UiStoreController {
       orderId,
       StoreOrderStatus.pending,
     );
+    _scheduleSalesPush();
   }
 
-  Future<void> updateOrderStatus(int orderId, String status) {
+  Future<void> updateOrderStatus(int orderId, String status) async {
     final store = _requireStore();
-    return store.orders.updateStatus(store.scope, orderId, status);
+    await store.orders.updateStatus(store.scope, orderId, status);
+    _scheduleSalesPush();
   }
 
   /// Derives order-level payment status from net payments after refunds.
@@ -2478,6 +2489,7 @@ class UiStoreController {
     );
     // Paid → refunded on cancel; unpaid cancel stays Unpaid.
     await _syncOrderPaymentStatus(orderId);
+    _scheduleSalesPush();
   }
 
   /// Refunds every remaining balance on the order, then cancels.
@@ -2516,6 +2528,7 @@ class UiStoreController {
       ),
     );
     await _syncOrderPaymentStatus(orderId);
+    _scheduleSalesPush();
     return refundId;
   }
 
@@ -3090,15 +3103,17 @@ class UiStoreController {
     required double amount,
     required String paymentMode,
     String? referenceId,
-  }) {
+  }) async {
     final store = _requireStore();
-    return store.credits.recordCustomerAdvance(
+    final id = await store.credits.recordCustomerAdvance(
       store.scope,
       customerId: customerId,
       amount: amount,
       paymentMode: paymentMode,
       referenceId: referenceId,
     );
+    _scheduleSalesPush();
+    return id;
   }
 
   Future<List<StoreCustomerLedgerEntry>> loadCustomerCreditLedger({
@@ -3120,7 +3135,7 @@ class UiStoreController {
     final store = _requireStore();
     final session = await store.auth.currentCustomer();
     final deletedBy = session?.customerId ?? session?.email ?? 'pos-tablet';
-    return store.credits.deleteRepayment(
+    final deleted = await store.credits.deleteRepayment(
       store.scope,
       repaymentId,
       StoreDeleteCreditRepaymentRequest(
@@ -3128,6 +3143,8 @@ class UiStoreController {
         reason: reason,
       ),
     );
+    _scheduleSalesPush();
+    return deleted;
   }
 
   Future<List<StoreScheduledCreditRepayment>> loadScheduledCreditRepayments({
@@ -3168,15 +3185,17 @@ class UiStoreController {
     required String paymentMode,
     String? referenceId,
     double? amount,
-  }) {
+  }) async {
     final store = _requireStore();
-    return store.credits.collectScheduledRepayment(
+    final id = await store.credits.collectScheduledRepayment(
       store.scope,
       scheduleId: scheduleId,
       paymentMode: paymentMode,
       referenceId: referenceId,
       amount: amount,
     );
+    _scheduleSalesPush();
+    return id;
   }
 
   Future<List<StoreWalletRecord>> loadWallets({bool includeInactive = false}) {
@@ -3191,9 +3210,9 @@ class UiStoreController {
     required String paymentMode,
     String? referenceId,
     int? preferCreditId,
-  }) {
+  }) async {
     final store = _requireStore();
-    return store.credits.recordRepaymentFifo(
+    final id = await store.credits.recordRepaymentFifo(
       store.scope,
       customerId: customerId,
       amount: amount,
@@ -3201,6 +3220,8 @@ class UiStoreController {
       referenceId: referenceId,
       preferCreditId: preferCreditId,
     );
+    _scheduleSalesPush();
+    return id;
   }
 
   /// Builds dashboard metrics for [filter] from the on-device SQLite store.
@@ -4052,6 +4073,42 @@ class UiStoreController {
     final store = await DeviceSettingsStore.open();
     await store.save(settings);
     await applyDeviceAutoSync();
+  }
+
+  /// Push orders, statuses, payments, and credit payments as soon as they
+  /// change, when the gateway can be reached. Offline rows stay queued.
+  void _scheduleSalesPush() {
+    if (_store == null || _deviceSyncBlocked) return;
+    _salesPushQueued = true;
+    if (_salesPushFlight != null) return;
+    _salesPushFlight = _drainSalesPush().whenComplete(() {
+      _salesPushFlight = null;
+    });
+  }
+
+  Future<void> _drainSalesPush() async {
+    while (_salesPushQueued) {
+      _salesPushQueued = false;
+      final inFlight = _syncInFlight;
+      if (inFlight != null) {
+        try {
+          await inFlight;
+        } catch (_) {}
+        _salesPushQueued = true;
+        continue;
+      }
+      final store = _store;
+      if (store == null) return;
+      final reachable = await NetworkReachability.canReachGateway();
+      if (!reachable) return;
+      if (_salesPushQueued) continue;
+      try {
+        await store.sync.exportOrders(store.scope);
+        await store.sync.exportCredits(store.scope);
+      } catch (error) {
+        debugPrint('Sales push failed: $error');
+      }
+    }
   }
 
   /// Start / stop periodic sync from device settings (independent of gateway

@@ -22,6 +22,9 @@ import '../widgets/pos_toast.dart';
 import 'invoice_screen.dart';
 import 'order_create_screen.dart';
 import '../../core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/pos_home_button.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 class _TenderLine {
   final String paymentMethod;
@@ -57,7 +60,7 @@ class _CreditCheckoutChoice {
 
 enum _WalletPayAction { complete, addPayment }
 
-enum RightPanelMode { payment, discount, tax, tips }
+enum RightPanelMode { payment, tax, tips }
 
 class SalesBillingScreen extends StatelessWidget {
   final OrderCreateScreenArgs orderArgs;
@@ -703,6 +706,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
           tipsAmount: state.tipsAmount,
           deliveryCharge: state.deliveryCharge,
           netTotal: state.netTotal,
+          orderHistory: state.orderHistory,
         );
         if (!mounted) return;
         cartBloc.add(ClearCart());
@@ -1191,11 +1195,14 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: _isCheckingOut ? null : () => Navigator.pop(context),
         ),
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           widget.screenTitle ?? context.l10n.billingTitle,
           style: FontUtility.heading.copyWith(fontSize: 20),
         ),
+        ),
         centerTitle: false,
+        actions: const [PosHomeButton()],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
           child: Container(color: Colors.grey.withOpacity(0.2), height: 1.0),
@@ -1221,12 +1228,22 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                   primaryFlex: 48,
                   secondaryFlex: 52,
                   primary: Container(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                    padding: EdgeInsets.fromLTRB(
+                      MediaQuery.sizeOf(context).width < 600 ? 16 : 20,
+                      16,
+                      MediaQuery.sizeOf(context).width < 600 ? 16 : 20,
+                      16,
+                    ),
                     child: _buildProductsColumn(state),
                   ),
                   secondary: Container(
                     color: Colors.white,
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+                    padding: EdgeInsets.fromLTRB(
+                      MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
+                      16,
+                      MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
+                      20,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -1296,8 +1313,12 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
             active: state.discounts.isNotEmpty,
             onTap: _isCheckingOut
                 ? null
-                : () =>
-                      setState(() => _rightPanelMode = RightPanelMode.discount),
+                : () => showDiscountDialog(
+                    context,
+                    state: state,
+                    allowItemTarget: true,
+                    confirmApplied: true,
+                  ),
           ),
         ),
         const SizedBox(width: 12),
@@ -1347,7 +1368,8 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
       netTotal: state.netTotal,
     );
 
-    if (dense) {
+    final narrow = MediaQuery.sizeOf(context).width < 600;
+    if (dense && !narrow) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1401,27 +1423,46 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                   : Colors.grey.withValues(alpha: 0.2),
             ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: color, size: 20),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: FontUtility.subheading.copyWith(
-                      fontSize: 12,
-                      color: color,
-                    ),
-                  ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final stacked = constraints.maxWidth < 160;
+              final labelStyle = FontUtility.subheading.copyWith(
+                fontSize: stacked ? 13 : 15,
+                fontWeight: FontWeight.w700,
+                height: 1.15,
+                color: color,
+              );
+              final labelText = Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: labelStyle,
+              );
+              return Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: stacked ? 8 : 12,
+                  vertical: stacked ? 12 : 16,
                 ),
-              ],
-            ),
+                child: stacked
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(icon, color: color, size: 22),
+                          const SizedBox(height: 6),
+                          labelText,
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(icon, color: color, size: 20),
+                          const SizedBox(width: 8),
+                          Flexible(child: labelText),
+                        ],
+                      ),
+              );
+            },
           ),
         ),
       ),
@@ -1430,13 +1471,6 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
 
   Widget _buildRightPanel(BuildContext context, CartState state) {
     switch (_rightPanelMode) {
-      case RightPanelMode.discount:
-        return _DiscountPanel(
-          state: state,
-          onDone: () =>
-              setState(() => _rightPanelMode = RightPanelMode.payment),
-        );
-
       case RightPanelMode.tax:
         return Column(
           children: [
@@ -1537,25 +1571,40 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      context.l10n.commonRemaining,
-                      style: FontUtility.body.copyWith(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F8FB),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFE6E8EE),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            context.l10n.commonRemaining,
+                            style: FontUtility.body.copyWith(
+                              fontSize: 13,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            PosCurrency.format(remaining),
+                            style: FontUtility.heading.copyWith(
+                              fontSize: 34,
+                              fontWeight: FontWeight.w800,
+                              color: remaining <= 0.0001
+                                  ? Colors.green.shade700
+                                  : const Color(0xFF1F2933),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      PosCurrency.format(remaining),
-                      style: FontUtility.heading.copyWith(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w800,
-                        color: remaining <= 0.0001
-                            ? Colors.green.shade700
-                            : const Color(0xFF4A00E0),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
@@ -1707,7 +1756,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Expanded(
-                          child: TextField(
+                          child: RubberPush(child: TextField(
                             controller: _tenderAmountController,
                             enabled: !_isCheckingOut && remaining > 0.0001,
                             keyboardType: const TextInputType.numberWithOptions(
@@ -1717,16 +1766,14 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                             decoration: InputDecoration(
                               prefixText: '${PosCurrency.symbol()} ',
                               isDense: true,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
+                              border: PosFields.border,
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 14,
                                 vertical: 16,
                               ),
                             ),
                             onChanged: (_) => setState(() {}),
-                          ),
+                          )),
                         ),
                         const SizedBox(width: 10),
                         SizedBox(
@@ -1741,14 +1788,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                                 ? Colors.grey.shade300
                                 : const Color(0xFF4A00E0),
                             borderRadius: BorderRadius.circular(14),
-                            elevation:
-                                (_isCheckingOut ||
-                                    remaining <= 0.0001 ||
-                                    _selectedWallet == null ||
-                                    typedAmount <= 0)
-                                ? 0
-                                : 3,
-                            shadowColor: Colors.black.withValues(alpha: 0.25),
+                            elevation: 0,
                             child: Tooltip(
                               message: context.l10n.billingAddPayment,
                               child: InkWell(
@@ -1883,6 +1923,7 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF4A00E0),
               disabledBackgroundColor: Colors.grey.shade300,
+              elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
@@ -1901,20 +1942,35 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
         ),
         if (_tenders.isEmpty) ...[
           const SizedBox(height: 8),
-          TextButton(
-            onPressed: _isCheckingOut
-                ? null
-                : () =>
-                      _completeCheckout(context, state, allowBalanceDue: true),
-            child: Text(
-              _isBuying
-                  ? context.l10n.billingCompleteWithoutPayment
-                  : context.l10n.billingPlaceFullOnCredit,
-            ),
-          ),
-          TextButton(
-            onPressed: _isCheckingOut ? null : () => _saveDraft(context, state),
-            child: Text(context.l10n.billingSaveAsDraft),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _isCheckingOut
+                      ? null
+                      : () => _completeCheckout(
+                          context,
+                          state,
+                          allowBalanceDue: true,
+                        ),
+                  child: Text(
+                    _isBuying
+                        ? context.l10n.billingCompleteWithoutPayment
+                        : context.l10n.billingPlaceFullOnCredit,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _isCheckingOut
+                      ? null
+                      : () => _saveDraft(context, state),
+                  child: Text(context.l10n.billingSaveAsDraft),
+                ),
+              ),
+            ],
           ),
         ],
       ],
@@ -1966,59 +2022,6 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
   }
 }
 
-class _DiscountPanel extends StatelessWidget {
-  final CartState state;
-  final VoidCallback onDone;
-
-  const _DiscountPanel({required this.state, required this.onDone});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                context.l10n.billingAddDiscount,
-                style: FontUtility.heading.copyWith(fontSize: 18),
-              ),
-            ),
-            IconButton(
-              tooltip: context.l10n.actionClose,
-              onPressed: onDone,
-              icon: const Icon(Icons.close_rounded, color: Colors.grey),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: SingleChildScrollView(
-            child: DiscountEntry(
-              state: state,
-              allowItemTarget: true,
-              confirmApplied: true,
-            ),
-          ),
-        ),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(
-            onPressed: state.discounts.isEmpty
-                ? null
-                : () => context.read<CartBloc>().add(const RemoveDiscount()),
-            child: Text(
-              context.l10n.billingRemoveAllDiscounts,
-              style: FontUtility.subheading.copyWith(color: Colors.red),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _WalletPayButton extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -2035,23 +2038,21 @@ class _WalletPayButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? const Color(0xFF4A00E0) : Colors.white,
-      elevation: selected ? 6 : 3,
-      shadowColor: Colors.black.withValues(alpha: 0.25),
-      borderRadius: BorderRadius.circular(16),
+      color: selected ? const Color(0xFF1F2933) : Colors.white,
+      elevation: 0,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          width: 128,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          width: 118,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: selected
-                  ? const Color(0xFF4A00E0)
-                  : Colors.grey.withValues(alpha: 0.25),
-              width: 1.5,
+                  ? const Color(0xFF1F2933)
+                  : const Color(0xFFE6E8EE),
             ),
           ),
           child: Column(
@@ -2060,7 +2061,7 @@ class _WalletPayButton extends StatelessWidget {
               Icon(
                 icon,
                 size: 28,
-                color: selected ? Colors.white : const Color(0xFF4A00E0),
+                color: selected ? Colors.white : const Color(0xFF1F2933),
               ),
               const SizedBox(height: 6),
               Text(
@@ -2090,20 +2091,23 @@ class _DenomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFFF3F0FF),
-      borderRadius: BorderRadius.circular(12),
-      elevation: 1,
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE6E8EE)),
+          ),
           child: Text(
             label,
             style: FontUtility.subheading.copyWith(
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF4A00E0),
+              color: const Color(0xFF1F2933),
             ),
           ),
         ),

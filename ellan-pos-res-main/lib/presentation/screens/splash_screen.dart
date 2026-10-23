@@ -156,6 +156,8 @@ class _SplashScreenState extends State<SplashScreen>
                         letterSpacing: 2,
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    const EllantecSiteMark(color: Colors.white),
                     const SizedBox(height: 48),
                     const CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),

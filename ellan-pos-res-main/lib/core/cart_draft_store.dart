@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pos_tablet/data/models/cart_discount_line.dart';
 import 'package:pos_tablet/data/models/cart_item_model.dart';
+import 'package:pos_tablet/data/models/order_history_model.dart';
 import 'package:pos_tablet/data/models/product_model.dart';
 
 class CartDraftArgs {
@@ -74,6 +75,7 @@ class CartDraft {
   final double tipsAmount;
   final double deliveryCharge;
   final double netTotal;
+  final List<OrderHistoryModel> orderHistory;
 
   const CartDraft({
     required this.id,
@@ -85,6 +87,7 @@ class CartDraft {
     this.tipsAmount = 0,
     this.deliveryCharge = 0,
     required this.netTotal,
+    this.orderHistory = const [],
   });
 
   String get title {
@@ -101,40 +104,16 @@ class CartDraft {
     'id': id,
     'savedAt': savedAt.toUtc().toIso8601String(),
     'args': args.toJson(),
-    'items': [
-      for (final item in items)
+    'items': [for (final item in items) _itemToJson(item)],
+    'orderHistory': [
+      for (final ticket in orderHistory)
         {
-          'product': {
-            'id': item.product.id,
-            'name': item.product.name,
-            'productName': item.product.productName,
-            'variantName': item.product.variantName,
-            'description': item.product.description,
-            'price': item.product.price,
-            'imageUrl': item.product.imageUrl,
-            'categoryId': item.product.categoryId,
-            'offerTag': item.product.offerTag,
-            'sellUnitCode': item.product.sellUnitCode,
-            'sellUnitShort': item.product.sellUnitShort,
-            'sellUnitLabel': item.product.sellUnitLabel,
-            'sellUnitBaseQty': item.product.sellUnitBaseQty,
-            'isMisc': item.product.isMisc,
-          },
-          'quantity': item.quantity,
-          'kotSentQuantity': item.kotSentQuantity,
-          'addons': [
-            for (final addon in item.addons)
-              {
-                'addonGroupId': addon.addonGroupId,
-                'addonGroupName': addon.addonGroupName,
-                'minSelections': addon.minSelections,
-                'maxSelections': addon.maxSelections,
-                'addonItemId': addon.addonItemId,
-                'addonItemName': addon.addonItemName,
-                'quantity': addon.quantity,
-                'unitPrice': addon.unitPrice,
-              },
-          ],
+          'id': ticket.id,
+          'orderId': ticket.orderId,
+          'kotBatch': ticket.kotBatch,
+          'totalAmount': ticket.totalAmount,
+          'timestamp': ticket.timestamp.toUtc().toIso8601String(),
+          'items': [for (final item in ticket.items) _itemToJson(item)],
         },
     ],
     'discounts': [
@@ -143,6 +122,7 @@ class CartDraft {
           'id': d.id,
           'title': d.title,
           'percentage': d.percentage,
+          'flatAmount': d.flatAmount,
           'targetLineSignature': d.targetLineSignature,
           'targetItemName': d.targetItemName,
         },
@@ -157,62 +137,19 @@ class CartDraft {
     final argsMap = (json['args'] as Map?)?.cast<String, dynamic>() ?? const {};
     final itemsRaw = json['items'] as List? ?? const [];
     final discountsRaw = json['discounts'] as List? ?? const [];
+    final savedAt =
+        DateTime.tryParse('${json['savedAt'] ?? ''}')?.toLocal() ??
+        DateTime.now();
+    final args = CartDraftArgs.fromJson(argsMap);
+    final items = [
+      for (final row in itemsRaw)
+        if (row is Map) _itemFromJson(row.cast<String, dynamic>()),
+    ];
     return CartDraft(
       id: '${json['id'] ?? ''}',
-      savedAt:
-          DateTime.tryParse('${json['savedAt'] ?? ''}')?.toLocal() ??
-          DateTime.now(),
-      args: CartDraftArgs.fromJson(argsMap),
-      items: [
-        for (final row in itemsRaw)
-          if (row is Map)
-            CartItem(
-              product: Product(
-                id: '${(row['product'] as Map?)?['id'] ?? ''}',
-                name: '${(row['product'] as Map?)?['name'] ?? ''}',
-                productName: '${(row['product'] as Map?)?['productName'] ?? ''}',
-                variantName: '${(row['product'] as Map?)?['variantName'] ?? ''}',
-                description:
-                    '${(row['product'] as Map?)?['description'] ?? ''}',
-                price:
-                    ((row['product'] as Map?)?['price'] as num?)?.toDouble() ??
-                    0,
-                imageUrl: '${(row['product'] as Map?)?['imageUrl'] ?? ''}',
-                categoryId:
-                    '${(row['product'] as Map?)?['categoryId'] ?? 'all'}',
-                offerTag: (row['product'] as Map?)?['offerTag'] as String?,
-                sellUnitCode:
-                    ((row['product'] as Map?)?['sellUnitCode'] as num?)
-                        ?.toInt(),
-                sellUnitShort:
-                    (row['product'] as Map?)?['sellUnitShort'] as String?,
-                sellUnitLabel:
-                    (row['product'] as Map?)?['sellUnitLabel'] as String?,
-                sellUnitBaseQty:
-                    ((row['product'] as Map?)?['sellUnitBaseQty'] as num?)
-                        ?.toDouble(),
-                isMisc: (row['product'] as Map?)?['isMisc'] == true,
-              ),
-              quantity: (row['quantity'] as num?)?.toDouble() ?? 1,
-              kotSentQuantity:
-                  (row['kotSentQuantity'] as num?)?.toDouble() ?? 0,
-              addons: [
-                for (final addon in (row['addons'] as List? ?? const []))
-                  if (addon is Map)
-                    CartAddonSelection(
-                      addonGroupId: '${addon['addonGroupId'] ?? ''}',
-                      addonGroupName: '${addon['addonGroupName'] ?? ''}',
-                      minSelections:
-                          (addon['minSelections'] as num?)?.toInt() ?? 0,
-                      maxSelections: (addon['maxSelections'] as num?)?.toInt(),
-                      addonItemId: '${addon['addonItemId'] ?? ''}',
-                      addonItemName: '${addon['addonItemName'] ?? ''}',
-                      quantity: (addon['quantity'] as num?)?.toInt() ?? 1,
-                      unitPrice: (addon['unitPrice'] as num?)?.toDouble() ?? 0,
-                    ),
-              ],
-            ),
-      ],
+      savedAt: savedAt,
+      args: args,
+      items: items,
       discounts: [
         for (final d in discountsRaw)
           if (d is Map)
@@ -220,6 +157,7 @@ class CartDraft {
               id: '${d['id'] ?? ''}',
               title: '${d['title'] ?? 'Discount'}',
               percentage: (d['percentage'] as num?)?.toDouble() ?? 0,
+              flatAmount: (d['flatAmount'] as num?)?.toDouble() ?? 0,
               targetLineSignature: d['targetLineSignature'] as String?,
               targetItemName: d['targetItemName'] as String?,
             ),
@@ -229,8 +167,129 @@ class CartDraft {
       tipsAmount: (json['tipsAmount'] as num?)?.toDouble() ?? 0,
       deliveryCharge: (json['deliveryCharge'] as num?)?.toDouble() ?? 0,
       netTotal: (json['netTotal'] as num?)?.toDouble() ?? 0,
+      orderHistory: _historyFromJson(json, items, args, savedAt),
     );
   }
+}
+
+Map<String, dynamic> _itemToJson(CartItem item) => {
+  'product': {
+    'id': item.product.id,
+    'name': item.product.name,
+    'productName': item.product.productName,
+    'variantName': item.product.variantName,
+    'description': item.product.description,
+    'price': item.product.price,
+    'imageUrl': item.product.imageUrl,
+    'categoryId': item.product.categoryId,
+    'offerTag': item.product.offerTag,
+    'sellUnitCode': item.product.sellUnitCode,
+    'sellUnitShort': item.product.sellUnitShort,
+    'sellUnitLabel': item.product.sellUnitLabel,
+    'sellUnitBaseQty': item.product.sellUnitBaseQty,
+    'isMisc': item.product.isMisc,
+  },
+  'quantity': item.quantity,
+  'kotSentQuantity': item.kotSentQuantity,
+  'addons': [
+    for (final addon in item.addons)
+      {
+        'addonGroupId': addon.addonGroupId,
+        'addonGroupName': addon.addonGroupName,
+        'minSelections': addon.minSelections,
+        'maxSelections': addon.maxSelections,
+        'addonItemId': addon.addonItemId,
+        'addonItemName': addon.addonItemName,
+        'quantity': addon.quantity,
+        'unitPrice': addon.unitPrice,
+      },
+  ],
+};
+
+CartItem _itemFromJson(Map<String, dynamic> row) {
+  final product =
+      (row['product'] as Map?)?.cast<String, dynamic>() ??
+      const <String, dynamic>{};
+  return CartItem(
+    product: Product(
+      id: '${product['id'] ?? ''}',
+      name: '${product['name'] ?? ''}',
+      productName: '${product['productName'] ?? ''}',
+      variantName: '${product['variantName'] ?? ''}',
+      description: '${product['description'] ?? ''}',
+      price: (product['price'] as num?)?.toDouble() ?? 0,
+      imageUrl: '${product['imageUrl'] ?? ''}',
+      categoryId: '${product['categoryId'] ?? 'all'}',
+      offerTag: product['offerTag'] as String?,
+      sellUnitCode: (product['sellUnitCode'] as num?)?.toInt(),
+      sellUnitShort: product['sellUnitShort'] as String?,
+      sellUnitLabel: product['sellUnitLabel'] as String?,
+      sellUnitBaseQty: (product['sellUnitBaseQty'] as num?)?.toDouble(),
+      isMisc: product['isMisc'] == true,
+    ),
+    quantity: (row['quantity'] as num?)?.toDouble() ?? 1,
+    kotSentQuantity: (row['kotSentQuantity'] as num?)?.toDouble() ?? 0,
+    addons: [
+      for (final addon in (row['addons'] as List? ?? const []))
+        if (addon is Map)
+          CartAddonSelection(
+            addonGroupId: '${addon['addonGroupId'] ?? ''}',
+            addonGroupName: '${addon['addonGroupName'] ?? ''}',
+            minSelections: (addon['minSelections'] as num?)?.toInt() ?? 0,
+            maxSelections: (addon['maxSelections'] as num?)?.toInt(),
+            addonItemId: '${addon['addonItemId'] ?? ''}',
+            addonItemName: '${addon['addonItemName'] ?? ''}',
+            quantity: (addon['quantity'] as num?)?.toInt() ?? 1,
+            unitPrice: (addon['unitPrice'] as num?)?.toDouble() ?? 0,
+          ),
+    ],
+  );
+}
+
+List<OrderHistoryModel> _historyFromJson(
+  Map<String, dynamic> json,
+  List<CartItem> items,
+  CartDraftArgs args,
+  DateTime savedAt,
+) {
+  final raw = json['orderHistory'];
+  if (raw is List && raw.isNotEmpty) {
+    return [
+      for (final row in raw)
+        if (row is Map)
+          OrderHistoryModel(
+            id: '${row['id'] ?? 'KOT'}',
+            orderId: (row['orderId'] as num?)?.toInt(),
+            kotBatch: (row['kotBatch'] as num?)?.toInt(),
+            totalAmount: (row['totalAmount'] as num?)?.toDouble() ?? 0,
+            timestamp:
+                DateTime.tryParse('${row['timestamp'] ?? ''}')?.toLocal() ??
+                savedAt,
+            items: [
+              for (final item in (row['items'] as List? ?? const []))
+                if (item is Map) _itemFromJson(item.cast<String, dynamic>()),
+            ],
+          ),
+    ];
+  }
+  final sent = [
+    for (final item in items)
+      if (item.kotSentQuantity > 0.0001)
+        item.copyWith(
+          quantity: item.kotSentQuantity,
+          kotSentQuantity: item.kotSentQuantity,
+        ),
+  ];
+  if (sent.isEmpty) return const [];
+  return [
+    OrderHistoryModel(
+      id: 'KOT',
+      orderId: args.openOrderId,
+      items: sent,
+      totalAmount: sent.fold<double>(0, (sum, item) => sum + item.totalPrice),
+      timestamp: savedAt,
+    ),
+  ];
 }
 
 class CartDraftStore {
@@ -272,6 +331,7 @@ class CartDraftStore {
     required double tipsAmount,
     required double deliveryCharge,
     required double netTotal,
+    List<OrderHistoryModel> orderHistory = const [],
   }) async {
     if (items.isEmpty) {
       throw StateError('Cannot save an empty draft.');
@@ -286,6 +346,7 @@ class CartDraftStore {
       tipsAmount: tipsAmount,
       deliveryCharge: deliveryCharge,
       netTotal: netTotal,
+      orderHistory: List<OrderHistoryModel>.from(orderHistory),
     );
     final current = await list();
     final next = <CartDraft>[

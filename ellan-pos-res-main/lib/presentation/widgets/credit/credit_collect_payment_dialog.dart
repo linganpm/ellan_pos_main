@@ -4,6 +4,7 @@ import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:pos_tablet/core/currency_format.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 class CreditCollectPaymentResult {
   final double amount;
@@ -105,7 +106,7 @@ class _CreditCollectPaymentDialogState
               style: FontUtility.body.copyWith(color: Colors.black54),
             ),
             const SizedBox(height: 16),
-            TextField(
+            RubberPush(child: TextField(
               controller: _amountController,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
@@ -116,9 +117,9 @@ class _CreditCollectPaymentDialogState
               decoration: InputDecoration(
                 labelText: context.l10n.commonAmount,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
+            RubberPush(child: DropdownButtonFormField<String>(
               initialValue: _paymentMode,
               decoration: InputDecoration(
                 labelText: context.l10n.commonPaymentMode,
@@ -141,14 +142,14 @@ class _CreditCollectPaymentDialogState
                 if (value == null) return;
                 setState(() => _paymentMode = value);
               },
-            ),
+            )),
             const SizedBox(height: 12),
-            TextField(
+            RubberPush(child: TextField(
               controller: _referenceController,
               decoration: InputDecoration(
                 labelText: context.l10n.commonReferenceOptional,
               ),
-            ),
+            )),
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerRight,

@@ -10,6 +10,8 @@ import 'package:pos_tablet/presentation/screens/order_details_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/localization/l10n_context.dart';
 import 'package:pos_tablet/core/currency_format.dart';
+import 'package:pos_tablet/presentation/widgets/pos_home_button.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 /// Lists local order refunds for the open store.
 class RefundsScreen extends StatefulWidget {
@@ -95,13 +97,16 @@ class _RefundsScreenState extends State<RefundsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           (widget.periodFilter ?? '').trim().isEmpty
               ? context.l10n.commonRefunds
               : context.l10n.refundsPeriodTitle(widget.periodFilter!.trim()),
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
+        ),
         actions: [
+          const PosHomeButton(),
           IconButton(
             tooltip: context.l10n.actionRefresh,
             onPressed: _loading ? null : _load,

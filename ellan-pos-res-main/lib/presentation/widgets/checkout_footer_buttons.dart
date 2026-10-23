@@ -22,13 +22,7 @@ class CheckoutFooterButtons extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 24,
-            offset: const Offset(0, -8),
-          ),
-        ],
+        border: const Border(top: BorderSide(color: Color(0xFFE6E8EE))),
       ),
       child: SizedBox(
         height: 64,
@@ -44,8 +38,7 @@ class CheckoutFooterButtons extends StatelessWidget {
                   foregroundColor: const Color(0xFF4A00E0),
                   disabledBackgroundColor: Colors.grey.shade100,
                   disabledForegroundColor: Colors.grey.shade400,
-                  elevation: kotEnabled ? 2 : 0,
-                  shadowColor: Colors.black.withOpacity(0.1),
+                  elevation: 0,
                   side: BorderSide(
                     color: kotEnabled
                         ? const Color(0xFF4A00E0).withOpacity(0.5)
@@ -75,8 +68,7 @@ class CheckoutFooterButtons extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4A00E0),
                   disabledBackgroundColor: Colors.grey.shade300,
-                  elevation: hasItems ? 6 : 0,
-                  shadowColor: const Color(0xFF4A00E0).withOpacity(0.4),
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),

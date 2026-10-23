@@ -7,6 +7,7 @@ import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/core/utils/user_facing_error.dart';
 import 'package:pos_tablet/features/store_setup/presentation/staff_signup_screen.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 /// List store staff and add cashiers (online signup).
 class CompanyStaffsScreen extends StatefulWidget {
@@ -108,13 +109,15 @@ class _CompanyStaffsScreenState extends State<CompanyStaffsScreen> {
         backgroundColor: Colors.white,
         foregroundColor: _ink,
         elevation: 0,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           context.l10n.commonStaff,
           style: FontUtility.heading.copyWith(
             fontSize: 22,
             fontWeight: FontWeight.w800,
             color: _ink,
           ),
+        ),
         ),
         actions: [
           Tooltip(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 class CreditScheduleRepaymentResult {
   final double amount;
@@ -113,7 +114,7 @@ class _CreditScheduleRepaymentDialogState
           children: [
             Text(name, style: FontUtility.subheading),
             const SizedBox(height: 16),
-            TextField(
+            RubberPush(child: TextField(
               controller: _amountController,
               autofocus: true,
               keyboardType: const TextInputType.numberWithOptions(
@@ -125,18 +126,18 @@ class _CreditScheduleRepaymentDialogState
               decoration: InputDecoration(
                 labelText: context.l10n.commonAmount,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
             InkWell(
               onTap: _pickDate,
               borderRadius: BorderRadius.circular(8),
-              child: InputDecorator(
+              child: RubberPush(child: InputDecorator(
                 decoration: InputDecoration(
                   labelText: context.l10n.commonDueDate,
                   suffixIcon: Icon(Icons.calendar_today_rounded),
                 ),
                 child: Text(_dueDateLabel, style: FontUtility.body),
-              ),
+              )),
             ),
           ],
         ),

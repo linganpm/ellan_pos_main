@@ -1,9 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/core/utils/user_facing_error.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 const _kAccent = Color(0xFF4A00E0);
 const _kDefaultCustomerName = 'Guest';
@@ -265,7 +268,7 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
       ),
       child: Center(
         child: Container(
-          width: isTablet ? 720 : screenWidth,
+          width: math.min(screenWidth, isTablet ? 720 : screenWidth),
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.88,
           ),
@@ -387,7 +390,7 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                           ),
                         )
                       else if (!_creatingCustomer) ...[
-                        TextField(
+                        RubberPush(child: TextField(
                           controller: _searchController,
                           onChanged: (value) {
                             Future<void>.delayed(
@@ -442,7 +445,7 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                               ],
                             ),
                           ),
-                        ),
+                        )),
                         if (_searchError != null) ...[
                           const SizedBox(height: 8),
                           Text(
@@ -531,7 +534,7 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                           ],
                         ),
                         const SizedBox(height: 10),
-                        TextField(
+                        RubberPush(child: TextField(
                           controller: _nameController,
                           textCapitalization: TextCapitalization.words,
                           style: FontUtility.body.copyWith(
@@ -541,9 +544,9 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                           decoration: _fieldDecoration(
                             hint: context.l10n.customerNameOptional,
                           ),
-                        ),
+                        )),
                         const SizedBox(height: 12),
-                        TextField(
+                        RubberPush(child: TextField(
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
                           style: FontUtility.body.copyWith(
@@ -553,9 +556,9 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                           decoration: _fieldDecoration(
                             hint: context.l10n.commonPhone,
                           ),
-                        ),
+                        )),
                         const SizedBox(height: 12),
-                        TextField(
+                        RubberPush(child: TextField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           style: FontUtility.body.copyWith(
@@ -565,7 +568,7 @@ class _CustomerSelectSheetState extends State<CustomerSelectSheet> {
                           decoration: _fieldDecoration(
                             hint: context.l10n.customerEmailOptional,
                           ),
-                        ),
+                        )),
                       ],
                       if (_formError != null) ...[
                         const SizedBox(height: 8),

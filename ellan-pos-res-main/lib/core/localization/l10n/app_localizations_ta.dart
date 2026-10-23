@@ -695,6 +695,9 @@ class AppLocalizationsTa extends AppLocalizations {
   String get commonOk => 'சரி';
 
   @override
+  String get commonOffline => 'ஆஃப்லைன்';
+
+  @override
   String get commonOnline => 'ஆன்லைன்';
 
   @override
@@ -2789,11 +2792,11 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get signupBodyBranch =>
-      'கிளை மற்றும் நகரத்தை பெயரிடுங்கள். பதிவு எண் விருப்பமானது.';
+      'கடை மற்றும் நகரத்தை பெயரிடுங்கள். பதிவு எண் விருப்பமானது.';
 
   @override
   String get signupBodyBusinessType =>
-      'வணிக வகையைத் தேர்வுசெய்க. உங்கள் கிளையின் கீழ் உணவகக் கடை உருவாக்கப்படும்.';
+      'பயன்பாட்டு வகையைத் தேர்வுசெய்க. கடை உங்கள் நிறுவனத்தின் கீழ் உருவாக்கப்படும்.';
 
   @override
   String get signupBodyCompanyDetails =>
@@ -2813,10 +2816,13 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get signupBodySettingUp =>
-      'உங்கள் நிறுவனம், கிளை மற்றும் கடை உருவாக்கப்படுகிறது — சிறிது நேரம் மட்டும்.';
+      'உங்கள் நிறுவனமும் கடையும் உருவாக்கப்படுகிறது — சிறிது நேரம் மட்டும்.';
 
   @override
-  String get signupBranchName => 'கிளைப் பெயர்';
+  String get signupApplicationType => 'பயன்பாட்டு வகை';
+
+  @override
+  String get signupBranchName => 'கடையின் பெயர்';
 
   @override
   String get signupBusinessBakery => 'பேக்கரி';
@@ -2912,7 +2918,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get signupProgressSettingAccount => 'கணக்கை அமைக்கிறது';
 
   @override
-  String get signupProgressSettingBranch => 'கிளையை அமைக்கிறது';
+  String get signupProgressSettingBranch => 'கடையை அமைக்கிறது';
 
   @override
   String get signupProgressSettingProfile => 'சுயவிவரத்தை அமைக்கிறது';

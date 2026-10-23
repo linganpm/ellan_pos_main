@@ -11,6 +11,8 @@ import 'package:pos_tablet/features/company/presentation/company_reports_screen.
 import 'package:pos_tablet/features/company/presentation/company_settings_screen.dart';
 import 'package:pos_tablet/features/company/presentation/company_staffs_screen.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/pos_home_button.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 /// Company hub: Settings + Staffs for the open store.
 class CompanyHubScreen extends StatefulWidget {
@@ -95,10 +97,13 @@ class _CompanyHubScreenState extends State<CompanyHubScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0.5,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           context.l10n.commonCompany,
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
+        ),
+        actions: const [PosHomeButton()],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

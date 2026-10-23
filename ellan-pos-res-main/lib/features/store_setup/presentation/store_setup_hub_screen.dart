@@ -10,6 +10,7 @@ import 'package:pos_tablet/features/store_setup/presentation/offers_setup_screen
 import 'package:pos_tablet/features/store_setup/presentation/products_setup_screen.dart';
 import 'package:pos_tablet/features/store_setup/presentation/staff_signup_screen.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 /// Offline-first store setup hub. Catalogue edits stay local until Sync exports.
 class StoreSetupHubScreen extends StatefulWidget {
@@ -78,9 +79,11 @@ class _StoreSetupHubScreenState extends State<StoreSetupHubScreen> {
           backgroundColor: Colors.white,
           foregroundColor: Colors.black87,
           elevation: 0.5,
-          title: Text(
+          title: PosBrandTitle(
+            child: Text(
             context.l10n.storeSetupTitle,
             style: FontUtility.heading.copyWith(fontSize: 22),
+          ),
           ),
           actions: [
             Tooltip(

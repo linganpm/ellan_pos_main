@@ -43,18 +43,7 @@ class OrderSummaryWidget extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x2E1B1433),
-                blurRadius: 0,
-                offset: Offset(0, 4),
-              ),
-              BoxShadow(
-                color: Color(0x1A1B1433),
-                blurRadius: 14,
-                offset: Offset(0, 8),
-              ),
-            ],
+            border: Border.all(color: const Color(0xFFE6E8EE)),
           ),
           child: FittedBox(
             fit: BoxFit.scaleDown,
@@ -91,7 +80,7 @@ class OrderSummaryWidget extends StatelessWidget {
                   for (final discount in discounts) ...[
                     const SizedBox(height: 6),
                     _buildSummaryRow(
-                      '${discount.title} (${discount.percentage.toStringAsFixed(0)}%)',
+                      discount.rateLabel(PosCurrency.format(discount.flatAmount)),
                       '-${PosCurrency.format(discountAmounts[discount.id] ?? 0)}',
                       color: Colors.green.shade700,
                     ),

@@ -4,6 +4,7 @@ import 'package:pos_orders_offline/store_models.dart';
 import 'package:pos_tablet/core/currency_format.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 class CustomerAdvanceResult {
   final double amount;
@@ -94,7 +95,7 @@ class _CustomerAdvanceDialogState extends State<CustomerAdvanceDialog> {
                 ),
               ),
               const SizedBox(height: 18),
-              TextField(
+              RubberPush(child: TextField(
                 controller: _amountController,
                 autofocus: true,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -107,9 +108,9 @@ class _CustomerAdvanceDialogState extends State<CustomerAdvanceDialog> {
                   labelText: context.l10n.commonAmount,
                   prefixText: '${PosCurrency.symbol()} ',
                 ),
-              ),
+              )),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
+              RubberPush(child: DropdownButtonFormField<String>(
                 initialValue: _paymentMode,
                 decoration: InputDecoration(
                   labelText: context.l10n.commonPaymentMode,
@@ -131,14 +132,14 @@ class _CustomerAdvanceDialogState extends State<CustomerAdvanceDialog> {
                 onChanged: (value) {
                   if (value != null) setState(() => _paymentMode = value);
                 },
-              ),
+              )),
               const SizedBox(height: 12),
-              TextField(
+              RubberPush(child: TextField(
                 controller: _referenceController,
                 decoration: InputDecoration(
                   labelText: context.l10n.commonReferenceOptional,
                 ),
-              ),
+              )),
             ],
           ),
         ),

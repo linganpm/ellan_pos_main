@@ -17,10 +17,13 @@ import '../../core/utils/font_utility.dart';
 import '../../bloc/order_list/order_list_bloc.dart';
 import '../../bloc/order_list/order_list_event.dart';
 import '../../bloc/order_list/order_list_state.dart';
+import '../widgets/pos_home_button.dart';
 import '../widgets/order_list/order_list_row.dart';
 import '../widgets/receipt_preview_dialog.dart';
 import 'order_details_screen.dart';
 import 'order_payments_screen.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 class SalesListScreen extends StatelessWidget {
   const SalesListScreen({super.key});
@@ -197,15 +200,18 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent>
         backgroundColor: Colors.white,
         elevation: 1,
         shadowColor: Colors.black.withValues(alpha: 0.05),
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           _ordersTitle(context),
           style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          const PosHomeButton(),
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: Colors.black87),
             onPressed: () {
@@ -237,24 +243,22 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent>
               _buildTableFilters(context),
               const SizedBox(height: 24),
               Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      if (MediaQuery.sizeOf(context).width >= 900)
-                        _buildTableHeader(context),
-                      Expanded(child: _buildOrderList()),
-                    ],
+                child: RubberPush(
+                  radius: 16,
+                  trackFocus: false,
+                  child: Container(
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: [
+                        if (MediaQuery.sizeOf(context).width >= 900)
+                          _buildTableHeader(context),
+                        Expanded(child: _buildOrderList()),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -310,42 +314,35 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent>
     );
     final search = SizedBox(
       width: compact ? null : 300,
-      child: TextField(
-        controller: _searchController,
-        onChanged: _onSearchChanged,
-        decoration: InputDecoration(
-          hintText: AppLocalizations.of(context)!.orderListSearchHint,
-          hintStyle: FontUtility.body.copyWith(color: Colors.black38),
-          prefixIcon: const Icon(Icons.search_rounded, color: Colors.black45),
-          suffixIcon: IconButton(
-            tooltip: context.l10n.commonClear,
-            icon: const Icon(
-              Icons.clear_rounded,
-              color: Colors.black45,
-              size: 20,
+      child: RubberPush(
+        child: TextField(
+          controller: _searchController,
+          onChanged: _onSearchChanged,
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context)!.orderListSearchHint,
+            hintStyle: FontUtility.body.copyWith(color: Colors.black38),
+            prefixIcon: const Icon(Icons.search_rounded, color: Colors.black45),
+            suffixIcon: IconButton(
+              tooltip: context.l10n.commonClear,
+              icon: const Icon(
+                Icons.clear_rounded,
+                color: Colors.black45,
+                size: 20,
+              ),
+              onPressed: () {
+                _searchController.clear();
+                _onSearchChanged('');
+              },
             ),
-            onPressed: () {
-              _searchController.clear();
-              _onSearchChanged('');
-            },
-          ),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 0,
-            horizontal: 16,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF4A00E0)),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 0,
+              horizontal: 16,
+            ),
+            border: PosFields.border,
+            enabledBorder: PosFields.border,
+            focusedBorder: PosFields.border,
           ),
         ),
       ),
@@ -826,13 +823,15 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent>
       decoration: BoxDecoration(
         color: colors.surfaceContainerHigh,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
       ),
       child: Row(
         children: [
           Expanded(
             flex: OrderListColumns.sl,
-            child: _headerText(loc.orderListColumnSlNo, textAlign: TextAlign.center),
+            child: _headerText(
+              loc.orderListColumnSlNo,
+              textAlign: TextAlign.center,
+            ),
           ),
           Expanded(
             flex: OrderListColumns.order,
@@ -848,7 +847,10 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent>
           ),
           Expanded(
             flex: OrderListColumns.time,
-            child: _headerText(loc.orderListColumnTime, textAlign: TextAlign.center),
+            child: _headerText(
+              loc.orderListColumnTime,
+              textAlign: TextAlign.center,
+            ),
           ),
           Expanded(
             flex: OrderListColumns.status,

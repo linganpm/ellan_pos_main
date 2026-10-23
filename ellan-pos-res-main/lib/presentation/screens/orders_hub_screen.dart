@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/store_trade_modes.dart';
 import '../../core/utils/font_utility.dart';
 import 'order_list_screen.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 class OrdersHubScreen extends StatelessWidget {
   const OrdersHubScreen({super.key});
@@ -15,9 +16,11 @@ class OrdersHubScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           'Orders',
           style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
         ),
       ),
       body: Center(

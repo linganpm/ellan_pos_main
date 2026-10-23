@@ -15,6 +15,7 @@ import 'package:pos_tablet/presentation/widgets/customer_support.dart';
 import 'package:pos_tablet/presentation/widgets/pin_pad.dart';
 import '../../core/routes.dart';
 import '../widgets/pos_brand_logo.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 class SignInScreen extends StatelessWidget {
   const SignInScreen({
@@ -39,18 +40,9 @@ class SignInScreen extends StatelessWidget {
       filled: true,
       fillColor: const Color(0xFFF7F8FB),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD0D5DD), width: 2),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFD0D5DD), width: 2),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _primary, width: 2.5),
-      ),
+      border: PosFields.border,
+      enabledBorder: PosFields.border,
+      focusedBorder: PosFields.border,
       suffixIcon: suffixIcon,
     );
   }
@@ -192,136 +184,141 @@ Future<bool> _confirmDestructive(
       builder: (context, setDialogState) {
         final typed = confirmController.text.trim().toUpperCase() == 'RESET';
         return Dialog(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: _danger.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: _danger, size: 32),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: FontUtility.heading.copyWith(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF1F2937),
-                ),
-              ),
-              const SizedBox(height: 10),
-              if (caution) ...[
-                Text(
-                  Localizations.localeOf(context).languageCode == 'ta'
-                      ? 'எச்சரிக்கை'
-                      : 'Caution',
-                  textAlign: TextAlign.center,
-                  style: FontUtility.body.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: _danger,
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-              Text(
-                body,
-                textAlign: TextAlign.center,
-                style: FontUtility.body.copyWith(
-                  fontSize: caution ? 16 : 14,
-                  height: 1.45,
-                  fontWeight: caution ? FontWeight.w700 : FontWeight.w500,
-                  color: caution
-                      ? const Color(0xFF1F2937)
-                      : const Color(0xFF6B7280),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                context.l10n.deviceTypeResetConfirm,
-                textAlign: TextAlign.center,
-                style: FontUtility.body.copyWith(
-                  fontSize: caution ? 15 : 13,
-                  fontWeight: caution ? FontWeight.w700 : FontWeight.w500,
-                  color: caution
-                      ? const Color(0xFF1F2937)
-                      : const Color(0xFF6B7280),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: confirmController,
-                autofocus: true,
-                textCapitalization: TextCapitalization.characters,
-                decoration: const InputDecoration(hintText: 'RESET'),
-                onChanged: (_) => setDialogState(() {}),
-              ),
-              const SizedBox(height: 20),
-              Row(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 52,
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(dialogContext, false),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF374151),
-                          side: const BorderSide(color: Color(0xFFD0D5DD)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          context.l10n.actionCancel,
-                          style: FontUtility.button.copyWith(
-                            color: const Color(0xFF374151),
-                          ),
-                        ),
-                      ),
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: _danger.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: _danger, size: 32),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: FontUtility.heading.copyWith(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF1F2937),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SizedBox(
-                      height: 52,
-                      child: FilledButton(
-                        onPressed: typed
-                            ? () => Navigator.pop(dialogContext, true)
-                            : null,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: _danger,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          actionLabel,
-                          style: FontUtility.button.copyWith(
-                            color: Colors.white,
+                  const SizedBox(height: 10),
+                  if (caution) ...[
+                    Text(
+                      Localizations.localeOf(context).languageCode == 'ta'
+                          ? 'எச்சரிக்கை'
+                          : 'Caution',
+                      textAlign: TextAlign.center,
+                      style: FontUtility.body.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: _danger,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  Text(
+                    body,
+                    textAlign: TextAlign.center,
+                    style: FontUtility.body.copyWith(
+                      fontSize: caution ? 16 : 14,
+                      height: 1.45,
+                      fontWeight: caution ? FontWeight.w700 : FontWeight.w500,
+                      color: caution
+                          ? const Color(0xFF1F2937)
+                          : const Color(0xFF6B7280),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    context.l10n.deviceTypeResetConfirm,
+                    textAlign: TextAlign.center,
+                    style: FontUtility.body.copyWith(
+                      fontSize: caution ? 15 : 13,
+                      fontWeight: caution ? FontWeight.w700 : FontWeight.w500,
+                      color: caution
+                          ? const Color(0xFF1F2937)
+                          : const Color(0xFF6B7280),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  RubberPush(
+                    child: TextField(
+                      controller: confirmController,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: const InputDecoration(hintText: 'RESET'),
+                      onChanged: (_) => setDialogState(() {}),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 52,
+                          child: OutlinedButton(
+                            onPressed: () =>
+                                Navigator.pop(dialogContext, false),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF374151),
+                              side: const BorderSide(color: Color(0xFFD0D5DD)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: Text(
+                              context.l10n.actionCancel,
+                              style: FontUtility.button.copyWith(
+                                color: const Color(0xFF374151),
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 52,
+                          child: FilledButton(
+                            onPressed: typed
+                                ? () => Navigator.pop(dialogContext, true)
+                                : null,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: _danger,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: Text(
+                              actionLabel,
+                              style: FontUtility.button.copyWith(
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
+        );
       },
     ),
   );
@@ -615,6 +612,10 @@ class _SignInFormState extends State<_SignInForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Center(child: PosBrandLogo(size: 112)),
+              const SizedBox(height: 4),
+              const Center(
+                child: EllantecSiteMark(color: Color(0xFF4A00E0)),
+              ),
               const SizedBox(height: 16),
               Text(
                 AppLocalizations.of(context)!.signInWelcome,
@@ -651,51 +652,58 @@ class _SignInFormState extends State<_SignInForm> {
               if (_boundCompanyCode.isNotEmpty)
                 _CompanyCard(code: _boundCompanyCode, name: _boundCompanyName)
               else
-                TextField(
-                  controller: _companyController,
+                RubberPush(
+                  child: TextField(
+                    controller: _companyController,
+                    onChanged: (value) =>
+                        context.read<SignInCubit>().companyCodeChanged(value),
+                    textInputAction: TextInputAction.next,
+                    style: FontUtility.body.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 17,
+                    ),
+                    decoration: widget.fieldDecoration(
+                      context.l10n.signupCompanyIdentifier,
+                      suffixIcon: const Icon(Icons.business_rounded),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 14),
+              RubberPush(
+                child: TextField(
+                  controller: _identifierController,
                   onChanged: (value) =>
-                      context.read<SignInCubit>().companyCodeChanged(value),
-                  textInputAction: TextInputAction.next,
+                      context.read<SignInCubit>().identifierChanged(value),
                   style: FontUtility.body.copyWith(
                     fontWeight: FontWeight.w700,
                     fontSize: 17,
                   ),
                   decoration: widget.fieldDecoration(
-                    context.l10n.signupCompanyIdentifier,
-                    suffixIcon: const Icon(Icons.business_rounded),
+                    context.l10n.signInIdentifierHint,
                   ),
-                ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: _identifierController,
-                onChanged: (value) =>
-                    context.read<SignInCubit>().identifierChanged(value),
-                style: FontUtility.body.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 17,
-                ),
-                decoration: widget.fieldDecoration(
-                  context.l10n.signInIdentifierHint,
                 ),
               ),
               const SizedBox(height: 14),
-              TextField(
-                onChanged: (value) =>
-                    context.read<SignInCubit>().passwordChanged(value),
-                obscureText: state.obscurePassword,
-                style: FontUtility.body.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 17,
-                ),
-                decoration: widget.fieldDecoration(
-                  context.l10n.signInPassword,
-                  suffixIcon: IconButton(
-                    onPressed: () =>
-                        context.read<SignInCubit>().togglePasswordVisibility(),
-                    icon: Icon(
-                      state.obscurePassword
-                          ? Icons.visibility_rounded
-                          : Icons.visibility_off_rounded,
+              RubberPush(
+                child: TextField(
+                  onChanged: (value) =>
+                      context.read<SignInCubit>().passwordChanged(value),
+                  obscureText: state.obscurePassword,
+                  style: FontUtility.body.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 17,
+                  ),
+                  decoration: widget.fieldDecoration(
+                    context.l10n.signInPassword,
+                    suffixIcon: IconButton(
+                      onPressed: () => context
+                          .read<SignInCubit>()
+                          .togglePasswordVisibility(),
+                      icon: Icon(
+                        state.obscurePassword
+                            ? Icons.visibility_rounded
+                            : Icons.visibility_off_rounded,
+                      ),
                     ),
                   ),
                 ),

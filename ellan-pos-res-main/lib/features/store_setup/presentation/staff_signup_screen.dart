@@ -11,6 +11,8 @@ import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/core/utils/user_facing_error.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 /// Add cashier — online + org JWT. Always creates a Cashier on the open store.
 class StaffSignupScreen extends StatefulWidget {
@@ -194,22 +196,10 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
       filled: true,
       fillColor: const Color(0xFFF8FAFC),
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _primary, width: 2),
-      ),
-      disabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-      ),
+      border: PosFields.border,
+      enabledBorder: PosFields.border,
+      focusedBorder: PosFields.border,
+      disabledBorder: PosFields.border,
     );
   }
 
@@ -279,13 +269,15 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
         backgroundColor: Colors.white,
         foregroundColor: _ink,
         elevation: 0,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           context.l10n.storeSetupAddCashier,
           style: FontUtility.heading.copyWith(
             fontSize: 22,
             fontWeight: FontWeight.w800,
             color: _ink,
           ),
+        ),
         ),
       ),
       body: Center(
@@ -316,7 +308,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                 icon: Icons.badge_outlined,
                 title: context.l10n.profileTitle,
                 children: [
-                  TextField(
+                  RubberPush(child: TextField(
                     controller: _first,
                     textCapitalization: TextCapitalization.words,
                     enabled: !_loading,
@@ -326,9 +318,9 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                       color: _ink,
                     ),
                     decoration: _fieldDecoration('First name'),
-                  ),
+                  )),
                   _gap(),
-                  TextField(
+                  RubberPush(child: TextField(
                     controller: _last,
                     textCapitalization: TextCapitalization.words,
                     enabled: !_loading,
@@ -338,9 +330,9 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                       color: _ink,
                     ),
                     decoration: _fieldDecoration('Last name'),
-                  ),
+                  )),
                   _gap(),
-                  TextField(
+                  RubberPush(child: TextField(
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
                     enabled: !_loading,
@@ -350,9 +342,9 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                       color: _ink,
                     ),
                     decoration: _fieldDecoration(context.l10n.commonEmail),
-                  ),
+                  )),
                   _gap(),
-                  TextField(
+                  RubberPush(child: TextField(
                     controller: _phone,
                     keyboardType: TextInputType.phone,
                     enabled: !_loading,
@@ -362,9 +354,9 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                       color: _ink,
                     ),
                     decoration: _fieldDecoration(context.l10n.commonPhone),
-                  ),
+                  )),
                   _gap(),
-                  TextField(
+                  RubberPush(child: TextField(
                     enabled: false,
                     controller: _country,
                     style: FontUtility.body.copyWith(
@@ -380,7 +372,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                         color: _muted,
                       ),
                     ),
-                  ),
+                  )),
                 ],
               ),
               _section(
@@ -388,7 +380,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                 icon: Icons.lock_outline_rounded,
                 title: context.l10n.storeSetupAccess,
                 children: [
-                  TextField(
+                  RubberPush(child: TextField(
                     controller: _password,
                     obscureText: true,
                     enabled: !_loading,
@@ -398,9 +390,9 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                       color: _ink,
                     ),
                     decoration: _fieldDecoration(context.l10n.commonPassword),
-                  ),
+                  )),
                   _gap(),
-                  TextField(
+                  RubberPush(child: TextField(
                     enabled: false,
                     controller: _role,
                     style: FontUtility.body.copyWith(
@@ -416,7 +408,7 @@ class _StaffSignupScreenState extends State<StaffSignupScreen> {
                         color: _muted,
                       ),
                     ),
-                  ),
+                  )),
                 ],
               ),
               const SizedBox(height: 8),

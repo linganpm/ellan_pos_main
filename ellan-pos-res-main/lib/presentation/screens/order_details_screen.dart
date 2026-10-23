@@ -13,6 +13,7 @@ import 'package:pos_tablet/presentation/screens/order_payments_screen.dart';
 import 'package:pos_tablet/presentation/widgets/order_list/order_status_badge.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
   final int orderId;
@@ -246,9 +247,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           context.l10n.orderNumber(widget.orderId),
           style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),

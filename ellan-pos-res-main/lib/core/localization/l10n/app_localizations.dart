@@ -1308,6 +1308,12 @@ abstract class AppLocalizations {
   /// **'OK'**
   String get commonOk;
 
+  /// No description provided for @commonOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get commonOffline;
+
   /// No description provided for @commonOnline.
   ///
   /// In en, this message translates to:
@@ -4917,13 +4923,13 @@ abstract class AppLocalizations {
   /// No description provided for @signupBodyBranch.
   ///
   /// In en, this message translates to:
-  /// **'Name the branch and city. Registration number is optional.'**
+  /// **'Name the store and city. Registration number is optional.'**
   String get signupBodyBranch;
 
   /// No description provided for @signupBodyBusinessType.
   ///
   /// In en, this message translates to:
-  /// **'Pick the business type. We will create a restaurant store under your branch.'**
+  /// **'Pick the application type. The store is created under your company.'**
   String get signupBodyBusinessType;
 
   /// No description provided for @signupBodyCompanyDetails.
@@ -4953,13 +4959,19 @@ abstract class AppLocalizations {
   /// No description provided for @signupBodySettingUp.
   ///
   /// In en, this message translates to:
-  /// **'Creating your organisation, branch, and store — this only takes a moment.'**
+  /// **'Creating your company and store — this only takes a moment.'**
   String get signupBodySettingUp;
+
+  /// No description provided for @signupApplicationType.
+  ///
+  /// In en, this message translates to:
+  /// **'Application type'**
+  String get signupApplicationType;
 
   /// No description provided for @signupBranchName.
   ///
   /// In en, this message translates to:
-  /// **'Branch name'**
+  /// **'Store name'**
   String get signupBranchName;
 
   /// No description provided for @signupBusinessBakery.
@@ -5133,7 +5145,7 @@ abstract class AppLocalizations {
   /// No description provided for @signupProgressSettingBranch.
   ///
   /// In en, this message translates to:
-  /// **'Setting up branch'**
+  /// **'Setting up store'**
   String get signupProgressSettingBranch;
 
   /// No description provided for @signupProgressSettingProfile.
@@ -6501,7 +6513,7 @@ abstract class AppLocalizations {
   /// No description provided for @signInSwitchCompanyBody.
   ///
   /// In en, this message translates to:
-  /// **'Switching company resets this device. Local orders, catalogue, customers, sync history and device settings will be permanently deleted, including any orders not yet synced. Nothing is deleted on the server.'**
+  /// **'This device will be reset. Data stored only here will be deleted.'**
   String get signInSwitchCompanyBody;
 
   /// No description provided for @signInSwitchCompanyAction.

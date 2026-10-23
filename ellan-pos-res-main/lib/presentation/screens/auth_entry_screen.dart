@@ -42,6 +42,8 @@ class AuthEntryScreen extends StatelessWidget {
                         fontSize: 44,
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    const EllantecSiteMark(color: Colors.white),
                     if (!kIsPosDiscoveryConfiguredByEnv) ...[
                       const SizedBox(height: 28),
                       Text(

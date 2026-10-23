@@ -89,22 +89,10 @@ class _ProductItemCardState extends State<ProductItemCard> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(radius),
-          boxShadow: [
-            BoxShadow(
-              color: (inCart ? accent : const Color(0xFF1B1433)).withValues(
-                alpha: inCart ? 0.34 : 0.16,
-              ),
-              blurRadius: 0,
-              offset: Offset(0, inCart ? 6 : 5),
-            ),
-            BoxShadow(
-              color: (inCart ? accent : const Color(0xFF1B1433)).withValues(
-                alpha: 0.12,
-              ),
-              blurRadius: 18,
-              offset: const Offset(0, 12),
-            ),
-          ],
+          border: Border.all(
+            color: inCart ? accent : const Color(0xFFE6E8EE),
+            width: inCart ? 1.5 : 1,
+          ),
         ),
         child: Material(
           type: MaterialType.transparency,
@@ -435,13 +423,6 @@ class _ProductItemCardState extends State<ProductItemCard> {
         decoration: BoxDecoration(
           color: accent,
           borderRadius: BorderRadius.circular(999),
-          boxShadow: [
-            BoxShadow(
-              color: accent.withValues(alpha: 0.35),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
         child: Text(
           '×${_fmtQty(widget.cartQuantity)}',

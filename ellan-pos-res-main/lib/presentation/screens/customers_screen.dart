@@ -5,6 +5,9 @@ import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/screens/customer_profile_screen.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/pos_home_button.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 class CustomersScreen extends StatefulWidget {
   const CustomersScreen({super.key});
@@ -62,15 +65,18 @@ class _CustomersScreenState extends State<CustomersScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           context.l10n.customersTitle,
           style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
         ),
         leading: IconButton(
           tooltip: context.l10n.actionBack,
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: const [PosHomeButton()],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
@@ -84,7 +90,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              TextField(
+              RubberPush(child: TextField(
                 controller: _searchController,
                 onSubmitted: (value) => _load(query: value),
                 decoration: InputDecoration(
@@ -100,16 +106,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   ),
                   filled: true,
                   fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
+                  border: PosFields.border,
+                  enabledBorder: PosFields.border,
                 ),
-              ),
+              )),
               const SizedBox(height: 16),
               Expanded(child: _buildBody()),
             ],

@@ -10,7 +10,7 @@ import 'package:pos_tablet/presentation/screens/order_create_screen.dart';
 import 'package:pos_tablet/presentation/screens/scheduled_payments_screen.dart';
 import 'package:pos_tablet/presentation/widgets/order_creation_sheet.dart';
 import 'package:pos_tablet/presentation/widgets/org_local_clock_badge.dart';
-import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
+import 'package:pos_tablet/presentation/widgets/pos_home_button.dart';
 import '../../bloc/cart/cart_event.dart';
 import '../../core/localization/l10n/app_localizations.dart';
 import '../../core/localization/l10n_context.dart';
@@ -26,6 +26,7 @@ import 'package:pos_tablet/presentation/widgets/customer_support.dart';
 import 'refunds_screen.dart';
 import 'tables_screen.dart';
 import '../../core/order_list_route_observer.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool openNewOrderSheet;
@@ -350,6 +351,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         serviceTaxPercentage: draft.serviceTaxPercentage,
         tipsAmount: draft.tipsAmount,
         deliveryCharge: draft.deliveryCharge,
+        orderHistory: draft.orderHistory,
       ),
     );
     await Navigator.push(
@@ -397,10 +399,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     return Scaffold(
       backgroundColor: const Color(0xFFEEF1F6),
       appBar: _buildAppBar(context),
-      body: MediaQuery.sizeOf(context).shortestSide < 600
-          ? _buildCompactMenu(context)
-          : MediaQuery.sizeOf(context).width < 900
-          ? _buildTabletHome(context)
+      body: MediaQuery.sizeOf(context).width < 900 ||
+              MediaQuery.sizeOf(context).shortestSide < 600
+          ? _buildGridHome(context)
           : SafeArea(
         child: Padding(
           // Outer margins around the home dashboard card.
@@ -743,79 +744,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     Navigator.pushNamed(context, AppRoutes.company);
   }
 
-  Widget _buildCompactMenu(BuildContext context) {
-    final destinations = <({String label, IconData icon, Widget page})>[
-      (label: context.l10n.homePosDashboard, icon: Icons.dashboard_rounded, page: const DashboardScreen()),
-      if (_tradeModes.sell)
-        (label: context.l10n.storeTradeSell, icon: Icons.trending_up_rounded, page: const SalesListScreen()),
-      if (_tradeModes.buy)
-        (label: context.l10n.storeTradeBuy, icon: Icons.trending_down_rounded, page: const PurchasesListScreen()),
-      (label: context.l10n.homeCatalogs, icon: Icons.inventory_2_outlined, page: const CatalogScreen()),
-      (label: context.l10n.homeCredits, icon: Icons.account_balance_wallet_outlined, page: const CreditsScreen()),
-      (label: context.l10n.homeRefunds, icon: Icons.assignment_return_outlined, page: const RefundsScreen()),
-      (label: context.l10n.homeCustomers, icon: Icons.people_outline, page: const CustomersScreen()),
-    ];
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 112),
-        children: [
-          const SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: OrgLocalClockBadge(),
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildTablesOption(context, compact: true),
-          if (_scheduledTodayCount > 0)
-            Card(
-              child: ListTile(
-                minVerticalPadding: 16,
-                leading: const Icon(Icons.event_available_rounded),
-                title: Text('$_scheduledTodayCount · ${context.l10n.creditsTodayScheduled}'),
-                onTap: () async {
-                  await Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => const ScheduledPaymentsScreen(todayOnly: true),
-                  ));
-                  if (mounted) await _loadScheduledToday();
-                },
-              ),
-            ),
-          for (final destination in destinations)
-            Card(
-              child: ListTile(
-                minVerticalPadding: 16,
-                leading: Icon(destination.icon, color: Theme.of(context).colorScheme.primary),
-                title: Text(destination.label),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => Navigator.push(context, MaterialPageRoute(
-                  builder: (_) => destination.page,
-                )),
-              ),
-            ),
-          Card(
-            child: ListTile(
-              minVerticalPadding: 16,
-              leading: const Icon(Icons.apartment_rounded),
-              title: Text(context.l10n.homeCompany),
-              onTap: () => _openCompany(context),
-            ),
-          ),
-          Card(
-            child: ListTile(
-              minVerticalPadding: 16,
-              leading: const Icon(Icons.drafts_outlined),
-              title: Text('${context.l10n.homeSavedDrafts} ($_draftCount)'),
-              onTap: _openDraftsSheet,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTablesOption(BuildContext context, {bool compact = false}) {
+  Widget _buildTablesOption(BuildContext context) {
     if (!_tradeModes.sell) return const SizedBox.shrink();
     return Builder(
       builder: (context) {
@@ -832,17 +761,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           context,
           MaterialPageRoute<void>(builder: (_) => const TablesScreen()),
         );
-        if (compact) {
-          return Card(
-            child: ListTile(
-              minVerticalPadding: 16,
-              leading: const Icon(Icons.table_restaurant_rounded, color: Color(0xFF00897B)),
-              title: Text(context.l10n.homeTables),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: openTables,
-            ),
-          );
-        }
         return _buildMenuCard(
           context,
           title: context.l10n.homeTables,
@@ -857,7 +775,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final compact = width < 600;
-    final veryCompact = width < 600;
     final store = context.read<UiStoreController>().store;
     final storeName = store?.storeName.trim();
     final title = (storeName != null && storeName.isNotEmpty)
@@ -868,36 +785,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       backgroundColor: Colors.white,
       elevation: 0,
       centerTitle: false,
-      title: veryCompact
-          ? Text(
-              title,
-              style: FontUtility.heading.copyWith(fontSize: 18),
-              overflow: TextOverflow.ellipsis,
-            )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const PosBrandLogo(size: 40),
-                const SizedBox(width: 12),
-                Flexible(
-                  child: Text(
-                    title,
-                    style: FontUtility.heading.copyWith(
-                      fontSize: compact ? 18 : 22,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-      leading: IconButton(
-        icon: veryCompact
-            ? const PosBrandLogo(size: 40)
-            : const Icon(Icons.menu_rounded, color: Colors.black87),
-        onPressed: () {
-          // TODO: Open drawer
-        },
-        tooltip: context.l10n.homeMenu,
+      leading: const PosHomeButton(),
+      leadingWidth: 56,
+      titleSpacing: 0,
+      title: PosBrandTitle(
+        child: Text(
+        title,
+        style: FontUtility.heading.copyWith(fontSize: compact ? 18 : 22),
+        overflow: TextOverflow.ellipsis,
+      ),
       ),
       actions: [
         if (compact)
@@ -977,7 +873,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             padding: EdgeInsets.only(right: 8),
             child: OrgLocalClockBadge(),
           ),
-          if (!veryCompact) const CustomerSupportButton(),
+          const CustomerSupportButton(),
           FutureBuilder<String>(
           future: getIt<UiStoreController>().resolveStaffDisplayName(),
           builder: (context, snapshot) {
@@ -1165,7 +1061,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  Widget _buildTabletHome(BuildContext context) {
+  Widget _buildGridHome(BuildContext context) {
+    final phone = MediaQuery.sizeOf(context).width < 600;
     final tiles = <Widget>[
       _buildMenuCard(
         context,
@@ -1278,7 +1175,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+        padding: EdgeInsets.fromLTRB(phone ? 16 : 20, 12, phone ? 16 : 20, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -1335,12 +1232,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final cols = constraints.maxWidth >= 900 ? 3 : 2;
+                  final gap = phone ? 14.0 : 16.0;
                   return GridView.count(
-                    padding: const EdgeInsets.only(bottom: 96),
+                    padding: const EdgeInsets.only(bottom: 108),
                     crossAxisCount: cols,
-                    mainAxisSpacing: 18,
-                    crossAxisSpacing: 18,
-                    childAspectRatio: cols == 2 ? 1.55 : 1.35,
+                    mainAxisSpacing: gap,
+                    crossAxisSpacing: gap,
+                    childAspectRatio: phone
+                        ? 1.12
+                        : (cols == 2 ? 1.42 : 1.35),
                     children: tiles,
                   );
                 },
@@ -1359,10 +1259,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     required Color color,
     required VoidCallback onTap,
   }) {
+    final roomy = MediaQuery.sizeOf(context).width >= 900;
     return Material(
       color: Colors.white,
-      elevation: 6,
-      shadowColor: const Color(0x331B1433),
+      elevation: roomy ? 4 : 1,
+      shadowColor: const Color(0x221B1433),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: InkWell(
         onTap: onTap,
@@ -1370,44 +1271,44 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         hoverColor: color.withValues(alpha: 0.06),
         highlightColor: color.withValues(alpha: 0.1),
         splashColor: color.withValues(alpha: 0.18),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return FittedBox(
-                fit: BoxFit.scaleDown,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: constraints.maxWidth),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(iconData, size: 40, color: color),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        title,
-                        style: FontUtility.heading.copyWith(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final narrow =
+                constraints.maxWidth < 210 || constraints.maxHeight < 150;
+            final iconSize = narrow ? 32.0 : 40.0;
+            final iconPad = narrow ? 12.0 : 14.0;
+            return Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: narrow ? 12 : 16,
+                vertical: narrow ? 12 : 14,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(iconPad),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(iconData, size: iconSize, color: color),
                   ),
-                ),
-              );
-            },
-          ),
+                  SizedBox(height: narrow ? 10 : 14),
+                  Text(
+                    title,
+                    style: FontUtility.heading.copyWith(
+                      fontSize: narrow ? 16 : 20,
+                      fontWeight: FontWeight.w800,
+                      height: 1.15,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

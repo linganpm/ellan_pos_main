@@ -71,7 +71,11 @@ class CartState extends Equatable {
         }
       }
       if (match == null) continue;
-      sum += match.totalPrice * (discount.percentage / 100);
+      sum += discount.isFlat
+          ? (discount.flatAmount > match.totalPrice
+                ? match.totalPrice
+                : discount.flatAmount)
+          : match.totalPrice * (discount.percentage / 100);
     }
     return double.parse(sum.toStringAsFixed(2));
   }
@@ -86,7 +90,11 @@ class CartState extends Equatable {
     var sum = 0.0;
     for (final discount in discounts) {
       if (discount.isItemDiscount) continue;
-      sum += orderDiscountBase * (discount.percentage / 100);
+      sum += discount.isFlat
+          ? (discount.flatAmount > orderDiscountBase
+                ? orderDiscountBase
+                : discount.flatAmount)
+          : orderDiscountBase * (discount.percentage / 100);
     }
     return double.parse(sum.toStringAsFixed(2));
   }
@@ -98,16 +106,22 @@ class CartState extends Equatable {
     if (discount.isItemDiscount) {
       for (final item in cartItems) {
         if (item.lineSignature == discount.targetLineSignature) {
-          return double.parse(
-            (item.totalPrice * (discount.percentage / 100)).toStringAsFixed(2),
-          );
+          final raw = discount.isFlat
+              ? (discount.flatAmount > item.totalPrice
+                    ? item.totalPrice
+                    : discount.flatAmount)
+              : item.totalPrice * (discount.percentage / 100);
+          return double.parse(raw.toStringAsFixed(2));
         }
       }
       return 0;
     }
-    return double.parse(
-      (orderDiscountBase * (discount.percentage / 100)).toStringAsFixed(2),
-    );
+    final raw = discount.isFlat
+        ? (discount.flatAmount > orderDiscountBase
+              ? orderDiscountBase
+              : discount.flatAmount)
+        : orderDiscountBase * (discount.percentage / 100);
+    return double.parse(raw.toStringAsFixed(2));
   }
 
   /// Legacy single-% view: sum of order-level percentages (UI badges).

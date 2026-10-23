@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/currency_format.dart';
+import '../../../core/pos_theme.dart';
 import '../../../core/utils/font_utility.dart';
 import '../../../core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 class CalculationInputSection extends StatefulWidget {
   final String title;
@@ -65,7 +67,7 @@ class _CalculationInputSectionState extends State<CalculationInputSection> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: PosTheme.lift(),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,26 +87,21 @@ class _CalculationInputSectionState extends State<CalculationInputSection> {
             ],
           ),
           const SizedBox(height: 24),
-          TextField(
-            controller: _controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: FontUtility.subheading.copyWith(fontSize: 18),
-            decoration: InputDecoration(
-              hintText: widget.placeholder,
-              suffixText: suffix,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+          RubberPush(
+            child: TextField(
+              controller: _controller,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: Color(0xFF4A00E0),
-                  width: 2,
-                ),
+              style: FontUtility.subheading.copyWith(fontSize: 18),
+              decoration: InputDecoration(
+                hintText: widget.placeholder,
+                suffixText: suffix,
+                border: PosFields.border,
+                focusedBorder: PosFields.border,
+                filled: true,
+                fillColor: Colors.grey.shade50,
               ),
-              filled: true,
-              fillColor: Colors.grey.shade50,
             ),
           ),
           const SizedBox(height: 24),

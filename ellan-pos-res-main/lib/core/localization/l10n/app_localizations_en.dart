@@ -688,6 +688,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonOk => 'OK';
 
   @override
+  String get commonOffline => 'Offline';
+
+  @override
   String get commonOnline => 'Online';
 
   @override
@@ -2746,11 +2749,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signupBodyBranch =>
-      'Name the branch and city. Registration number is optional.';
+      'Name the store and city. Registration number is optional.';
 
   @override
   String get signupBodyBusinessType =>
-      'Pick the business type. We will create a restaurant store under your branch.';
+      'Pick the application type. The store is created under your company.';
 
   @override
   String get signupBodyCompanyDetails =>
@@ -2769,10 +2772,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signupBodySettingUp =>
-      'Creating your organisation, branch, and store — this only takes a moment.';
+      'Creating your company and store — this only takes a moment.';
 
   @override
-  String get signupBranchName => 'Branch name';
+  String get signupApplicationType => 'Application type';
+
+  @override
+  String get signupBranchName => 'Store name';
 
   @override
   String get signupBusinessBakery => 'Bakery';
@@ -2867,7 +2873,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signupProgressSettingAccount => 'Setting up account';
 
   @override
-  String get signupProgressSettingBranch => 'Setting up branch';
+  String get signupProgressSettingBranch => 'Setting up store';
 
   @override
   String get signupProgressSettingProfile => 'Setting profile';

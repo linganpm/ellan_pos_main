@@ -5,6 +5,7 @@ import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/features/store_setup/presentation/store_setup_ui.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 class OffersSetupScreen extends StatefulWidget {
   const OffersSetupScreen({super.key});
@@ -75,7 +76,7 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
+            RubberPush(child: TextField(
               controller: nameCtrl,
               decoration: StoreSetupUi.field(
                 hint: 'e.g. Lunch special',
@@ -83,9 +84,9 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
                 icon: Icons.local_offer_rounded,
                 accent: _accent,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
-            TextField(
+            RubberPush(child: TextField(
               controller: pctCtrl,
               keyboardType: TextInputType.number,
               decoration: StoreSetupUi.field(
@@ -94,9 +95,9 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
                 icon: Icons.percent_rounded,
                 accent: _accent,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
-            TextField(
+            RubberPush(child: TextField(
               controller: minCtrl,
               keyboardType: TextInputType.number,
               decoration: StoreSetupUi.field(
@@ -105,7 +106,7 @@ class _OffersSetupScreenState extends State<OffersSetupScreen> {
                 icon: Icons.shopping_bag_outlined,
                 accent: _accent,
               ),
-            ),
+            )),
             StoreSetupUi.sectionLabel(
               context.l10n.storeSetupLinkPackagesOptional,
               accent: StoreSetupUi.productsAccent,

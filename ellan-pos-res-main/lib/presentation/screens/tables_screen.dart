@@ -5,6 +5,9 @@ import '../../core/controllers/ui_store_controller.dart';
 import '../../core/currency_format.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/pos_home_button.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 class TablesScreen extends StatefulWidget {
   const TablesScreen({super.key});
@@ -79,8 +82,11 @@ class _TablesScreenState extends State<TablesScreen> {
     final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.homeTables),
+        title: PosBrandTitle(
+          child: Text(l10n.homeTables),
+        ),
         actions: [
+          const PosHomeButton(),
           IconButton(
             key: const ValueKey('add-table'),
             tooltip: 'Add table',
@@ -385,16 +391,16 @@ class _AddTableDialogState extends State<_AddTableDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
+            RubberPush(child: TextField(
               controller: _name,
               autofocus: true,
               textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(labelText: 'Table name'),
               onSubmitted: (_) => _submit(),
-            ),
+            )),
             const SizedBox(height: 12),
             if (widget.floors.isNotEmpty)
-              DropdownButtonFormField<String>(
+              RubberPush(child: DropdownButtonFormField<String>(
                 initialValue: _newFloor ? '' : _floorId,
                 decoration: const InputDecoration(labelText: 'Floor'),
                 items: [
@@ -415,21 +421,21 @@ class _AddTableDialogState extends State<_AddTableDialog> {
                     }
                   });
                 },
-              ),
+              )),
             if (_newFloor) ...[
               const SizedBox(height: 12),
-              TextField(
+              RubberPush(child: TextField(
                 controller: _floorName,
                 textCapitalization: TextCapitalization.words,
                 decoration: const InputDecoration(labelText: 'Floor name'),
-              ),
+              )),
             ],
             const SizedBox(height: 12),
-            TextField(
+            RubberPush(child: TextField(
               controller: _seats,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(labelText: 'Seats'),
-            ),
+            )),
           ],
         ),
       ),

@@ -10,6 +10,7 @@ import 'package:pos_tablet/core/pos_tax_label_defaults.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/features/store_setup/presentation/store_setup_ui.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 class ProductsSetupScreen extends StatefulWidget {
   const ProductsSetupScreen({super.key});
@@ -231,7 +232,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DropdownButtonFormField<String>(
+            RubberPush(child: DropdownButtonFormField<String>(
               initialValue: categoryLocalId,
               items: [
                 for (final c in _categories)
@@ -245,9 +246,9 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                 icon: Icons.folder_rounded,
                 accent: _accent,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
-            TextField(
+            RubberPush(child: TextField(
               controller: productCtrl,
               decoration: StoreSetupUi.field(
                 hint: context.l10n.storeSetupProductNameHint,
@@ -255,9 +256,9 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                 icon: Icons.restaurant_menu_rounded,
                 accent: _accent,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
-            TextField(
+            RubberPush(child: TextField(
               controller: packageCtrl,
               decoration: StoreSetupUi.field(
                 hint: context.l10n.storeSetupPackageNameHint,
@@ -265,9 +266,9 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                 icon: Icons.inventory_2_rounded,
                 accent: _accent,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
-            TextField(
+            RubberPush(child: TextField(
               controller: priceCtrl,
               keyboardType: TextInputType.number,
               decoration: StoreSetupUi.field(
@@ -276,23 +277,23 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                 icon: Icons.payments_rounded,
                 accent: _accent,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
-                  child: TextField(
+                  child: RubberPush(child: TextField(
                     controller: unitCtrl,
                     decoration: StoreSetupUi.field(
                       hint: context.l10n.storeSetupUnitHint,
                       label: context.l10n.storeSetupUnit,
                       accent: _accent,
                     ),
-                  ),
+                  )),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: TextField(
+                  child: RubberPush(child: TextField(
                     controller: qtyCtrl,
                     keyboardType: TextInputType.number,
                     decoration: StoreSetupUi.field(
@@ -300,7 +301,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                       label: context.l10n.storeSetupUnitQty,
                       accent: _accent,
                     ),
-                  ),
+                  )),
                 ),
               ],
             ),
@@ -396,7 +397,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
+            RubberPush(child: TextField(
               controller: productCtrl,
               decoration: StoreSetupUi.field(
                 hint: context.l10n.storeSetupProductNamePlain,
@@ -404,9 +405,9 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                 icon: Icons.restaurant_menu_rounded,
                 accent: _accent,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
-            TextField(
+            RubberPush(child: TextField(
               controller: packageCtrl,
               decoration: StoreSetupUi.field(
                 hint: context.l10n.storeSetupPackageNamePlain,
@@ -414,9 +415,9 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                 icon: Icons.inventory_2_rounded,
                 accent: _accent,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
-            TextField(
+            RubberPush(child: TextField(
               controller: priceCtrl,
               keyboardType: TextInputType.number,
               decoration: StoreSetupUi.field(
@@ -425,23 +426,23 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                 icon: Icons.payments_rounded,
                 accent: _accent,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
-                  child: TextField(
+                  child: RubberPush(child: TextField(
                     controller: unitCtrl,
                     decoration: StoreSetupUi.field(
                       hint: 'pcs',
                       label: context.l10n.storeSetupUnit,
                       accent: _accent,
                     ),
-                  ),
+                  )),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: TextField(
+                  child: RubberPush(child: TextField(
                     controller: qtyCtrl,
                     keyboardType: TextInputType.number,
                     decoration: StoreSetupUi.field(
@@ -449,7 +450,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                       label: context.l10n.storeSetupUnitQty,
                       accent: _accent,
                     ),
-                  ),
+                  )),
                 ),
               ],
             ),
@@ -631,7 +632,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
         builder: (ctx, setLocal) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            DropdownButtonFormField<String>(
+            RubberPush(child: DropdownButtonFormField<String>(
               initialValue: masterId,
               items: [
                 for (final m in _masters)
@@ -646,9 +647,9 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                 label: 'Master product',
                 accent: _accent,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
+            RubberPush(child: DropdownButtonFormField<String>(
               initialValue: categoryLocalId,
               items: [
                 for (final c in _categories)
@@ -661,7 +662,7 @@ class _ProductsSetupScreenState extends State<ProductsSetupScreen> {
                 label: 'Store category',
                 accent: _accent,
               ),
-            ),
+            )),
           ],
         ),
       ),

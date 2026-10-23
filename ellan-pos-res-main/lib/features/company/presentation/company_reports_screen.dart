@@ -5,6 +5,8 @@ import 'package:pos_tablet/core/pos_report_mailer_defaults.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/core/utils/user_facing_error.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 /// Sales report subscribers for the open store.
 class CompanyReportsScreen extends StatefulWidget {
@@ -110,32 +112,32 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(
+                    RubberPush(child: TextField(
                       controller: nameCtrl,
                       decoration: InputDecoration(
                         hintText: context.l10n.commonName,
                       ),
-                    ),
+                    )),
                     const SizedBox(height: 12),
                     if (notificationType == 'sms' ||
                         notificationType == 'whatsapp')
-                      TextField(
+                      RubberPush(child: TextField(
                         controller: phoneCtrl,
                         keyboardType: TextInputType.phone,
                         decoration: InputDecoration(
                           hintText: context.l10n.commonPhone,
                         ),
-                      )
+                      ))
                     else
-                      TextField(
+                      RubberPush(child: TextField(
                         controller: emailCtrl,
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           hintText: context.l10n.commonEmail,
                         ),
-                      ),
+                      )),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
+                    RubberPush(child: DropdownButtonFormField<String>(
                       value: notificationType,
                       decoration: InputDecoration(
                         labelText: context.l10n.companyChannel,
@@ -166,9 +168,9 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
                         if (v == null) return;
                         setLocal(() => notificationType = v);
                       },
-                    ),
+                    )),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
+                    RubberPush(child: DropdownButtonFormField<String>(
                       value: cadence,
                       decoration: InputDecoration(
                         labelText: context.l10n.companyPeriodicity,
@@ -191,7 +193,7 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
                         if (v == null) return;
                         setLocal(() => cadence = v);
                       },
-                    ),
+                    )),
                   ],
                 ),
               ),
@@ -348,13 +350,15 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
         backgroundColor: Colors.white,
         foregroundColor: _ink,
         elevation: 0.5,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           context.l10n.commonReports,
           style: FontUtility.heading.copyWith(
             fontSize: 22,
             fontWeight: FontWeight.w800,
             color: _ink,
           ),
+        ),
         ),
         actions: [
           Tooltip(

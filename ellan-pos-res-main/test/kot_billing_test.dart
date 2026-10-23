@@ -138,6 +138,103 @@ void main() {
   });
   tearDown(() async => getIt.reset());
 
+  test('older drafts rebuild a kitchen ticket from sent quantities', () {
+    final draft = CartDraft.fromJson({
+      'id': 'old',
+      'savedAt': '2026-10-23T10:00:00.000Z',
+      'args': {'orderType': 'Dine-In', 'openOrderId': 42},
+      'items': [
+        {
+          'product': {
+            'id': 'tea',
+            'name': 'Tea',
+            'price': 100,
+            'description': '',
+            'imageUrl': '',
+            'categoryId': 'all',
+          },
+          'quantity': 3,
+          'kotSentQuantity': 2,
+        },
+      ],
+      'netTotal': 300,
+    });
+    expect(draft.items.single.quantity, 3);
+    expect(draft.items.single.kotSentQuantity, 2);
+    expect(draft.orderHistory.single.orderId, 42);
+    expect(draft.orderHistory.single.items.single.quantity, 2);
+  });
+
+  test('retrieving a draft restores every KOT ticket', () async {
+    final bloc = CartBloc();
+    addTearDown(bloc.close);
+    final loaded = bloc.stream.firstWhere((state) => !state.isLoading);
+    bloc.add(const LoadInitialData(draft: snapshot));
+    await loaded;
+
+    final first = bloc.stream.firstWhere(
+      (state) => state.orderHistory.length == 1,
+    );
+    bloc.add(const MarkCartKotSent(orderId: 42, batchNumber: 1));
+    await first;
+
+    final extended = bloc.stream.firstWhere(
+      (state) => state.cartItems.single.quantity == 3,
+    );
+    bloc.add(const AddProductToCart(product));
+    await extended;
+
+    final second = bloc.stream.firstWhere(
+      (state) => state.orderHistory.length == 2,
+    );
+    bloc.add(const MarkCartKotSent(orderId: 42, batchNumber: 2));
+    final sent = await second;
+    expect(sent.orderHistory.map((ticket) => ticket.kotBatch), [2, 1]);
+    expect(sent.cartItems.single.kotSentQuantity, 3);
+
+    final saved = await CartDraftStore.save(
+      args: const CartDraftArgs(orderType: 'Dine-In', openOrderId: 42),
+      items: sent.cartItems,
+      discounts: sent.discounts,
+      serviceTaxPercentage: sent.serviceTaxPercentage,
+      tipsAmount: sent.tipsAmount,
+      deliveryCharge: sent.deliveryCharge,
+      netTotal: sent.netTotal,
+      orderHistory: sent.orderHistory,
+    );
+    final stored = (await CartDraftStore.list()).singleWhere(
+      (row) => row.id == saved.id,
+    );
+    expect(stored.orderHistory.map((ticket) => ticket.kotBatch), [2, 1]);
+    expect(stored.orderHistory.first.items.single.quantity, 3);
+    expect(stored.items.single.kotSentQuantity, 3);
+
+    final restored = CartBloc();
+    addTearDown(restored.close);
+    final ready = restored.stream.firstWhere(
+      (state) => state.orderHistory.length == 2,
+    );
+    restored.add(
+      LoadInitialData(
+        draft: CartDraftSnapshot(
+          items: stored.items,
+          discounts: stored.discounts,
+          serviceTaxPercentage: stored.serviceTaxPercentage,
+          tipsAmount: stored.tipsAmount,
+          deliveryCharge: stored.deliveryCharge,
+          orderHistory: stored.orderHistory,
+        ),
+      ),
+    );
+    final again = await ready;
+    expect(again.orderHistory.map((ticket) => ticket.kotBatch), [2, 1]);
+    expect(again.orderHistory.first.id, 'KOT #2');
+    expect(again.orderHistory.last.id, 'KOT #1');
+    expect(again.cartItems.single.kotSentQuantity, 3);
+    expect(again.cartItems.single.pendingKotQuantity, 0);
+    await CartDraftStore.delete(saved.id);
+  });
+
   test('KOT retains the billable basket and all adjustments', () async {
     final bloc = CartBloc();
     addTearDown(bloc.close);
@@ -204,21 +301,24 @@ void main() {
   }
 
   testWidgets(
-    'phone order can switch to its cart and billing payment panel',
+    'phone and tablet portrait orders can switch to cart and billing',
     (tester) async {
-      await mount(tester, size: const Size(390, 844));
-      expect(tester.takeException(), isNull);
-      await tester.tap(find.widgetWithText(Tab, 'Order'));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-      await tester.ensureVisible(find.text('BILL'));
-      await tester.tap(find.text('BILL'));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-      await tester.tap(find.widgetWithText(Tab, 'Payments'));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-      expect(find.text('Exact'), findsOneWidget);
+      for (final size in [const Size(390, 844), const Size(768, 1024)]) {
+        await mount(tester, size: size);
+        expect(tester.takeException(), isNull, reason: 'Order at $size');
+        await tester.tap(find.widgetWithText(Tab, 'Order'));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: 'Cart at $size');
+        await tester.ensureVisible(find.text('BILL'));
+        await tester.tap(find.text('BILL'));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: 'Billing at $size');
+        await tester.tap(find.widgetWithText(Tab, 'Payments'));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: 'Payments at $size');
+        expect(find.text('Exact'), findsOneWidget);
+        await tester.pumpWidget(const SizedBox());
+      }
     },
   );
 
@@ -249,6 +349,9 @@ void main() {
       final drafts = await CartDraftStore.list();
       expect(drafts.single.args.openOrderId, 42);
       expect(drafts.single.items.single.kotSentQuantity, 2);
+      expect(drafts.single.orderHistory.single.orderId, 42);
+      expect(drafts.single.orderHistory.single.kotBatch, 1);
+      expect(drafts.single.orderHistory.single.items.single.quantity, 2);
       await tester.tap(find.text('BILL'));
       await tester.pumpAndSettle();
       final billing = tester.widget<BillingSummaryScreen>(

@@ -10,6 +10,7 @@ import '../../core/routes.dart';
 import '../../core/device_setup_store.dart';
 import '../../core/constants/discovery_constants.dart';
 import '../../core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -181,46 +182,48 @@ class _WelcomeViewState extends State<_WelcomeView> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              InputDecorator(
-                                decoration: _fieldDecoration(
-                                  hintText:
-                                      context.l10n.welcomeChooseSavedServer,
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<PosServerEntry>(
-                                    value: _selectedEntry(state),
-                                    isExpanded: true,
-                                    hint: Text(
-                                      context.l10n.welcomeChooseSavedServer,
-                                      style: FontUtility.body.copyWith(
-                                        color: Colors.black38,
+                              RubberPush(
+                                child: InputDecorator(
+                                  decoration: _fieldDecoration(
+                                    hintText:
+                                        context.l10n.welcomeChooseSavedServer,
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<PosServerEntry>(
+                                      value: _selectedEntry(state),
+                                      isExpanded: true,
+                                      hint: Text(
+                                        context.l10n.welcomeChooseSavedServer,
+                                        style: FontUtility.body.copyWith(
+                                          color: Colors.black38,
+                                        ),
                                       ),
-                                    ),
-                                    items: state.savedServers
-                                        .map(
-                                          (entry) => DropdownMenuItem(
-                                            value: entry,
-                                            child: Text(
-                                              entry.displayLabel,
-                                              overflow: TextOverflow.ellipsis,
+                                      items: state.savedServers
+                                          .map(
+                                            (entry) => DropdownMenuItem(
+                                              value: entry,
+                                              child: Text(
+                                                entry.displayLabel,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                             ),
-                                          ),
-                                        )
-                                        .toList(growable: false),
-                                    onChanged: state.isLoading
-                                        ? null
-                                        : (entry) {
-                                            if (entry == null) return;
-                                            context
-                                                .read<WelcomeCubit>()
-                                                .selectSavedServer(entry);
-                                            _syncControllers(
+                                          )
+                                          .toList(growable: false),
+                                      onChanged: state.isLoading
+                                          ? null
+                                          : (entry) {
+                                              if (entry == null) return;
                                               context
                                                   .read<WelcomeCubit>()
-                                                  .state,
-                                              force: true,
-                                            );
-                                          },
+                                                  .selectSavedServer(entry);
+                                              _syncControllers(
+                                                context
+                                                    .read<WelcomeCubit>()
+                                                    .state,
+                                                force: true,
+                                              );
+                                            },
+                                    ),
                                   ),
                                 ),
                               ),
@@ -323,17 +326,19 @@ class _WelcomeViewState extends State<_WelcomeView> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              TextField(
-                                controller: _serverUrlController,
-                                enabled: !state.isLoading,
-                                keyboardType: TextInputType.url,
-                                onChanged: (value) => context
-                                    .read<WelcomeCubit>()
-                                    .serverUrlChanged(value),
-                                decoration: _fieldDecoration(
-                                  hintText: context.l10n.welcomeServerUrlHint,
+                              RubberPush(
+                                child: TextField(
+                                  controller: _serverUrlController,
+                                  enabled: !state.isLoading,
+                                  keyboardType: TextInputType.url,
+                                  onChanged: (value) => context
+                                      .read<WelcomeCubit>()
+                                      .serverUrlChanged(value),
+                                  decoration: _fieldDecoration(
+                                    hintText: context.l10n.welcomeServerUrlHint,
+                                  ),
+                                  style: FontUtility.body,
                                 ),
-                                style: FontUtility.body,
                               ),
                               const SizedBox(height: 20),
                             ],
@@ -345,17 +350,19 @@ class _WelcomeViewState extends State<_WelcomeView> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            TextField(
-                              controller: _orgIdController,
-                              enabled: !state.isLoading,
-                              keyboardType: TextInputType.text,
-                              onChanged: (value) => context
-                                  .read<WelcomeCubit>()
-                                  .organizationNameChanged(value),
-                              decoration: _fieldDecoration(
-                                hintText: context.l10n.welcomeOrgCodeHint,
+                            RubberPush(
+                              child: TextField(
+                                controller: _orgIdController,
+                                enabled: !state.isLoading,
+                                keyboardType: TextInputType.text,
+                                onChanged: (value) => context
+                                    .read<WelcomeCubit>()
+                                    .organizationNameChanged(value),
+                                decoration: _fieldDecoration(
+                                  hintText: context.l10n.welcomeOrgCodeHint,
+                                ),
+                                style: FontUtility.body,
                               ),
-                              style: FontUtility.body,
                             ),
                             const SizedBox(height: 24),
                             SizedBox(
@@ -470,18 +477,9 @@ class _WelcomeViewState extends State<_WelcomeView> {
       hintText: hintText,
       hintStyle: FontUtility.body.copyWith(color: Colors.black38),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.black12),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.black12),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF4A00E0), width: 2),
-      ),
+      border: PosFields.border,
+      enabledBorder: PosFields.border,
+      focusedBorder: PosFields.border,
     );
   }
 }

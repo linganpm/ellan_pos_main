@@ -8,6 +8,8 @@ import 'package:pos_tablet/core/routes.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/screens/splash_screen.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 /// Device-level POS settings: auto sync, interval, POS code, and sync history.
 class DeviceSettingsScreen extends StatefulWidget {
@@ -169,9 +171,11 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           context.l10n.deviceSettingsTitle,
           style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
@@ -344,30 +348,30 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<int>(
-                initialValue: settings.intervalSeconds,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+              RubberPush(
+                child: DropdownButtonFormField<int>(
+                  initialValue: settings.intervalSeconds,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                    border: PosFields.border,
                   ),
+                  items: [
+                    for (final option in DeviceSyncSettings.intervalOptions)
+                      DropdownMenuItem(
+                        value: option.seconds,
+                        child: Text(_intervalLabel(context, option.seconds)),
+                      ),
+                  ],
+                  onChanged: (_saving || !settings.autoSyncEnabled)
+                      ? null
+                      : (value) {
+                          if (value == null) return;
+                          _saveSettings(
+                            settings.copyWith(intervalSeconds: value),
+                          );
+                        },
                 ),
-                items: [
-                  for (final option in DeviceSyncSettings.intervalOptions)
-                    DropdownMenuItem(
-                      value: option.seconds,
-                      child: Text(_intervalLabel(context, option.seconds)),
-                    ),
-                ],
-                onChanged: (_saving || !settings.autoSyncEnabled)
-                    ? null
-                    : (value) {
-                        if (value == null) return;
-                        _saveSettings(
-                          settings.copyWith(intervalSeconds: value),
-                        );
-                      },
               ),
               const SizedBox(height: 16),
               _infoRow(
@@ -443,43 +447,43 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: _orientation,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+              RubberPush(
+                child: DropdownButtonFormField<String>(
+                  initialValue: _orientation,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                    border: PosFields.border,
                   ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: DeviceSettingsStore.orientationLandscape,
+                      child: Text('Landscape'),
+                    ),
+                    DropdownMenuItem(
+                      value: DeviceSettingsStore.orientationPortrait,
+                      child: Text('Portrait'),
+                    ),
+                    DropdownMenuItem(
+                      value: DeviceSettingsStore.orientationAutomatic,
+                      child: Text('Automatic'),
+                    ),
+                  ],
+                  onChanged: _saving
+                      ? null
+                      : (value) async {
+                          if (value == null) return;
+                          setState(() => _saving = true);
+                          try {
+                            final store = await DeviceSettingsStore.open();
+                            await store.saveOrientation(value);
+                            if (!mounted) return;
+                            setState(() => _orientation = value);
+                          } finally {
+                            if (mounted) setState(() => _saving = false);
+                          }
+                        },
                 ),
-                items: const [
-                  DropdownMenuItem(
-                    value: DeviceSettingsStore.orientationLandscape,
-                    child: Text('Landscape'),
-                  ),
-                  DropdownMenuItem(
-                    value: DeviceSettingsStore.orientationPortrait,
-                    child: Text('Portrait'),
-                  ),
-                  DropdownMenuItem(
-                    value: DeviceSettingsStore.orientationAutomatic,
-                    child: Text('Automatic'),
-                  ),
-                ],
-                onChanged: _saving
-                    ? null
-                    : (value) async {
-                        if (value == null) return;
-                        setState(() => _saving = true);
-                        try {
-                          final store = await DeviceSettingsStore.open();
-                          await store.saveOrientation(value);
-                          if (!mounted) return;
-                          setState(() => _orientation = value);
-                        } finally {
-                          if (mounted) setState(() => _saving = false);
-                        }
-                      },
               ),
             ],
           ),
@@ -490,13 +494,13 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
-                controller: _denominationsController,
-                enabled: !_saving,
-                decoration: InputDecoration(
-                  hintText: DeviceSettingsStore.defaultCashDenominations,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+              RubberPush(
+                child: TextField(
+                  controller: _denominationsController,
+                  enabled: !_saving,
+                  decoration: InputDecoration(
+                    hintText: DeviceSettingsStore.defaultCashDenominations,
+                    border: PosFields.border,
                   ),
                 ),
               ),
@@ -526,15 +530,15 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              TextField(
-                controller: _serveNumberMaximumController,
-                enabled: !_saving,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Maximum service number',
-                  hintText: '100',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+              RubberPush(
+                child: TextField(
+                  controller: _serveNumberMaximumController,
+                  enabled: !_saving,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Maximum service number',
+                    hintText: '100',
+                    border: PosFields.border,
                   ),
                 ),
               ),
@@ -662,13 +666,13 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: confirmController,
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        hintText: 'RESET',
+                    RubberPush(
+                      child: TextField(
+                        controller: confirmController,
+                        autofocus: true,
+                        decoration: InputDecoration(hintText: 'RESET'),
+                        onChanged: (_) => setDialogState(() {}),
                       ),
-                      onChanged: (_) => setDialogState(() {}),
                     ),
                   ],
                 ),

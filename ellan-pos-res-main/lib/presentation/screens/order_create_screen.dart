@@ -18,12 +18,14 @@ import '../../bloc/cart/cart_state.dart';
 import '../widgets/category_card.dart';
 import '../widgets/product_item_card.dart';
 import '../widgets/cart_item_tile.dart';
-import '../widgets/discount_entry.dart';
 import '../widgets/order_summary_widget.dart';
 import '../widgets/checkout_tab_bar.dart';
 import '../widgets/checkout_footer_buttons.dart';
+import '../widgets/pos_home_button.dart';
 import '../widgets/order_history_card.dart';
 import 'billing_summary_screen.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 class OrderCreateScreenArgs {
   final String orderType; // Display label (Pickup, On-Site, …)
@@ -146,9 +148,6 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
     final controller = getIt<UiStoreController>();
     try {
       final snapshotItems = List<CartItem>.from(state.cartItems);
-      final snapshotNet = state.netTotal;
-      final snapshotDiscounts = List.of(state.discounts);
-      final snapshotTax = state.serviceTaxPercentage;
       final snapshotTips = state.tipsAmount;
       final snapshotDelivery = state.deliveryCharge;
       final result = await controller.sendKotFromCart(
@@ -184,7 +183,23 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
       );
       if (!mounted) return;
       setState(() => _openOrderId = result.orderId);
-      // Keep the open order recoverable if the user leaves before billing.
+      final marked = cartBloc.stream.firstWhere(
+        (next) => next.orderHistory.any(
+          (ticket) =>
+              ticket.orderId == result.orderId &&
+              ticket.kotBatch == result.batchNumber,
+        ),
+      );
+      cartBloc.add(
+        MarkCartKotSent(
+          orderId: result.orderId,
+          batchNumber: result.batchNumber,
+        ),
+      );
+      final after = await marked;
+      if (!mounted) return;
+      // Save after the new ticket is on the cart so a later retrieve
+      // brings back every KOT, including the one just sent.
       final draft = await CartDraftStore.save(
         existingId: _draftId,
         args: CartDraftArgs(
@@ -200,24 +215,16 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
           tableId: args.tableId,
           openOrderId: result.orderId,
         ),
-        items: [
-          for (final item in snapshotItems)
-            item.copyWith(kotSentQuantity: item.quantity),
-        ],
-        discounts: snapshotDiscounts,
-        serviceTaxPercentage: snapshotTax,
-        tipsAmount: snapshotTips,
-        deliveryCharge: snapshotDelivery,
-        netTotal: snapshotNet,
+        items: after.cartItems,
+        discounts: after.discounts,
+        serviceTaxPercentage: after.serviceTaxPercentage,
+        tipsAmount: after.tipsAmount,
+        deliveryCharge: after.deliveryCharge,
+        netTotal: after.netTotal,
+        orderHistory: after.orderHistory,
       );
       if (!mounted) return;
       setState(() => _draftId = draft.id);
-      cartBloc.add(
-        MarkCartKotSent(
-          orderId: result.orderId,
-          batchNumber: result.batchNumber,
-        ),
-      );
       messenger.showSnackBar(
         SnackBar(
           content: Text(
@@ -268,6 +275,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
         tipsAmount: state.tipsAmount,
         deliveryCharge: state.deliveryCharge,
         netTotal: state.netTotal,
+        orderHistory: state.orderHistory,
       );
       if (!mounted) return;
       setState(() => _draftId = draft.id);
@@ -376,8 +384,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
               backgroundColor: const Color(0xFFF3F0FA),
               appBar: AppBar(
                 backgroundColor: Colors.white,
-                elevation: 8,
-                shadowColor: const Color(0x331B1433),
+                elevation: 0,
                 surfaceTintColor: Colors.transparent,
                 leading: IconButton(
                   icon: const Icon(
@@ -386,7 +393,8 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                   ),
                   onPressed: () => Navigator.pop(context),
                 ),
-                title: Column(
+                title: PosBrandTitle(
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -433,8 +441,10 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                       ),
                   ],
                 ),
+                ),
                 centerTitle: false,
                 actions: [
+                  const PosHomeButton(),
                   BlocBuilder<CartBloc, CartState>(
                     builder: (context, state) {
                       return IconButton(
@@ -498,8 +508,13 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
           children: [
             // Categories List
             Container(
-              height: 76,
-              padding: const EdgeInsets.fromLTRB(18, 12, 18, 6),
+              height: 72,
+              padding: EdgeInsets.fromLTRB(
+                MediaQuery.sizeOf(context).width < 600 ? 12 : 18,
+                10,
+                MediaQuery.sizeOf(context).width < 600 ? 12 : 18,
+                6,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -531,11 +546,12 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF4A00E0),
                       backgroundColor: Colors.white,
-                      side: BorderSide.none,
-                      elevation: 6,
-                      shadowColor: const Color(0x334A00E0),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
+                      side: const BorderSide(color: Color(0xFFE6E8EE)),
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: MediaQuery.sizeOf(context).width < 600
+                            ? 12
+                            : 16,
                         vertical: 12,
                       ),
                     ),
@@ -630,32 +646,32 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
+                RubberPush(child: TextField(
                   controller: nameController,
                   textCapitalization: TextCapitalization.sentences,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
                     labelText: context.l10n.orderCreateProductName,
                   ),
-                ),
+                )),
                 const SizedBox(height: 12),
                 Text(
                   context.l10n.commonPrice,
                   style: FontUtility.body.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 6),
-                TextField(
+                RubberPush(child: TextField(
                   controller: priceController,
                   autofocus: true,
                   decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
+                    border: PosFields.border,
                     isDense: true,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                   textInputAction: TextInputAction.done,
-                ),
+                )),
               ],
             ),
           ),
@@ -777,7 +793,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                     style: FontUtility.body.copyWith(color: Colors.black54),
                   ),
                   const SizedBox(height: 16),
-                  TextField(
+                  RubberPush(child: TextField(
                     controller: controller,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -789,7 +805,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                         unitShort,
                       ),
                     ),
-                  ),
+                  )),
                   const SizedBox(height: 12),
                   Text(
                     entered > 0
@@ -1041,8 +1057,6 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                           ),
                           child: Column(
                             children: [
-                              if (state.cartItems.isNotEmpty)
-                                DiscountEntry(state: state, compact: true),
                               const SizedBox(height: 6),
                               SizedBox(
                                 height: 150,
@@ -1141,8 +1155,9 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
       );
     }
 
+    final inset = MediaQuery.sizeOf(context).width < 600 ? 8.0 : 24.0;
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.symmetric(horizontal: inset),
       itemCount: state.cartItems.length,
       itemBuilder: (context, index) {
         final item = state.cartItems[index];
@@ -1201,7 +1216,9 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
         _buildHistoryHeader(context),
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.sizeOf(context).width < 600 ? 8 : 24,
+            ),
             itemCount: state.orderHistory.length,
             itemBuilder: (context, index) {
               final order = state.orderHistory[index];
@@ -1214,8 +1231,9 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
   }
 
   Widget _buildHistoryHeader(BuildContext context) {
+    final inset = MediaQuery.sizeOf(context).width < 600 ? 12.0 : 24.0;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+      padding: EdgeInsets.symmetric(horizontal: inset, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -1286,11 +1304,8 @@ class _ProductGridLayout {
   });
 
   factory _ProductGridLayout.fromConstraints(BoxConstraints constraints) {
-    const minTile = 176.0;
     const maxTile = 240.0;
-    const minGap = 22.0;
     const maxGap = 32.0;
-    const minPad = 18.0;
     const maxPad = 28.0;
     const targetVisible = 12;
 
@@ -1298,13 +1313,18 @@ class _ProductGridLayout {
     final rawHeight = constraints.maxHeight;
     if (rawWidth <= 0 || rawHeight <= 0) {
       return const _ProductGridLayout(
-        crossAxisCount: 3,
-        spacing: 22,
-        padding: 18,
+        crossAxisCount: 2,
+        spacing: 14,
+        padding: 14,
         childAspectRatio: 0.86,
-        compact: false,
+        compact: true,
       );
     }
+
+    final narrowPanel = rawWidth < 560;
+    final minTile = narrowPanel ? 132.0 : 176.0;
+    final minGap = narrowPanel ? 14.0 : 22.0;
+    final minPad = narrowPanel ? 14.0 : 18.0;
 
     // Outer padding scales with panel width.
     final padding = (rawWidth * 0.015).clamp(minPad, maxPad);
@@ -1312,7 +1332,8 @@ class _ProductGridLayout {
     final height = (rawHeight - 4 - padding).clamp(1.0, rawHeight);
 
     // Start from a comfortable tile width, then clamp column count.
-    var cols = (width / 210).round().clamp(1, 4);
+    final maxCols = narrowPanel ? 2 : 4;
+    var cols = (width / (narrowPanel ? 168 : 210)).round().clamp(1, maxCols);
 
     double tileWidthFor(int columnCount, double gap) =>
         (width - (columnCount - 1) * gap) / columnCount;
@@ -1320,7 +1341,7 @@ class _ProductGridLayout {
     var gap = minGap;
     var tileW = tileWidthFor(cols, gap);
 
-    while (tileW > maxTile && cols < 4) {
+    while (tileW > maxTile && cols < maxCols) {
       cols += 1;
       tileW = tileWidthFor(cols, gap);
     }

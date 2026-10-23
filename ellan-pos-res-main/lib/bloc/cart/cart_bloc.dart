@@ -98,6 +98,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
           serviceTaxPercentage: event.draft?.serviceTaxPercentage ?? 0,
           tipsAmount: event.draft?.tipsAmount ?? 0,
           deliveryCharge: event.draft?.deliveryCharge ?? 0,
+          orderHistory: event.draft?.orderHistory ?? const [],
           offerAppliedAmount: 0,
           offerLabels: const [],
         ),
@@ -295,12 +296,15 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   }
 
   void _onApplyDiscount(ApplyDiscount event, Emitter<CartState> emit) {
-    if (event.percentage <= 0 || event.percentage > 100) return;
+    final flat = event.flatAmount;
+    final percent = event.percentage;
+    if (flat <= 0 && (percent <= 0 || percent > 100)) return;
     final title = event.title.trim().isEmpty ? 'Discount' : event.title.trim();
     final line = CartDiscountLine(
       id: 'disc-${DateTime.now().microsecondsSinceEpoch}-${Random().nextInt(9999)}',
       title: title,
-      percentage: event.percentage,
+      percentage: flat > 0 ? 0 : percent,
+      flatAmount: flat > 0 ? flat : 0,
       targetLineSignature: event.targetLineSignature,
       targetItemName: event.targetItemName,
     );

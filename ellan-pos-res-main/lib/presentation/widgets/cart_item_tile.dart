@@ -29,24 +29,14 @@ class CartItemTile extends StatelessWidget {
         ? '${cartItem.quantity == cartItem.quantity.roundToDouble() ? cartItem.quantity.toInt() : cartItem.quantity}'
         : formatSellQtyWithUnit(cartItem.quantity, cartItem.sellUnit);
 
+    final narrow = MediaQuery.sizeOf(context).width < 600;
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.fromLTRB(10, 12, 12, 12),
+      margin: EdgeInsets.fromLTRB(narrow ? 8 : 16, 0, narrow ? 8 : 16, 12),
+      padding: EdgeInsets.fromLTRB(narrow ? 8 : 10, 12, narrow ? 10 : 12, 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x2E1B1433),
-            blurRadius: 0,
-            offset: Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Color(0x1A1B1433),
-            blurRadius: 14,
-            offset: Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE6E8EE)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -91,9 +81,10 @@ class CartItemTile extends StatelessWidget {
                 Text(
                   cartItem.product.name,
                   style: FontUtility.subheading.copyWith(
-                    fontSize: 15,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    height: 1.25,
+                    height: 1.2,
+                    color: const Color(0xFF1F2933),
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -105,9 +96,10 @@ class CartItemTile extends StatelessWidget {
                       : '${PosCurrency.format(unitPrice)} / '
                             '${formatSellQty(cartItem.sellUnit!.baseQty)} '
                             '${cartItem.sellUnit!.unitShort}',
-                  style: FontUtility.body.copyWith(
-                    fontSize: 12,
-                    color: Colors.black54,
+                  style: FontUtility.subheading.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1F2933),
                   ),
                 ),
                 if (cartItem.addons.isNotEmpty) ...[
@@ -147,8 +139,9 @@ class CartItemTile extends StatelessWidget {
               Text(
                 PosCurrency.format(cartItem.totalPrice),
                 style: FontUtility.heading.copyWith(
-                  fontSize: 15,
-                  color: const Color(0xFF4A00E0),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF1F2933),
                 ),
               ),
               if (!isReadOnly) ...[
@@ -160,10 +153,10 @@ class CartItemTile extends StatelessWidget {
                     onTap: onRemove,
                     borderRadius: BorderRadius.circular(10),
                     child: Padding(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(6),
                       child: Icon(
                         Icons.delete_outline_rounded,
-                        size: 24,
+                        size: 18,
                         color: Colors.red.shade600,
                       ),
                     ),
@@ -200,17 +193,18 @@ class _QtyControls extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _TapBtn(icon: Icons.remove_rounded, onTap: onDecrease),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: SizedBox(
-              width: 48,
-              child: Text(
-                qtyLabel,
-                textAlign: TextAlign.center,
-                style: FontUtility.subheading.copyWith(fontSize: 13),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 16, maxWidth: 56),
+            child: Text(
+              qtyLabel,
+              textAlign: TextAlign.center,
+              style: FontUtility.body.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF667085),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           _TapBtn(
@@ -239,9 +233,9 @@ class _TapBtn extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
         child: SizedBox(
-          width: 48,
-          height: 44,
-          child: Icon(icon, size: 26, color: color),
+          width: 32,
+          height: 32,
+          child: Icon(icon, size: 18, color: color),
         ),
       ),
     );

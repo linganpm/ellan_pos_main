@@ -11,6 +11,7 @@ import 'package:pos_tablet/core/pos_theme.dart';
 import 'package:pos_tablet/core/routes.dart';
 import 'package:pos_tablet/data/models/order_list_model.dart';
 import 'package:pos_tablet/presentation/screens/home_screen.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 import 'package:pos_tablet/presentation/screens/tables_screen.dart';
 import 'package:pos_tablet/presentation/screens/order_list_screen.dart';
 import 'package:pos_tablet/presentation/widgets/order_list/order_list_row.dart';
@@ -77,7 +78,21 @@ void main() {
       await mount(tester, size, const HomeScreen());
       expect(tester.takeException(), isNull, reason: 'Home at $size');
       expect(find.byType(FloatingActionButton), findsOneWidget);
+      if (size.width < 900 || size.shortestSide < 600) {
+        expect(find.byType(GridView), findsOneWidget, reason: 'Home grid at $size');
+      }
+      expect(find.byType(ListTile), findsNothing, reason: 'Home grid at $size');
       final appBar = find.byType(AppBar);
+      expect(
+        find.descendant(of: appBar, matching: find.byIcon(Icons.home_rounded)),
+        findsOneWidget,
+        reason: 'Home icon at $size',
+      );
+      expect(
+        find.descendant(of: appBar, matching: find.byType(PosBrandMark)),
+        findsOneWidget,
+        reason: 'EllanPOS icon at $size',
+      );
       expect(
         find.descendant(of: appBar, matching: find.text('Lock')),
         findsOneWidget,
@@ -90,6 +105,7 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       await mount(tester, size, const SalesListScreen());
       expect(tester.takeException(), isNull, reason: 'History at $size');
+      expect(find.byType(PosBrandMark), findsOneWidget, reason: 'EllanPOS on sales at $size');
       expect(find.byType(TextField), findsOneWidget);
       expect(find.byType(FloatingActionButton), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
@@ -143,6 +159,8 @@ void main() {
       controller.types = OrderTypesRepository.defaults;
       await mount(tester, size, const HomeScreen());
       expect(find.text('Tables'), findsOneWidget);
+      await tester.ensureVisible(find.text('Tables'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Tables'));
       await tester.pumpAndSettle();
       expect(find.byType(TablesScreen), findsOneWidget);

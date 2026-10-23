@@ -11,6 +11,8 @@ import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/presentation/widgets/billing/order_add_payment_dialog.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 class SalesOrderPaymentsScreen extends StatelessWidget {
   final int orderId;
@@ -193,7 +195,7 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
               style: FontUtility.body.copyWith(color: Colors.black54),
             ),
             const SizedBox(height: 12),
-            TextField(
+            RubberPush(child: TextField(
               controller: amountController,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
@@ -201,14 +203,14 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
               decoration: InputDecoration(
                 labelText: context.l10n.orderPaymentsRefundAmount,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
-            TextField(
+            RubberPush(child: TextField(
               controller: reasonController,
               decoration: InputDecoration(
                 labelText: context.l10n.orderPaymentsReasonOptional,
               ),
-            ),
+            )),
           ],
         ),
         actions: [
@@ -350,9 +352,11 @@ class _OrderPaymentsScreenState extends State<OrderPaymentsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           '${widget.screenTitle ?? defaultTitle} · $titleOrder',
           style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
         ),
         leading: IconButton(
           tooltip: context.l10n.actionBack,

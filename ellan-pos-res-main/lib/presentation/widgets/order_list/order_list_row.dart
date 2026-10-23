@@ -230,9 +230,6 @@ class _OrderListRowState extends State<OrderListRow> {
                   : (widget.index % 2 == 0
                         ? Colors.white
                         : Colors.grey.withValues(alpha: 0.02)),
-              border: Border(
-                bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
-              ),
             ),
             child: Row(
               children: [

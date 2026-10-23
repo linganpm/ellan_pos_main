@@ -5,6 +5,7 @@ import '../../bloc/dashboard/dashboard_cubit.dart';
 import '../../core/controllers/checkout_models.dart';
 import '../../core/localization/l10n/app_localizations.dart';
 import '../../core/utils/font_utility.dart';
+import '../widgets/pos_home_button.dart';
 import '../widgets/dashboard/overview_card.dart';
 import '../widgets/dashboard/sales_chart.dart';
 import '../widgets/dashboard/top_items_list.dart';
@@ -14,6 +15,7 @@ import 'credits_screen.dart';
 import 'order_list_screen.dart';
 import 'refunds_screen.dart';
 import 'scheduled_payments_screen.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -49,12 +51,14 @@ class _DashboardView extends StatelessWidget {
         shadowColor: const Color(0x331B1433),
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           AppLocalizations.of(context)!.dashboardTitle,
           style: FontUtility.heading.copyWith(
             fontSize: 26,
             fontWeight: FontWeight.w800,
           ),
+        ),
         ),
         leading: IconButton(
           icon: const Icon(
@@ -63,6 +67,7 @@ class _DashboardView extends StatelessWidget {
           ),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: const [PosHomeButton()],
       ),
       body: SafeArea(
         child: BlocBuilder<DashboardCubit, DashboardState>(

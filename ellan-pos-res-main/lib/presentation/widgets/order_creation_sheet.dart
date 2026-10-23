@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_orders_offline/store_models.dart';
@@ -13,6 +15,7 @@ import '../../bloc/order_creation/order_creation_event.dart';
 import '../../bloc/order_creation/order_creation_state.dart';
 import 'package:pos_tablet/core/store_trade_modes.dart';
 import '../screens/order_create_screen.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 const _kAccent = Color(0xFF4A00E0);
 const _kDefaultCustomerName = 'Guest';
@@ -483,7 +486,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
       ),
       child: Center(
         child: Container(
-          width: isTablet ? 900 : screenWidth,
+          width: math.min(screenWidth, isTablet ? 900 : screenWidth),
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.96,
           ),
@@ -578,8 +581,9 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final count = _orderTypes.length.clamp(1, 4);
-        final gap = 10.0;
-        final width = (constraints.maxWidth - gap * (count - 1)) / count;
+        final gap = 12.0;
+        final perRow = count > 2 && constraints.maxWidth < 560 ? 2 : count;
+        final width = (constraints.maxWidth - gap * (perRow - 1)) / perRow;
         return Wrap(
           spacing: gap,
           runSpacing: gap,
@@ -665,7 +669,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (!_creatingCustomer) ...[
-          TextField(
+          RubberPush(child: TextField(
             controller: _searchController,
             onChanged: (value) {
               Future<void>.delayed(const Duration(milliseconds: 250), () {
@@ -713,7 +717,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
                 ],
               ),
             ),
-          ),
+          )),
           if (_searchError != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -791,7 +795,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
             ],
           ),
           const SizedBox(height: 10),
-          TextField(
+          RubberPush(child: TextField(
             controller: _nameController,
             textCapitalization: TextCapitalization.words,
             style: FontUtility.body.copyWith(
@@ -801,9 +805,9 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
             decoration: _fieldDecoration(
               hint: context.l10n.customerNameOptional,
             ),
-          ),
+          )),
           const SizedBox(height: 12),
-          TextField(
+          RubberPush(child: TextField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
             style: FontUtility.body.copyWith(
@@ -811,9 +815,9 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
               fontSize: 16,
             ),
             decoration: _fieldDecoration(hint: context.l10n.commonPhone),
-          ),
+          )),
           const SizedBox(height: 12),
-          TextField(
+          RubberPush(child: TextField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             style: FontUtility.body.copyWith(
@@ -823,7 +827,7 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
             decoration: _fieldDecoration(
               hint: context.l10n.customerEmailOptional,
             ),
-          ),
+          )),
           if (_formError != null) ...[
             const SizedBox(height: 8),
             Text(

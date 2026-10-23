@@ -19,6 +19,8 @@ import 'package:pos_tablet/core/store_trade_modes.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 /// Edit open-store company profile (online + local store_info mirror).
 class CompanySettingsScreen extends StatefulWidget {
@@ -148,9 +150,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
             final body = jsonDecode(response.body);
             if (body is Map) {
               final plan = body['price_plan'];
-              _pricePlan = plan is Map
-                  ? Map<String, dynamic>.from(plan)
-                  : null;
+              _pricePlan = plan is Map ? Map<String, dynamic>.from(plan) : null;
               final raw = body['fixed_email_mailers'];
               if (raw is List) {
                 final rows = raw
@@ -658,12 +658,12 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
           title: Text(context.l10n.companyLogoFilePath),
           content: SizedBox(
             width: 480,
-            child: TextField(
-              controller: ctrl,
-              decoration: InputDecoration(
-                hintText: '/path/to/logo.png',
+            child: RubberPush(
+              child: TextField(
+                controller: ctrl,
+                decoration: InputDecoration(hintText: '/path/to/logo.png'),
+                autofocus: true,
               ),
-              autofocus: true,
             ),
           ),
           actions: [
@@ -834,18 +834,9 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
       filled: true,
       fillColor: const Color(0xFFF8FAFC),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _primary, width: 2),
-      ),
+      border: PosFields.border,
+      enabledBorder: PosFields.border,
+      focusedBorder: PosFields.border,
     );
   }
 
@@ -916,13 +907,15 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
         backgroundColor: Colors.white,
         foregroundColor: _ink,
         elevation: 0.5,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           context.l10n.companySettingsTitle,
           style: FontUtility.heading.copyWith(
             fontSize: 22,
             fontWeight: FontWeight.w800,
             color: _ink,
           ),
+        ),
         ),
       ),
       body: _loading
@@ -994,7 +987,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                     fontSize: 13,
                   ),
                 ),
-                  if (_pricePlan != null) ...[
+                if (_pricePlan != null) ...[
                   const SizedBox(height: 16),
                   CompanyPricePlanCard(plan: _pricePlan!),
                 ],
@@ -1069,40 +1062,48 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                   title: context.l10n.companyBranch,
                   children: [
                     _fieldGap(
-                      TextField(
-                        controller: _name,
-                        style: FontUtility.body.copyWith(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          color: _ink,
-                        ),
-                        decoration: _fieldDecoration(
-                          context.l10n.companyBranchStoreName,
+                      RubberPush(
+                        child: TextField(
+                          controller: _name,
+                          style: FontUtility.body.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: _ink,
+                          ),
+                          decoration: _fieldDecoration(
+                            context.l10n.companyBranchStoreName,
+                          ),
                         ),
                       ),
                     ),
                     _fieldGap(
-                      TextField(
-                        controller: _identifier,
+                      RubberPush(
+                        child: TextField(
+                          controller: _identifier,
+                          style: FontUtility.body.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: _ink,
+                          ),
+                          decoration: _fieldDecoration(
+                            context.l10n.companyIdentifier,
+                          ),
+                        ),
+                      ),
+                    ),
+                    RubberPush(
+                      child: TextField(
+                        controller: _address,
+                        maxLines: 2,
                         style: FontUtility.body.copyWith(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                           color: _ink,
                         ),
                         decoration: _fieldDecoration(
-                          context.l10n.companyIdentifier,
+                          context.l10n.companyAddress,
                         ),
                       ),
-                    ),
-                    TextField(
-                      controller: _address,
-                      maxLines: 2,
-                      style: FontUtility.body.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: _ink,
-                      ),
-                      decoration: _fieldDecoration(context.l10n.companyAddress),
                     ),
                   ],
                 ),
@@ -1112,26 +1113,32 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                   title: context.l10n.companyContact,
                   children: [
                     _fieldGap(
-                      TextField(
-                        controller: _phone,
-                        keyboardType: TextInputType.phone,
+                      RubberPush(
+                        child: TextField(
+                          controller: _phone,
+                          keyboardType: TextInputType.phone,
+                          style: FontUtility.body.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: _ink,
+                          ),
+                          decoration: _fieldDecoration(
+                            context.l10n.commonPhone,
+                          ),
+                        ),
+                      ),
+                    ),
+                    RubberPush(
+                      child: TextField(
+                        controller: _email,
+                        keyboardType: TextInputType.emailAddress,
                         style: FontUtility.body.copyWith(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                           color: _ink,
                         ),
-                        decoration: _fieldDecoration(context.l10n.commonPhone),
+                        decoration: _fieldDecoration(context.l10n.commonEmail),
                       ),
-                    ),
-                    TextField(
-                      controller: _email,
-                      keyboardType: TextInputType.emailAddress,
-                      style: FontUtility.body.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: _ink,
-                      ),
-                      decoration: _fieldDecoration(context.l10n.commonEmail),
                     ),
                   ],
                 ),
@@ -1141,27 +1148,31 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                   title: context.l10n.companyLegal,
                   children: [
                     _fieldGap(
-                      TextField(
-                        controller: _registration,
+                      RubberPush(
+                        child: TextField(
+                          controller: _registration,
+                          style: FontUtility.body.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: _ink,
+                          ),
+                          decoration: _fieldDecoration(
+                            context.l10n.companyRegistrationNumber,
+                          ),
+                        ),
+                      ),
+                    ),
+                    RubberPush(
+                      child: TextField(
+                        controller: _tax,
                         style: FontUtility.body.copyWith(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                           color: _ink,
                         ),
                         decoration: _fieldDecoration(
-                          context.l10n.companyRegistrationNumber,
+                          context.l10n.companyTaxRegistrationNumber,
                         ),
-                      ),
-                    ),
-                    TextField(
-                      controller: _tax,
-                      style: FontUtility.body.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: _ink,
-                      ),
-                      decoration: _fieldDecoration(
-                        context.l10n.companyTaxRegistrationNumber,
                       ),
                     ),
                   ],
@@ -1233,20 +1244,20 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                     AdaptiveFormRow(
                       children: [
                         _tradeModeTile(
-                            label: context.l10n.storeTradeSell,
-                            hint: context.l10n.storeTradeSellHint,
-                            icon: Icons.trending_up_rounded,
-                            color: const Color(0xFF178A45),
-                            selected: _tradeModes.sell,
-                            onTap: () => _setTradeMode(sell: !_tradeModes.sell),
+                          label: context.l10n.storeTradeSell,
+                          hint: context.l10n.storeTradeSellHint,
+                          icon: Icons.trending_up_rounded,
+                          color: const Color(0xFF178A45),
+                          selected: _tradeModes.sell,
+                          onTap: () => _setTradeMode(sell: !_tradeModes.sell),
                         ),
                         _tradeModeTile(
-                            label: context.l10n.storeTradeBuy,
-                            hint: context.l10n.storeTradeBuyHint,
-                            icon: Icons.trending_down_rounded,
-                            color: const Color(0xFFD32F2F),
-                            selected: _tradeModes.buy,
-                            onTap: () => _setTradeMode(buy: !_tradeModes.buy),
+                          label: context.l10n.storeTradeBuy,
+                          hint: context.l10n.storeTradeBuyHint,
+                          icon: Icons.trending_down_rounded,
+                          color: const Color(0xFFD32F2F),
+                          selected: _tradeModes.buy,
+                          onTap: () => _setTradeMode(buy: !_tradeModes.buy),
                         ),
                       ],
                     ),

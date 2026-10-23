@@ -13,6 +13,8 @@ import '../../../presentation/widgets/customer_support.dart';
 import '../cubit/company_signup_cubit.dart';
 import '../cubit/company_signup_state.dart';
 import '../data/signup_api.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 class CompanySignupShell extends StatelessWidget {
   const CompanySignupShell({super.key});
@@ -157,6 +159,8 @@ class _SignupViewState extends State<_SignupView> {
                               height: 1.2,
                             ),
                           ),
+                          const SizedBox(height: 28),
+                          const EllantecSiteMark(color: Colors.white),
                         ],
                       );
                     },
@@ -320,18 +324,9 @@ InputDecoration _fieldDecoration(String hint) {
     filled: true,
     fillColor: const Color(0xFFF7F8FB),
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Color(0xFFD0D5DD), width: 2),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Color(0xFFD0D5DD), width: 2),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Color(0xFF4A00E0), width: 2.5),
-    ),
+    border: PosFields.border,
+    enabledBorder: PosFields.border,
+    focusedBorder: PosFields.border,
   );
 }
 
@@ -452,17 +447,21 @@ class _ServerParentFormState extends State<_ServerParentForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextField(
-          controller: _server,
-          keyboardType: TextInputType.url,
-          onChanged: cubit.serverUrlChanged,
-          decoration: _fieldDecoration(context.l10n.signupServerUrlHint),
+        RubberPush(
+          child: TextField(
+            controller: _server,
+            keyboardType: TextInputType.url,
+            onChanged: cubit.serverUrlChanged,
+            decoration: _fieldDecoration(context.l10n.signupServerUrlHint),
+          ),
         ),
         const SizedBox(height: 16),
-        TextField(
-          controller: _parent,
-          onChanged: cubit.parentOrgChanged,
-          decoration: _fieldDecoration(context.l10n.signupParentOrgHint),
+        RubberPush(
+          child: TextField(
+            controller: _parent,
+            onChanged: cubit.parentOrgChanged,
+            decoration: _fieldDecoration(context.l10n.signupParentOrgHint),
+          ),
         ),
         const SizedBox(height: 28),
         _primaryButton(
@@ -611,37 +610,45 @@ class _CountryStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          _copy(context, 'Choose your country', 'உங்கள் நாட்டைத் தேர்ந்தெடுக்கவும்'),
+          _copy(
+            context,
+            'Choose your country',
+            'உங்கள் நாட்டைத் தேர்ந்தெடுக்கவும்',
+          ),
           style: FontUtility.heading.copyWith(fontSize: 28),
         ),
         const SizedBox(height: 20),
         InkWell(
-          onTap: state.countries.isEmpty ? null : () => _pick(context, cubit, state),
+          onTap: state.countries.isEmpty
+              ? null
+              : () => _pick(context, cubit, state),
           borderRadius: BorderRadius.circular(12),
-          child: InputDecorator(
-            decoration: _fieldDecoration(
-              selected == null ? context.l10n.signupSelectCountry : '',
-            ),
-            child: selected == null
-                ? const SizedBox(height: 24)
-                : Row(
-                    children: [
-                      Text(
-                        selected.flag.isNotEmpty ? selected.flag : '',
-                        style: const TextStyle(fontSize: 24),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          selected.name,
-                          style: FontUtility.body.copyWith(
-                            color: const Color(0xFF1F2937),
-                            fontWeight: FontWeight.w600,
+          child: RubberPush(
+            child: InputDecorator(
+              decoration: _fieldDecoration(
+                selected == null ? context.l10n.signupSelectCountry : '',
+              ),
+              child: selected == null
+                  ? const SizedBox(height: 24)
+                  : Row(
+                      children: [
+                        Text(
+                          selected.flag.isNotEmpty ? selected.flag : '',
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            selected.name,
+                            style: FontUtility.body.copyWith(
+                              color: const Color(0xFF1F2937),
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+            ),
           ),
         ),
         const SizedBox(height: 28),
@@ -653,7 +660,8 @@ class _CountryStep extends StatelessWidget {
                   : context.l10n.actionBack,
               icon: Icons.arrow_back_rounded,
               onPressed: kIsPosDiscoveryConfiguredByEnv
-                  ? () => Navigator.pushReplacementNamed(context, AppRoutes.login)
+                  ? () =>
+                        Navigator.pushReplacementNamed(context, AppRoutes.login)
                   : cubit.goBack,
             ),
             const Spacer(),
@@ -693,7 +701,10 @@ class _VerificationStep extends StatelessWidget {
           style: FontUtility.body.copyWith(fontSize: 16),
         ),
         const SizedBox(height: 16),
-        Text(state.email, style: FontUtility.body.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          state.email,
+          style: FontUtility.body.copyWith(fontWeight: FontWeight.w700),
+        ),
         const SizedBox(height: 8),
         Text(state.phoneNumber, style: FontUtility.body),
         const SizedBox(height: 28),
@@ -764,50 +775,60 @@ class _CompanyDetailsFormState extends State<_CompanyDetailsForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextField(
-          controller: _company,
-          onChanged: cubit.companyNameChanged,
-          decoration: _fieldDecoration(context.l10n.signupCompanyName),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _owner,
-          onChanged: cubit.ownerNameChanged,
-          decoration: _fieldDecoration(context.l10n.signupOwnerName),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _email,
-          keyboardType: TextInputType.emailAddress,
-          onChanged: cubit.emailChanged,
-          decoration: _fieldDecoration(context.l10n.commonEmail),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _phone,
-          keyboardType: TextInputType.phone,
-          onChanged: cubit.phoneChanged,
-          decoration: _fieldDecoration(
-            selected?.dialCode.isNotEmpty == true
-                ? context.l10n.signupPhoneHintWithDial(selected!.dialCode)
-                : context.l10n.signupPhoneHint,
+        RubberPush(
+          child: TextField(
+            controller: _company,
+            onChanged: cubit.companyNameChanged,
+            decoration: _fieldDecoration(context.l10n.signupCompanyName),
           ),
         ),
         const SizedBox(height: 16),
-        TextField(
-          controller: _password,
-          obscureText: _obscure,
-          onChanged: cubit.passwordChanged,
-          decoration: _fieldDecoration(context.l10n.signupPasswordHint)
-              .copyWith(
-                suffixIcon: _iconAction(
-                  label: _obscure
-                      ? context.l10n.signInShowPassword
-                      : context.l10n.commonHideDetails,
-                  icon: _obscure ? Icons.visibility_off : Icons.visibility,
-                  onPressed: () => setState(() => _obscure = !_obscure),
+        RubberPush(
+          child: TextField(
+            controller: _owner,
+            onChanged: cubit.ownerNameChanged,
+            decoration: _fieldDecoration(context.l10n.signupOwnerName),
+          ),
+        ),
+        const SizedBox(height: 16),
+        RubberPush(
+          child: TextField(
+            controller: _email,
+            keyboardType: TextInputType.emailAddress,
+            onChanged: cubit.emailChanged,
+            decoration: _fieldDecoration(context.l10n.commonEmail),
+          ),
+        ),
+        const SizedBox(height: 16),
+        RubberPush(
+          child: TextField(
+            controller: _phone,
+            keyboardType: TextInputType.phone,
+            onChanged: cubit.phoneChanged,
+            decoration: _fieldDecoration(
+              selected?.dialCode.isNotEmpty == true
+                  ? context.l10n.signupPhoneHintWithDial(selected!.dialCode)
+                  : context.l10n.signupPhoneHint,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        RubberPush(
+          child: TextField(
+            controller: _password,
+            obscureText: _obscure,
+            onChanged: cubit.passwordChanged,
+            decoration: _fieldDecoration(context.l10n.signupPasswordHint)
+                .copyWith(
+                  suffixIcon: _iconAction(
+                    label: _obscure
+                        ? context.l10n.signInShowPassword
+                        : context.l10n.commonHideDetails,
+                    icon: _obscure ? Icons.visibility_off : Icons.visibility,
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                  ),
                 ),
-              ),
+          ),
         ),
         const SizedBox(height: 28),
         Row(
@@ -923,13 +944,15 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-            child: TextField(
-              controller: _search,
-              autofocus: true,
-              onChanged: (value) => setState(() => _query = value),
-              decoration: _fieldDecoration(
-                context.l10n.signupSearchCountry,
-              ).copyWith(prefixIcon: const Icon(Icons.search_rounded)),
+            child: RubberPush(
+              child: TextField(
+                controller: _search,
+                autofocus: true,
+                onChanged: (value) => setState(() => _query = value),
+                decoration: _fieldDecoration(
+                  context.l10n.signupSearchCountry,
+                ).copyWith(prefixIcon: const Icon(Icons.search_rounded)),
+              ),
             ),
           ),
           Expanded(
@@ -1092,7 +1115,10 @@ class _PlanStepState extends State<_PlanStep> {
             child: Center(child: CircularProgressIndicator()),
           )
         else if (_error != null)
-          Text(_error!, style: FontUtility.body.copyWith(color: Colors.red.shade800))
+          Text(
+            _error!,
+            style: FontUtility.body.copyWith(color: Colors.red.shade800),
+          )
         else if (plans.isEmpty)
           Text(
             _copy(
@@ -1111,7 +1137,10 @@ class _PlanStepState extends State<_PlanStep> {
                 onTap: () => cubit.packageChanged(plan.key),
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 16,
+                  ),
                   decoration: BoxDecoration(
                     color: selected
                         ? const Color(0xFF4A00E0).withValues(alpha: 0.08)
@@ -1172,7 +1201,11 @@ class _PlanStepState extends State<_PlanStep> {
               flex: 2,
               child: _primaryButton(
                 label: context.l10n.actionContinue,
-                onPressed: !_loading && (_error != null || plans.isEmpty || state.canContinuePlan)
+                onPressed:
+                    !_loading &&
+                        (_error != null ||
+                            plans.isEmpty ||
+                            state.canContinuePlan)
                     ? cubit.continueFromPlan
                     : null,
               ),
@@ -1217,25 +1250,89 @@ class _BranchDetailsFormState extends State<_BranchDetailsForm> {
   Widget build(BuildContext context) {
     final cubit = context.read<CompanySignupCubit>();
     final state = context.watch<CompanySignupCubit>().state;
+    final types = state.businessTypes;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextField(
-          controller: _branch,
-          onChanged: cubit.branchNameChanged,
-          decoration: _fieldDecoration(context.l10n.signupBranchName),
+        Text(
+          context.l10n.signupApplicationType,
+          style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
+        const SizedBox(height: 12),
+        if (types.isEmpty)
+          Text(
+            context.l10n.signupBodyBusinessType,
+            style: FontUtility.body,
+          )
+        else
+          ...types.map((type) {
+            final selected = state.businessType == type.id;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: InkWell(
+                onTap: () => cubit.businessTypeChanged(type.id),
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? const Color(0xFF4A00E0).withValues(alpha: 0.08)
+                        : const Color(0xFFF7F8FB),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x2E1B1433),
+                        offset: Offset(0, 4),
+                        blurRadius: 0,
+                      ),
+                      BoxShadow(
+                        color: Color(0x1A1B1433),
+                        offset: Offset(0, 10),
+                        blurRadius: 16,
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    type.label,
+                    style: FontUtility.body.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: selected
+                          ? const Color(0xFF4A00E0)
+                          : const Color(0xFF1F2937),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        const SizedBox(height: 8),
+        RubberPush(
+          child: TextField(
+            controller: _branch,
+            onChanged: cubit.branchNameChanged,
+            decoration: _fieldDecoration(context.l10n.signupBranchName),
+          ),
         ),
         const SizedBox(height: 16),
-        TextField(
-          controller: _city,
-          onChanged: cubit.cityChanged,
-          decoration: _fieldDecoration(context.l10n.signupCity),
+        RubberPush(
+          child: TextField(
+            controller: _city,
+            onChanged: cubit.cityChanged,
+            decoration: _fieldDecoration(context.l10n.signupCity),
+          ),
         ),
         const SizedBox(height: 16),
-        TextField(
-          controller: _reg,
-          onChanged: cubit.registrationNumberChanged,
-          decoration: _fieldDecoration(context.l10n.signupRegistrationOptional),
+        RubberPush(
+          child: TextField(
+            controller: _reg,
+            onChanged: cubit.registrationNumberChanged,
+            decoration: _fieldDecoration(
+              context.l10n.signupRegistrationOptional,
+            ),
+          ),
         ),
         const SizedBox(height: 28),
         Row(

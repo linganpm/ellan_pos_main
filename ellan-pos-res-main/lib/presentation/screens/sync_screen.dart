@@ -7,6 +7,7 @@ import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/di/service_locator.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import '../../core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 class SyncScreen extends StatelessWidget {
   const SyncScreen({super.key});
@@ -111,9 +112,11 @@ class _SyncViewState extends State<_SyncView> {
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           context.l10n.syncDataSync,
           style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
         ),
         centerTitle: false,
         actions: [

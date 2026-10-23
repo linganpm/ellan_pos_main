@@ -4,6 +4,7 @@ import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/features/store_setup/presentation/store_setup_ui.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 class CategoriesSetupScreen extends StatefulWidget {
   const CategoriesSetupScreen({super.key});
@@ -58,7 +59,7 @@ class _CategoriesSetupScreenState extends State<CategoriesSetupScreen> {
       title: context.l10n.storeSetupNewMasterCategory,
       accent: _accent,
       confirmLabel: context.l10n.storeSetupCreate,
-      child: TextField(
+      child: RubberPush(child: TextField(
         controller: nameCtrl,
         autofocus: true,
         decoration: StoreSetupUi.field(
@@ -67,7 +68,7 @@ class _CategoriesSetupScreenState extends State<CategoriesSetupScreen> {
           icon: Icons.folder_rounded,
           accent: _accent,
         ),
-      ),
+      )),
     );
     if (ok != true || nameCtrl.text.trim().isEmpty) return;
     final store = context.read<UiStoreController>().store!;
@@ -155,7 +156,7 @@ class _CategoriesSetupScreenState extends State<CategoriesSetupScreen> {
       title: context.l10n.storeSetupRenameCategory,
       accent: _accent,
       confirmLabel: context.l10n.actionSave,
-      child: TextField(
+      child: RubberPush(child: TextField(
         controller: nameCtrl,
         autofocus: true,
         decoration: StoreSetupUi.field(
@@ -164,7 +165,7 @@ class _CategoriesSetupScreenState extends State<CategoriesSetupScreen> {
           icon: Icons.edit_rounded,
           accent: _accent,
         ),
-      ),
+      )),
     );
     if (ok != true || nameCtrl.text.trim().isEmpty) return;
     final store = context.read<UiStoreController>().store!;

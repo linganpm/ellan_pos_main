@@ -161,6 +161,16 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
           }
         }
       }
+      var businessType = state.businessType.trim();
+      final known = meta.businessTypes.any((type) => type.id == businessType);
+      if (!known && meta.businessTypes.isNotEmpty) {
+        businessType = meta.businessTypes
+            .firstWhere(
+              (type) => type.id == 'restaurant',
+              orElse: () => meta.businessTypes.first,
+            )
+            .id;
+      }
       emit(
         state.copyWith(
           isLoadingMeta: false,
@@ -170,6 +180,7 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
               : state.parentOrgIdentifier.trim(),
           countries: meta.countries,
           businessTypes: meta.businessTypes,
+          businessType: businessType,
           countryId: countryId,
           step: CompanySignupStep.country,
         ),
@@ -228,7 +239,11 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
           'phone_number': state.phoneNumber.trim(),
           'country_id': state.countryId.trim(),
           'password': state.password,
+          'application_type': state.businessType.trim(),
           'business_type': state.businessType.trim(),
+          if (state.selectedBusinessType != null &&
+              state.selectedBusinessType!.variantId > 0)
+            'service_variant_unique_id': state.selectedBusinessType!.variantId,
           'package_key': state.packageKey.trim(),
           'billing_interval': state.billingInterval.trim(),
           'currency': state.planCurrency.trim(),

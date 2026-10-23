@@ -9,6 +9,7 @@ import '../../core/routes.dart';
 import '../../bloc/store_list/store_list_bloc.dart';
 import '../../bloc/store_list/store_list_state.dart';
 import '../../data/models/store_model.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 /// Store List Screen - Premium tablet-optimized UI for store selection
 ///
@@ -171,7 +172,7 @@ class StoreListScreen extends StatelessWidget {
   Widget _buildSearchField() {
     return BlocBuilder<StoreListCubit, StoreListState>(
       builder: (context, state) {
-        return TextField(
+        return RubberPush(child: TextField(
           onChanged: (query) {
             context.read<StoreListCubit>().searchStores(query);
           },
@@ -183,21 +184,12 @@ class StoreListScreen extends StatelessWidget {
               horizontal: 20,
               vertical: 16,
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.black12),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.black12),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF4A00E0), width: 2),
-            ),
+            border: PosFields.border,
+            enabledBorder: PosFields.border,
+            focusedBorder: PosFields.border,
           ),
           style: FontUtility.body,
-        );
+        ));
       },
     );
   }

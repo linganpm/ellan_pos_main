@@ -96,6 +96,13 @@ class CompanySignupState {
     return null;
   }
 
+  SignupBusinessType? get selectedBusinessType {
+    for (final type in businessTypes) {
+      if (type.id == businessType) return type;
+    }
+    return null;
+  }
+
   CompanySignupState copyWith({
     CompanySignupStep? step,
     String? serverUrl,

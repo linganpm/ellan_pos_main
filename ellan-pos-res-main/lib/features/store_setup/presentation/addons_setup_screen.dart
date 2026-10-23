@@ -5,6 +5,7 @@ import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
 import 'package:pos_tablet/features/store_setup/presentation/store_setup_ui.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
 
 class AddonsSetupScreen extends StatefulWidget {
   const AddonsSetupScreen({super.key});
@@ -68,7 +69,7 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
         builder: (ctx, setLocal) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
+            RubberPush(child: TextField(
               controller: nameCtrl,
               decoration: StoreSetupUi.field(
                 hint: 'e.g. Extra toppings',
@@ -76,9 +77,9 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
                 icon: Icons.playlist_add_rounded,
                 accent: _accent,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
-            TextField(
+            RubberPush(child: TextField(
               controller: itemCtrl,
               decoration: StoreSetupUi.field(
                 hint: 'e.g. Cheese',
@@ -86,9 +87,9 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
                 icon: Icons.egg_alt_rounded,
                 accent: _accent,
               ),
-            ),
+            )),
             const SizedBox(height: 12),
-            TextField(
+            RubberPush(child: TextField(
               controller: priceCtrl,
               keyboardType: TextInputType.number,
               decoration: StoreSetupUi.field(
@@ -97,10 +98,10 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
                 icon: Icons.payments_rounded,
                 accent: _accent,
               ),
-            ),
+            )),
             if (!isEdit && _variants.isNotEmpty) ...[
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
+              RubberPush(child: DropdownButtonFormField<String>(
                 initialValue: variantLocalId,
                 items: [
                   for (final v in _variants)
@@ -116,7 +117,7 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
                   icon: Icons.link_rounded,
                   accent: _accent,
                 ),
-              ),
+              )),
             ],
             if (isEdit) ...[
               const SizedBox(height: 12),
@@ -126,7 +127,7 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
                   style: FontUtility.body.copyWith(color: StoreSetupUi.muted),
                 )
               else
-                DropdownButtonFormField<String>(
+                RubberPush(child: DropdownButtonFormField<String>(
                   initialValue: variantLocalId,
                   items: [
                     for (final v in _variants)
@@ -143,7 +144,7 @@ class _AddonsSetupScreenState extends State<AddonsSetupScreen> {
                     label: context.l10n.storeSetupPackage,
                     accent: _accent,
                   ),
-                ),
+                )),
             ],
           ],
         ),

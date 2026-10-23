@@ -73,13 +73,21 @@ class SignupPricing {
 class SignupBusinessType {
   final String id;
   final String label;
+  final int variantId;
 
-  const SignupBusinessType({required this.id, required this.label});
+  const SignupBusinessType({
+    required this.id,
+    required this.label,
+    this.variantId = 0,
+  });
 
   factory SignupBusinessType.fromJson(Map<String, dynamic> json) {
+    final raw = json['service_variant_unique_id'];
+    final variantId = raw is int ? raw : int.tryParse('${raw ?? ''}') ?? 0;
     return SignupBusinessType(
       id: '${json['id'] ?? ''}',
       label: '${json['label'] ?? ''}',
+      variantId: variantId,
     );
   }
 }
@@ -230,24 +238,32 @@ class CompanySignupApi {
             .map((row) => SignupCountry.fromJson(row.cast<String, dynamic>()))
             .where((c) => c.id.isNotEmpty)
             .toList(growable: false);
-    final types =
-        (decoded['business_types'] is List
-                ? decoded['business_types'] as List
-                : const [])
-            .whereType<Map>()
-            .map(
-              (row) => SignupBusinessType.fromJson(row.cast<String, dynamic>()),
-            )
-            .where((t) => t.id.isNotEmpty)
-            .toList(growable: false);
+    final typeRows = decoded['application_types'] is List
+        ? decoded['application_types'] as List
+        : decoded['business_types'] is List
+        ? decoded['business_types'] as List
+        : const [];
+    final types = typeRows
+        .whereType<Map>()
+        .map((row) => SignupBusinessType.fromJson(row.cast<String, dynamic>()))
+        .where((t) => t.id.isNotEmpty)
+        .toList(growable: false);
     return SignupMeta(
       countries: countries,
       businessTypes: types.isEmpty
           ? const [
-              SignupBusinessType(id: 'cafe', label: 'Cafe'),
-              SignupBusinessType(id: 'restaurant', label: 'Restaurant'),
-              SignupBusinessType(id: 'bakery', label: 'Bakery'),
-              SignupBusinessType(id: 'other', label: 'Others'),
+              SignupBusinessType(id: 'cafe', label: 'Cafe', variantId: 1070),
+              SignupBusinessType(
+                id: 'restaurant',
+                label: 'Restaurant',
+                variantId: 700,
+              ),
+              SignupBusinessType(id: 'bakery', label: 'Bakery', variantId: 1060),
+              SignupBusinessType(
+                id: 'wholesale',
+                label: 'Wholesale',
+                variantId: 1090,
+              ),
             ]
           : types,
     );

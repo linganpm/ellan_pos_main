@@ -7,6 +7,7 @@ import 'package:pos_tablet/presentation/screens/credit_account_detail_screen.dar
 import 'package:pos_tablet/presentation/widgets/credit/credit_collect_payment_dialog.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:pos_tablet/core/currency_format.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 /// Lists all open scheduled credit repayments across customers.
 class ScheduledPaymentsScreen extends StatefulWidget {
@@ -139,11 +140,13 @@ class _ScheduledPaymentsScreenState extends State<ScheduledPaymentsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           widget.todayOnly
               ? context.l10n.creditsTodayScheduled
               : context.l10n.scheduledPaymentsTitle,
           style: FontUtility.heading.copyWith(fontSize: 22),
+        ),
         ),
         leading: IconButton(
           tooltip: context.l10n.actionBack,

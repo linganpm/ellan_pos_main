@@ -36,15 +36,6 @@ class CheckoutTabBar extends StatelessWidget {
                       ? const Color(0xFF4A00E0)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: !isHistoryActive
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFF4A00E0).withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
                 ),
                 child: Center(
                   child: Text(
@@ -73,15 +64,6 @@ class CheckoutTabBar extends StatelessWidget {
                       ? const Color(0xFF4A00E0)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: isHistoryActive
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFF4A00E0).withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
                 ),
                 child: Center(
                   child: Text(

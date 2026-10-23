@@ -5,17 +5,21 @@ import 'utils/font_utility.dart';
 class PosTheme {
   PosTheme._();
 
-  /// Hard offset plus a soft falloff, so a surface reads as raised with no stroke.
+  /// A short, soft edge. Surfaces stay flat instead of sitting on a slab.
   static List<BoxShadow> lift({Color tint = const Color(0xFF1B1433)}) => [
     BoxShadow(
-      color: tint.withValues(alpha: 0.18),
-      blurRadius: 0,
-      offset: const Offset(0, 5),
+      color: tint.withValues(alpha: 0.05),
+      blurRadius: 6,
+      offset: const Offset(0, 1),
     ),
+  ];
+
+  /// Contact shadow used while a surface is pressed in.
+  static List<BoxShadow> pressed({Color tint = const Color(0xFF1B1433)}) => [
     BoxShadow(
-      color: tint.withValues(alpha: 0.10),
-      blurRadius: 18,
-      offset: const Offset(0, 12),
+      color: tint.withValues(alpha: 0.06),
+      blurRadius: 2,
+      offset: const Offset(0, 1),
     ),
   ];
 
@@ -27,9 +31,9 @@ class PosTheme {
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(14),
     );
-    final outline = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: BorderSide(color: colors.outlineVariant),
+    const outline = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(14)),
+      borderSide: BorderSide.none,
     );
     final text = ThemeData(useMaterial3: true).textTheme.apply(
       fontFamily: FontUtility.body.fontFamily,
@@ -70,20 +74,10 @@ class PosTheme {
         ),
         border: outline,
         enabledBorder: outline,
-        focusedBorder: outline.copyWith(
-          borderSide: BorderSide(color: colors.primary, width: 2),
-        ),
-        errorBorder: outline.copyWith(
-          borderSide: BorderSide(color: colors.error),
-        ),
-        focusedErrorBorder: outline.copyWith(
-          borderSide: BorderSide(color: colors.error, width: 2),
-        ),
-        disabledBorder: outline.copyWith(
-          borderSide: BorderSide(
-            color: colors.outlineVariant.withValues(alpha: 0.5),
-          ),
-        ),
+        focusedBorder: outline,
+        errorBorder: outline,
+        focusedErrorBorder: outline,
+        disabledBorder: outline,
         hintStyle: FontUtility.body.copyWith(color: colors.onSurfaceVariant),
         labelStyle: FontUtility.body.copyWith(color: colors.onSurfaceVariant),
         floatingLabelStyle: TextStyle(

@@ -9,6 +9,9 @@ import 'package:pos_tablet/presentation/widgets/credit/credit_collect_payment_di
 import 'package:pos_tablet/presentation/widgets/customer_select_sheet.dart';
 import 'package:pos_tablet/core/localization/l10n_context.dart';
 import 'package:pos_tablet/core/currency_format.dart';
+import 'package:pos_tablet/presentation/widgets/pos_home_button.dart';
+import 'package:pos_tablet/presentation/widgets/rubber_push.dart';
+import 'package:pos_tablet/presentation/widgets/pos_brand_logo.dart';
 
 enum _CreditSortMode { highest, longPending }
 
@@ -291,7 +294,8 @@ class _CreditsScreenState extends State<CreditsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
+        title: PosBrandTitle(
+          child: Text(
           _isCustomerScoped
               ? context.l10n.creditsCustomerScopedTitle(
                   (widget.customerName ?? '').trim().isEmpty
@@ -301,11 +305,13 @@ class _CreditsScreenState extends State<CreditsScreen> {
               : context.l10n.commonCredit,
           style: FontUtility.heading.copyWith(fontSize: 22),
         ),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          const PosHomeButton(),
           IconButton(
             tooltip: context.l10n.commonOpenCreditAccount,
             onPressed: _openOrAddCreditAccount,
@@ -407,7 +413,7 @@ class _CreditsScreenState extends State<CreditsScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: TextField(
+                    child: RubberPush(child: TextField(
                       controller: _searchController,
                       onChanged: (_) => setState(() {}),
                       decoration: InputDecoration(
@@ -415,20 +421,10 @@ class _CreditsScreenState extends State<CreditsScreen> {
                         prefixIcon: const Icon(Icons.search_rounded),
                         filled: true,
                         fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.grey.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.grey.withValues(alpha: 0.2),
-                          ),
-                        ),
+                        border: PosFields.border,
+                        enabledBorder: PosFields.border,
                       ),
-                    ),
+                    )),
                   ),
                   const SizedBox(width: 12),
                   FilterChip(
