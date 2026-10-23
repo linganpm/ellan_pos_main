@@ -2,9 +2,11 @@ import '../data/signup_api.dart';
 
 enum CompanySignupStep {
   serverParent,
-  companyDetails,
-  businessType,
-  branchDetails,
+  country,
+  account,
+  verification,
+  plan,
+  setup,
   progress,
 }
 
@@ -19,8 +21,10 @@ class CompanySignupState {
   final String phoneNumber;
   final String countryId;
   final String password;
-  final String passwordConfirm;
   final String businessType;
+  final String packageKey;
+  final String billingInterval;
+  final String planCurrency;
   final String branchName;
   final String city;
   final String registrationNumber;
@@ -47,8 +51,10 @@ class CompanySignupState {
     this.phoneNumber = '',
     this.countryId = '',
     this.password = '',
-    this.passwordConfirm = '',
     this.businessType = 'restaurant',
+    this.packageKey = '',
+    this.billingInterval = 'monthly',
+    this.planCurrency = '',
     this.branchName = '',
     this.city = '',
     this.registrationNumber = '',
@@ -68,21 +74,20 @@ class CompanySignupState {
   bool get canContinueServerParent =>
       serverUrl.trim().isNotEmpty && parentOrgIdentifier.trim().isNotEmpty;
 
-  bool get passwordsMatch => password.isNotEmpty && password == passwordConfirm;
-
   bool get canContinueCompanyDetails =>
       companyName.trim().isNotEmpty &&
       ownerName.trim().isNotEmpty &&
       email.trim().isNotEmpty &&
       phoneNumber.trim().isNotEmpty &&
       countryId.trim().isNotEmpty &&
-      password.trim().length >= 6 &&
-      passwordsMatch;
+      password.trim().length >= 6;
 
-  bool get canContinueBusinessType => businessType.trim().isNotEmpty;
+  bool get canContinuePlan => packageKey.trim().isNotEmpty;
 
   bool get canSubmitBranch =>
-      branchName.trim().isNotEmpty && city.trim().isNotEmpty;
+      businessType.trim().isNotEmpty &&
+      branchName.trim().isNotEmpty &&
+      city.trim().isNotEmpty;
 
   SignupCountry? get selectedCountry {
     for (final country in countries) {
@@ -102,8 +107,10 @@ class CompanySignupState {
     String? phoneNumber,
     String? countryId,
     String? password,
-    String? passwordConfirm,
     String? businessType,
+    String? packageKey,
+    String? billingInterval,
+    String? planCurrency,
     String? branchName,
     String? city,
     String? registrationNumber,
@@ -132,8 +139,10 @@ class CompanySignupState {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       countryId: countryId ?? this.countryId,
       password: password ?? this.password,
-      passwordConfirm: passwordConfirm ?? this.passwordConfirm,
       businessType: businessType ?? this.businessType,
+      packageKey: packageKey ?? this.packageKey,
+      billingInterval: billingInterval ?? this.billingInterval,
+      planCurrency: planCurrency ?? this.planCurrency,
       branchName: branchName ?? this.branchName,
       city: city ?? this.city,
       registrationNumber: registrationNumber ?? this.registrationNumber,

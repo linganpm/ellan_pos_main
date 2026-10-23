@@ -74,12 +74,20 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
     emit(state.copyWith(password: value, clearError: true));
   }
 
-  void passwordConfirmChanged(String value) {
-    emit(state.copyWith(passwordConfirm: value, clearError: true));
-  }
-
   void businessTypeChanged(String value) {
     emit(state.copyWith(businessType: value, clearError: true));
+  }
+
+  void packageChanged(String value) {
+    emit(state.copyWith(packageKey: value, clearError: true));
+  }
+
+  void billingIntervalChanged(String value) {
+    emit(state.copyWith(billingInterval: value, clearError: true));
+  }
+
+  void planCurrencyChanged(String value) {
+    emit(state.copyWith(planCurrency: value));
   }
 
   void branchNameChanged(String value) {
@@ -96,40 +104,31 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
 
   void goBack() {
     if (state.isSubmitting || state.isSuccess) return;
-    switch (state.step) {
-      case CompanySignupStep.companyDetails:
-        emit(
-          state.copyWith(
-            step: CompanySignupStep.serverParent,
-            clearError: true,
-          ),
-        );
-      case CompanySignupStep.businessType:
-        emit(
-          state.copyWith(
-            step: CompanySignupStep.companyDetails,
-            clearError: true,
-          ),
-        );
-      case CompanySignupStep.branchDetails:
-        emit(
-          state.copyWith(
-            step: CompanySignupStep.businessType,
-            clearError: true,
-          ),
-        );
-      case CompanySignupStep.progress:
-        emit(
-          state.copyWith(
-            step: CompanySignupStep.branchDetails,
-            clearError: true,
-            clearActiveProgress: true,
-            completedProgressIds: const [],
-          ),
-        );
-      case CompanySignupStep.serverParent:
-        break;
-    }
+    final previous = switch (state.step) {
+      CompanySignupStep.country => CompanySignupStep.serverParent,
+      CompanySignupStep.account => CompanySignupStep.country,
+      CompanySignupStep.verification => CompanySignupStep.account,
+      CompanySignupStep.plan => CompanySignupStep.verification,
+      CompanySignupStep.setup => CompanySignupStep.plan,
+      CompanySignupStep.progress => CompanySignupStep.setup,
+      CompanySignupStep.serverParent => null,
+    };
+    if (previous == null) return;
+    emit(
+      state.copyWith(
+        step: previous,
+        clearError: true,
+        clearActiveProgress: state.step == CompanySignupStep.progress,
+        completedProgressIds: state.step == CompanySignupStep.progress
+            ? const []
+            : state.completedProgressIds,
+      ),
+    );
+  }
+
+  void continueFromCountry() {
+    if (state.countryId.trim().isEmpty) return;
+    emit(state.copyWith(step: CompanySignupStep.account, clearError: true));
   }
 
   Future<void> continueFromServerParent() async {
@@ -152,17 +151,14 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
         ),
       );
       final meta = await _api.fetchMeta();
-      // Prefer GB/IN/US when present; otherwise first country.
-      var defaultCountry = state.countryId;
-      if (defaultCountry.isEmpty) {
-        for (final preferred in const ['216', '94', '217']) {
-          if (meta.countries.any((c) => c.id == preferred)) {
-            defaultCountry = preferred;
+      var countryId = state.countryId.trim();
+      if (countryId.isEmpty) {
+        for (final country in meta.countries) {
+          if (country.code.toUpperCase() == 'IN' ||
+              country.name.toLowerCase() == 'india') {
+            countryId = country.id;
             break;
           }
-        }
-        if (defaultCountry.isEmpty && meta.countries.isNotEmpty) {
-          defaultCountry = meta.countries.first.id;
         }
       }
       emit(
@@ -174,8 +170,8 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
               : state.parentOrgIdentifier.trim(),
           countries: meta.countries,
           businessTypes: meta.businessTypes,
-          countryId: defaultCountry,
-          step: CompanySignupStep.companyDetails,
+          countryId: countryId,
+          step: CompanySignupStep.country,
         ),
       );
     } catch (e) {
@@ -191,16 +187,15 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
 
   void continueFromCompanyDetails() {
     if (!state.canContinueCompanyDetails) return;
-    emit(
-      state.copyWith(step: CompanySignupStep.businessType, clearError: true),
-    );
+    emit(state.copyWith(step: CompanySignupStep.verification, clearError: true));
   }
 
-  void continueFromBusinessType() {
-    if (!state.canContinueBusinessType) return;
-    emit(
-      state.copyWith(step: CompanySignupStep.branchDetails, clearError: true),
-    );
+  void continueFromVerification() {
+    emit(state.copyWith(step: CompanySignupStep.plan, clearError: true));
+  }
+
+  void continueFromPlan() {
+    emit(state.copyWith(step: CompanySignupStep.setup, clearError: true));
   }
 
   Future<void> submitBranchAndCreate() async {
@@ -234,6 +229,9 @@ class CompanySignupCubit extends Cubit<CompanySignupState> {
           'country_id': state.countryId.trim(),
           'password': state.password,
           'business_type': state.businessType.trim(),
+          'package_key': state.packageKey.trim(),
+          'billing_interval': state.billingInterval.trim(),
+          'currency': state.planCurrency.trim(),
           'branch_name': state.branchName.trim(),
           'city': state.city.trim(),
           'registration_number': state.registrationNumber.trim(),

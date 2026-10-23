@@ -3578,13 +3578,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeGetStarted => 'Let\'s Get Started';
 
   @override
-  String get welcomeOrgCodeHint => 'e.g., 100001';
+  String get welcomeOrgCodeHint => 'Company identifier';
 
   @override
   String get welcomeOrgHint => 'e.g. Acme Corp';
 
   @override
-  String get welcomeOrgInstanceId => 'Organisation instance id';
+  String get welcomeOrgInstanceId => 'Company identifier';
 
   @override
   String get welcomeRegisterDevice => 'Register device';
@@ -3624,7 +3624,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signInSwitchCompanyBody =>
-      'Switching company resets this device. Local orders, catalogue, customers, sync history and device settings will be permanently deleted, including any orders not yet synced. Nothing is deleted on the server.';
+      'This device will be reset. Data stored only here will be deleted.';
 
   @override
   String get signInSwitchCompanyAction => 'Switch & reset';

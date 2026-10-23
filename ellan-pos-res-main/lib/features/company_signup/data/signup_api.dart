@@ -36,6 +36,40 @@ class SignupCountry {
   }
 }
 
+class SignupPlan {
+  final String key;
+  final String title;
+  final String label;
+  final String price;
+  final String annualPrice;
+  final String priceSuffix;
+  final bool isFree;
+  final List<String> features;
+
+  const SignupPlan({
+    required this.key,
+    required this.title,
+    required this.label,
+    required this.price,
+    required this.annualPrice,
+    required this.priceSuffix,
+    required this.isFree,
+    required this.features,
+  });
+}
+
+class SignupPricing {
+  final String currencyCode;
+  final String currencySymbol;
+  final List<SignupPlan> plans;
+
+  const SignupPricing({
+    required this.currencyCode,
+    required this.currencySymbol,
+    required this.plans,
+  });
+}
+
 class SignupBusinessType {
   final String id;
   final String label;
@@ -242,6 +276,64 @@ class CompanySignupApi {
       );
     }
     return ResolvedParentOrg.fromJson(parent.cast<String, dynamic>());
+  }
+
+  Future<SignupPricing> fetchPricing(String countryCode) async {
+    final code = countryCode.trim().toUpperCase();
+    final response = await http.get(
+      _originUri('/store/pricing/', {if (code.isNotEmpty) 'country': code}),
+    );
+    final decoded = _decodeMap(response.body);
+    final data = decoded['data'] is Map
+        ? (decoded['data'] as Map).cast<String, dynamic>()
+        : decoded;
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300 ||
+        decoded['status'] == 'Failed') {
+      throw SignupApiException.fromResponse(
+        statusCode: response.statusCode,
+        body: decoded,
+        fallback: 'Unable to load price plans',
+      );
+    }
+    final currencies = data['currencies'] is Map
+        ? (data['currencies'] as Map).cast<String, dynamic>()
+        : <String, dynamic>{};
+    final preferred = '${data['default_currency'] ?? ''}'.trim();
+    final currencyCode = currencies.containsKey(preferred)
+        ? preferred
+        : currencies.containsKey('INR')
+        ? 'INR'
+        : (currencies.keys.isEmpty ? '' : currencies.keys.first);
+    final block = currencies[currencyCode] is Map
+        ? (currencies[currencyCode] as Map).cast<String, dynamic>()
+        : <String, dynamic>{};
+    final symbol = '${block['symbol'] ?? ''}'.trim();
+    final tiers = block['tiers'] is List ? block['tiers'] as List : const [];
+    final plans = tiers.whereType<Map>().map((row) {
+      final features = row['features'] is List
+          ? (row['features'] as List)
+                .map((item) => '$item'.trim())
+                .where((item) => item.isNotEmpty)
+                .toList(growable: false)
+          : const <String>[];
+      final price = '${row['price'] ?? ''}'.trim();
+      return SignupPlan(
+        key: '${row['key'] ?? ''}'.trim(),
+        title: '${row['title'] ?? row['label'] ?? ''}'.trim(),
+        label: '${row['label'] ?? ''}'.trim(),
+        price: price,
+        annualPrice: '${row['annual_price'] ?? ''}'.trim(),
+        priceSuffix: '${row['price_suffix'] ?? ''}'.trim(),
+        isFree: row['is_free'] == true || price.toLowerCase() == 'free',
+        features: features,
+      );
+    }).where((plan) => plan.key.isNotEmpty).toList(growable: false);
+    return SignupPricing(
+      currencyCode: currencyCode,
+      currencySymbol: symbol,
+      plans: plans,
+    );
   }
 
   Future<CompanySignupResult> createCompany({

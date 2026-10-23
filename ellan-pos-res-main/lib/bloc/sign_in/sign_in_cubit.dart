@@ -42,6 +42,16 @@ class SignInCubit extends Cubit<SignInState> {
         .trim();
   }
 
+  /// This tablet already has catalogue from a different company than [enteredCode].
+  bool deviceSyncedToAnotherCompany(String enteredCode) {
+    final setupStore = DeviceSetupStore(prefs);
+    final orgCode = (prefs.getString(DeviceSetupStore.orgCodeKey) ?? '').trim();
+    if (orgCode.isEmpty || _isCachedCompany(enteredCode, orgCode, setupStore)) {
+      return false;
+    }
+    return setupStore.isCatalogSynced || setupStore.syncedStoreIds.isNotEmpty;
+  }
+
   bool _isCachedCompany(
     String enteredCode,
     String orgCode,

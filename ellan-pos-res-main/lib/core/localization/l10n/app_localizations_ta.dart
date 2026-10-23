@@ -3632,7 +3632,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get welcomeGetStarted => 'தொடங்குவோம்';
 
   @override
-  String get welcomeOrgCodeHint => 'எ.கா., 100001';
+  String get welcomeOrgCodeHint => 'நிறுவன அடையாளம்';
 
   @override
   String get welcomeOrgHint => 'எ.கா. ஆக்மே நிறுவனம்';
@@ -3678,7 +3678,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get signInSwitchCompanyBody =>
-      'நிறுவனத்தை மாற்றினால் இந்த சாதனம் மீட்டமைக்கப்படும். உள்ளூர் ஆர்டர்கள், பட்டியல், வாடிக்கையாளர்கள், ஒத்திசை வரலாறு மற்றும் சாதன அமைப்புகள் நிரந்தரமாக நீக்கப்படும் — இன்னும் ஒத்திசைக்கப்படாத ஆர்டர்களும் இதில் அடங்கும். சேவையகத்தில் எதுவும் நீக்கப்படாது.';
+      'இந்த சாதனம் மீட்டமைக்கப்படும். இங்கே மட்டும் உள்ள தரவு நீக்கப்படும்.';
 
   @override
   String get signInSwitchCompanyAction => 'மாற்றி மீட்டமை';

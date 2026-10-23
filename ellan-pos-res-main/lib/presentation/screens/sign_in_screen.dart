@@ -183,10 +183,15 @@ Future<bool> _confirmDestructive(
   required String title,
   required String body,
   required String actionLabel,
+  bool caution = false,
 }) async {
+  final confirmController = TextEditingController();
   final confirmed = await showDialog<bool>(
     context: context,
-    builder: (dialogContext) => Dialog(
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setDialogState) {
+        final typed = confirmController.text.trim().toUpperCase() == 'RESET';
+        return Dialog(
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -217,16 +222,53 @@ Future<bool> _confirmDestructive(
                 ),
               ),
               const SizedBox(height: 10),
+              if (caution) ...[
+                Text(
+                  Localizations.localeOf(context).languageCode == 'ta'
+                      ? 'எச்சரிக்கை'
+                      : 'Caution',
+                  textAlign: TextAlign.center,
+                  style: FontUtility.body.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: _danger,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               Text(
                 body,
                 textAlign: TextAlign.center,
                 style: FontUtility.body.copyWith(
-                  fontSize: 14,
+                  fontSize: caution ? 16 : 14,
                   height: 1.45,
-                  color: const Color(0xFF6B7280),
+                  fontWeight: caution ? FontWeight.w700 : FontWeight.w500,
+                  color: caution
+                      ? const Color(0xFF1F2937)
+                      : const Color(0xFF6B7280),
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
+              Text(
+                context.l10n.deviceTypeResetConfirm,
+                textAlign: TextAlign.center,
+                style: FontUtility.body.copyWith(
+                  fontSize: caution ? 15 : 13,
+                  fontWeight: caution ? FontWeight.w700 : FontWeight.w500,
+                  color: caution
+                      ? const Color(0xFF1F2937)
+                      : const Color(0xFF6B7280),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: confirmController,
+                autofocus: true,
+                textCapitalization: TextCapitalization.characters,
+                decoration: const InputDecoration(hintText: 'RESET'),
+                onChanged: (_) => setDialogState(() {}),
+              ),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
@@ -255,7 +297,9 @@ Future<bool> _confirmDestructive(
                     child: SizedBox(
                       height: 52,
                       child: FilledButton(
-                        onPressed: () => Navigator.pop(dialogContext, true),
+                        onPressed: typed
+                            ? () => Navigator.pop(dialogContext, true)
+                            : null,
                         style: FilledButton.styleFrom(
                           backgroundColor: _danger,
                           shape: RoundedRectangleBorder(
@@ -277,8 +321,11 @@ Future<bool> _confirmDestructive(
           ),
         ),
       ),
+    );
+      },
     ),
   );
+  confirmController.dispose();
   return confirmed == true;
 }
 
@@ -397,6 +444,7 @@ class _CompanyCardState extends State<_CompanyCard> {
       title: context.l10n.signInSwitchCompanyTitle,
       body: context.l10n.signInSwitchCompanyBody,
       actionLabel: context.l10n.signInSwitchCompanyAction,
+      caution: true,
     );
     if (!confirmed || !mounted) return;
 
@@ -535,6 +583,22 @@ class _SignInFormState extends State<_SignInForm> {
     super.dispose();
   }
 
+  Future<void> _signIn(BuildContext context) async {
+    final cubit = context.read<SignInCubit>();
+    if (cubit.deviceSyncedToAnotherCompany(cubit.state.companyCode)) {
+      final confirmed = await _confirmDestructive(
+        context,
+        icon: Icons.swap_horiz_rounded,
+        title: context.l10n.signInSwitchCompanyTitle,
+        body: context.l10n.signInSwitchCompanyBody,
+        actionLabel: context.l10n.signInSwitchCompanyAction,
+        caution: true,
+      );
+      if (!confirmed || !context.mounted) return;
+    }
+    await cubit.submit();
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = widget.state;
@@ -662,7 +726,7 @@ class _SignInFormState extends State<_SignInForm> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: state.isValid && !state.isLoading
-                      ? () => context.read<SignInCubit>().submit()
+                      ? () => _signIn(context)
                       : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: SignInScreen._primary,

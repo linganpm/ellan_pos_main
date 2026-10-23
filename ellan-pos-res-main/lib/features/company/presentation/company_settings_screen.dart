@@ -56,6 +56,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
   Set<int> _linkedVariantIds = {};
   List<Map<String, dynamic>> _fixedMailers = const [];
   StoreTradeModes _tradeModes = StoreTradeModes.current();
+  Map<String, dynamic>? _pricePlan;
 
   @override
   void initState() {
@@ -146,6 +147,10 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
           if (response.statusCode >= 200 && response.statusCode < 300) {
             final body = jsonDecode(response.body);
             if (body is Map) {
+              final plan = body['price_plan'];
+              _pricePlan = plan is Map
+                  ? Map<String, dynamic>.from(plan)
+                  : null;
               final raw = body['fixed_email_mailers'];
               if (raw is List) {
                 final rows = raw
@@ -989,6 +994,10 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                     fontSize: 13,
                   ),
                 ),
+                  if (_pricePlan != null) ...[
+                  const SizedBox(height: 16),
+                  CompanyPricePlanCard(plan: _pricePlan!),
+                ],
                 const SizedBox(height: 22),
                 _section(
                   accent: const Color(0xFFEC4899),
@@ -1413,6 +1422,86 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                 ),
               ],
             ),
+    );
+  }
+}
+
+class CompanyPricePlanCard extends StatelessWidget {
+  const CompanyPricePlanCard({super.key, required this.plan});
+
+  final Map<String, dynamic> plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = '${plan['title'] ?? ''}'.trim();
+    final interval = '${plan['interval'] ?? ''}'.trim();
+    final currency = '${plan['currency'] ?? ''}'.trim();
+    final amount = '${plan['amount'] ?? ''}'.trim();
+    final isFree = plan['isFree'] == true || amount == '0' || amount == '0.00';
+    final period = switch (interval) {
+      'yearly' => 'Annual',
+      'monthly' => 'Monthly',
+      _ => interval,
+    };
+    final price = isFree
+        ? 'Free'
+        : [currency, amount].where((part) => part.isNotEmpty).join(' ');
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.sell_outlined, color: Color(0xFF4A00E0)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Price plan',
+                  style: FontUtility.body.copyWith(
+                    color: const Color(0xFF6B7280),
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  title.isEmpty ? 'Selected plan' : title,
+                  style: FontUtility.body.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                price,
+                style: FontUtility.body.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  color: const Color(0xFF4A00E0),
+                ),
+              ),
+              if (period.isNotEmpty)
+                Text(
+                  period,
+                  style: FontUtility.body.copyWith(
+                    color: const Color(0xFF6B7280),
+                    fontSize: 13,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

@@ -336,30 +336,28 @@ class _WelcomeViewState extends State<_WelcomeView> {
                                 style: FontUtility.body,
                               ),
                               const SizedBox(height: 20),
-                              Text(
-                                context.l10n.welcomeOrgInstanceId,
-                                style: FontUtility.body.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF333333),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: _orgIdController,
-                                enabled: !state.isLoading,
-                                keyboardType: TextInputType.text,
-                                onChanged: (value) => context
-                                    .read<WelcomeCubit>()
-                                    .organizationNameChanged(value),
-                                decoration: _fieldDecoration(
-                                  hintText: AppLocalizations.of(
-                                    context,
-                                  )!.welcomeOrgCodeHint,
-                                ),
-                                style: FontUtility.body,
-                              ),
-                              const SizedBox(height: 24),
                             ],
+                            Text(
+                              context.l10n.welcomeOrgInstanceId,
+                              style: FontUtility.body.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF333333),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _orgIdController,
+                              enabled: !state.isLoading,
+                              keyboardType: TextInputType.text,
+                              onChanged: (value) => context
+                                  .read<WelcomeCubit>()
+                                  .organizationNameChanged(value),
+                              decoration: _fieldDecoration(
+                                hintText: context.l10n.welcomeOrgCodeHint,
+                              ),
+                              style: FontUtility.body,
+                            ),
+                            const SizedBox(height: 24),
                             SizedBox(
                               width: double.infinity,
                               height: 60,

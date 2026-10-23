@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http;
+import 'package:pos_tablet/core/constants/discovery_constants.dart';
 import 'package:pos_tablet/core/controllers/ui_store_controller.dart';
 import 'package:pos_tablet/core/routes.dart';
 import 'package:pos_tablet/core/utils/font_utility.dart';
@@ -21,6 +25,7 @@ class _CompanyHubScreenState extends State<CompanyHubScreen> {
   int? _staffCount;
   int? _reportCount;
   int? _catalogueCount;
+  Map<String, dynamic>? _pricePlan;
 
   @override
   void initState() {
@@ -40,11 +45,31 @@ class _CompanyHubScreenState extends State<CompanyHubScreen> {
       );
       final reports = await store.listReportSubscribers();
       final products = await store.products.searchDetails(scope: store.scope);
+      Map<String, dynamic>? plan;
+      final token = controller.organisationLogin?.accessToken?.trim() ?? '';
+      if (token.isNotEmpty) {
+        try {
+          final uri = Uri.parse(
+            '${discoveryOrigin(kDiscoveryUrl)}/api/pos/store/profile',
+          ).replace(queryParameters: controller.companyProfileRefs());
+          final response = await http.get(
+            uri,
+            headers: {'Authorization': 'Bearer $token'},
+          );
+          if (response.statusCode >= 200 && response.statusCode < 300) {
+            final body = jsonDecode(response.body);
+            if (body is Map && body['price_plan'] is Map) {
+              plan = Map<String, dynamic>.from(body['price_plan'] as Map);
+            }
+          }
+        } catch (_) {}
+      }
       if (!mounted) return;
       setState(() {
         _staffCount = staff.length;
         _reportCount = reports.length;
         _catalogueCount = products.length;
+        _pricePlan = plan;
       });
     } catch (_) {}
   }
@@ -89,6 +114,10 @@ class _CompanyHubScreenState extends State<CompanyHubScreen> {
             ),
             style: FontUtility.body.copyWith(color: Colors.black54, fontSize: 13),
           ),
+          if (_pricePlan != null) ...[
+            const SizedBox(height: 14),
+            CompanyPricePlanCard(plan: _pricePlan!),
+          ],
           const SizedBox(height: 14),
           _tile(
             context,

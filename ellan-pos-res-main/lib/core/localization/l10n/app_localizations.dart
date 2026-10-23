@@ -6417,7 +6417,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeOrgCodeHint.
   ///
   /// In en, this message translates to:
-  /// **'e.g., 100001'**
+  /// **'Company identifier'**
   String get welcomeOrgCodeHint;
 
   /// No description provided for @welcomeOrgHint.
@@ -6429,7 +6429,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeOrgInstanceId.
   ///
   /// In en, this message translates to:
-  /// **'Organisation instance id'**
+  /// **'Company identifier'**
   String get welcomeOrgInstanceId;
 
   /// No description provided for @welcomeRegisterDevice.

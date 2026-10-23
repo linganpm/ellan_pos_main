@@ -26,9 +26,11 @@ class WelcomeCubit extends Cubit<WelcomeState> {
     var serverUrl = kIsPosDiscoveryConfiguredByEnv
         ? kDefaultServerOrigin
         : (activeUrl ?? '');
-    var orgId = kIsPosDiscoveryConfiguredByEnv
-        ? kDefaultRootOrgInstanceId
-        : (activeOrg ?? '');
+    var orgId = activeOrg ?? '';
+    // The env parent is Store Global, not the shop this tablet is joining.
+    if (orgId.trim() == kDefaultRootOrgInstanceId.trim()) {
+      orgId = '';
+    }
 
     if (!kIsPosDiscoveryConfiguredByEnv &&
         (serverUrl.isEmpty || orgId.isEmpty) &&
@@ -48,7 +50,7 @@ class WelcomeCubit extends Cubit<WelcomeState> {
         serverUrl: serverUrl.isEmpty
             ? kDefaultServerOrigin
             : discoveryOrigin(serverUrl),
-        organizationName: orgId.isEmpty ? kDefaultRootOrgInstanceId : orgId,
+        organizationName: orgId,
       ),
     );
   }

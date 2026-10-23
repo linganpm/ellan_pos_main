@@ -95,8 +95,8 @@ class _SignupViewState extends State<_SignupView> {
     return Scaffold(
       body: Row(
         children: [
-          Expanded(
-            flex: 1,
+          SizedBox(
+            width: 380,
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -107,18 +107,33 @@ class _SignupViewState extends State<_SignupView> {
               ),
               child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(40),
+                  padding: const EdgeInsets.all(32),
                   child: BlocBuilder<CompanySignupCubit, CompanySignupState>(
                     builder: (context, state) {
                       final title = switch (state.step) {
-                        CompanySignupStep.serverParent =>
+                        CompanySignupStep.serverParent ||
+                        CompanySignupStep.country =>
                           context.l10n.signupTitleCreateCompany,
-                        CompanySignupStep.companyDetails =>
-                          context.l10n.signupTitleCompanyDetails,
-                        CompanySignupStep.businessType =>
-                          context.l10n.signupTitleBusinessType,
-                        CompanySignupStep.branchDetails =>
-                          context.l10n.signupTitleBranch,
+                        CompanySignupStep.account => _copy(
+                          context,
+                          'Account',
+                          'கணக்கு',
+                        ),
+                        CompanySignupStep.verification => _copy(
+                          context,
+                          'Verification',
+                          'சரிபார்ப்பு',
+                        ),
+                        CompanySignupStep.plan => _copy(
+                          context,
+                          'Plan',
+                          'திட்டம்',
+                        ),
+                        CompanySignupStep.setup => _copy(
+                          context,
+                          'Setup',
+                          'அமைப்பு',
+                        ),
                         CompanySignupStep.progress =>
                           state.isSuccess
                               ? context.l10n.signupTitleReady
@@ -130,15 +145,15 @@ class _SignupViewState extends State<_SignupView> {
                         children: [
                           const Icon(
                             Icons.storefront_rounded,
-                            size: 80,
+                            size: 56,
                             color: Colors.white,
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 24),
                           Text(
                             title,
                             style: FontUtility.heading.copyWith(
                               color: Colors.white,
-                              fontSize: 40,
+                              fontSize: 34,
                               height: 1.2,
                             ),
                           ),
@@ -186,16 +201,23 @@ class _SignupViewState extends State<_SignupView> {
                                     ),
                                     const SizedBox(height: 16),
                                   ],
+                                  if (_showsJourney(state.step)) ...[
+                                    const _SignupJourney(),
+                                    const SizedBox(height: 20),
+                                  ],
                                   switch (state.step) {
                                     CompanySignupStep.serverParent =>
                                       kIsPosDiscoveryConfiguredByEnv
                                           ? const _ConfiguredEnvironmentSetup()
                                           : const _ServerParentForm(),
-                                    CompanySignupStep.companyDetails =>
+                                    CompanySignupStep.country =>
+                                      const _CountryStep(),
+                                    CompanySignupStep.account =>
                                       const _CompanyDetailsForm(),
-                                    CompanySignupStep.businessType =>
-                                      const _BusinessTypeForm(),
-                                    CompanySignupStep.branchDetails =>
+                                    CompanySignupStep.verification =>
+                                      const _VerificationStep(),
+                                    CompanySignupStep.plan => const _PlanStep(),
+                                    CompanySignupStep.setup =>
                                       const _BranchDetailsForm(),
                                     CompanySignupStep.progress =>
                                       const _ProgressPanel(),
@@ -480,47 +502,86 @@ class _ServerParentFormState extends State<_ServerParentForm> {
   }
 }
 
-class _CompanyDetailsForm extends StatefulWidget {
-  const _CompanyDetailsForm();
-
-  @override
-  State<_CompanyDetailsForm> createState() => _CompanyDetailsFormState();
+String _copy(BuildContext context, String english, String tamil) {
+  return Localizations.localeOf(context).languageCode == 'ta' ? tamil : english;
 }
 
-class _CompanyDetailsFormState extends State<_CompanyDetailsForm> {
-  late final TextEditingController _company;
-  late final TextEditingController _owner;
-  late final TextEditingController _email;
-  late final TextEditingController _phone;
-  late final TextEditingController _password;
-  late final TextEditingController _passwordConfirm;
-  bool _obscure = true;
-  bool _obscureConfirm = true;
+bool _showsJourney(CompanySignupStep step) {
+  return step == CompanySignupStep.account ||
+      step == CompanySignupStep.verification ||
+      step == CompanySignupStep.plan ||
+      step == CompanySignupStep.setup ||
+      step == CompanySignupStep.progress;
+}
+
+class _SignupJourney extends StatelessWidget {
+  const _SignupJourney();
 
   @override
-  void initState() {
-    super.initState();
-    final state = context.read<CompanySignupCubit>().state;
-    _company = TextEditingController(text: state.companyName);
-    _owner = TextEditingController(text: state.ownerName);
-    _email = TextEditingController(text: state.email);
-    _phone = TextEditingController(text: state.phoneNumber);
-    _password = TextEditingController(text: state.password);
-    _passwordConfirm = TextEditingController(text: state.passwordConfirm);
+  Widget build(BuildContext context) {
+    final step = context.watch<CompanySignupCubit>().state.step;
+    final labels = [
+      _copy(context, 'Account', 'கணக்கு'),
+      _copy(context, 'Verification', 'சரிபார்ப்பு'),
+      _copy(context, 'Plan', 'திட்டம்'),
+      _copy(context, 'Setup', 'அமைப்பு'),
+      _copy(context, 'Dashboard', 'டாஷ்போர்டு'),
+    ];
+    final current = switch (step) {
+      CompanySignupStep.account => 0,
+      CompanySignupStep.verification => 1,
+      CompanySignupStep.plan => 2,
+      CompanySignupStep.setup => 3,
+      CompanySignupStep.progress => 4,
+      _ => 0,
+    };
+    return Row(
+      children: [
+        for (var index = 0; index < labels.length; index++)
+          Expanded(
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: index <= current
+                      ? const Color(0xFF4A00E0)
+                      : const Color(0xFFE5E7EB),
+                  child: Text(
+                    '${index + 1}',
+                    style: TextStyle(
+                      color: index <= current ? Colors.white : Colors.black54,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  labels[index],
+                  textAlign: TextAlign.center,
+                  style: FontUtility.body.copyWith(
+                    fontSize: 11,
+                    fontWeight: index == current
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                    color: index == current
+                        ? const Color(0xFF4A00E0)
+                        : Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
+}
 
-  @override
-  void dispose() {
-    _company.dispose();
-    _owner.dispose();
-    _email.dispose();
-    _phone.dispose();
-    _password.dispose();
-    _passwordConfirm.dispose();
-    super.dispose();
-  }
+class _CountryStep extends StatelessWidget {
+  const _CountryStep();
 
-  Future<void> _pickCountry(
+  Future<void> _pick(
+    BuildContext context,
     CompanySignupCubit cubit,
     CompanySignupState state,
   ) async {
@@ -538,9 +599,160 @@ class _CompanyDetailsFormState extends State<_CompanyDetailsForm> {
         );
       },
     );
-    if (selected != null) {
-      cubit.countryChanged(selected.id);
-    }
+    if (selected != null) cubit.countryChanged(selected.id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<CompanySignupCubit>();
+    final state = context.watch<CompanySignupCubit>().state;
+    final selected = state.selectedCountry;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          _copy(context, 'Choose your country', 'உங்கள் நாட்டைத் தேர்ந்தெடுக்கவும்'),
+          style: FontUtility.heading.copyWith(fontSize: 28),
+        ),
+        const SizedBox(height: 20),
+        InkWell(
+          onTap: state.countries.isEmpty ? null : () => _pick(context, cubit, state),
+          borderRadius: BorderRadius.circular(12),
+          child: InputDecorator(
+            decoration: _fieldDecoration(
+              selected == null ? context.l10n.signupSelectCountry : '',
+            ),
+            child: selected == null
+                ? const SizedBox(height: 24)
+                : Row(
+                    children: [
+                      Text(
+                        selected.flag.isNotEmpty ? selected.flag : '',
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          selected.name,
+                          style: FontUtility.body.copyWith(
+                            color: const Color(0xFF1F2937),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+        const SizedBox(height: 28),
+        Row(
+          children: [
+            _iconAction(
+              label: kIsPosDiscoveryConfiguredByEnv
+                  ? context.l10n.signupBackToSignIn
+                  : context.l10n.actionBack,
+              icon: Icons.arrow_back_rounded,
+              onPressed: kIsPosDiscoveryConfiguredByEnv
+                  ? () => Navigator.pushReplacementNamed(context, AppRoutes.login)
+                  : cubit.goBack,
+            ),
+            const Spacer(),
+            Expanded(
+              flex: 2,
+              child: _primaryButton(
+                label: context.l10n.actionContinue,
+                onPressed: state.countryId.trim().isEmpty
+                    ? null
+                    : cubit.continueFromCountry,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _VerificationStep extends StatelessWidget {
+  const _VerificationStep();
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<CompanySignupCubit>();
+    final state = context.watch<CompanySignupCubit>().state;
+    final country = state.selectedCountry?.name ?? '';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          _copy(
+            context,
+            'No email code is required for $country.',
+            '$countryக்கு மின்னஞ்சல் குறியீடு தேவையில்லை.',
+          ),
+          style: FontUtility.body.copyWith(fontSize: 16),
+        ),
+        const SizedBox(height: 16),
+        Text(state.email, style: FontUtility.body.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        Text(state.phoneNumber, style: FontUtility.body),
+        const SizedBox(height: 28),
+        Row(
+          children: [
+            _iconAction(
+              label: context.l10n.actionBack,
+              icon: Icons.arrow_back_rounded,
+              onPressed: cubit.goBack,
+            ),
+            const Spacer(),
+            Expanded(
+              flex: 2,
+              child: _primaryButton(
+                label: context.l10n.actionContinue,
+                onPressed: cubit.continueFromVerification,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _CompanyDetailsForm extends StatefulWidget {
+  const _CompanyDetailsForm();
+
+  @override
+  State<_CompanyDetailsForm> createState() => _CompanyDetailsFormState();
+}
+
+class _CompanyDetailsFormState extends State<_CompanyDetailsForm> {
+  late final TextEditingController _company;
+  late final TextEditingController _owner;
+  late final TextEditingController _email;
+  late final TextEditingController _phone;
+  late final TextEditingController _password;
+  bool _obscure = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final state = context.read<CompanySignupCubit>().state;
+    _company = TextEditingController(text: state.companyName);
+    _owner = TextEditingController(text: state.ownerName);
+    _email = TextEditingController(text: state.email);
+    _phone = TextEditingController(text: state.phoneNumber);
+    _password = TextEditingController(text: state.password);
+  }
+
+  @override
+  void dispose() {
+    _company.dispose();
+    _owner.dispose();
+    _email.dispose();
+    _phone.dispose();
+    _password.dispose();
+    super.dispose();
   }
 
   @override
@@ -582,31 +794,6 @@ class _CompanyDetailsFormState extends State<_CompanyDetailsForm> {
           ),
         ),
         const SizedBox(height: 16),
-        InkWell(
-          onTap: () => _pickCountry(cubit, state),
-          borderRadius: BorderRadius.circular(12),
-          child: InputDecorator(
-            decoration: _fieldDecoration(context.l10n.signupCountry),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    selected?.displayLabel ?? context.l10n.signupSelectCountry,
-                    style: FontUtility.body.copyWith(
-                      color: selected == null
-                          ? Colors.black38
-                          : const Color(0xFF1F2937),
-                      fontWeight: FontWeight.w600,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const Icon(Icons.search_rounded, color: Colors.black45),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
         TextField(
           controller: _password,
           obscureText: _obscure,
@@ -620,29 +807,6 @@ class _CompanyDetailsFormState extends State<_CompanyDetailsForm> {
                   icon: _obscure ? Icons.visibility_off : Icons.visibility,
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
-              ),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _passwordConfirm,
-          obscureText: _obscureConfirm,
-          onChanged: cubit.passwordConfirmChanged,
-          decoration: _fieldDecoration(context.l10n.signupConfirmPassword)
-              .copyWith(
-                suffixIcon: _iconAction(
-                  label: _obscureConfirm
-                      ? context.l10n.signInShowPassword
-                      : context.l10n.commonHideDetails,
-                  icon: _obscureConfirm
-                      ? Icons.visibility_off
-                      : Icons.visibility,
-                  onPressed: () =>
-                      setState(() => _obscureConfirm = !_obscureConfirm),
-                ),
-                errorText:
-                    state.passwordConfirm.isNotEmpty && !state.passwordsMatch
-                    ? context.l10n.signupPasswordsDoNotMatch
-                    : null,
               ),
         ),
         const SizedBox(height: 28),
@@ -822,85 +986,179 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
   }
 }
 
-class _BusinessTypeForm extends StatelessWidget {
-  const _BusinessTypeForm();
+class _PlanStep extends StatefulWidget {
+  const _PlanStep();
+
+  @override
+  State<_PlanStep> createState() => _PlanStepState();
+}
+
+class _PlanStepState extends State<_PlanStep> {
+  final CompanySignupApi _api = CompanySignupApi();
+  SignupPricing? _pricing;
+  String? _error;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final country = context.read<CompanySignupCubit>().state.selectedCountry;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final pricing = await _api.fetchPricing(country?.code ?? '');
+      if (!mounted) return;
+      final cubit = context.read<CompanySignupCubit>();
+      if (cubit.state.packageKey.isEmpty && pricing.plans.isNotEmpty) {
+        cubit.packageChanged(pricing.plans.first.key);
+      }
+      if (pricing.currencyCode.isNotEmpty) {
+        cubit.planCurrencyChanged(pricing.currencyCode);
+      }
+      setState(() {
+        _pricing = pricing;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = '$error';
+        _loading = false;
+      });
+    }
+  }
+
+  String _priceLabel(SignupPlan plan, String interval, String symbol) {
+    if (plan.isFree) return 'Free';
+    final yearly = interval == 'yearly' && plan.annualPrice.isNotEmpty;
+    final amount = yearly ? plan.annualPrice : plan.price;
+    if (amount.isEmpty) return 'Price on request';
+    final numeric = RegExp(r'^\d+(?:\.\d+)?$').hasMatch(amount);
+    if (!numeric) return amount;
+    final suffix = yearly ? '/ year' : plan.priceSuffix;
+    return '$symbol$amount${suffix.isEmpty ? '' : ' $suffix'}';
+  }
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<CompanySignupCubit>();
     final state = context.watch<CompanySignupCubit>().state;
-    final types = state.businessTypes.isEmpty
-        ? [
-            SignupBusinessType(
-              id: 'cafe',
-              label: context.l10n.signupBusinessCafe,
-            ),
-            SignupBusinessType(
-              id: 'restaurant',
-              label: context.l10n.signupBusinessRestaurant,
-            ),
-            SignupBusinessType(
-              id: 'bakery',
-              label: context.l10n.signupBusinessBakery,
-            ),
-            SignupBusinessType(
-              id: 'other',
-              label: context.l10n.signupBusinessOther,
-            ),
-          ]
-        : state.businessTypes;
-
+    final plans = _pricing?.plans ?? const <SignupPlan>[];
+    final symbol = _pricing?.currencySymbol ?? '';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ...types.map((type) {
-          final selected = state.businessType == type.id;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: InkWell(
-              onTap: () => cubit.businessTypeChanged(type.id),
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 18,
+        Row(
+          children: [
+            Text(
+              _copy(context, 'Billing period', 'பில்லிங் காலம்'),
+              style: FontUtility.body.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const Spacer(),
+            SegmentedButton<String>(
+              segments: [
+                ButtonSegment(
+                  value: 'monthly',
+                  label: Text(_copy(context, 'Monthly', 'மாதாந்திரம்')),
                 ),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? const Color(0xFF4A00E0).withValues(alpha: 0.08)
-                      : const Color(0xFFF7F8FB),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
+                ButtonSegment(
+                  value: 'yearly',
+                  label: Text(_copy(context, 'Annual', 'ஆண்டு')),
+                ),
+              ],
+              selected: {state.billingInterval},
+              onSelectionChanged: (value) =>
+                  cubit.billingIntervalChanged(value.first),
+            ),
+          ],
+        ),
+        if ((_pricing?.currencyCode ?? '').isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            _pricing!.currencyCode,
+            style: FontUtility.body.copyWith(color: Colors.black54),
+          ),
+        ],
+        const SizedBox(height: 16),
+        if (_loading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_error != null)
+          Text(_error!, style: FontUtility.body.copyWith(color: Colors.red.shade800))
+        else if (plans.isEmpty)
+          Text(
+            _copy(
+              context,
+              'No prices are available right now.',
+              'விலைகள் இப்போது இல்லை.',
+            ),
+            style: FontUtility.body,
+          )
+        else
+          ...plans.map((plan) {
+            final selected = state.packageKey == plan.key;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: InkWell(
+                onTap: () => cubit.packageChanged(plan.key),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  decoration: BoxDecoration(
                     color: selected
-                        ? const Color(0xFF4A00E0)
-                        : const Color(0xFFD0D5DD),
-                    width: 2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      selected
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_off,
+                        ? const Color(0xFF4A00E0).withValues(alpha: 0.08)
+                        : const Color(0xFFF7F8FB),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
                       color: selected
                           ? const Color(0xFF4A00E0)
-                          : Colors.black45,
+                          : const Color(0xFFD0D5DD),
+                      width: 2,
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      type.label,
-                      style: FontUtility.body.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 17,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        plan.title,
+                        style: FontUtility.body.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                        ),
                       ),
-                    ),
-                  ],
+                      if (plan.label.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          plan.label,
+                          style: FontUtility.body.copyWith(
+                            color: Colors.black54,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      Text(
+                        _priceLabel(plan, state.billingInterval, symbol),
+                        style: FontUtility.body.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 20,
+                          color: const Color(0xFF4A00E0),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
         const SizedBox(height: 16),
         Row(
           children: [
@@ -914,8 +1172,8 @@ class _BusinessTypeForm extends StatelessWidget {
               flex: 2,
               child: _primaryButton(
                 label: context.l10n.actionContinue,
-                onPressed: state.canContinueBusinessType
-                    ? cubit.continueFromBusinessType
+                onPressed: !_loading && (_error != null || plans.isEmpty || state.canContinuePlan)
+                    ? cubit.continueFromPlan
                     : null,
               ),
             ),
