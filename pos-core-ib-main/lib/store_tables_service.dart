@@ -33,6 +33,26 @@ class StoreTablesService {
     return _store._saveTable(scope, request);
   }
 
+  Future<String> addDineInTable(
+    StoreScope scope, {
+    required String name,
+    required String floorName,
+    String? floorId,
+    int capacity = 4,
+  }) {
+    return _store._addDineInTable(
+      scope,
+      name: name,
+      floorName: floorName,
+      floorId: floorId,
+      capacity: capacity,
+    );
+  }
+
+  Future<void> deactivateDineInTable(StoreScope scope, String tableId) {
+    return _store._deactivateDineInTable(scope, tableId);
+  }
+
   Future<List<StoreTableRecord>> listTables(
     StoreScope scope, {
     String? floorId,

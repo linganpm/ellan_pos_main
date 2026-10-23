@@ -1127,6 +1127,46 @@ class UiStoreController {
         .toList();
   }
 
+  Future<List<StoreFloorRecord>> loadDineInFloors() async {
+    final store = _requireStore();
+    final floors = await store.tables.listFloors(store.scope);
+    return floors.where((floor) => floor.active).toList();
+  }
+
+  Future<String> addDineInTable({
+    required String name,
+    required String floorName,
+    String? floorId,
+    int capacity = 4,
+  }) async {
+    final store = _requireStore();
+    await store.tables.addDineInTable(
+      store.scope,
+      name: name,
+      floorName: floorName,
+      floorId: floorId,
+      capacity: capacity,
+    );
+    return _exportDineInTables(store);
+  }
+
+  Future<String> removeDineInTable(String tableId) async {
+    final store = _requireStore();
+    await store.tables.deactivateDineInTable(store.scope, tableId);
+    return _exportDineInTables(store);
+  }
+
+  Future<String> _exportDineInTables(Store store) async {
+    final result = await store.sync.exportTables(store.scope);
+    if (result.skipped) {
+      return 'Saved on this device. Table sync is not configured.';
+    }
+    if (!result.success) {
+      return 'Saved on this device. ${result.message}';
+    }
+    return 'Table change synced.';
+  }
+
   Future<void> updateServeNumberMaximum(int maximum) {
     final store = _requireStore();
     return store.orders.setServeNumberMaximum(store.scope, maximum);

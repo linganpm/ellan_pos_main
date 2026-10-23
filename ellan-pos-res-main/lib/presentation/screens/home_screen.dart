@@ -397,8 +397,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     return Scaffold(
       backgroundColor: const Color(0xFFEEF1F6),
       appBar: _buildAppBar(context),
-      body: MediaQuery.sizeOf(context).width < 900
+      body: MediaQuery.sizeOf(context).shortestSide < 600
           ? _buildCompactMenu(context)
+          : MediaQuery.sizeOf(context).width < 900
+          ? _buildTabletHome(context)
           : SafeArea(
         child: Padding(
           // Outer margins around the home dashboard card.
@@ -854,7 +856,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final compact = width < 900;
+    final compact = width < 600;
     final veryCompact = width < 600;
     final store = context.read<UiStoreController>().store;
     final storeName = store?.storeName.trim();
@@ -1163,6 +1165,193 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
+  Widget _buildTabletHome(BuildContext context) {
+    final tiles = <Widget>[
+      _buildMenuCard(
+        context,
+        title: AppLocalizations.of(context)!.homePosDashboard,
+        iconData: Icons.dashboard_rounded,
+        color: const Color(0xFF4A00E0),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const DashboardScreen()),
+          );
+        },
+      ),
+      if (_tradeModes.sell)
+        _buildMenuCard(
+          context,
+          title: 'Sales',
+          iconData: Icons.trending_up_rounded,
+          color: const Color(0xFF178A45),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SalesListScreen()),
+            );
+          },
+        ),
+      if (_tradeModes.buy)
+        _buildMenuCard(
+          context,
+          title:
+              Localizations.localeOf(
+                context,
+              ).languageCode.toLowerCase().startsWith('ta')
+              ? 'கொள்முதல்'
+              : 'Purchases',
+          iconData: Icons.trending_down_rounded,
+          color: const Color(0xFFD32F2F),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PurchasesListScreen()),
+            );
+          },
+        ),
+      _buildMenuCard(
+        context,
+        title: context.l10n.homeCatalogs,
+        iconData: Icons.inventory_2_rounded,
+        color: const Color(0xFFFFA751),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CatalogScreen()),
+          );
+        },
+      ),
+      _buildMenuCard(
+        context,
+        title: context.l10n.homeCredits,
+        iconData: Icons.account_balance_wallet_rounded,
+        color: const Color(0xFFFF512F),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CreditsScreen()),
+          ).then((_) => _loadScheduledToday());
+        },
+      ),
+      _buildMenuCard(
+        context,
+        title: context.l10n.homeRefunds,
+        iconData: Icons.undo_rounded,
+        color: const Color(0xFFE53935),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const RefundsScreen()),
+          );
+        },
+      ),
+      _buildMenuCard(
+        context,
+        title: context.l10n.homeCompany,
+        iconData: Icons.apartment_rounded,
+        color: const Color(0xFF1B5E20),
+        onTap: () => _openCompany(context),
+      ),
+      _buildMenuCard(
+        context,
+        title: context.l10n.homeCustomers,
+        iconData: Icons.people_alt_rounded,
+        color: const Color(0xFF00C9FF),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CustomersScreen()),
+          );
+        },
+      ),
+      if (_tradeModes.sell && (_dineInEnabled || _orderTypesError != null))
+        _buildTablesOption(context),
+      _buildMenuCard(
+        context,
+        title: '${context.l10n.homeSavedDrafts} ($_draftCount)',
+        iconData: Icons.drafts_rounded,
+        color: const Color(0xFF4A00E0),
+        onTap: _openDraftsSheet,
+      ),
+    ];
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_scheduledTodayCount > 0) ...[
+              Material(
+                color: const Color(0xFFFFF3E0),
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const ScheduledPaymentsScreen(todayOnly: true),
+                      ),
+                    ).then((_) => _loadScheduledToday());
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.event_available_rounded,
+                          color: Color(0xFFE65100),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '$_scheduledTodayCount · '
+                            '${context.l10n.creditsTodayScheduled}',
+                            style: FontUtility.subheading.copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFFE65100),
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Color(0xFFE65100),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final cols = constraints.maxWidth >= 900 ? 3 : 2;
+                  return GridView.count(
+                    padding: const EdgeInsets.only(bottom: 96),
+                    crossAxisCount: cols,
+                    mainAxisSpacing: 18,
+                    crossAxisSpacing: 18,
+                    childAspectRatio: cols == 2 ? 1.55 : 1.35,
+                    children: tiles,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMenuCard(
     BuildContext context, {
     required String title,
@@ -1171,12 +1360,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: const Color(0xFFF7F8FB),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-        side: BorderSide(color: Colors.black.withValues(alpha: 0.04)),
-      ),
+      color: Colors.white,
+      elevation: 6,
+      shadowColor: const Color(0x331B1433),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(22),
@@ -1202,12 +1389,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                           color: color.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(iconData, size: 34, color: color),
+                        child: Icon(iconData, size: 40, color: color),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       Text(
                         title,
-                        style: FontUtility.heading.copyWith(fontSize: 18),
+                        style: FontUtility.heading.copyWith(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
                         textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

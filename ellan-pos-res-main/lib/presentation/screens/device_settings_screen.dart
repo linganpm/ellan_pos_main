@@ -23,6 +23,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
   bool _loading = true;
   bool _saving = false;
   bool _resetting = false;
+  String _orientation = DeviceSettingsStore.defaultOrientation;
   String? _error;
   DeviceSettingsSnapshot? _snapshot;
   List<StoreSyncAttemptRecord> _history = const [];
@@ -70,6 +71,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         _snapshot = snapshot;
         _history = history;
         _denominationsController.text = denomStore.loadCashDenominationsRaw();
+        _orientation = denomStore.loadOrientation();
         _serveNumberMaximumController.text = '$serveNumberMaximum';
         _loading = false;
       });
@@ -423,6 +425,61 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                     ),
                   ),
                 ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        _sectionCard(
+          title: 'Screen orientation',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Landscape is the default for this device.',
+                style: FontUtility.body.copyWith(
+                  fontSize: 13,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: _orientation,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: DeviceSettingsStore.orientationLandscape,
+                    child: Text('Landscape'),
+                  ),
+                  DropdownMenuItem(
+                    value: DeviceSettingsStore.orientationPortrait,
+                    child: Text('Portrait'),
+                  ),
+                  DropdownMenuItem(
+                    value: DeviceSettingsStore.orientationAutomatic,
+                    child: Text('Automatic'),
+                  ),
+                ],
+                onChanged: _saving
+                    ? null
+                    : (value) async {
+                        if (value == null) return;
+                        setState(() => _saving = true);
+                        try {
+                          final store = await DeviceSettingsStore.open();
+                          await store.saveOrientation(value);
+                          if (!mounted) return;
+                          setState(() => _orientation = value);
+                        } finally {
+                          if (mounted) setState(() => _saving = false);
+                        }
+                      },
               ),
             ],
           ),

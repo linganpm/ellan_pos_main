@@ -18,7 +18,7 @@ class DashboardState extends Equatable {
 
   factory DashboardState.initial() {
     return DashboardState(
-      filter: 'All Time',
+      filter: 'Today',
       snapshot: PosDashboardSnapshot.empty(),
       isLoading: true,
     );
@@ -49,7 +49,7 @@ class DashboardCubit extends Cubit<DashboardState> {
   DashboardCubit({UiStoreController? controller})
     : controller = controller ?? getIt<UiStoreController>(),
       super(DashboardState.initial()) {
-    load(filter: 'All Time');
+    load(filter: 'Today');
   }
 
   Future<void> load({String? filter}) async {

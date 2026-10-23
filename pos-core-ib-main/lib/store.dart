@@ -5994,6 +5994,187 @@ class Store {
     return _customerRepo.deleteCustomer(customerId);
   }
 
+  Future<String> _addDineInTable(
+    StoreScope scope, {
+    required String name,
+    required String floorName,
+    String? floorId,
+    int capacity = 4,
+  }) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    final tableName = name.trim();
+    if (tableName.isEmpty) {
+      throw ArgumentError.value(name, 'name', 'Table name is required.');
+    }
+    final seats = capacity < 1 ? 4 : capacity;
+    var resolvedFloorId = (floorId ?? '').trim();
+    final resolvedFloorName = floorName.trim().isEmpty ? 'Main' : floorName.trim();
+    if (resolvedFloorId.isEmpty) {
+      final floors = await _listFloorRecords(scope);
+      final match = floors.where(
+        (floor) =>
+            floor.active &&
+            floor.name.trim().toLowerCase() == resolvedFloorName.toLowerCase(),
+      );
+      if (match.isNotEmpty) {
+        resolvedFloorId = match.first.floorId;
+      } else {
+        resolvedFloorId = 'floor-${DateTime.now().microsecondsSinceEpoch}';
+        await _saveFloor(
+          scope,
+          StoreSaveFloorRequest(
+            floorId: resolvedFloorId,
+            name: resolvedFloorName,
+            sortingOrder: floors.length + 1,
+          ),
+          skipAuth: true,
+        );
+      }
+    }
+    final existing = await _listTableRecords(
+      scope,
+      floorId: resolvedFloorId,
+      includeInactive: false,
+    );
+    if (existing.any(
+      (table) => table.name.trim().toLowerCase() == tableName.toLowerCase(),
+    )) {
+      throw StateError('A table named $tableName is already on this floor.');
+    }
+    final tableId = 'table-${DateTime.now().microsecondsSinceEpoch}';
+    return _saveTable(
+      scope,
+      StoreSaveTableRequest(
+        tableId: tableId,
+        floorId: resolvedFloorId,
+        name: tableName,
+        capacity: seats,
+        sortingOrder: existing.length + 1,
+      ),
+      skipAuth: true,
+    );
+  }
+
+  Future<void> _deactivateDineInTable(StoreScope scope, String tableId) async {
+    _validateScope(scope);
+    await _requireRole('member');
+    final id = tableId.trim();
+    if (id.isEmpty) {
+      throw ArgumentError.value(tableId, 'tableId', 'tableId is required.');
+    }
+    final tables = await _listTableRecords(scope, includeInactive: true);
+    final matches = tables.where((table) => table.tableId == id);
+    if (matches.isEmpty) {
+      throw StateError('Table $id was not found.');
+    }
+    final table = matches.first;
+    if (table.occupied) {
+      throw StateError('This table has an open order.');
+    }
+    await _saveTable(
+      scope,
+      StoreSaveTableRequest(
+        tableId: table.tableId,
+        floorId: table.floorId,
+        name: table.name,
+        capacity: table.capacity,
+        sortingOrder: table.sortingOrder,
+        active: false,
+      ),
+      skipAuth: true,
+    );
+  }
+
+  Future<void> _applyTableExportMappings(
+    StoreScope scope,
+    Map<String, dynamic>? response,
+  ) async {
+    if (response == null || response['accepted'] != true) return;
+    final mappings = response['mappings'];
+    if (mappings is! Map) return;
+    final floors = mappings['floors'];
+    final tables = mappings['tables'];
+    await _db.transaction((txn) async {
+      if (floors is List) {
+        for (final raw in floors.whereType<Map>()) {
+          final oldId = '${raw['floor_id'] ?? ''}'.trim();
+          final newId = '${raw['remote_id'] ?? ''}'.trim();
+          if (oldId.isEmpty || newId.isEmpty || oldId == newId) continue;
+          final clash = await txn.query(
+            'floors',
+            where: 'orgId = ? AND storeId = ? AND floor_id = ?',
+            whereArgs: [scope.orgId, scope.storeId, newId],
+            limit: 1,
+          );
+          if (clash.isEmpty) {
+            await txn.update(
+              'floors',
+              {'floor_id': newId},
+              where: 'orgId = ? AND storeId = ? AND floor_id = ?',
+              whereArgs: [scope.orgId, scope.storeId, oldId],
+            );
+          }
+          await txn.update(
+            'tables',
+            {'floor_id': newId},
+            where: 'orgId = ? AND storeId = ? AND floor_id = ?',
+            whereArgs: [scope.orgId, scope.storeId, oldId],
+          );
+        }
+      }
+      if (tables is List) {
+        for (final raw in tables.whereType<Map>()) {
+          final oldId = '${raw['table_id'] ?? ''}'.trim();
+          final newId = '${raw['remote_id'] ?? ''}'.trim();
+          final floorId = '${raw['floor_id'] ?? ''}'.trim();
+          if (oldId.isEmpty || newId.isEmpty) continue;
+          if (oldId == newId) {
+            if (floorId.isNotEmpty) {
+              await txn.update(
+                'tables',
+                {'floor_id': floorId},
+                where: 'orgId = ? AND storeId = ? AND table_id = ?',
+                whereArgs: [scope.orgId, scope.storeId, oldId],
+              );
+            }
+            continue;
+          }
+          final clash = await txn.query(
+            'tables',
+            where: 'orgId = ? AND storeId = ? AND table_id = ?',
+            whereArgs: [scope.orgId, scope.storeId, newId],
+            limit: 1,
+          );
+          if (clash.isEmpty) {
+            await txn.update(
+              'tables',
+              {
+                'table_id': newId,
+                if (floorId.isNotEmpty) 'floor_id': floorId,
+              },
+              where: 'orgId = ? AND storeId = ? AND table_id = ?',
+              whereArgs: [scope.orgId, scope.storeId, oldId],
+            );
+            await txn.update(
+              'order_items',
+              {'table_id': newId},
+              where: 'orgId = ? AND storeId = ? AND table_id = ?',
+              whereArgs: [scope.orgId, scope.storeId, oldId],
+            );
+          } else {
+            await txn.update(
+              'tables',
+              {'active': 0},
+              where: 'orgId = ? AND storeId = ? AND table_id = ?',
+              whereArgs: [scope.orgId, scope.storeId, oldId],
+            );
+          }
+        }
+      }
+    });
+  }
+
   Future<String> _saveFloor(
     StoreScope scope,
     StoreSaveFloorRequest request, {
@@ -8445,6 +8626,9 @@ class Store {
 
   Future<void> close() async {
     sync.stopAutoSync();
+    try {
+      await sync.pendingProductImageDownloads;
+    } catch (_) {}
     await _db.close();
   }
 }

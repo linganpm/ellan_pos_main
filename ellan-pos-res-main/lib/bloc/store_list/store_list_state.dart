@@ -80,6 +80,49 @@ class StoreSelectionChanged extends StoreListState {
   List<Object?> get props => [selectedStore, allStores];
 }
 
+/// One catalogue entity while a store is opening.
+class StoreSyncCountLine extends Equatable {
+  final String id;
+  final String label;
+  final int synced;
+  final int total;
+  final int failed;
+  final bool running;
+  final bool done;
+  final bool failedStep;
+  final bool background;
+
+  const StoreSyncCountLine({
+    required this.id,
+    required this.label,
+    required this.synced,
+    required this.total,
+    this.failed = 0,
+    this.running = false,
+    this.done = false,
+    this.failedStep = false,
+    this.background = false,
+  });
+
+  double? get fraction {
+    if (total <= 0) return null;
+    return ((synced + failed) / total).clamp(0.0, 1.0);
+  }
+
+  @override
+  List<Object?> get props => [
+    id,
+    label,
+    synced,
+    total,
+    failed,
+    running,
+    done,
+    failedStep,
+    background,
+  ];
+}
+
 /// State indicating that store verification is in progress
 ///
 /// This state is emitted when the user submits the selected store
@@ -91,17 +134,21 @@ class StoreVerificationLoading extends StoreListState {
   /// Progress text for the catalogue pull, e.g. `Syncing product catalogue 40/120`
   final String? message;
 
-  /// 0..1 for the current entity when the server reports a total, else null.
+  /// Average of entity fractions that have reported a total.
   final double? progress;
+
+  /// Live synced / total rows for products, customers, orders, and the rest.
+  final List<StoreSyncCountLine> counts;
 
   const StoreVerificationLoading({
     required this.store,
     this.message,
     this.progress,
+    this.counts = const [],
   });
 
   @override
-  List<Object?> get props => [store, message, progress];
+  List<Object?> get props => [store, message, progress, counts];
 }
 
 /// State indicating that store verification was successful

@@ -19,7 +19,9 @@ void main() {
         seenSince.add(request.uri.queryParameters['since']);
         request.response
           ..statusCode = HttpStatus.ok
-          ..write('{"data": [{"id": "cust_1", "updated_on": "2026-03-29T10:00:00.000Z"}]}');
+          ..write(
+            '{"data": [{"id": "cust_1", "updated_on": "2026-03-29T10:00:00.000Z"}]}',
+          );
       } else {
         request.response.statusCode = HttpStatus.notFound;
       }
@@ -1298,9 +1300,9 @@ void main() {
   test(
     'Store sync imports products and keeps imported variants exported',
     () async {
-      final productData = jsonDecode(await File(
-        'fixtures/product_data.json',
-      ).readAsString()) as Map<String, dynamic>;
+      final productData =
+          jsonDecode(await File('fixtures/product_data.json').readAsString())
+              as Map<String, dynamic>;
       for (final category in productData['data'] as List) {
         for (final variant in category['product_variants'] as List? ?? []) {
           variant['product_variant_logo'] = '/product-image.png';
@@ -1396,11 +1398,18 @@ void main() {
       addTearDown(() => temp.delete(recursive: true));
       final metadata = config.testStore!;
       final store = await Store.openPersistent(
-        orgId: metadata.orgId, orgName: metadata.orgName, orgCode: metadata.orgCode,
-        storeId: metadata.storeId, serviceInstanceId: metadata.serviceInstanceId,
-        storeName: metadata.storeName, logo: metadata.logo, uniqueId: metadata.uniqueId,
-        contactEmail: metadata.contactEmail, phone: metadata.phone,
-        contactPerson: metadata.contactPerson, status: metadata.status,
+        orgId: metadata.orgId,
+        orgName: metadata.orgName,
+        orgCode: metadata.orgCode,
+        storeId: metadata.storeId,
+        serviceInstanceId: metadata.serviceInstanceId,
+        storeName: metadata.storeName,
+        logo: metadata.logo,
+        uniqueId: metadata.uniqueId,
+        contactEmail: metadata.contactEmail,
+        phone: metadata.phone,
+        contactPerson: metadata.contactPerson,
+        status: metadata.status,
         serviceVariantType: metadata.serviceVariantType,
         customerJson: config.assetPaths.customers,
         databasePath: temp.path,
@@ -1414,6 +1423,8 @@ void main() {
       expect(importResult.processedCount, greaterThan(0));
       expect(importResult.successCount, greaterThan(0));
       expect(importResult.failureCount, 0);
+      expect(importResult.success, isTrue);
+      await store.sync.pendingProductImageDownloads;
 
       final categoryIds = await store.products.listCategoryIdsWithVariants(
         store.scope,
@@ -1431,27 +1442,50 @@ void main() {
       expect(await File(variants.first.imagePath).readAsBytes(), imageBytes);
 
       final history = await store.sync.history(store.scope);
-      expect(history.isNotEmpty, true);
-      expect(history.first.entity, 'products');
-      expect(history.first.direction, 'import');
-      expect(history.first.successCount, greaterThan(0));
-      expect(history.first.failureCount, 0);
+      final productHistory = history.firstWhere(
+        (entry) => entry.entity == 'products',
+      );
+      expect(productHistory.direction, 'import');
+      expect(productHistory.successCount, greaterThan(0));
+      expect(productHistory.failureCount, 0);
 
       imageStatus = HttpStatus.forbidden;
       productData['updated_on'] = '2026-03-02T12:00:00Z';
       productJson = jsonEncode(productData);
       final progress = <StoreSyncProgressUpdate>[];
-      await expectLater(store.sync.importProducts(store.scope, onProgress: progress.add),
-        throwsStateError);
-      expect(progress.last.stage, StoreSyncProgressStage.failed);
-      expect(progress.any((p) => p.stage == StoreSyncProgressStage.completed), isFalse);
+      final second = await store.sync.importProducts(
+        store.scope,
+        onProgress: progress.add,
+      );
+      expect(second.success, isTrue);
+      await store.sync.pendingProductImageDownloads;
+      expect(
+        progress.any(
+          (update) =>
+              update.entity == 'products' &&
+              update.stage == StoreSyncProgressStage.completed,
+        ),
+        isTrue,
+      );
+      expect(
+        progress.any(
+          (update) =>
+              update.entity == 'product_images' &&
+              update.stage == StoreSyncProgressStage.failed,
+        ),
+        isTrue,
+      );
       final failedHistory = await store.sync.history(store.scope);
-      expect(failedHistory.first.failureCount, 1);
-      expect(failedHistory.first.message, contains('Previous images are kept'));
+      final imageHistory = failedHistory.firstWhere(
+        (entry) => entry.entity == 'product_images' && !entry.success,
+      );
+      expect(imageHistory.failureCount, greaterThan(0));
+      expect(imageHistory.message, contains('Previous images are kept'));
       expect(await File(variants.first.imagePath).readAsBytes(), imageBytes);
       imageStatus = HttpStatus.ok;
       await store.sync.importProducts(store.scope);
-      expect(seenSince, [null, '2026-03-01T12:00:00Z', '2026-03-01T12:00:00Z']);
+      await store.sync.pendingProductImageDownloads;
+      expect(seenSince, [null, '2026-03-01T12:00:00Z', '2026-03-02T12:00:00Z']);
 
       expect(store.sync.autoSyncEnabled, true);
       expect(store.sync.startAutoSync(store.scope), true);

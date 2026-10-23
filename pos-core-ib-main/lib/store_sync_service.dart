@@ -36,6 +36,12 @@ class StoreSyncService {
   Timer? _timer;
   bool _autoSyncInProgress = false;
 
+  /// Image downloads run after the catalogue is saved and do not block sync.
+  Future<void> _productImageSync = Future<void>.value();
+
+  /// Completes when every queued product-image download has finished.
+  Future<void> get pendingProductImageDownloads => _productImageSync;
+
   StoreSyncService._(this._store);
 
   bool get autoSyncEnabled => _store._config.sync.autoSyncEnabled;
@@ -169,7 +175,8 @@ class StoreSyncService {
         extraQuery: extraQuery,
       ),
       headers: {
-        if (deviceId != null && deviceId.isNotEmpty) 'X-Pos-Device-Id': deviceId,
+        if (deviceId != null && deviceId.isNotEmpty)
+          'X-Pos-Device-Id': deviceId,
       },
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -257,6 +264,23 @@ class StoreSyncService {
           ? batch.totalCount
           : processedCount;
       onPayload?.call(batch.payload);
+      _emitProgress(
+        onProgress,
+        _progressUpdate(
+          entity: entity,
+          direction: 'import',
+          stage: StoreSyncProgressStage.running,
+          processedCount: processedCount,
+          totalCount: totalCount,
+          successCount: processedCount,
+          batchIndex: batchIndex,
+          totalBatches: totalCount == 0
+              ? 0
+              : ((totalCount + config.importBatchSize - 1) ~/
+                    config.importBatchSize),
+          message: 'Saving $processedCount of $totalCount $entity.',
+        ),
+      );
       final importedCount = await importBatch(batch.payload);
       processedCount += importedCount;
 
@@ -403,7 +427,7 @@ class StoreSyncService {
       ),
     );
 
-      var processedCount = 0;
+    var processedCount = 0;
     try {
       final deviceId = await _store.registeredDeviceId;
       final resolvedExportUrl = Store._buildExportUri(
@@ -415,7 +439,8 @@ class StoreSyncService {
       final exportHeaders = <String, String>{
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $exportToken',
-        if (deviceId != null && deviceId.isNotEmpty) 'X-Pos-Device-Id': deviceId,
+        if (deviceId != null && deviceId.isNotEmpty)
+          'X-Pos-Device-Id': deviceId,
       };
       for (var batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
         final payload = <String, List<Map<String, dynamic>>>{};
@@ -592,8 +617,7 @@ class StoreSyncService {
             : (since == null
                   ? 'Fetching orders from remote server.'
                   : 'Fetching order drifts since $since.'),
-        completeMessage: (processedCount) =>
-            'Imported $processedCount orders.',
+        completeMessage: (processedCount) => 'Imported $processedCount orders.',
         onPayload: (payload) {
           for (final row in payload['data'] as List<dynamic>? ?? const []) {
             if (row is! Map) continue;
@@ -704,7 +728,8 @@ class StoreSyncService {
           // that finished ingest (DONE/DUPLICATE). Pending/failed stay queued.
           final ok = responseJson == null || responseJson['ok'] != false;
           if (!ok) {
-            final failed = (responseJson['failed_local_ids'] as List?)
+            final failed =
+                (responseJson['failed_local_ids'] as List?)
                     ?.map((id) => '$id'.trim())
                     .where((id) => id.isNotEmpty)
                     .toList() ??
@@ -720,12 +745,14 @@ class StoreSyncService {
               .toList();
           if (fromServer == null || fromServer.isEmpty) {
             // No DONE ack yet (e.g. Celery-only race) — keep exported=0.
-            final pending = (responseJson?['pending_local_ids'] as List?)
+            final pending =
+                (responseJson?['pending_local_ids'] as List?)
                     ?.map((id) => '$id'.trim())
                     .where((id) => id.isNotEmpty)
                     .toList() ??
                 const <String>[];
-            final failed = (responseJson?['failed_local_ids'] as List?)
+            final failed =
+                (responseJson?['failed_local_ids'] as List?)
                     ?.map((id) => '$id'.trim())
                     .where((id) => id.isNotEmpty)
                     .toList() ??
@@ -739,7 +766,8 @@ class StoreSyncService {
             return;
           }
           await _store._markOrdersExported(scope, fromServer, exported: true);
-          final failed = (responseJson?['failed_local_ids'] as List?)
+          final failed =
+              (responseJson?['failed_local_ids'] as List?)
                   ?.map((id) => '$id'.trim())
                   .where((id) => id.isNotEmpty)
                   .toList() ??
@@ -752,6 +780,123 @@ class StoreSyncService {
         batchSize: batchSize,
       );
     }, onProgress: onProgress);
+  }
+
+  /// Queues offline image downloads. Later catalogue steps keep running.
+  void _enqueueProductImageSync({
+    required StoreScope scope,
+    required Uri importUri,
+    required void Function(StoreSyncProgressUpdate update)? onProgress,
+  }) {
+    _emitProgress(
+      onProgress,
+      _progressUpdate(
+        entity: 'product_images',
+        direction: 'import',
+        stage: StoreSyncProgressStage.running,
+        message: 'Downloading product images in the background.',
+      ),
+    );
+    _productImageSync = _productImageSync
+        .catchError((Object _) {})
+        .then((_) => _downloadProductImages(scope, importUri, onProgress));
+  }
+
+  Future<void> _downloadProductImages(
+    StoreScope scope,
+    Uri importUri,
+    void Function(StoreSyncProgressUpdate update)? onProgress,
+  ) async {
+    final startedAt = DateTime.now().toIso8601String();
+    try {
+      final summary = await ProductImageCache(_store._db).sync(
+        scope,
+        importUri,
+        throwOnFailure: false,
+        onProgress: (processed, total, failed) {
+          _emitProgress(
+            onProgress,
+            _progressUpdate(
+              entity: 'product_images',
+              direction: 'import',
+              stage: StoreSyncProgressStage.running,
+              processedCount: processed,
+              totalCount: total,
+              successCount: processed - failed,
+              failureCount: failed,
+              message: total == 0
+                  ? 'No product images to download.'
+                  : 'Product images $processed of $total'
+                        '${failed > 0 ? ' ($failed failed)' : ''}.',
+            ),
+          );
+        },
+      );
+      final failed = summary.failureCount > 0;
+      final message = failed
+          ? summary.failureMessage!
+          : 'Saved ${summary.successCount} of ${summary.totalCount} product images for offline use.';
+      final result = StoreSyncOperationResult(
+        entity: 'product_images',
+        direction: 'import',
+        processedCount: summary.totalCount,
+        successCount: summary.successCount,
+        failureCount: summary.failureCount,
+        skipped: false,
+        success: !failed,
+        startedAt: startedAt,
+        completedAt: DateTime.now().toIso8601String(),
+        message: message,
+      );
+      _emitProgress(
+        onProgress,
+        _progressUpdate(
+          entity: 'product_images',
+          direction: 'import',
+          stage: failed
+              ? StoreSyncProgressStage.failed
+              : StoreSyncProgressStage.completed,
+          processedCount: summary.totalCount,
+          totalCount: summary.totalCount,
+          successCount: summary.successCount,
+          failureCount: summary.failureCount,
+          message: message,
+        ),
+      );
+      try {
+        await _store._recordSyncAttempt(result);
+      } catch (_) {
+        // A closed session must not surface after the catalogue already saved.
+      }
+    } catch (error) {
+      final message = error.toString();
+      _emitProgress(
+        onProgress,
+        _progressUpdate(
+          entity: 'product_images',
+          direction: 'import',
+          stage: StoreSyncProgressStage.failed,
+          failureCount: 1,
+          message: message,
+        ),
+      );
+      try {
+        await _store._recordSyncAttempt(
+          StoreSyncOperationResult(
+            entity: 'product_images',
+            direction: 'import',
+            processedCount: 0,
+            successCount: 0,
+            failureCount: 1,
+            skipped: false,
+            success: false,
+            startedAt: startedAt,
+            completedAt: DateTime.now().toIso8601String(),
+            message: message,
+          ),
+        );
+      } catch (_) {}
+    }
   }
 
   Future<StoreSyncOperationResult> importProducts(
@@ -776,21 +921,7 @@ class StoreSyncService {
             ? 'Fetching products from remote server.'
             : 'Fetching product drifts since $since.',
         completeMessage: (processedCount) =>
-            'Imported $processedCount product variants and saved images for offline use.',
-        afterImport: () async {
-          _emitProgress(
-            onProgress,
-            _progressUpdate(
-              entity: 'products',
-              direction: 'import',
-              stage: StoreSyncProgressStage.running,
-              message: 'Downloading product images for offline use.',
-            ),
-          );
-          await ProductImageCache(
-            _store._db,
-          ).sync(scope, Uri.parse(config.importUrl));
-        },
+            'Imported $processedCount product variants. Product images download in the background.',
         onPayload: (payload) {
           final timestamp = _readLatestTimestamp(payload);
           if (timestamp != null) {
@@ -818,6 +949,13 @@ class StoreSyncService {
           final watermark = maxSeenUpdatedOn.toList()..sort();
           await _store._setSyncWatermark(scope, 'products', watermark.last);
         }
+        if (result.success && !result.skipped) {
+          _enqueueProductImageSync(
+            scope: scope,
+            importUri: Uri.parse(config.importUrl),
+            onProgress: onProgress,
+          );
+        }
         return result;
       });
     }, onProgress: onProgress);
@@ -837,11 +975,9 @@ class StoreSyncService {
         config: config,
         skipMessage: 'Offers import URL is not configured.',
         startMessage: 'Fetching offers from remote server.',
-        completeMessage: (processedCount) =>
-            'Imported $processedCount offers.',
+        completeMessage: (processedCount) => 'Imported $processedCount offers.',
         importBatch: (payload) async {
-          final count =
-              (payload['data'] as List<dynamic>? ?? const []).length;
+          final count = (payload['data'] as List<dynamic>? ?? const []).length;
           serverOfferIds.addAll(
             await _store._offersRepo.importOffersFromJsonData(
               payload,
@@ -853,7 +989,10 @@ class StoreSyncService {
         // Offers are a full snapshot of what is currently applicable, so
         // anything missing (expired/disabled/removed upstream) is retired.
         afterImport: () async {
-          await _store._offersRepo.pruneServerOffersNotIn(scope, serverOfferIds);
+          await _store._offersRepo.pruneServerOffersNotIn(
+            scope,
+            serverOfferIds,
+          );
         },
         onProgress: onProgress,
       );
@@ -1013,13 +1152,10 @@ class StoreSyncService {
           );
           final rawVariants = payload['variants'];
           if (rawVariants is List && rawVariants.isNotEmpty) {
-            await _store._saveWalletVariantCatalogue(
-              scope,
-              [
-                for (final row in rawVariants.whereType<Map>())
-                  Map<String, dynamic>.from(row),
-              ],
-            );
+            await _store._saveWalletVariantCatalogue(scope, [
+              for (final row in rawVariants.whereType<Map>())
+                Map<String, dynamic>.from(row),
+            ]);
           }
           isFirstBatch = false;
           return rows.length;
@@ -1199,12 +1335,11 @@ class StoreSyncService {
             payloadKey: 'data',
             advancesOffset: false,
             count: () => _store._countPendingExportProductVariants(scope),
-            loadBatch: (limit, offset) =>
-                _store._listPendingExportCatalogRows(
-                  scope,
-                  limit: limit,
-                  offset: offset,
-                ),
+            loadBatch: (limit, offset) => _store._listPendingExportCatalogRows(
+              scope,
+              limit: limit,
+              offset: offset,
+            ),
           ),
           _StoreSyncExportSection(
             payloadKey: 'offers',
@@ -1221,8 +1356,8 @@ class StoreSyncService {
         successMessage: (sectionTotals) =>
             'Exported ${sectionTotals['data'] ?? 0} product variants and ${sectionTotals['offers'] ?? 0} offers.',
         onBatchSucceeded: (batchPayload, [responseJson]) async {
-          final accepted = responseJson == null ||
-              responseJson['accepted'] != false;
+          final accepted =
+              responseJson == null || responseJson['accepted'] != false;
           if (!accepted) {
             throw StateError(
               '${responseJson['message'] ?? 'Products export was not accepted by the server.'}',
@@ -1266,18 +1401,17 @@ class StoreSyncService {
                   ?.map((id) => '$id'.trim())
                   .where((id) => id.isNotEmpty)
                   .toList();
-          final offerIds = (offerIdsFromServer != null &&
-                  offerIdsFromServer.isNotEmpty)
+          final offerIds =
+              (offerIdsFromServer != null && offerIdsFromServer.isNotEmpty)
               ? offerIdsFromServer
               : (batchPayload['offers'] ?? const <Map<String, dynamic>>[])
-                  .map((row) => '${row['local_id'] ?? row['localId'] ?? ''}'.trim())
-                  .where((id) => id.isNotEmpty)
-                  .toList();
-          await _store._markOffersExported(
-            scope,
-            offerIds,
-            exported: true,
-          );
+                    .map(
+                      (row) =>
+                          '${row['local_id'] ?? row['localId'] ?? ''}'.trim(),
+                    )
+                    .where((id) => id.isNotEmpty)
+                    .toList();
+          await _store._markOffersExported(scope, offerIds, exported: true);
         },
         onProgress: onProgress,
         batchSize: batchSize,
@@ -1443,7 +1577,9 @@ class StoreSyncService {
         emptyMessage: 'No floors or tables to export.',
         successMessage: (sectionTotals) =>
             'Exported ${sectionTotals['floors'] ?? 0} floors and ${sectionTotals['tables'] ?? 0} tables.',
-        onBatchSucceeded: (_, [__]) async {},
+        onBatchSucceeded: (_, [response]) async {
+          await _store._applyTableExportMappings(scope, response);
+        },
         onProgress: onProgress,
         batchSize: batchSize,
       );
@@ -1521,16 +1657,19 @@ class StoreSyncService {
                   .toList();
           final batchLocalIds =
               (batchPayload['data'] ?? const <Map<String, dynamic>>[])
-                  .map((row) => '${row['local_id'] ?? row['localId'] ?? ''}'.trim())
+                  .map(
+                    (row) =>
+                        '${row['local_id'] ?? row['localId'] ?? ''}'.trim(),
+                  )
                   .where((id) => id.isNotEmpty)
                   .toList();
           final localIds = acceptedFromServer ?? batchLocalIds;
           final mappingsRaw = responseJson?['mappings'];
           final mappings = mappingsRaw is List
               ? mappingsRaw
-                  .whereType<Map>()
-                  .map((row) => Map<String, dynamic>.from(row))
-                  .toList()
+                    .whereType<Map>()
+                    .map((row) => Map<String, dynamic>.from(row))
+                    .toList()
               : const <Map<String, dynamic>>[];
           await _store._markSubscribersExported(
             scope,

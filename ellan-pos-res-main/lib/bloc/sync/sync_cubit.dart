@@ -18,6 +18,10 @@ class SyncChecklistItem extends Equatable {
   final String subtitle;
   final SyncItemStatus status;
   final String? detail;
+  final int processedCount;
+  final int totalCount;
+  final int successCount;
+  final int failureCount;
 
   const SyncChecklistItem({
     required this.id,
@@ -27,9 +31,20 @@ class SyncChecklistItem extends Equatable {
     required this.subtitle,
     this.status = SyncItemStatus.pending,
     this.detail,
+    this.processedCount = 0,
+    this.totalCount = 0,
+    this.successCount = 0,
+    this.failureCount = 0,
   });
 
-  SyncChecklistItem copyWith({SyncItemStatus? status, String? detail}) {
+  SyncChecklistItem copyWith({
+    SyncItemStatus? status,
+    String? detail,
+    int? processedCount,
+    int? totalCount,
+    int? successCount,
+    int? failureCount,
+  }) {
     return SyncChecklistItem(
       id: id,
       entity: entity,
@@ -38,7 +53,16 @@ class SyncChecklistItem extends Equatable {
       subtitle: subtitle,
       status: status ?? this.status,
       detail: detail ?? this.detail,
+      processedCount: processedCount ?? this.processedCount,
+      totalCount: totalCount ?? this.totalCount,
+      successCount: successCount ?? this.successCount,
+      failureCount: failureCount ?? this.failureCount,
     );
+  }
+
+  double? get progressFraction {
+    if (totalCount <= 0) return null;
+    return (processedCount / totalCount).clamp(0.0, 1.0);
   }
 
   @override
@@ -50,6 +74,10 @@ class SyncChecklistItem extends Equatable {
     subtitle,
     status,
     detail,
+    processedCount,
+    totalCount,
+    successCount,
+    failureCount,
   ];
 }
 
@@ -123,6 +151,14 @@ class SyncState extends Equatable {
           direction: SyncDirection.download,
           title: 'Products Catalog Sync',
           subtitle: 'Pull categories and product variants for this store',
+        ),
+        SyncChecklistItem(
+          id: 'product_images:import',
+          entity: 'product_images',
+          direction: SyncDirection.download,
+          title: 'Product Images',
+          subtitle:
+              'Downloads catalogue photos for offline use without blocking sync',
         ),
         SyncChecklistItem(
           id: 'offers:import',
@@ -243,7 +279,14 @@ class SyncCubit extends Cubit<SyncState> {
 
     final reset = state.items
         .map(
-          (item) => item.copyWith(status: SyncItemStatus.pending, detail: ''),
+          (item) => item.copyWith(
+            status: SyncItemStatus.pending,
+            detail: '',
+            processedCount: 0,
+            totalCount: 0,
+            successCount: 0,
+            failureCount: 0,
+          ),
         )
         .toList();
     emit(
@@ -259,6 +302,10 @@ class SyncCubit extends Cubit<SyncState> {
     try {
       final result = await controller.syncFromRemote(onProgress: _onProgress);
       final finalized = state.items.map((item) {
+        if (item.id == 'product_images:import' &&
+            item.status == SyncItemStatus.running) {
+          return item;
+        }
         if (item.status == SyncItemStatus.pending) {
           return item.copyWith(
             status: SyncItemStatus.skipped,
@@ -298,6 +345,7 @@ class SyncCubit extends Cubit<SyncState> {
   }
 
   void _onProgress(StoreSyncProgressUpdate update) {
+    if (isClosed) return;
     final id = '${update.entity}:${update.direction}';
     final index = state.items.indexWhere((item) => item.id == id);
     if (index < 0) return;
@@ -318,12 +366,25 @@ class SyncCubit extends Cubit<SyncState> {
         break;
     }
 
-    final detail = update.totalCount > 0
-        ? '${update.processedCount}/${update.totalCount} — ${update.message}'
-        : update.message;
+    final detail = _countDetail(update);
 
     final items = List<SyncChecklistItem>.from(state.items);
-    items[index] = items[index].copyWith(status: status, detail: detail);
+    items[index] = items[index].copyWith(
+      status: status,
+      detail: detail,
+      processedCount: update.processedCount,
+      totalCount: update.totalCount,
+      successCount: update.successCount,
+      failureCount: update.failureCount,
+    );
     emit(state.copyWith(items: items));
+  }
+
+  String _countDetail(StoreSyncProgressUpdate update) {
+    if (update.totalCount <= 0) return update.message;
+    final failed = update.failureCount > 0
+        ? ' · ${update.failureCount} failed'
+        : '';
+    return '${update.successCount} synced / ${update.totalCount} total$failed';
   }
 }

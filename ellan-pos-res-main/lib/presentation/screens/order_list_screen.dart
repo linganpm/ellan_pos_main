@@ -830,22 +830,49 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent>
       ),
       child: Row(
         children: [
-          Expanded(flex: 1, child: _headerText(loc.orderListColumnSlNo)),
-          Expanded(flex: 2, child: _headerText(loc.orderListColumnOrderId)),
-          Expanded(flex: 1, child: _headerText('')),
-          Expanded(flex: 3, child: _headerText(loc.orderListColumnName)),
-          Expanded(flex: 2, child: _headerText(loc.orderListColumnTime)),
-          Expanded(flex: 2, child: _headerText(loc.orderListColumnStatus)),
-          Expanded(flex: 2, child: _headerText(loc.orderListColumnPayment)),
           Expanded(
-            flex: 1,
+            flex: OrderListColumns.sl,
+            child: _headerText(loc.orderListColumnSlNo, textAlign: TextAlign.center),
+          ),
+          Expanded(
+            flex: OrderListColumns.order,
+            child: _headerText(loc.orderListColumnOrderId),
+          ),
+          Expanded(
+            flex: OrderListColumns.type,
+            child: _headerText('', textAlign: TextAlign.center),
+          ),
+          Expanded(
+            flex: OrderListColumns.name,
+            child: _headerText(loc.orderListColumnName),
+          ),
+          Expanded(
+            flex: OrderListColumns.time,
+            child: _headerText(loc.orderListColumnTime, textAlign: TextAlign.center),
+          ),
+          Expanded(
+            flex: OrderListColumns.status,
+            child: _headerText(
+              loc.orderListColumnStatus,
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Expanded(
+            flex: OrderListColumns.payment,
+            child: _headerText(
+              loc.orderListColumnPayment,
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Expanded(
+            flex: OrderListColumns.items,
             child: _headerText(
               loc.orderListColumnItems,
               textAlign: TextAlign.center,
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: OrderListColumns.total,
             child: _headerText(
               PosCurrency.symbol().isEmpty
                   ? loc.orderListColumnTotal
@@ -854,7 +881,7 @@ class _OrderListScreenContentState extends State<_OrderListScreenContent>
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: OrderListColumns.actions,
             child: _headerText(
               loc.orderListColumnActions,
               textAlign: TextAlign.right,

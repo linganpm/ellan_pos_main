@@ -60,13 +60,18 @@ class AdaptiveCheckoutPanels extends StatelessWidget {
 
   Widget _scrollablePanel(Widget child) {
     return LayoutBuilder(
-      builder: (context, constraints) => SingleChildScrollView(
-        child: SizedBox(
+      builder: (context, constraints) {
+        // Keep the panel at the visible height so the Bill button stays on
+        // screen instead of being pushed below a taller-than-viewport box.
+        final height = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : 640.0;
+        return SizedBox(
           width: constraints.maxWidth,
-          height: constraints.maxHeight < 640 ? 640 : constraints.maxHeight,
+          height: height,
           child: child,
-        ),
-      ),
+        );
+      },
     );
   }
 }

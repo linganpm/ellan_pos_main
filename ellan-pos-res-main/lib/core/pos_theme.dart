@@ -5,6 +5,20 @@ import 'utils/font_utility.dart';
 class PosTheme {
   PosTheme._();
 
+  /// Hard offset plus a soft falloff, so a surface reads as raised with no stroke.
+  static List<BoxShadow> lift({Color tint = const Color(0xFF1B1433)}) => [
+    BoxShadow(
+      color: tint.withValues(alpha: 0.18),
+      blurRadius: 0,
+      offset: const Offset(0, 5),
+    ),
+    BoxShadow(
+      color: tint.withValues(alpha: 0.10),
+      blurRadius: 18,
+      offset: const Offset(0, 12),
+    ),
+  ];
+
   static ThemeData light() {
     final colors = ColorScheme.fromSeed(
       seedColor: const Color(0xFF4A00E0),
@@ -26,10 +40,26 @@ class PosTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colors,
-      scaffoldBackgroundColor: const Color(0xFFF6F7FB),
+      scaffoldBackgroundColor: const Color(0xFFF3F0FA),
       textTheme: text.copyWith(
         headlineMedium: FontUtility.heading,
+        titleLarge: text.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+        titleMedium: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        titleSmall: text.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+        labelLarge: text.labelLarge?.copyWith(fontWeight: FontWeight.w700),
         bodyMedium: FontUtility.body,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: colors.surface,
+        foregroundColor: colors.onSurface,
+        elevation: 8,
+        scrolledUnderElevation: 8,
+        shadowColor: const Color(0x331B1433),
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: FontUtility.heading.copyWith(
+          fontSize: 22,
+          color: colors.onSurface,
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -84,8 +114,9 @@ class PosTheme {
       cardTheme: CardThemeData(
         color: colors.surfaceContainerLowest,
         surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        shape: shape.copyWith(side: BorderSide(color: colors.outlineVariant)),
+        elevation: 8,
+        shadowColor: const Color(0x331B1433),
+        shape: shape,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -98,17 +129,27 @@ class PosTheme {
         style: ElevatedButton.styleFrom(
           foregroundColor: colors.onPrimary,
           backgroundColor: colors.primary,
-          minimumSize: const Size(48, 48),
+          minimumSize: const Size(48, 52),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          elevation: 1,
+          elevation: 6,
+          shadowColor: const Color(0x553C00B5),
+          textStyle: FontUtility.button.copyWith(fontSize: 16),
           shape: shape,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(48, 48),
+          minimumSize: const Size(48, 52),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          side: BorderSide(color: colors.outlineVariant),
+          backgroundColor: colors.surface,
+          foregroundColor: colors.onSurface,
+          side: BorderSide.none,
+          elevation: 6,
+          shadowColor: const Color(0x331B1433),
+          textStyle: FontUtility.button.copyWith(
+            fontSize: 16,
+            color: colors.onSurface,
+          ),
           shape: shape,
         ),
       ),
@@ -134,7 +175,7 @@ class PosTheme {
         decoration: BoxDecoration(
           color: colors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colors.outlineVariant),
+          boxShadow: PosTheme.lift(),
         ),
       ),
       dropdownMenuTheme: DropdownMenuThemeData(

@@ -54,8 +54,9 @@ class CheckoutTabBar extends StatelessWidget {
                     style: FontUtility.subheading.copyWith(
                       color: !isHistoryActive
                           ? Colors.white
-                          : Colors.grey.shade600,
-                      fontSize: 14,
+                          : Colors.grey.shade700,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
@@ -88,8 +89,9 @@ class CheckoutTabBar extends StatelessWidget {
                     style: FontUtility.subheading.copyWith(
                       color: isHistoryActive
                           ? Colors.white
-                          : Colors.grey.shade600,
-                      fontSize: 14,
+                          : Colors.grey.shade700,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),

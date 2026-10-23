@@ -770,7 +770,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
@@ -780,8 +780,8 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
           ),
           child: Row(
             children: [
-              Icon(icon, color: color, size: 28),
-              const SizedBox(width: 12),
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -789,7 +789,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                     Text(
                       label,
                       style: FontUtility.heading.copyWith(
-                        fontSize: 18,
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: _ink,
                       ),
@@ -820,14 +820,15 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
   InputDecoration _fieldDecoration(String placeholder) {
     return InputDecoration(
       hintText: placeholder,
+      isDense: true,
       hintStyle: FontUtility.body.copyWith(
         color: const Color(0xFF9CA3AF),
         fontWeight: FontWeight.w500,
-        fontSize: 16,
+        fontSize: 14,
       ),
       filled: true,
       fillColor: const Color(0xFFF8FAFC),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -850,10 +851,10 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
     required List<Widget> children,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -863,27 +864,27 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 28,
+                  height: 28,
                   decoration: BoxDecoration(
                     color: accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(icon, color: accent, size: 24),
+                  child: Icon(icon, color: accent, size: 16),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     title,
                     style: FontUtility.heading.copyWith(
-                      fontSize: 22,
+                      fontSize: 16,
                       fontWeight: FontWeight.w800,
                       color: _ink,
                     ),
@@ -891,7 +892,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 10),
             ...children,
           ],
         ),
@@ -967,7 +968,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                       ? _name.text.trim()
                       : context.l10n.companyBranch,
                   style: FontUtility.heading.copyWith(
-                    fontSize: 28,
+                    fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: _ink,
                   ),
@@ -1014,6 +1015,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                                   ? DecorationImage(
                                       image: FileImage(File(_logoPath!)),
                                       fit: BoxFit.cover,
+                                      alignment: Alignment.center,
                                     )
                                   : null,
                             ),
@@ -1062,7 +1064,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                         controller: _name,
                         style: FontUtility.body.copyWith(
                           fontWeight: FontWeight.w600,
-                          fontSize: 17,
+                          fontSize: 14,
                           color: _ink,
                         ),
                         decoration: _fieldDecoration(
@@ -1075,7 +1077,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                         controller: _identifier,
                         style: FontUtility.body.copyWith(
                           fontWeight: FontWeight.w600,
-                          fontSize: 17,
+                          fontSize: 14,
                           color: _ink,
                         ),
                         decoration: _fieldDecoration(
@@ -1088,7 +1090,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                       maxLines: 2,
                       style: FontUtility.body.copyWith(
                         fontWeight: FontWeight.w600,
-                        fontSize: 17,
+                        fontSize: 14,
                         color: _ink,
                       ),
                       decoration: _fieldDecoration(context.l10n.companyAddress),
@@ -1106,7 +1108,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                         keyboardType: TextInputType.phone,
                         style: FontUtility.body.copyWith(
                           fontWeight: FontWeight.w600,
-                          fontSize: 17,
+                          fontSize: 14,
                           color: _ink,
                         ),
                         decoration: _fieldDecoration(context.l10n.commonPhone),
@@ -1117,7 +1119,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                       keyboardType: TextInputType.emailAddress,
                       style: FontUtility.body.copyWith(
                         fontWeight: FontWeight.w600,
-                        fontSize: 17,
+                        fontSize: 14,
                         color: _ink,
                       ),
                       decoration: _fieldDecoration(context.l10n.commonEmail),
@@ -1134,7 +1136,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                         controller: _registration,
                         style: FontUtility.body.copyWith(
                           fontWeight: FontWeight.w600,
-                          fontSize: 17,
+                          fontSize: 14,
                           color: _ink,
                         ),
                         decoration: _fieldDecoration(
@@ -1146,7 +1148,7 @@ class _CompanySettingsScreenState extends State<CompanySettingsScreen> {
                       controller: _tax,
                       style: FontUtility.body.copyWith(
                         fontWeight: FontWeight.w600,
-                        fontSize: 17,
+                        fontSize: 14,
                         color: _ink,
                       ),
                       decoration: _fieldDecoration(

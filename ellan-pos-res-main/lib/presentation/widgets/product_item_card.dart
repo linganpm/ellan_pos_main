@@ -56,8 +56,11 @@ class _ProductItemCardState extends State<ProductItemCard> {
   Widget build(BuildContext context) {
     final product = widget.product;
     final compact = widget.compact;
-    final title = product.productName.isNotEmpty ? product.productName : product.name;
-    final variant = product.productName.isNotEmpty &&
+    final title = product.productName.isNotEmpty
+        ? product.productName
+        : product.name;
+    final variant =
+        product.productName.isNotEmpty &&
             product.variantName.toLowerCase() != title.toLowerCase()
         ? product.variantName
         : '';
@@ -70,10 +73,11 @@ class _ProductItemCardState extends State<ProductItemCard> {
               '${_fmtQty(product.sellUnitBaseQty ?? 1)} ${product.sellUnitShort}'
         : PosCurrency.format(product.price);
 
-    final pad = compact ? 7.0 : 9.0;
-    final nameSize = compact ? 14.5 : 16.0;
-    final priceSize = compact ? 13.0 : 14.5;
-    final radius = compact ? 14.0 : 16.0;
+    final pad = compact ? 10.0 : 14.0;
+    final nameSize = compact ? 16.0 : 18.0;
+    final priceSize = compact ? 14.0 : 16.0;
+    final radius = compact ? 18.0 : 22.0;
+    final onPhoto = product.imageUrl.trim().isNotEmpty;
 
     return AnimatedScale(
       scale: _pressed ? 0.95 : 1,
@@ -85,19 +89,20 @@ class _ProductItemCardState extends State<ProductItemCard> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(radius),
-          border: Border.all(
-            color: inCart
-                ? accent.withValues(alpha: 0.85)
-                : Colors.black.withValues(alpha: 0.06),
-            width: inCart ? 1.6 : 1,
-          ),
           boxShadow: [
             BoxShadow(
-              color: inCart
-                  ? accent.withValues(alpha: 0.22)
-                  : Colors.black.withValues(alpha: 0.05),
-              blurRadius: inCart ? 16 : 10,
-              offset: const Offset(0, 5),
+              color: (inCart ? accent : const Color(0xFF1B1433)).withValues(
+                alpha: inCart ? 0.34 : 0.16,
+              ),
+              blurRadius: 0,
+              offset: Offset(0, inCart ? 6 : 5),
+            ),
+            BoxShadow(
+              color: (inCart ? accent : const Color(0xFF1B1433)).withValues(
+                alpha: 0.12,
+              ),
+              blurRadius: 18,
+              offset: const Offset(0, 12),
             ),
           ],
         ),
@@ -116,8 +121,10 @@ class _ProductItemCardState extends State<ProductItemCard> {
                 // Short tiles drop the artwork so name and price never clip.
                 final extraHeight = variant.isNotEmpty ? 20 : 0;
                 final tight = variant.isNotEmpty && box.maxHeight < 104;
-                final showArt = box.maxHeight >= (compact ? 104 : 118) + extraHeight;
-                final nameLines = box.maxHeight >= (compact ? 104 : 124) + extraHeight
+                final showArt =
+                    box.maxHeight >= (compact ? 104 : 118) + extraHeight;
+                final nameLines =
+                    box.maxHeight >= (compact ? 104 : 124) + extraHeight
                     ? 2
                     : 1;
                 final name = Text(
@@ -125,12 +132,56 @@ class _ProductItemCardState extends State<ProductItemCard> {
                   style: FontUtility.subheading.copyWith(
                     fontSize: tight ? 13 : nameSize,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1F2933),
+                    color: onPhoto ? Colors.white : const Color(0xFF1F2933),
                     height: 1.15,
+                    shadows: onPhoto
+                        ? const [
+                            Shadow(color: Color(0x99000000), blurRadius: 8),
+                          ]
+                        : null,
                   ),
                   maxLines: nameLines,
                   overflow: TextOverflow.ellipsis,
                 );
+                final details = <Widget>[
+                  name,
+                  SizedBox(height: tight ? 2 : (compact ? 5 : 6)),
+                  if (variant.isNotEmpty) ...[
+                    Text(
+                      variant,
+                      style: FontUtility.body.copyWith(
+                        fontSize: tight ? 11 : (compact ? 13 : 15),
+                        height: 1.15,
+                        color: onPhoto ? Colors.white : accent,
+                        fontWeight: FontWeight.w700,
+                        shadows: onPhoto
+                            ? const [
+                                Shadow(color: Color(0x99000000), blurRadius: 8),
+                              ]
+                            : null,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: tight ? 2 : 4),
+                  ],
+                  _priceRow(
+                    priceLabel,
+                    accent,
+                    tight ? 12 : priceSize,
+                    tight || compact,
+                    chipColor: onPhoto ? Colors.white : null,
+                  ),
+                ];
+                if (onPhoto) {
+                  return _photoFill(
+                    radius: radius,
+                    compact: compact,
+                    accent: accent,
+                    padding: EdgeInsets.all(tight ? 3 : pad),
+                    details: details,
+                  );
+                }
                 return Padding(
                   padding: EdgeInsets.all(tight ? 3 : pad),
                   child: Column(
@@ -150,22 +201,7 @@ class _ProductItemCardState extends State<ProductItemCard> {
                             child: name,
                           ),
                         ),
-                      SizedBox(height: tight ? 2 : (compact ? 5 : 6)),
-                      if (variant.isNotEmpty) ...[
-                        Text(
-                          variant,
-                          style: FontUtility.body.copyWith(
-                            fontSize: tight ? 10 : (compact ? 11 : 12),
-                            height: 1.1,
-                            color: accent,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(height: tight ? 2 : 4),
-                      ],
-                      _priceRow(priceLabel, accent, tight ? 12 : priceSize, tight || compact),
+                      ...details.skip(1),
                     ],
                   ),
                 );
@@ -177,9 +213,79 @@ class _ProductItemCardState extends State<ProductItemCard> {
     );
   }
 
+  /// Product photo painted edge to edge, stretched to the card box.
+  Widget _photoFill({
+    required double radius,
+    required bool compact,
+    required Color accent,
+    required EdgeInsets padding,
+    required List<Widget> details,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ProductImage(
+            source: widget.product.imageUrl,
+            fit: BoxFit.fill,
+            iconSize: compact ? 28 : 32,
+          ),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0x00000000),
+                  Color(0x00000000),
+                  Color(0x401B1433),
+                ],
+                stops: [0.0, 0.58, 1.0],
+              ),
+            ),
+          ),
+          Padding(
+            padding: padding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Spacer(),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: const Color(0x591B1433),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: details,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_offerTag != null)
+            Positioned(
+              top: 4,
+              left: 4,
+              right: widget.cartQuantity > 0 ? (compact ? 38 : 44) : 4,
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: _offerChip(compact),
+              ),
+            ),
+          if (widget.cartQuantity > 0)
+            Positioned(top: 4, right: 4, child: _qtyBadge(accent, compact)),
+        ],
+      ),
+    );
+  }
+
   Widget _artwork(Color accent, double radius, bool compact) {
     final product = widget.product;
-    final hasImage = product.imageUrl.trim().isNotEmpty;
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: Stack(
@@ -196,22 +302,17 @@ class _ProductItemCardState extends State<ProductItemCard> {
                 ],
               ),
             ),
-            child: hasImage
-                ? ProductImage(
-                    source: product.imageUrl,
-                    iconSize: compact ? 18 : 22,
-                  )
-                : Center(
-                    child: Text(
-                      _initials(product.name),
-                      style: FontUtility.heading.copyWith(
-                        fontSize: compact ? 22 : 26,
-                        fontWeight: FontWeight.w800,
-                        color: accent.withValues(alpha: 0.75),
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ),
+            child: Center(
+              child: Text(
+                _initials(product.name),
+                style: FontUtility.heading.copyWith(
+                  fontSize: compact ? 22 : 26,
+                  fontWeight: FontWeight.w800,
+                  color: accent.withValues(alpha: 0.75),
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
           ),
           if (_offerTag != null)
             Positioned(
@@ -246,7 +347,13 @@ class _ProductItemCardState extends State<ProductItemCard> {
     );
   }
 
-  Widget _priceRow(String label, Color accent, double size, bool compact) {
+  Widget _priceRow(
+    String label,
+    Color accent,
+    double size,
+    bool compact, {
+    Color? chipColor,
+  }) {
     return Row(
       children: [
         Flexible(
@@ -256,7 +363,7 @@ class _ProductItemCardState extends State<ProductItemCard> {
               vertical: compact ? 3 : 4,
             ),
             decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.1),
+              color: chipColor ?? accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(

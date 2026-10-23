@@ -213,6 +213,40 @@ void main() {
     expect(tile(tester, 'free').onTap, isNotNull);
   });
 
+  testWidgets('dine-in opens checkout with no table', (tester) async {
+    controller.tables = [table('free')];
+    tester.view.physicalSize = const Size(1200, 1800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showOrderCreationBottomSheet(context),
+              child: const Text('Open table picker'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open table picker'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('dine-in-without-table')));
+    await tester.pumpAndSettle();
+    final screen = tester.widget<OrderCreateScreen>(
+      find.byType(OrderCreateScreen),
+    );
+    expect(screen.args.orderType, 'Dine-In');
+    expect(screen.args.resolvedTableId, isNull);
+    expect(screen.args.table, isNull);
+    expect(screen.args.floor, isNull);
+    expect(find.byType(OrderCreationBottomSheet), findsNothing);
+  });
+
   testWidgets('empty floor plan does not invent selectable tables', (
     tester,
   ) async {

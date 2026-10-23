@@ -7,6 +7,7 @@ class ProductImage extends StatelessWidget {
   final double? width;
   final double? height;
   final double iconSize;
+  final BoxFit fit;
 
   const ProductImage({
     super.key,
@@ -14,6 +15,7 @@ class ProductImage extends StatelessWidget {
     this.width,
     this.height,
     this.iconSize = 18,
+    this.fit = BoxFit.cover,
   });
 
   @override
@@ -38,12 +40,12 @@ class ProductImage extends StatelessWidget {
       image: image,
       width: width,
       height: height,
-      fit: BoxFit.cover,
+      fit: fit,
       errorBuilder: (context, error, stack) {
         debugPrint(
           'Product image could not be loaded (${error.runtimeType}). Sync to retry.',
         );
-        return placeholder;
+        return Center(child: placeholder);
       },
     );
   }

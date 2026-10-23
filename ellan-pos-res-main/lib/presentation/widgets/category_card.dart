@@ -24,24 +24,23 @@ class CategoryCard extends StatelessWidget {
       selected: isSelected,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        margin: const EdgeInsets.only(right: 8),
-        constraints: const BoxConstraints(minHeight: 48),
+        margin: const EdgeInsets.only(right: 14, bottom: 4),
+        constraints: const BoxConstraints(minHeight: 52),
         decoration: BoxDecoration(
-          color: isSelected ? accent : Color.lerp(accent, Colors.white, 0.9),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: accent.withValues(alpha: isSelected ? 1 : 0.35),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: accent.withValues(alpha: 0.24),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ]
-              : null,
+          color: isSelected ? accent : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: accent.withValues(alpha: isSelected ? 0.38 : 0.18),
+              blurRadius: 0,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: accent.withValues(alpha: 0.12),
+              blurRadius: 14,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Material(
           type: MaterialType.transparency,
@@ -60,7 +59,7 @@ class CategoryCard extends StatelessWidget {
                   Text(
                     category.name,
                     style: FontUtility.subheading.copyWith(
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: FontWeight.w800,
                       color: isSelected ? Colors.white : accent,
                     ),

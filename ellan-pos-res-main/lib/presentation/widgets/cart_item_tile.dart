@@ -30,12 +30,23 @@ class CartItemTile extends StatelessWidget {
         : formatSellQtyWithUnit(cartItem.quantity, cartItem.sellUnit);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.fromLTRB(8, 10, 10, 10),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.fromLTRB(10, 12, 12, 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.12)),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x2E1B1433),
+            blurRadius: 0,
+            offset: Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Color(0x1A1B1433),
+            blurRadius: 14,
+            offset: Offset(0, 8),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -80,8 +91,8 @@ class CartItemTile extends StatelessWidget {
                 Text(
                   cartItem.product.name,
                   style: FontUtility.subheading.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
                     height: 1.25,
                   ),
                   maxLines: 2,
@@ -182,9 +193,8 @@ class _QtyControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: const Color(0xFFF3F0FA),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

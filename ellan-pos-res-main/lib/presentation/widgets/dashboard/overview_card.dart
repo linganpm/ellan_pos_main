@@ -30,8 +30,8 @@ class OverviewCard extends StatelessWidget {
         final iconWrapPadding = compact ? 8.0 : 16.0;
         final iconSize = compact ? 20.0 : 36.0;
         final gap = compact ? 10.0 : 20.0;
-        final titleSize = compact ? 12.0 : 16.0;
-        final valueSize = compact ? 18.0 : 28.0;
+        final titleSize = compact ? 13.0 : 16.0;
+        final valueSize = compact ? 20.0 : 30.0;
         final spacing = compact ? 2.0 : 8.0;
 
         final body = Container(
@@ -73,7 +73,8 @@ class OverviewCard extends StatelessWidget {
                           maxLines: 1,
                           style: FontUtility.subheading.copyWith(
                             fontSize: titleSize,
-                            color: Colors.black54,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF3D4A5C),
                           ),
                         ),
                       ),

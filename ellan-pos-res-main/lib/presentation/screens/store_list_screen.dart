@@ -628,7 +628,12 @@ class _StoreSyncProgressOverlay extends StatelessWidget {
                 ? const SizedBox.expand()
                 : ColoredBox(
                     color: Colors.black.withValues(alpha: 0.45),
-                    child: Center(child: _card(context, loading)),
+                    child: Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: _card(context, loading),
+                      ),
+                    ),
                   ),
           ),
         );
@@ -643,7 +648,7 @@ class _StoreSyncProgressOverlay extends StatelessWidget {
       elevation: 12,
       borderRadius: BorderRadius.circular(24),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
+        constraints: const BoxConstraints(maxWidth: 480),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(32, 32, 32, 28),
           child: Column(
@@ -704,10 +709,86 @@ class _StoreSyncProgressOverlay extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              if (state.counts.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 280),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        for (final line in state.counts) ...[
+                          _SyncCountRow(line: line),
+                          const SizedBox(height: 8),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SyncCountRow extends StatelessWidget {
+  final StoreSyncCountLine line;
+
+  const _SyncCountRow({required this.line});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = line.failedStep
+        ? Colors.red.shade700
+        : line.done
+        ? Colors.green.shade700
+        : const Color(0xFF4A00E0);
+    final count = line.total > 0
+        ? '${line.synced} synced / ${line.total} total'
+        : line.done
+        ? '0 synced / 0 total'
+        : '…';
+    final failed = line.failed > 0 ? ' · ${line.failed} failed' : '';
+    final note = line.background ? ' · background' : '';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                line.label,
+                style: FontUtility.body.copyWith(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1F2937),
+                ),
+              ),
+            ),
+            Text(
+              '$count$failed$note',
+              style: FontUtility.body.copyWith(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: line.fraction,
+            minHeight: 4,
+            color: color,
+            backgroundColor: color.withValues(alpha: 0.12),
+          ),
+        ),
+      ],
     );
   }
 }

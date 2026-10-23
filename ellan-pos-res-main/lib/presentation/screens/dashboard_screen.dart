@@ -31,12 +31,12 @@ class _DashboardView extends StatelessWidget {
   const _DashboardView();
 
   static const _filters = [
-    'All Time',
-    'Yesterday',
     'Today',
+    'Yesterday',
     'This Week',
     'This Month',
     'This Year',
+    'All Time',
   ];
 
   @override
@@ -45,11 +45,16 @@ class _DashboardView extends StatelessWidget {
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
+        elevation: 6,
+        shadowColor: const Color(0x331B1433),
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
         title: Text(
           AppLocalizations.of(context)!.dashboardTitle,
-          style: FontUtility.heading.copyWith(fontSize: 24),
+          style: FontUtility.heading.copyWith(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(
@@ -57,13 +62,6 @@ class _DashboardView extends StatelessWidget {
             color: Colors.black87,
           ),
           onPressed: () => Navigator.pop(context),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1.0),
-          child: Container(
-            color: Colors.grey.withValues(alpha: 0.2),
-            height: 1.0,
-          ),
         ),
       ),
       body: SafeArea(
@@ -168,7 +166,7 @@ class _DashboardView extends StatelessWidget {
         const SizedBox(height: 32),
         LayoutBuilder(
           builder: (context, constraints) {
-            final stack = constraints.maxWidth < 900;
+            final stack = constraints.maxWidth < 700;
             final sales = SizedBox(
               height: 420,
               child: SalesChart(
@@ -203,7 +201,7 @@ class _DashboardView extends StatelessWidget {
         const SizedBox(height: 32),
         LayoutBuilder(
           builder: (context, constraints) {
-            final stack = constraints.maxWidth < 900;
+            final stack = constraints.maxWidth < 700;
             final l10n = AppLocalizations.of(context)!;
             final topCategories = SizedBox(
               height: 450,
@@ -281,18 +279,26 @@ class _DashboardView extends StatelessWidget {
                 ],
               );
             }
+            final columns = constraints.maxWidth >= 1100 ? 3 : 2;
+            final panels = [topCategories, topProducts, credits];
             return Column(
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: topCategories),
-                    const SizedBox(width: 24),
-                    Expanded(child: topProducts),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                credits,
+                for (var i = 0; i < panels.length; i += columns) ...[
+                  if (i > 0) const SizedBox(height: 24),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var col = 0; col < columns; col++) ...[
+                        if (col > 0) const SizedBox(width: 24),
+                        Expanded(
+                          child: i + col < panels.length
+                              ? panels[i + col]
+                              : const SizedBox.shrink(),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
               ],
             );
           },
@@ -396,18 +402,18 @@ class _DashboardView extends StatelessWidget {
         final width = constraints.maxWidth;
         final crossAxisCount = width >= 1200
             ? 4
-            : width >= 900
+            : width >= 760
             ? 3
-            : width >= 600
+            : width >= 520
             ? 2
             : 1;
         return GridView.count(
           crossAxisCount: crossAxisCount,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 2.35,
+          mainAxisSpacing: 18,
+          crossAxisSpacing: 18,
+          childAspectRatio: crossAxisCount >= 3 ? 2.05 : 2.2,
           children: cards,
         );
       },

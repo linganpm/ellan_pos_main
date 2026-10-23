@@ -21,6 +21,7 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
 
   bool _loading = true;
   String? _error;
+  String _period = 'daily';
   List<Map<String, dynamic>> _subscribers = [];
 
   @override
@@ -88,7 +89,8 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
   Future<void> _addSubscriber() async {
     final nameCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
-    var cadence = 'daily';
+    final phoneCtrl = TextEditingController();
+    var cadence = _period;
     var notificationType = 'email';
     final ok = await showDialog<bool>(
       context: context,
@@ -115,13 +117,23 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: emailCtrl,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        hintText: context.l10n.commonEmail,
+                    if (notificationType == 'sms' ||
+                        notificationType == 'whatsapp')
+                      TextField(
+                        controller: phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          hintText: context.l10n.commonPhone,
+                        ),
+                      )
+                    else
+                      TextField(
+                        controller: emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          hintText: context.l10n.commonEmail,
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       value: notificationType,
@@ -174,10 +186,6 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
                           value: 'monthly',
                           child: Text(context.l10n.commonMonthly),
                         ),
-                        DropdownMenuItem(
-                          value: 'annually',
-                          child: Text(context.l10n.companyPeriodAnnually),
-                        ),
                       ],
                       onChanged: (v) {
                         if (v == null) return;
@@ -210,9 +218,11 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
       await store.addReportSubscriber(
         name: nameCtrl.text.trim(),
         email: emailCtrl.text.trim(),
+        phoneNumber: phoneCtrl.text.trim(),
         cadence: cadence,
         notificationType: notificationType,
       );
+      _period = cadence;
       await _load();
     } catch (e) {
       if (!mounted) return;
@@ -248,6 +258,86 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text(userFacingError(e))));
     }
+  }
+
+  String _cadenceOf(Map<String, dynamic> row) {
+    final value = '${row['periodicity'] ?? row['cadence'] ?? 'daily'}'
+        .trim()
+        .toLowerCase();
+    if (value == 'weekly' || value == 'monthly' || value == 'annually') {
+      return value;
+    }
+    if (value == 'annual' || value == 'yearly') return 'annually';
+    return 'daily';
+  }
+
+  List<Map<String, dynamic>> get _visibleSubscribers {
+    return _subscribers
+        .where((row) => _cadenceOf(row) == _period)
+        .toList(growable: false);
+  }
+
+  int _periodCount(String period) {
+    return _subscribers.where((row) => _cadenceOf(row) == period).length;
+  }
+
+  String _periodLabel(BuildContext context, String period) {
+    switch (period) {
+      case 'weekly':
+        return context.l10n.commonWeekly;
+      case 'monthly':
+        return context.l10n.commonMonthly;
+      default:
+        return context.l10n.companyPeriodDaily;
+    }
+  }
+
+  String _contactLine(Map<String, dynamic> row) {
+    final channel = '${row['notification_type'] ?? 'email'}'.trim().toLowerCase();
+    final phone = '${row['phone_number'] ?? ''}'.trim();
+    final email = '${row['email'] ?? ''}'.trim();
+    if ((channel == 'sms' || channel == 'whatsapp') && phone.isNotEmpty) {
+      return phone;
+    }
+    return email;
+  }
+
+  Widget _periodCard(BuildContext context, String period) {
+    final selected = _period == period;
+    final count = _periodCount(period);
+    return Material(
+      color: selected ? _primary : Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => setState(() => _period = period),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _periodLabel(context, period),
+                style: FontUtility.body.copyWith(
+                  color: selected ? Colors.white : _muted,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '$count',
+                style: FontUtility.heading.copyWith(
+                  color: selected ? Colors.white : _ink,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -351,23 +441,44 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    for (final period in const ['daily', 'weekly', 'monthly']) ...[
+                      if (period != 'daily') const SizedBox(width: 8),
+                      Expanded(child: _periodCard(context, period)),
+                    ],
+                  ],
+                ),
+                if (_periodCount('annually') > 0) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: () => setState(() => _period = 'annually'),
+                      child: Text(
+                        '${context.l10n.companyPeriodAnnually} · ${_periodCount('annually')}',
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
                 Text(
                   context.l10n.companySubscribers,
                   style: FontUtility.heading.copyWith(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: _ink,
                   ),
                 ),
                 const SizedBox(height: 12),
-                if (_subscribers.isEmpty)
+                if (_visibleSubscribers.isEmpty)
                   Text(
                     context.l10n.companyNoSubscribersYet,
                     style: FontUtility.body.copyWith(color: _muted),
                   )
                 else
-                  ..._subscribers.map((row) {
+                  ..._visibleSubscribers.map((row) {
                     final owner =
                         ((row['is_owner_default'] as num?)?.toInt() ?? 0) == 1;
                     final cadence =
@@ -399,7 +510,7 @@ class _CompanyReportsScreenState extends State<CompanyReportsScreen> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  '${row['email'] ?? ''}',
+                                  _contactLine(row),
                                   style: FontUtility.body.copyWith(
                                     color: _muted,
                                     fontSize: 14,

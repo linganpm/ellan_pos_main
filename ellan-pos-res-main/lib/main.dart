@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 // sqflite FFI initialization for desktop / mobile; web uses ffi_web.
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -16,6 +15,7 @@ import 'bloc/language/language_state.dart';
 import 'core/pos_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/di/service_locator.dart';
+import 'core/device_settings_store.dart';
 import 'core/device_setup_store.dart';
 import 'core/constants/discovery_constants.dart';
 import 'core/org_timezone.dart';
@@ -58,15 +58,10 @@ void main() async {
   // Initialize service locator and register singletons
   await initServiceLocator(prefs: prefs);
 
-  // Let phones and tablets use both portrait and landscape layouts.
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]).then((_) {
-    runApp(PosTabletApp(prefs: prefs));
-  });
+  // Landscape unless Device Settings chooses portrait or automatic.
+  await DeviceSettingsStore(prefs).applySavedOrientation();
+
+  runApp(PosTabletApp(prefs: prefs));
 }
 
 class PosTabletApp extends StatelessWidget {

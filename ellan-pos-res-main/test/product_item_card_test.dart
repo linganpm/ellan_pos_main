@@ -1,8 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pos_tablet/data/models/product_model.dart';
 import 'package:pos_tablet/data/models/category_model.dart';
 import 'package:pos_tablet/presentation/widgets/category_card.dart';
+import 'package:pos_tablet/presentation/widgets/product_image.dart';
 import 'package:pos_tablet/presentation/widgets/product_item_card.dart';
 
 Product _product(String id, String name, {String? offer}) => Product(
@@ -102,6 +106,57 @@ void main() {
 
   test('accent colour is stable per product', () {
     expect(ProductItemCard.accentFor('Tea'), ProductItemCard.accentFor('Tea'));
+  });
+
+  testWidgets('product photo stretches to the card width and height', (
+    tester,
+  ) async {
+    final file = (await tester.runAsync(() async {
+      final temp = await Directory.systemTemp.createTemp('pos-card-image-');
+      addTearDown(() => temp.delete(recursive: true));
+      return File('${temp.path}/product.png').writeAsBytes(
+        base64Decode(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1cAAAAASUVORK5CYII=',
+        ),
+      );
+    }))!;
+    const cardWidth = 160.0;
+    const cardHeight = 180.0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: cardWidth,
+            height: cardHeight,
+            child: ProductItemCard(
+              product: Product(
+                id: 'photo',
+                name: 'Filter Coffee',
+                description: '',
+                price: 40,
+                imageUrl: file.path,
+                categoryId: 'c',
+                offerTag: '10% OFF',
+              ),
+              cartQuantity: 1,
+              onTap: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    final image = tester.widget<Image>(find.byType(Image));
+    expect(image.fit, BoxFit.fill);
+    final imageSize = tester.getSize(find.byType(ProductImage));
+    final cardSize = tester.getSize(find.byType(ProductItemCard));
+    expect(imageSize.width, cardSize.width);
+    expect(imageSize.height, cardSize.height);
+    expect(imageSize.width, cardWidth);
+    expect(imageSize.height, cardHeight);
+    expect(find.text('Filter Coffee'), findsOneWidget);
+    expect(find.text('10% OFF'), findsOneWidget);
+    expect(find.text('×1'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('product tile adds on tap without a plus button', (tester) async {

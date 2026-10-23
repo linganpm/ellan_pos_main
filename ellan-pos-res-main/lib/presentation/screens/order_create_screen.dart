@@ -18,6 +18,7 @@ import '../../bloc/cart/cart_state.dart';
 import '../widgets/category_card.dart';
 import '../widgets/product_item_card.dart';
 import '../widgets/cart_item_tile.dart';
+import '../widgets/discount_entry.dart';
 import '../widgets/order_summary_widget.dart';
 import '../widgets/checkout_tab_bar.dart';
 import '../widgets/checkout_footer_buttons.dart';
@@ -364,114 +365,119 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
         ),
       child: Builder(
         builder: (context) {
-          return Scaffold(
-            backgroundColor: const Color(0xFFF8F9FA),
-            appBar: AppBar(
-              backgroundColor: Colors.white,
-              elevation: 0,
-              leading: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_rounded,
-                  color: Colors.black87,
-                ),
-                onPressed: () => Navigator.pop(context),
-              ),
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    args.pricingMode == 'buying'
-                        ? (Localizations.localeOf(
-                                context,
-                              ).languageCode.toLowerCase().startsWith('ta')
-                              ? 'கொள்முதல் ஆர்டர்'
-                              : 'Purchase order')
-                        : (Localizations.localeOf(
-                                context,
-                              ).languageCode.toLowerCase().startsWith('ta')
-                              ? 'விற்பனை ஆர்டர்'
-                              : 'Sales order'),
-                    style: FontUtility.heading.copyWith(fontSize: 20),
-                  ),
-                  if (args.name != null && args.name!.isNotEmpty)
-                    Text(
-                      [
-                            args.name,
-                            if (args.phone != null && args.phone!.isNotEmpty)
-                              args.phone,
-                            if (args.table != null && args.table!.isNotEmpty)
-                              '${args.floor ?? ''} ${args.table}'.trim(),
-                          ]
-                          .whereType<String>()
-                          .where((part) => part.isNotEmpty)
-                          .join(' · '),
-                      style: FontUtility.body.copyWith(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    )
-                  else if (args.table != null)
-                    Text(
-                      context.l10n.orderCreateFloorTable(
-                        args.floor ?? '',
-                        args.table ?? '',
-                      ),
-                      style: FontUtility.body.copyWith(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                ],
-              ),
-              centerTitle: false,
-              actions: [
-                BlocBuilder<CartBloc, CartState>(
-                  builder: (context, state) {
-                    return IconButton(
-                      tooltip: context.l10n.orderCreateSaveDraftTooltip,
-                      onPressed: state.cartItems.isEmpty
-                          ? null
-                          : () => _saveDraft(context, state),
-                      icon: const Icon(
-                        Icons.save_rounded,
-                        color: Color(0xFF4A00E0),
-                      ),
-                    );
-                  },
-                ),
-                BlocBuilder<CartBloc, CartState>(
-                  builder: (context, state) {
-                    return IconButton(
-                      key: const ValueKey('order-create-delete'),
-                      tooltip: context.l10n.orderDeleteOrder,
-                      onPressed: _kotBusy
-                          ? null
-                          : () => _deleteOrder(context, state),
-                      icon: const Icon(
-                        Icons.delete_outline_rounded,
-                        color: Color(0xFFFF512F),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(width: 4),
-              ],
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(1.0),
-                child: Container(
-                  color: Colors.grey.withValues(alpha: 0.2),
-                  height: 1.0,
-                ),
+          return Theme(
+            data: Theme.of(context).copyWith(
+              snackBarTheme: const SnackBarThemeData(
+                behavior: SnackBarBehavior.floating,
+                insetPadding: EdgeInsets.fromLTRB(16, 8, 16, 108),
               ),
             ),
-            body: SafeArea(
-              child: AdaptiveCheckoutPanels(
-                primaryLabel: context.l10n.commonItem,
-                secondaryLabel: context.l10n.commonOrderLabel,
-                primaryFlex: 65,
-                secondaryFlex: 35,
-                primary: _buildLeftPanel(),
-                secondary: _buildRightPanel(),
+            child: Scaffold(
+              backgroundColor: const Color(0xFFF3F0FA),
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                elevation: 8,
+                shadowColor: const Color(0x331B1433),
+                surfaceTintColor: Colors.transparent,
+                leading: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: Colors.black87,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      args.pricingMode == 'buying'
+                          ? (Localizations.localeOf(
+                                  context,
+                                ).languageCode.toLowerCase().startsWith('ta')
+                                ? 'கொள்முதல் ஆர்டர்'
+                                : 'Purchase order')
+                          : (Localizations.localeOf(
+                                  context,
+                                ).languageCode.toLowerCase().startsWith('ta')
+                                ? 'விற்பனை ஆர்டர்'
+                                : 'Sales order'),
+                      style: FontUtility.heading.copyWith(fontSize: 22),
+                    ),
+                    if (args.name != null && args.name!.isNotEmpty)
+                      Text(
+                        [
+                              args.name,
+                              if (args.phone != null && args.phone!.isNotEmpty)
+                                args.phone,
+                              if (args.table != null && args.table!.isNotEmpty)
+                                '${args.floor ?? ''} ${args.table}'.trim(),
+                            ]
+                            .whereType<String>()
+                            .where((part) => part.isNotEmpty)
+                            .join(' · '),
+                        style: FontUtility.body.copyWith(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      )
+                    else if (args.table != null)
+                      Text(
+                        context.l10n.orderCreateFloorTable(
+                          args.floor ?? '',
+                          args.table ?? '',
+                        ),
+                        style: FontUtility.body.copyWith(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                  ],
+                ),
+                centerTitle: false,
+                actions: [
+                  BlocBuilder<CartBloc, CartState>(
+                    builder: (context, state) {
+                      return IconButton(
+                        tooltip: context.l10n.orderCreateSaveDraftTooltip,
+                        iconSize: 34,
+                        onPressed: state.cartItems.isEmpty
+                            ? null
+                            : () => _saveDraft(context, state),
+                        icon: const Icon(
+                          Icons.save_rounded,
+                          size: 34,
+                          color: Color(0xFF4A00E0),
+                        ),
+                      );
+                    },
+                  ),
+                  BlocBuilder<CartBloc, CartState>(
+                    builder: (context, state) {
+                      return IconButton(
+                        key: const ValueKey('order-create-delete'),
+                        tooltip: context.l10n.orderDeleteOrder,
+                        onPressed: _kotBusy
+                            ? null
+                            : () => _deleteOrder(context, state),
+                        icon: const Icon(
+                          Icons.delete_outline_rounded,
+                          color: Color(0xFFFF512F),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 4),
+                ],
+              ),
+              body: SafeArea(
+                child: AdaptiveCheckoutPanels(
+                  primaryLabel: context.l10n.commonItem,
+                  secondaryLabel: context.l10n.commonOrderLabel,
+                  primaryFlex: 65,
+                  secondaryFlex: 35,
+                  primary: _buildLeftPanel(),
+                  secondary: _buildRightPanel(),
+                ),
               ),
             ),
           );
@@ -492,8 +498,8 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
           children: [
             // Categories List
             Container(
-              height: 64,
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              height: 76,
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 6),
               child: Row(
                 children: [
                   Expanded(
@@ -518,13 +524,19 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                   OutlinedButton.icon(
                     onPressed: () => _showMiscItemDialog(context),
                     icon: const Icon(Icons.add_box_outlined, size: 18),
-                    label: Text(context.l10n.orderMisc),
+                    label: Text(
+                      context.l10n.orderMisc,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF4A00E0),
-                      side: const BorderSide(color: Color(0xFF4A00E0)),
+                      backgroundColor: Colors.white,
+                      side: BorderSide.none,
+                      elevation: 6,
+                      shadowColor: const Color(0x334A00E0),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
+                        horizontal: 16,
+                        vertical: 12,
                       ),
                     ),
                   ),
@@ -561,74 +573,56 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
       inCart[item.product.id] = (inCart[item.product.id] ?? 0) + item.quantity;
     }
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFFDF8F3), Color(0xFFF6FAFF)],
-          ),
-          border: Border.all(color: const Color(0xFFE0E7EF)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
+    return productCount == 0
+        ? Center(
+            child: Text(
+              context.l10n.catalogEmpty,
+              style: FontUtility.body.copyWith(
+                color: Colors.black54,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: productCount == 0
-              ? Center(
-                  child: Text(
-                    context.l10n.catalogEmpty,
-                    style: FontUtility.body.copyWith(
-                      color: Colors.black54,
-                      fontSize: 14,
-                    ),
-                  ),
-                )
-              : GridView.builder(
-                  key: PageStorageKey('grid-${state.selectedCategoryId}'),
-                  padding: EdgeInsets.all(layout.padding),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: layout.crossAxisCount,
-                    mainAxisSpacing: layout.spacing,
-                    crossAxisSpacing: layout.spacing,
-                    childAspectRatio: layout.childAspectRatio,
-                  ),
-                  itemCount: productCount,
-                  itemBuilder: (context, index) {
-                    final product = products[index];
-                    return _StaggeredTileIn(
-                      key: ValueKey(
-                        '${state.selectedCategoryId}-${product.id}',
-                      ),
-                      index: index,
-                      child: ProductItemCard(
-                        product: product,
-                        onTap: () => _onProductTap(context, product),
-                        compact: layout.compact,
-                        cartQuantity: inCart[product.id] ?? 0,
-                      ),
-                    );
-                  },
+          )
+        : GridView.builder(
+            key: PageStorageKey('grid-${state.selectedCategoryId}'),
+            padding: EdgeInsets.fromLTRB(
+              layout.padding,
+              8,
+              layout.padding,
+              layout.padding,
+            ),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: layout.crossAxisCount,
+              mainAxisSpacing: layout.spacing,
+              crossAxisSpacing: layout.spacing,
+              childAspectRatio: layout.childAspectRatio,
+            ),
+            itemCount: productCount,
+            itemBuilder: (context, index) {
+              final product = products[index];
+              return _StaggeredTileIn(
+                key: ValueKey('${state.selectedCategoryId}-${product.id}'),
+                index: index,
+                child: ProductItemCard(
+                  product: product,
+                  onTap: () => _onProductTap(context, product),
+                  compact: layout.compact,
+                  cartQuantity: inCart[product.id] ?? 0,
                 ),
-        ),
-      ),
-    );
+              );
+            },
+          );
   }
 
   Future<void> _showMiscItemDialog(BuildContext context) async {
+    final nameController = TextEditingController(
+      text: context.l10n.orderMisc.toLowerCase(),
+    );
+    final priceController = TextEditingController();
     final result = await showDialog<Map<String, Object>>(
       context: context,
       builder: (dialogContext) {
-        final nameController = TextEditingController(text: context.l10n.orderMisc);
-        final priceController = TextEditingController();
         return AlertDialog(
           title: Text(context.l10n.orderCreateAddMiscItem),
           content: SizedBox(
@@ -638,30 +632,36 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
               children: [
                 TextField(
                   controller: nameController,
+                  textCapitalization: TextCapitalization.sentences,
+                  textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
                     labelText: context.l10n.orderCreateProductName,
-                    hintText: context.l10n.orderCreateMisc,
                   ),
-                  textCapitalization: TextCapitalization.sentences,
                 ),
                 const SizedBox(height: 12),
+                Text(
+                  context.l10n.commonPrice,
+                  style: FontUtility.body.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
                 TextField(
                   controller: priceController,
-                  decoration: InputDecoration(
-                    labelText: context.l10n.commonPrice,
-                    prefixText: '${PosCurrency.symbol()} ',
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    isDense: true,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  autofocus: true,
+                  textInputAction: TextInputAction.done,
                 ),
               ],
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
+              onPressed: () => Navigator.pop(dialogContext),
               child: Text(context.l10n.actionCancel),
             ),
             ElevatedButton(
@@ -690,6 +690,8 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
         );
       },
     );
+    nameController.dispose();
+    priceController.dispose();
     if (result == null || !context.mounted) return;
 
     final name = (result['name'] as String?)?.trim() ?? '';
@@ -698,7 +700,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
 
     final product = Product(
       id: 'misc-${DateTime.now().microsecondsSinceEpoch}',
-      name: name.isEmpty ? context.l10n.orderMisc : name,
+      name: name.isEmpty ? context.l10n.orderMisc.toLowerCase() : name,
       description: context.l10n.commonMiscItem,
       price: price,
       imageUrl: '',
@@ -986,7 +988,7 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
 
   Widget _buildRightPanel() {
     return Container(
-      color: Colors.white,
+      color: const Color(0xFFF7F5FC),
       child: BlocBuilder<CartBloc, CartState>(
         builder: (context, state) {
           return Column(
@@ -1030,64 +1032,84 @@ class _OrderCreateScreenState extends State<OrderCreateScreen> {
                     horizontal: 24.0,
                     vertical: 4.0,
                   ),
-                  child: OrderSummaryWidget(
-                    subTotal: state.subTotal,
-                    deliveryCharge: state.cartItems.isEmpty
-                        ? 0
-                        : state.deliveryCharge,
-                    netTotal: state.cartItems.isEmpty ? 0 : state.netTotal,
-                    discounts: state.discounts,
-                    discountAmounts: {
-                      for (final d in state.discounts)
-                        d.id: state.amountForDiscount(d),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: Column(
+                            children: [
+                              if (state.cartItems.isNotEmpty)
+                                DiscountEntry(state: state, compact: true),
+                              const SizedBox(height: 6),
+                              SizedBox(
+                                height: 150,
+                                child: OrderSummaryWidget(
+                                  subTotal: state.subTotal,
+                                  deliveryCharge: state.cartItems.isEmpty
+                                      ? 0
+                                      : state.deliveryCharge,
+                                  netTotal: state.cartItems.isEmpty
+                                      ? 0
+                                      : state.netTotal,
+                                  discounts: state.discounts,
+                                  discountAmounts: {
+                                    for (final d in state.discounts)
+                                      d.id: state.amountForDiscount(d),
+                                  },
+                                  offerAppliedAmount: state.offerAppliedAmount,
+                                  offerLabels: state.offerLabels,
+                                  serviceTaxValue: state.serviceTaxValue,
+                                  serviceTaxPercentage:
+                                      state.serviceTaxPercentage,
+                                  tipsAmount: state.tipsAmount,
+                                  cartItems: state.cartItems,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
                     },
-                    offerAppliedAmount: state.offerAppliedAmount,
-                    offerLabels: state.offerLabels,
-                    serviceTaxValue: state.serviceTaxValue,
-                    serviceTaxPercentage: state.serviceTaxPercentage,
-                    tipsAmount: state.tipsAmount,
-                    cartItems: state.cartItems,
                   ),
                 ),
               ),
 
-              // Footer Buttons Section - 11% height
-              Expanded(
-                flex: 11,
-                child: CheckoutFooterButtons(
-                  hasItems: state.cartItems.isNotEmpty && !_kotBusy,
-                  canSendKot: state.cartItems.any(
-                    (item) => item.pendingKotQuantity > 0.0001,
-                  ),
-                  onKOT: () => _sendKot(context, state),
-                  onBill: () {
-                    final billArgs = OrderCreateScreenArgs(
-                      orderType: args.orderType,
-                      orderTypeKey: args.orderTypeKey,
-                      pricingMode: args.pricingMode,
-                      name: args.name,
-                      phone: args.phone,
-                      email: args.email,
-                      customerUniqueId: args.customerUniqueId,
-                      floor: args.floor,
-                      table: args.table,
-                      tableId: args.tableId,
-                      draftId: _draftId,
-                      openOrderId: _openOrderId,
-                    );
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (navContext) => BlocProvider.value(
-                          value: context.read<CartBloc>(),
-                          child: args.pricingMode == 'buying'
-                              ? PurchaseBillingScreen(orderArgs: billArgs)
-                              : SalesBillingScreen(orderArgs: billArgs),
-                        ),
-                      ),
-                    );
-                  },
+              CheckoutFooterButtons(
+                hasItems: state.cartItems.isNotEmpty && !_kotBusy,
+                canSendKot: state.cartItems.any(
+                  (item) => item.pendingKotQuantity > 0.0001,
                 ),
+                onKOT: () => _sendKot(context, state),
+                onBill: () {
+                  final billArgs = OrderCreateScreenArgs(
+                    orderType: args.orderType,
+                    orderTypeKey: args.orderTypeKey,
+                    pricingMode: args.pricingMode,
+                    name: args.name,
+                    phone: args.phone,
+                    email: args.email,
+                    customerUniqueId: args.customerUniqueId,
+                    floor: args.floor,
+                    table: args.table,
+                    tableId: args.tableId,
+                    draftId: _draftId,
+                    openOrderId: _openOrderId,
+                  );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (navContext) => BlocProvider.value(
+                        value: context.read<CartBloc>(),
+                        child: args.pricingMode == 'buying'
+                            ? PurchaseBillingScreen(orderArgs: billArgs)
+                            : SalesBillingScreen(orderArgs: billArgs),
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           );
@@ -1264,23 +1286,23 @@ class _ProductGridLayout {
   });
 
   factory _ProductGridLayout.fromConstraints(BoxConstraints constraints) {
-    const minTile = 104.0;
-    const maxTile = 148.0;
-    const minGap = 6.0;
-    const maxGap = 16.0;
-    const minPad = 8.0;
-    const maxPad = 16.0;
-    const targetVisible = 30;
+    const minTile = 176.0;
+    const maxTile = 240.0;
+    const minGap = 22.0;
+    const maxGap = 32.0;
+    const minPad = 18.0;
+    const maxPad = 28.0;
+    const targetVisible = 12;
 
     final rawWidth = constraints.maxWidth;
     final rawHeight = constraints.maxHeight;
     if (rawWidth <= 0 || rawHeight <= 0) {
       return const _ProductGridLayout(
-        crossAxisCount: 5,
-        spacing: 8,
-        padding: 12,
-        childAspectRatio: 0.92,
-        compact: true,
+        crossAxisCount: 3,
+        spacing: 22,
+        padding: 18,
+        childAspectRatio: 0.86,
+        compact: false,
       );
     }
 
@@ -1290,7 +1312,7 @@ class _ProductGridLayout {
     final height = (rawHeight - 4 - padding).clamp(1.0, rawHeight);
 
     // Start from a comfortable tile width, then clamp column count.
-    var cols = (width / 124).round().clamp(1, 8);
+    var cols = (width / 210).round().clamp(1, 4);
 
     double tileWidthFor(int columnCount, double gap) =>
         (width - (columnCount - 1) * gap) / columnCount;
@@ -1298,7 +1320,7 @@ class _ProductGridLayout {
     var gap = minGap;
     var tileW = tileWidthFor(cols, gap);
 
-    while (tileW > maxTile && cols < 8) {
+    while (tileW > maxTile && cols < 4) {
       cols += 1;
       tileW = tileWidthFor(cols, gap);
     }
@@ -1317,11 +1339,11 @@ class _ProductGridLayout {
       gap = minGap;
     }
 
-    // Choose row height so roughly 30 tiles fit the viewport.
-    final targetRows = (targetVisible / cols).ceil().clamp(4, 7);
+    // Fewer, taller cards so the name, variant and price stay readable.
+    final targetRows = (targetVisible / cols).ceil().clamp(2, 3);
     final tileH = ((height - (targetRows - 1) * gap) / targetRows).clamp(
-      tileW * 0.88,
-      tileW * 1.28,
+      tileW * 1.05,
+      tileW * 1.4,
     );
     final aspect = tileW / tileH;
 
@@ -1330,7 +1352,7 @@ class _ProductGridLayout {
       spacing: gap,
       padding: padding,
       childAspectRatio: aspect,
-      compact: tileW < 120,
+      compact: tileW < 190,
     );
   }
 }

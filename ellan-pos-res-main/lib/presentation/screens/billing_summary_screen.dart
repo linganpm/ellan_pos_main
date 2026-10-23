@@ -12,6 +12,7 @@ import '../../core/device_setup_store.dart';
 import '../../bloc/cart/cart_bloc.dart';
 import '../../bloc/cart/cart_state.dart';
 import '../../bloc/cart/cart_event.dart';
+import '../widgets/discount_entry.dart';
 import '../widgets/billing/billing_items_table.dart';
 import '../widgets/billing/billing_summary_card.dart';
 import '../widgets/billing/calculation_input_section.dart';
@@ -1220,21 +1221,22 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                   primaryFlex: 48,
                   secondaryFlex: 52,
                   primary: Container(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                        child: _buildProductsColumn(state),
-                      ),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                    child: _buildProductsColumn(state),
+                  ),
                   secondary: Container(
-                        color: Colors.white,
-                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _buildCustomerPickerRow(),
-                            const SizedBox(height: 14),
-                            Expanded(child: _buildRightPanel(context, state)),
-                          ],
-                        ),
+                    color: Colors.white,
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildCustomerPickerRow(),
+                        const SizedBox(height: 14),
+                        Expanded(child: _buildRightPanel(context, state)),
+                        _buildCheckoutBar(context, state),
+                      ],
                     ),
+                  ),
                 ),
               );
             },
@@ -1813,108 +1815,110 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
                 ),
               ),
             ),
-            SizedBox(
-              width: double.infinity,
-              height: 64,
-              child: ElevatedButton(
-                onPressed: _isCheckingOut
-                    ? null
-                    : () async {
-                        // Include typed tender when deciding Complete vs balance.
-                        final coversDue =
-                            remaining <= 0.0001 ||
-                            typedAmount + 0.0001 >= remaining;
-                        if (remaining > 0.0001 &&
-                            typedAmount > 0.0001 &&
-                            _selectedWallet == null) {
-                          PosToast.failed(
-                            context,
-                            detail: context.l10n.billingAddOnePaymentFirst,
-                          );
-                          return;
-                        }
-                        if (!coversDue) {
-                          // Partial typed amount: commit it, then place remainder on credit.
-                          if (typedAmount > 0.0001) {
-                            final added = await _addInlineTender(
-                              context,
-                              state,
-                              remaining,
-                            );
-                            if (!mounted) return;
-                            // Tender cancelled or rejected — do not continue.
-                            if (!added) return;
-                          }
-                          if (!mounted) return;
-                          await _completeCheckout(
-                            context,
-                            state,
-                            allowBalanceDue: true,
-                          );
-                          return;
-                        }
-                        // Exact or higher tender (or already fully paid).
-                        if (remaining > 0.0001 && typedAmount > 0.0001) {
-                          final added = await _addInlineTender(
-                            context,
-                            state,
-                            remaining,
-                          );
-                          if (!mounted) return;
-                          if (!added) return;
-                        }
-                        if (!mounted) return;
-                        await _completeCheckout(
-                          context,
-                          state,
-                          allowBalanceDue: false,
-                        );
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4A00E0),
-                  disabledBackgroundColor: Colors.grey.shade300,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: Text(
-                  (remaining <= 0.0001 || typedAmount + 0.0001 >= remaining)
-                      ? context.l10n.billingComplete
-                      : context.l10n.billingPlaceWithBalance,
-                  style: FontUtility.heading.copyWith(
-                    color: Colors.white,
-                    fontSize: 18,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-              ),
-            ),
-            if (_tenders.isEmpty) ...[
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: _isCheckingOut
-                    ? null
-                    : () => _completeCheckout(
-                        context,
-                        state,
-                        allowBalanceDue: true,
-                      ),
-                child: Text(
-                  _isBuying
-                      ? context.l10n.billingCompleteWithoutPayment
-                      : context.l10n.billingPlaceFullOnCredit,
-                ),
-              ),
-              TextButton(
-                onPressed: _isCheckingOut
-                    ? null
-                    : () => _saveDraft(context, state),
-                child: Text(context.l10n.billingSaveAsDraft),
-              ),
-            ],
           ],
         );
     }
+  }
+
+  /// Stays under discount, tax, tips, and payment so billing never hides it.
+  Widget _buildCheckoutBar(BuildContext context, CartState state) {
+    final remaining = _remainingDue(state.netTotal);
+    final typedAmount =
+        double.tryParse(_tenderAmountController.text.trim()) ?? 0;
+    final coversDue = remaining <= 0.0001 || typedAmount + 0.0001 >= remaining;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          height: 64,
+          child: ElevatedButton(
+            onPressed: _isCheckingOut
+                ? null
+                : () async {
+                    if (remaining > 0.0001 &&
+                        typedAmount > 0.0001 &&
+                        _selectedWallet == null) {
+                      PosToast.failed(
+                        context,
+                        detail: context.l10n.billingAddOnePaymentFirst,
+                      );
+                      return;
+                    }
+                    if (!coversDue) {
+                      if (typedAmount > 0.0001) {
+                        final added = await _addInlineTender(
+                          context,
+                          state,
+                          remaining,
+                        );
+                        if (!mounted) return;
+                        if (!added) return;
+                      }
+                      if (!mounted) return;
+                      await _completeCheckout(
+                        context,
+                        state,
+                        allowBalanceDue: true,
+                      );
+                      return;
+                    }
+                    if (remaining > 0.0001 && typedAmount > 0.0001) {
+                      final added = await _addInlineTender(
+                        context,
+                        state,
+                        remaining,
+                      );
+                      if (!mounted) return;
+                      if (!added) return;
+                    }
+                    if (!mounted) return;
+                    await _completeCheckout(
+                      context,
+                      state,
+                      allowBalanceDue: false,
+                    );
+                  },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF4A00E0),
+              disabledBackgroundColor: Colors.grey.shade300,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: Text(
+              coversDue
+                  ? context.l10n.billingComplete
+                  : context.l10n.billingPlaceWithBalance,
+              style: FontUtility.heading.copyWith(
+                color: Colors.white,
+                fontSize: 18,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+        ),
+        if (_tenders.isEmpty) ...[
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: _isCheckingOut
+                ? null
+                : () =>
+                      _completeCheckout(context, state, allowBalanceDue: true),
+            child: Text(
+              _isBuying
+                  ? context.l10n.billingCompleteWithoutPayment
+                  : context.l10n.billingPlaceFullOnCredit,
+            ),
+          ),
+          TextButton(
+            onPressed: _isCheckingOut ? null : () => _saveDraft(context, state),
+            child: Text(context.l10n.billingSaveAsDraft),
+          ),
+        ],
+      ],
+    );
   }
 
   /// Returns true when a tender line was added.
@@ -1962,223 +1966,55 @@ class _BillingSummaryScreenState extends State<BillingSummaryScreen> {
   }
 }
 
-class _DiscountPanel extends StatefulWidget {
+class _DiscountPanel extends StatelessWidget {
   final CartState state;
   final VoidCallback onDone;
 
   const _DiscountPanel({required this.state, required this.onDone});
 
   @override
-  State<_DiscountPanel> createState() => _DiscountPanelState();
-}
-
-class _DiscountPanelState extends State<_DiscountPanel> {
-  late final TextEditingController _titleController;
-  final _percentController = TextEditingController();
-  String? _selectedItemSignature;
-  bool _userEditedTitle = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _titleController = TextEditingController();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_userEditedTitle && _selectedItemSignature == null) {
-      _titleController.text = context.l10n.commonDiscount;
-    }
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _percentController.dispose();
-    super.dispose();
-  }
-
-  void _onItemChanged(String? signature) {
-    setState(() {
-      _selectedItemSignature = signature;
-      if (!_userEditedTitle) {
-        if (signature == null) {
-          _titleController.text = context.l10n.commonDiscount;
-        } else {
-          final item = widget.state.cartItems.firstWhere(
-            (c) => c.lineSignature == signature,
-          );
-          _titleController.text = '${item.product.name} -discount';
-        }
-      }
-    });
-  }
-
-  void _apply() {
-    final pct = double.tryParse(_percentController.text.trim());
-    if (pct == null || pct <= 0 || pct > 100) {
-      PosToast.failed(context, detail: context.l10n.billingInvalidDiscountPct);
-      return;
-    }
-    String? itemName;
-    if (_selectedItemSignature != null) {
-      for (final item in widget.state.cartItems) {
-        if (item.lineSignature == _selectedItemSignature) {
-          itemName = item.product.name;
-          break;
-        }
-      }
-    }
-    final title = _titleController.text.trim().isEmpty
-        ? (itemName == null
-              ? context.l10n.commonDiscount
-              : '$itemName -discount')
-        : _titleController.text.trim();
-    context.read<CartBloc>().add(
-      ApplyDiscount(
-        pct,
-        title: title,
-        targetLineSignature: _selectedItemSignature,
-        targetItemName: itemName,
-      ),
-    );
-    _percentController.clear();
-    PosToast.success(context, detail: context.l10n.billingDiscountAdded(title));
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final state = widget.state;
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  context.l10n.billingAddDiscount,
-                  style: FontUtility.heading.copyWith(fontSize: 18),
-                ),
-              ),
-              IconButton(
-                tooltip: context.l10n.actionClose,
-                onPressed: widget.onDone,
-                icon: const Icon(Icons.close_rounded, color: Colors.grey),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            context.l10n.billingApplyTo,
-            style: FontUtility.body.copyWith(color: Colors.black54),
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String?>(
-            value: _selectedItemSignature,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.grey.shade50,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            items: [
-              DropdownMenuItem<String?>(
-                value: null,
-                child: Text(context.l10n.billingEntireOrder),
-              ),
-              for (final item in state.cartItems)
-                DropdownMenuItem<String?>(
-                  value: item.lineSignature,
-                  child: Text(
-                    '${item.product.name} · ${PosCurrency.format(item.totalPrice)}',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-            ],
-            onChanged: _onItemChanged,
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _titleController,
-            onChanged: (_) => _userEditedTitle = true,
-            decoration: InputDecoration(
-              labelText: context.l10n.commonTitleLabel,
-              hintText: context.l10n.commonDiscount,
-              filled: true,
-              fillColor: Colors.grey.shade50,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _percentController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: context.l10n.commonPercentage,
-              hintText: context.l10n.billingPercentageHint,
-              suffixText: '%',
-              filled: true,
-              fillColor: Colors.grey.shade50,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _apply,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4A00E0),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(context.l10n.billingAddDiscountCaps),
-          ),
-          if (state.discounts.isNotEmpty) ...[
-            const SizedBox(height: 20),
-            Text(
-              context.l10n.billingAppliedDiscounts,
-              style: FontUtility.subheading.copyWith(fontSize: 15),
-            ),
-            const SizedBox(height: 8),
-            for (final discount in state.discounts)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(discount.title),
-                subtitle: Text(
-                  '${discount.percentage.toStringAsFixed(0)}% · '
-                  '-${PosCurrency.format(state.amountForDiscount(discount))}',
-                ),
-                trailing: IconButton(
-                  tooltip: context.l10n.actionRemove,
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  onPressed: () {
-                    context.read<CartBloc>().add(
-                      RemoveDiscount(discountId: discount.id),
-                    );
-                  },
-                ),
-              ),
-            TextButton(
-              onPressed: () {
-                context.read<CartBloc>().add(const RemoveDiscount());
-              },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
               child: Text(
-                context.l10n.billingRemoveAllDiscounts,
-                style: FontUtility.subheading.copyWith(color: Colors.red),
+                context.l10n.billingAddDiscount,
+                style: FontUtility.heading.copyWith(fontSize: 18),
               ),
+            ),
+            IconButton(
+              tooltip: context.l10n.actionClose,
+              onPressed: onDone,
+              icon: const Icon(Icons.close_rounded, color: Colors.grey),
             ),
           ],
-        ],
-      ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: SingleChildScrollView(
+            child: DiscountEntry(
+              state: state,
+              allowItemTarget: true,
+              confirmApplied: true,
+            ),
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            onPressed: state.discounts.isEmpty
+                ? null
+                : () => context.read<CartBloc>().add(const RemoveDiscount()),
+            child: Text(
+              context.l10n.billingRemoveAllDiscounts,
+              style: FontUtility.subheading.copyWith(color: Colors.red),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -6,6 +6,20 @@ import '../../../core/utils/font_utility.dart';
 import '../../../data/models/order_list_model.dart';
 import 'order_status_badge.dart';
 
+/// Shared column weights so the Sales header and each row fill the same width.
+class OrderListColumns {
+  static const sl = 2;
+  static const order = 4;
+  static const type = 2;
+  static const name = 6;
+  static const time = 4;
+  static const status = 3;
+  static const payment = 3;
+  static const items = 2;
+  static const total = 3;
+  static const actions = 3;
+}
+
 class OrderListRow extends StatefulWidget {
   final OrderListModel order;
   final int index;
@@ -99,69 +113,99 @@ class _OrderListRowState extends State<OrderListRow> {
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 8,
-                  children: [
-                    Text('#${widget.order.orderId}', style: _boldBlack),
-                    Text(PosCurrency.format(widget.order.totalAmount), style: _boldBlack),
-                    Tooltip(
-                      message: widget.order.syncedToRemote
-                          ? context.l10n.orderSyncedRemote
-                          : context.l10n.orderNotSyncedRemote,
-                      child: Icon(
-                        widget.order.syncedToRemote
-                            ? Icons.cloud_done_rounded
-                            : Icons.cloud_upload_outlined,
-                        size: 20,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('#${widget.order.orderId}', style: _boldBlack),
+                      const SizedBox(height: 6),
+                      Text(widget.order.customerName),
+                      Text(_orderTypeTooltip, style: _greyStyle),
+                      Text(
+                        timeFormatter.format(widget.order.timestamp),
+                        style: _greyStyle,
                       ),
-                    ),
-                  ],
+                      if (widget.order.posCode?.isNotEmpty ?? false)
+                        Text(
+                          context.l10n.orderListPosCode(widget.order.posCode!),
+                          style: _greyStyle,
+                        ),
+                      if (widget.order.serveNumber != null)
+                        Text(
+                          context.l10n.orderListServeNumber(
+                            '${widget.order.serveNumber}',
+                          ),
+                          style: _greyStyle,
+                        ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Text(widget.order.customerName),
-                Text(_orderTypeTooltip, style: _greyStyle),
-                Text(timeFormatter.format(widget.order.timestamp), style: _greyStyle),
-                if (widget.order.posCode?.isNotEmpty ?? false)
-                  Text(context.l10n.orderListPosCode(widget.order.posCode!), style: _greyStyle),
-                if (widget.order.serveNumber != null)
-                  Text(context.l10n.orderListServeNumber('${widget.order.serveNumber}'), style: _greyStyle),
-                if (widget.order.balanceDue > 0.0001)
-                  Text(context.l10n.commonBal(PosCurrency.format(widget.order.balanceDue))),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    Text(
+                      PosCurrency.format(widget.order.totalAmount),
+                      style: _boldBlack,
+                    ),
+                    if (widget.order.balanceDue > 0.0001)
+                      Text(
+                        context.l10n.commonBal(
+                          PosCurrency.format(widget.order.balanceDue),
+                        ),
+                      ),
+                    const SizedBox(height: 8),
                     OrderStatusBadge(status: widget.order.orderStatus),
-                    OrderStatusBadge(status: widget.order.paymentStatus, isPaymentStatus: true),
-                    if (_needsPayment)
-                      IconButton(
-                        tooltip: context.l10n.commonPayments,
-                        onPressed: widget.onPayNowTap,
-                        icon: const Icon(Icons.payment_rounded),
-                      ),
-                    IconButton(
-                      tooltip: context.l10n.actionPrint,
-                      onPressed: widget.onPrintTap,
-                      icon: const Icon(Icons.print_rounded),
+                    const SizedBox(height: 6),
+                    OrderStatusBadge(
+                      status: widget.order.paymentStatus,
+                      isPaymentStatus: true,
                     ),
-                    IconButton(
-                      tooltip: context.l10n.actionUpdate,
-                      onPressed: widget.onUpdateTap,
-                      icon: const Icon(Icons.edit_rounded),
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 4,
+                      children: [
+                        Tooltip(
+                          message: widget.order.syncedToRemote
+                              ? context.l10n.orderSyncedRemote
+                              : context.l10n.orderNotSyncedRemote,
+                          child: Icon(
+                            widget.order.syncedToRemote
+                                ? Icons.cloud_done_rounded
+                                : Icons.cloud_upload_outlined,
+                            size: 20,
+                          ),
+                        ),
+                        if (_needsPayment)
+                          IconButton(
+                            tooltip: context.l10n.commonPayments,
+                            onPressed: widget.onPayNowTap,
+                            icon: const Icon(Icons.payment_rounded),
+                          ),
+                        IconButton(
+                          tooltip: context.l10n.actionPrint,
+                          onPressed: widget.onPrintTap,
+                          icon: const Icon(Icons.print_rounded),
+                        ),
+                        IconButton(
+                          tooltip: context.l10n.actionUpdate,
+                          onPressed: widget.onUpdateTap,
+                          icon: const Icon(Icons.edit_rounded),
+                        ),
+                        if (widget.onDeleteTap != null)
+                          IconButton(
+                            key: ValueKey(
+                              'order-row-delete-${widget.order.orderId}',
+                            ),
+                            tooltip: context.l10n.orderDeleteOrder,
+                            onPressed: widget.onDeleteTap,
+                            icon: const Icon(Icons.delete_outline_rounded),
+                          ),
+                      ],
                     ),
-                    if (widget.onDeleteTap != null)
-                      IconButton(
-                        key: ValueKey('order-row-delete-${widget.order.orderId}'),
-                        tooltip: context.l10n.orderDeleteOrder,
-                        onPressed: widget.onDeleteTap,
-                        icon: const Icon(Icons.delete_outline_rounded),
-                      ),
                   ],
                 ),
               ],
@@ -192,14 +236,16 @@ class _OrderListRowState extends State<OrderListRow> {
             ),
             child: Row(
               children: [
-                // Sl No
                 Expanded(
-                  flex: 1,
-                  child: Text('${widget.index + 1}', style: _greyStyle),
+                  flex: OrderListColumns.sl,
+                  child: Text(
+                    '${widget.index + 1}',
+                    style: _greyStyle,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-                // Order ID
                 Expanded(
-                  flex: 2,
+                  flex: OrderListColumns.order,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -255,18 +301,17 @@ class _OrderListRowState extends State<OrderListRow> {
                 ),
                 // Type — icon only
                 Expanded(
-                  flex: 1,
+                  flex: OrderListColumns.type,
                   child: Align(
-                    alignment: Alignment.centerLeft,
+                    alignment: Alignment.center,
                     child: Tooltip(
                       message: _orderTypeTooltip,
                       child: Icon(_orderTypeIcon(), size: 20, color: _grey),
                     ),
                   ),
                 ),
-                // Name
                 Expanded(
-                  flex: 3,
+                  flex: OrderListColumns.name,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -297,30 +342,29 @@ class _OrderListRowState extends State<OrderListRow> {
                 ),
                 // Time
                 Expanded(
-                  flex: 2,
+                  flex: OrderListColumns.time,
                   child: Text(
                     timeFormatter.format(widget.order.timestamp),
                     style: _greyStyle,
+                    textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                // Order Status — text only
                 Expanded(
-                  flex: 2,
+                  flex: OrderListColumns.status,
                   child: Align(
-                    alignment: Alignment.centerLeft,
+                    alignment: Alignment.center,
                     child: OrderStatusBadge(
                       status: widget.order.orderStatus,
                       plain: true,
                     ),
                   ),
                 ),
-                // Payment Status — Paid / Unpaid / Partial
                 Expanded(
-                  flex: 2,
+                  flex: OrderListColumns.payment,
                   child: Align(
-                    alignment: Alignment.centerLeft,
+                    alignment: Alignment.center,
                     child: _needsPayment
                         ? InkWell(
                             onTap: widget.onPayNowTap,
@@ -340,16 +384,15 @@ class _OrderListRowState extends State<OrderListRow> {
                 ),
                 // Items
                 Expanded(
-                  flex: 1,
+                  flex: OrderListColumns.items,
                   child: Text(
                     '${widget.order.itemCount}',
                     style: _boldBlack,
                     textAlign: TextAlign.center,
                   ),
                 ),
-                // Total
                 Expanded(
-                  flex: 2,
+                  flex: OrderListColumns.total,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -380,7 +423,7 @@ class _OrderListRowState extends State<OrderListRow> {
                 ),
                 // Actions
                 Expanded(
-                  flex: 2,
+                  flex: OrderListColumns.actions,
                   child: Align(
                     alignment: Alignment.centerRight,
                     child: FittedBox(

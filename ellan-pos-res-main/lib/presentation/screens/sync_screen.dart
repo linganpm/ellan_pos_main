@@ -203,6 +203,8 @@ class _SyncViewState extends State<_SyncView> {
                     ),
                   ],
                   const SizedBox(height: 24),
+                  if (state.isRunning || state.completed)
+                    _SyncCountsSummary(items: state.items),
                   Expanded(
                     child: ListView(
                       children: [
@@ -390,6 +392,68 @@ class _SyncHistoryTile extends StatelessWidget {
   }
 }
 
+class _SyncCountsSummary extends StatelessWidget {
+  final List<SyncChecklistItem> items;
+
+  const _SyncCountsSummary({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    final counted = items
+        .where(
+          (item) =>
+              item.totalCount > 0 ||
+              item.status == SyncItemStatus.running ||
+              item.status == SyncItemStatus.success ||
+              item.status == SyncItemStatus.failed,
+        )
+        .toList(growable: false);
+    if (counted.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0xFF4A00E0).withValues(alpha: 0.15),
+          ),
+        ),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final item in counted)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF4F0FF),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  item.totalCount > 0
+                      ? '${item.title}: ${item.successCount} synced / ${item.totalCount} total'
+                      : '${item.title}: ${item.detail ?? ''}',
+                  style: FontUtility.body.copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF3B0764),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _SectionHeader extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -532,6 +596,20 @@ class _SyncChecklistTile extends StatelessWidget {
                     style: FontUtility.body.copyWith(
                       fontSize: 12,
                       color: color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                if (item.status == SyncItemStatus.running ||
+                    item.totalCount > 0) ...[
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: item.progressFraction,
+                      minHeight: 6,
+                      color: color,
+                      backgroundColor: color.withValues(alpha: 0.12),
                     ),
                   ),
                 ],

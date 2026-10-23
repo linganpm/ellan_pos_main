@@ -13,9 +13,9 @@
     },
     "linking_enabled": false
   },
-  "out_dir_shared": "/home/lingaraja/work/ellanone/ellan-one-container/ellan-pos/pos-core-ib-main/.dart_tool/hooks_runner/shared/sqlite3/build/",
-  "out_file": "/home/lingaraja/work/ellanone/ellan-one-container/ellan-pos/pos-core-ib-main/.dart_tool/hooks_runner/sqlite3/6b4ebf10e7/output.json",
+  "out_dir_shared": "/mnt/myvol/ellanone/ellan-one-container/ellan_pos_main/pos-core-ib-main/.dart_tool/hooks_runner/shared/sqlite3/build/",
+  "out_file": "/mnt/myvol/ellanone/ellan-one-container/ellan_pos_main/pos-core-ib-main/.dart_tool/hooks_runner/sqlite3/6b4ebf10e7/output.json",
   "package_name": "sqlite3",
-  "package_root": "/home/lingaraja/.pub-cache/hosted/pub.dev/sqlite3-3.3.1/",
+  "package_root": "/home/linga/.pub-cache/hosted/pub.dev/sqlite3-3.3.1/",
   "user_defines": {}
 }

@@ -11,8 +11,8 @@ class FontUtility {
   static TextStyle get subheading => const TextStyle(
     fontFamily: 'Roboto',
     fontSize: 24,
-    fontWeight: FontWeight.w600,
-    color: Colors.black54,
+    fontWeight: FontWeight.w700,
+    color: Colors.black87,
   );
 
   static TextStyle get body => const TextStyle(

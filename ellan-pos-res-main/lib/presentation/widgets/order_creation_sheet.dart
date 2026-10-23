@@ -439,6 +439,39 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
     }
   }
 
+  Future<void> _openDineInWithoutTable(OrderCreationState state) async {
+    if (_saving || _checkingTable) return;
+    setState(() {
+      _saving = true;
+      _formError = null;
+    });
+    try {
+      final ready = await _ensureCustomerReady(state);
+      if (!ready || !mounted) return;
+      final latest = context.read<OrderCreationBloc>().state;
+      final navigator = Navigator.of(context, rootNavigator: true);
+      final args = OrderCreateScreenArgs(
+        orderType: _selectedType?.label.isNotEmpty == true
+            ? _selectedType!.label
+            : 'DineIn',
+        orderTypeKey: _selectedType?.key,
+        pricingMode: _pricingMode,
+        name: _resolvedCustomerName(latest),
+        phone: latest.pickupPhone,
+        email: latest.pickupEmail,
+        customerUniqueId: latest.customerUniqueId,
+      );
+      navigator.pop();
+      await navigator.push(
+        MaterialPageRoute(builder: (_) => SalesOrderScreen(args: args)),
+      );
+    } catch (error) {
+      if (mounted) setState(() => _formError = error.toString());
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -917,6 +950,36 @@ class _OrderCreationBottomSheetState extends State<OrderCreationBottomSheet> {
                 icon: const Icon(Icons.refresh),
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Align(
+          alignment: Alignment.centerRight,
+          child: SizedBox(
+            height: 52,
+            child: ElevatedButton(
+              key: const ValueKey('dine-in-without-table'),
+              onPressed: _saving || _checkingTable || _loadingTables
+                  ? null
+                  : () => _openDineInWithoutTable(state),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kAccent,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey.shade300,
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                'Select',
+                style: FontUtility.button.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 16),

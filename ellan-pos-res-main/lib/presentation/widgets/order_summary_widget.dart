@@ -41,9 +41,20 @@ class OrderSummaryWidget extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x2E1B1433),
+                blurRadius: 0,
+                offset: Offset(0, 4),
+              ),
+              BoxShadow(
+                color: Color(0x1A1B1433),
+                blurRadius: 14,
+                offset: Offset(0, 8),
+              ),
+            ],
           ),
           child: FittedBox(
             fit: BoxFit.scaleDown,

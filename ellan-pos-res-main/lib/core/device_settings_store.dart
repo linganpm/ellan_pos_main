@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// On-device POS settings that operators can change without re-registering.
@@ -84,7 +85,12 @@ class DeviceSettingsStore {
   static const _intervalKey = 'pos_device_sync_interval_seconds';
   static const lastSyncAtKey = 'posLastSuccessfulSyncAt';
   static const cashDenominationsKey = 'pos_cash_denominations';
+  static const orientationKey = 'pos_device_orientation';
   static const defaultCashDenominations = '5, 10, 20, 50, 100, 500';
+  static const orientationLandscape = 'landscape';
+  static const orientationPortrait = 'portrait';
+  static const orientationAutomatic = 'automatic';
+  static const defaultOrientation = orientationLandscape;
 
   final SharedPreferences _prefs;
 
@@ -125,6 +131,53 @@ class DeviceSettingsStore {
   Future<void> saveCashDenominationsRaw(String raw) async {
     final cleaned = raw.trim().isEmpty ? defaultCashDenominations : raw.trim();
     await _prefs.setString(cashDenominationsKey, cleaned);
+  }
+
+  String loadOrientation() {
+    final raw = (_prefs.getString(orientationKey) ?? '').trim().toLowerCase();
+    if (raw == orientationPortrait || raw == orientationAutomatic) return raw;
+    return defaultOrientation;
+  }
+
+  Future<void> saveOrientation(String mode) async {
+    final normalized = mode.trim().toLowerCase();
+    final value = normalized == orientationPortrait ||
+            normalized == orientationAutomatic
+        ? normalized
+        : defaultOrientation;
+    await _prefs.setString(orientationKey, value);
+    await applyOrientation(value);
+  }
+
+  static List<DeviceOrientation> orientationsFor(String mode) {
+    switch (mode) {
+      case orientationPortrait:
+        return const [
+          DeviceOrientation.portraitUp,
+          DeviceOrientation.portraitDown,
+        ];
+      case orientationAutomatic:
+        return const [
+          DeviceOrientation.portraitUp,
+          DeviceOrientation.portraitDown,
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ];
+      case orientationLandscape:
+      default:
+        return const [
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ];
+    }
+  }
+
+  static Future<void> applyOrientation(String mode) {
+    return SystemChrome.setPreferredOrientations(orientationsFor(mode));
+  }
+
+  Future<void> applySavedOrientation() {
+    return applyOrientation(loadOrientation());
   }
 
   static List<double> parseCashDenominations(String raw) {

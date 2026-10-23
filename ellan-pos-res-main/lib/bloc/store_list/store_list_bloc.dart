@@ -138,7 +138,9 @@ class StoreListCubit extends Cubit<StoreListState> {
     }
 
     final store = selectedStore;
+    final counts = <StoreSyncCountLine>[];
     emit(StoreVerificationLoading(store: store));
+    var acceptingProgress = true;
 
     try {
       final prefs = getIt<SharedPreferences>();
@@ -147,18 +149,19 @@ class StoreListCubit extends Cubit<StoreListState> {
         controller: controller,
         storeId: _selectedStoreId!,
         onProgress: (update) {
-          if (isClosed) return;
+          if (!acceptingProgress || isClosed) return;
+          _applySyncCount(counts, update);
           emit(
             StoreVerificationLoading(
               store: store,
               message: _syncMessage(update),
-              progress: update.totalCount > 0
-                  ? (update.processedCount / update.totalCount).clamp(0.0, 1.0)
-                  : null,
+              progress: _overallProgress(counts),
+              counts: List<StoreSyncCountLine>.of(counts),
             ),
           );
         },
       );
+      acceptingProgress = false;
       await controller.refreshAccessControl();
 
       // Only block when access is explicitly disabled. Missing local access
@@ -195,17 +198,63 @@ class StoreListCubit extends Cubit<StoreListState> {
   }
 
   static const _entityLabels = <String, String>{
-    'products': 'product catalogue',
-    'customers': 'customers',
-    'credits': 'credits',
-    'tables': 'floors and tables',
-    'orders': 'orders',
+    'products': 'Products',
+    'product_images': 'Product images',
+    'customers': 'Customers',
+    'credits': 'Credits',
+    'tables': 'Floors & tables',
+    'orders': 'Orders',
+    'offers': 'Offers',
+    'wallets': 'Wallets',
+    'subscribers': 'Subscribers',
   };
+
+  void _applySyncCount(
+    List<StoreSyncCountLine> counts,
+    StoreSyncProgressUpdate update,
+  ) {
+    final id = '${update.entity}:${update.direction}';
+    final base = _entityLabels[update.entity] ?? update.entity;
+    final label = update.direction == 'export' ? '$base upload' : base;
+    final line = StoreSyncCountLine(
+      id: id,
+      label: label,
+      synced: update.successCount,
+      total: update.totalCount,
+      failed: update.failureCount,
+      running: update.stage == StoreSyncProgressStage.running,
+      done:
+          update.stage == StoreSyncProgressStage.completed ||
+          update.stage == StoreSyncProgressStage.skipped,
+      failedStep: update.stage == StoreSyncProgressStage.failed,
+      background: update.entity == 'product_images',
+    );
+    final index = counts.indexWhere((item) => item.id == id);
+    if (index < 0) {
+      counts.add(line);
+    } else {
+      counts[index] = line;
+    }
+  }
+
+  double? _overallProgress(List<StoreSyncCountLine> counts) {
+    final data = counts.where((line) => !line.background);
+    var sum = 0.0;
+    var n = 0;
+    for (final line in data) {
+      final fraction = line.fraction;
+      if (fraction == null) continue;
+      sum += fraction;
+      n += 1;
+    }
+    if (n == 0) return null;
+    return sum / n;
+  }
 
   String _syncMessage(StoreSyncProgressUpdate update) {
     final label = _entityLabels[update.entity] ?? update.entity;
     if (update.totalCount > 0) {
-      return 'Syncing $label ${update.processedCount}/${update.totalCount}';
+      return 'Syncing $label ${update.successCount} synced / ${update.totalCount} total';
     }
     return 'Syncing $label';
   }
